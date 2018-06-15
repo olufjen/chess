@@ -1,0 +1,265 @@
+package no.chess.web.model;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.IntPredicate;
+
+import org.protege.owl.codegeneration.inference.CodeGenerationInference;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+
+import no.basis.felles.model.OntologyModel;
+import no.basis.felles.model.ParentModel;
+
+import no.basis.felles.semanticweb.chess.BlackBoardPosition;
+import no.basis.felles.semanticweb.chess.BlackPiece;
+import no.basis.felles.semanticweb.chess.BoardPosition;
+import no.basis.felles.semanticweb.chess.Piece;
+import no.basis.felles.semanticweb.chess.WhiteBoardPosition;
+import no.basis.felles.semanticweb.chess.WhitePiece;
+import no.basis.felles.semanticweb.chess.impl.DefaultBlackPiece;
+import no.basis.felles.semanticweb.chess.impl.DefaultWhitePiece;
+
+/**
+ * This class represent a position on the chessboard
+ * It also contains the correct ontology whiteboard or blackboard position
+ * If it is occupied it contains the correct chesspiece (usedBy) and the equivalent ontology chesspiece (HashSet<Piece> pieces).
+ * 
+ * @author oluf
+ *
+ */
+public class Position extends ParentModel {
+	private String positionName;
+	private String column;
+	private int intColumn;
+	private String row;
+	private int intRow;
+	private String positionColor;
+	private boolean inUse;
+	private ChessPiece usedBy;
+	private BlackBoardPosition blackBoardPosition = null;
+	private WhiteBoardPosition whiteBoardPosition = null;
+	private HashSet<Piece> pieces;
+	
+	public Position(String positionName, boolean inUse, ChessPiece usedBy) {
+		super();
+		this.positionName = positionName;
+		this.inUse = inUse;
+		if (usedBy == null){
+			String[] legalMoves = {};
+			usedBy =  new ChessPiece("","x","ee",legalMoves);
+		}
+		this.column = positionName.substring(0, 1);
+		this.row = positionName.substring(1);
+		intRow = Integer.parseInt(row);
+		this.usedBy = usedBy;
+		intColumn = findColumn();
+		calculateColor();
+	}
+	
+	public HashSet<Piece> getPieces() {
+		return pieces;
+	}
+	private IntPredicate evenNumbers = (int i) -> i%2 == 0;
+	private void calculateColor(){
+		if (evenNumbers.test(intRow+intColumn)){
+			positionColor = "B";
+		}else
+			positionColor = "W";
+	}
+	public <T,R> Integer transformValue(List<String> letters,Function<List<String>, Integer> f) {
+			return f.apply(letters);
+	}
+
+	private int findColumn(){
+		List <String> letters  = Arrays.asList("a","b","c","d","e","f","g","h");
+		Function<List<String>,Integer> f = (List<String> l) -> {
+			int ct = 0;
+			for (String s:letters){
+				ct++;
+				if (s.equals(column)){
+					return ct;
+				}
+	
+			}
+			return ct;
+		};
+		return transformValue(letters,f);
+	}
+	/**
+	 * setPieces
+	 * This method puts the correct ontology chess piece to the correct ontology position
+	 * It is called whenever a player makes a move.
+	 * @param pieces
+	 */
+	public void setPieces(HashSet<Piece> pieces) {
+		this.pieces = pieces;
+		if (pieces != null){
+			Iterator<Piece> pieceIterator = pieces.iterator();
+			while (pieceIterator.hasNext()){
+				Piece piece = pieceIterator.next();
+				IRI ir = piece.getOwlIndividual().getIRI();
+				String irs = ir.toString();
+		    	char sep = '#';
+		    	String name = extractString(irs, sep,-1); 
+//		    	System.out.println("Name of piece: "+name+" Name of chess piece: "+usedBy.getPieceName()+" "+usedBy.getName());
+		    	if (name.startsWith("White")){
+		    		usedBy.setWhitePiece(piece);
+		    		if (piece != null)
+		    			checkPieceOccupation(piece);
+		    		else
+		    			System.out.println("Piece is null!! Name of piece: "+name+" Name of chess piece: "+usedBy.getPieceName()+" "+usedBy.getName());
+		    	}
+		    	if (name.startsWith("Black")){
+		    		usedBy.setBlackPiece(piece);
+		    		if (piece != null)
+		    			checkPieceOccupation(piece);
+		    		else
+		    			System.out.println("Piece is null!! Name of piece: "+name+" Name of chess piece: "+usedBy.getPieceName()+" "+usedBy.getName());
+		    	}
+		    	usedBy.setOntlogyName(name);
+			}
+		} 
+	}
+	public void checkPieceOccupation(Piece piece){
+		if (piece.getOccupies() != null){
+			HashSet<BoardPosition> whitePosset = (HashSet<BoardPosition>) piece.getOccupies();
+			Iterator<BoardPosition> whitePosIterator =  whitePosset.iterator(); // Empty after move???!!
+			while(whitePosIterator.hasNext()){
+				BoardPosition whitePos = whitePosIterator.next();
+				IRI ir = whitePos.getOwlIndividual().getIRI();
+				String irs = ir.toString();
+				char sep = '#';
+				String name = extractString(irs, sep,-1);
+				if (name.equals(positionName)){
+					System.out.println("Occupies correct position: " + irs+ " " + name + " " +positionName);
+				}else {
+					System.out.println("Occupies wrong position: "+ irs+ " " + name + " " +positionName);
+					piece.removeOccupies(whitePos);
+					if (whiteBoardPosition != null){
+						piece.addOccupies(whiteBoardPosition);
+						System.out.println("New white position: "+ whiteBoardPosition.getOwlIndividual().getIRI().toString() + " " +positionName);
+					}
+					else if (blackBoardPosition != null){
+						piece.addOccupies(blackBoardPosition);
+						System.out.println("New black position: "+ blackBoardPosition.getOwlIndividual().getIRI().toString() + " " +positionName);
+					}
+				
+				}
+			}			
+		}else{
+			System.out.println("Piece does not occupy position: " + piece.toString()+positionName);
+		}
+			
+	}
+	public void checkWhiteOccupation(HashSet<WhiteBoardPosition> whitePositions){
+		Iterator<WhiteBoardPosition> whitePosIterator =  whitePositions.iterator();
+	      while(whitePosIterator.hasNext()){
+	    	  WhiteBoardPosition whitePos = whitePosIterator.next();
+	    	  IRI ir = whitePos.getOwlIndividual().getIRI();
+	    	  HashSet<Piece> pieces =  (HashSet<Piece>)whitePos.getIsOccupiedBy();
+	    	  String irs = ir.toString();
+	    	  OWLNamedIndividual wp = whitePos.getOwlIndividual();
+	    	  char sep = '#';
+	    	  String name = extractString(irs, sep,-1);
+	    	  if (name.equals(positionName) && usedBy != null){
+//	    		  CodeGenerationInference inference = usedBy.getWhitePiece().
+	    		  if (pieces.isEmpty() || pieces == null){
+	    			Piece newIsOccupiedBy = new DefaultWhitePiece(null, ir);
+					whitePos.addIsOccupiedBy(newIsOccupiedBy );
+	    		  }
+	    		  if (pieces != null){
+	    			  Iterator<Piece> pieceIterator = pieces.iterator();
+	    			  while (pieceIterator.hasNext()){
+	    				  Piece newPiece = pieceIterator.next();
+	    				  IRI irp = newPiece.getOwlIndividual().getIRI();
+	    				  String irsp = ir.toString();
+	    				  char sepp = '#';
+	    				  String pname = extractString(irs, sepp,-1); 
+	    			  }
+	    		  }
+	    	  }
+	      }
+		
+	}
+	
+	public int getIntColumn() {
+		return intColumn;
+	}
+
+	public void setIntColumn(int intColumn) {
+		this.intColumn = intColumn;
+	}
+
+	public String getRow() {
+		return row;
+	}
+
+	public void setRow(String row) {
+		this.row = row;
+	}
+
+	public int getIntRow() {
+		return intRow;
+	}
+
+	public void setIntRow(int intRow) {
+		this.intRow = intRow;
+	}
+
+	public String getPositionColor() {
+		return positionColor;
+	}
+
+	public void setPositionColor(String positionColor) {
+		this.positionColor = positionColor;
+	}
+
+	public BlackBoardPosition getBlackBoardPosition() {
+		return blackBoardPosition;
+	}
+
+	public void setBlackBoardPosition(BlackBoardPosition blackBoardPosition) {
+		this.blackBoardPosition = blackBoardPosition;
+	}
+
+	public WhiteBoardPosition getWhiteBoardPosition() {
+		return whiteBoardPosition;
+	}
+
+	public void setWhiteBoardPosition(WhiteBoardPosition whiteBoardPosition) {
+		this.whiteBoardPosition = whiteBoardPosition;
+	}
+
+	public String getColumn() {
+		return column;
+	}
+
+	public void setColumn(String column) {
+		this.column = column;
+	}
+
+	public String getPositionName() {
+		return positionName;
+	}
+	public void setPositionName(String positionName) {
+		this.positionName = positionName;
+	}
+	public boolean isInUse() {
+		return inUse;
+	}
+	public void setInUse(boolean inUse) {
+		this.inUse = inUse;
+	}
+	public ChessPiece getUsedBy() {
+		return usedBy;
+	}
+	public void setUsedBy(ChessPiece usedBy) {
+		this.usedBy = usedBy;
+	}
+	
+
+}

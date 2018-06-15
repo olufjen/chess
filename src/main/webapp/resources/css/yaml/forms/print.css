@@ -1,0 +1,107 @@
+/*		
+		Filnavn:    print.xsl
+		Formål:     css til utskrift av kvittering webskjema
+		Opprettet:  rek@kunnskapssenteret.no		
+	*/
+	
+@media print{
+	
+body {
+	color: #222;
+	background-color: #F2F2F2;
+	font-family: "PT Sans","PT Sans Narrow", "Trebuchet MS", Sans-serif;
+	height:100%;
+	position:absolute; top:0px; bottom:0px; left:0px; right:0px;
+	/* YUI standard css under */
+	font:13px;
+  *font-size:small;
+  *font:x-small;	
+}
+div{
+	overflow: none;
+}
+
+nav#top {
+	background-color: #00bcea;
+	height: 40px;
+	width: 100%;
+}
+
+header#logo {
+	width: 965px;
+	padding: 10px 30px 10px 0px;
+	background-color: white;
+}
+
+header#logo img {
+	margin: 0 auto;
+	padding-right: 30px;
+}
+
+.ym-wbox header {
+	display: none;
+}
+
+a {
+	color: #00b0e6;
+}
+
+h1 {
+	margin: 0px; 
+	padding: 14px 0px 0px 19px; 
+	font-size:200%; 
+	font-weight:bold; 
+	color:#666; 
+	font-family: "PT Sans Narrow", "Trebuchet MS", Sans-serif;
+	line-height: 0.8571em;
+	letter-spacing: 1.5px;
+}
+
+
+h2 {
+	margin: 0 0 0.75em 0; 
+	font-size: 120%; 
+	font-weight: bold; 
+	border-bottom: 1px solid #ccc; 
+	color: #615046; 
+	font-family: "PT Sans", "PT Sans Narrow", "Trebuchet MS", Sans-serif; 
+}
+
+h3 {
+	margin: 0 0 0.25em 0;
+	font-size: 100%;
+	font-weight: bold;
+	color: #231f20;
+}
+
+table {
+	border-bottom: 1px solid #CCCCCC;
+	border-collapse: collapse;
+	border-top: 1px solid #CCCCCC;
+	color: #333333;
+	margin: 1.3571em 0 0;
+	width: 100%;
+	overflow: none;
+}
+
+.summary {
+	border: 1px solid #CCCCCC;
+}
+
+.summary td {
+	border: 1px solid #CCCCCC;
+}
+
+.summary tr:first-child td {
+	background-color: #F2F2F2;
+	font-weight: bold;
+}
+
+.summary td:first-child{
+	width:40%;
+}
+
+#noprint {
+	display:none;
+}
+}

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+    xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	
+<!-- <import resource="classpath:rest-component-config.xml"/> -->
+
+<!--    <import resource="applicationContext-ejb.xml" />                -->
+
+<!-- Restlet components -->
+
+        <bean id="component" class="org.restlet.ext.spring.SpringComponent">
+                <property name="name" value="RESTful chess Server component" />
+                <property name="description" value="Example for Restlet applications" />
+                <property name="owner" value="Oluf Jensen" />
+                <property name="author" value="Oluf Jensen" />
+            <property name="defaultTarget" ref="path2BeanRouter" />
+            <property name="client" value="clap" />
+        </bean>
+
+        <bean id="component.context"
+                class="org.springframework.beans.factory.config.PropertyPathFactoryBean" />
+ 
+
+        <bean id="componentChildContext" class="org.restlet.Context">
+                <lookup-method name="createChildContext" bean="component.context" />
+        </bean>
+<!--    
+        <bean id="docsDir" class="org.restlet.resource.Directory"> 
+        <constructor-arg name="context" ref="componentChildContext" /> 
+        <constructor-arg name="rootUri" value="clap:///no/naks/web/server/resource/css/" /> 
+        <property name="indexName" value="index" /> 
+    </bean>
+    
+        <bean id="localdocsDir" class="no.naks.web.server.resource.ProsedyreDirectory"> 
+        <constructor-arg name="context" ref="componentChildContext" /> 
+        <constructor-arg name="rootUri" value="file://Biovigilans_web/restapi/melding/css" /> 
+        <property name="indexName" value="style.css" /> 
+    </bean>
+-->
+<!-- 
+        <bean id="directoryService" class="no.naks.web.server.resource.ProsedyreDirectory">
+                <property name="context" ref="componentChildContext"></property>
+        </bean>
+ -->    
+        <!-- This router automagically routes requests to beans that extend org.restlet.resource.ServerResource or org.restlet.Restlet who's name starts with
+         a "/" slash which matches the request-->
+
+<!-- 
+        <bean id="BiovigilansApiApplication" class="no.naks.web.server.BiovigilansApiApplication">
+        
+
+                <property name="name" value="RESTful Biovigilans API application" />
+                <property name="description"
+                        value="Biovigilans API application for Kunnskapssenteret" />
+                <property name="owner" value="Kunnskapssenteret" />
+                <property name="author" value="Oluf Jensen" />
+                <property name="root" ref="path2BeanRouter"/>
+        
+        </bean>
+ -->    
+
+<!-- Restlet components end -->
+
+         <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+                <property name="locations">
+                        <list>
+   
+                                <value>/config/app-config/application.properties</value>
+                                <value>/config/app-config/jdbc.properties</value>
+                                <value>/config/app-config/jdbcutside.properties</value>
+                                <value>/config/app-config/sqladmin.properties</value>
+                                <value>/config/app-config/tables.properties</value>
+                                <value>/config/app-config/question.properties</value>
+                                <value>/config/app-config/environment.properties</value>
+                                <value>/config/app-config/parameter.properties</value>
+                                <value>/config/app-config/giver.properties</value>
+                       			<value>/config/app-config/kontakt.properties</value>
+                                <value>/config/app-config/andreHendelser.properties</value>
+                                <value>/config/app-config/dbtable.properties</value>
+                                <value>/config/app-config/email.properties</value>
+                        </list>
+                </property>
+         </bean>
+
+	
+<!-- Exception handling -->
+  <!--   <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+        <property name="defaultErrorView" value="error/exception" />
+        <property name="defaultStatusCode" value="500" />
+        <property name="warnLogCategory" value="WARN" />
+        <property name="exceptionMappings">
+            <props>
+                <prop key="org.springframework.webflow.execution.repository.FlowExecutionRestorationFailureException">velkommen</prop>
+                
+            </props>
+        </property>
+    </bean> -->
+    <bean name="path2BeanRouter" class="org.restlet.ext.spring.SpringBeanRouter">
+<!-- 
+            <property name="attachments"> 
+            <map> 
+               <entry key="/css/" value-ref="docsDir" /> 
+            </map> 
+        </property> 
+  -->       
+	</bean>
+	<bean id="sessionAdmin" class="no.basis.felles.control.SessionAdminImpl">
+	</bean>
+  <bean name="/chess/startside.html" id="rapporterstartServerResource" autowire="byName" scope="prototype"
+             class="no.chess.web.server.resource.RapporterChessStartServerResourceHTML"> 
+             <property name="sessionAdmin" ref="sessionAdmin"></property>
+  </bean>
+    <bean name="/chess/" id="startServerResource" autowire="byName" scope="prototype"
+            class="no.chess.web.server.resource.RapporterChessStartServerResourceHTML">
+  </bean>
+    <bean name="/chess/game.html" id="rapportergameServerResource" autowire="byName" scope="prototype"
+             class="no.chess.web.server.resource.RapporterGameServerResourceHTML"> 
+  </bean>
+</beans>

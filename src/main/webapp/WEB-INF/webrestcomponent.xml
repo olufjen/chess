@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
+  <display-name>Fagprosedyrer site</display-name>
+
+ <!-- Restlet Servlet -->
+  	<servlet>
+		<servlet-name>FagprosedyreComponent</servlet-name>
+		<servlet-class>
+			org.restlet.ext.servlet.ServerServlet
+        </servlet-class>
+     
+		<init-param>
+			<param-name>org.restlet.component</param-name>
+			<param-value>
+				no.naks.web.server.FagprosedyreComponent
+			</param-value>
+		</init-param>
+ <!--  	
+		<init-param>
+               <param-name>org.restlet.application</param-name>
+               <param-value>no.naks.web.server.FagprosedyreApplication</param-value>
+        </init-param>
+-->		
+		<!-- List of supported client protocols
+		<init-param>
+    		<param-name>org.restlet.clients</param-name>
+    		<param-value>HTTP HTTPS FILE</param-value>
+		</init-param>
+		 -->
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+<!--  	  
+	<context-param>
+		  <param-name>org.restlet.application</param-name>  
+     	  <param-value>no.naks.web.server.FagprosedyreApplication</param-value>  
+	</context-param>
+-->	
+	<servlet-mapping>
+		<servlet-name>FagprosedyreComponent</servlet-name>
+		<url-pattern>/*</url-pattern>
+	</servlet-mapping>
+  <!-- Restlet Servlet end -->
+  
+  </web-app>

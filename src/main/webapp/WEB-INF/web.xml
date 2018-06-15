@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
+  <display-name>Basis example site</display-name>
+<listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+</listener>
+  <listener>
+    <listener-class>
+			org.springframework.web.context.request.RequestContextListener</listener-class>
+  </listener>
+  <!--  
+		<context-param>
+               <param-name>org.restlet.application</param-name>
+               <param-value>no.naks.web.server.BiovigilansApiApplication</param-value>
+        </context-param>
+	-->
+	<context-param>
+	  <param-name>contextConfigLocation</param-name>
+   		<param-value>/WEB-INF/applicationContext.xml,/WEB-INF/applicationContext-ejb.xml</param-value>
+	</context-param>
+<servlet>
+  <servlet-name>appServlet</servlet-name>
+  <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+  <init-param>
+   <param-name>contextConfigLocation</param-name>
+   <param-value>/WEB-INF/applicationContext.xml,/WEB-INF/applicationContext-ejb.xml</param-value>
+  </init-param>
+  <load-on-startup>2</load-on-startup>
+ </servlet>
+ <!-- Restlet Servlet -->
+ <servlet>
+    <servlet-name>SpringChessRESTApi</servlet-name>
+    <servlet-class>org.restlet.ext.spring.SpringServerServlet</servlet-class>
+     <init-param>
+            <param-name>org.restlet.component</param-name>
+             <!-- this value must match the bean id of the Restlet component you will configure in Spring (below) -->
+            <param-value>component</param-value>
+     </init-param>
+     	<init-param>
+    		<param-name>org.restlet.clients</param-name>
+    		<param-value>CLAP HTTP HTTPS FILE</param-value>
+
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+</servlet>
+<!-- Dersom denne mapping tas med sÃ¥ starter ikke Restlet component
+<servlet-mapping>
+    <servlet-name>Spring MVC Dispatcher Servlet</servlet-name>
+    <url-pattern>/innhold/spring/*</url-pattern>
+</servlet-mapping>
+ -->
+	<servlet-mapping>
+		<servlet-name>SpringChessRESTApi</servlet-name>
+		<url-pattern>/restapi/*</url-pattern>
+	</servlet-mapping>
+  <!-- Restlet Servlet end -->
+  <servlet-mapping>
+ <servlet-name>default</servlet-name>
+	 <url-pattern>/resources/*</url-pattern>
+ </servlet-mapping>
+  
+</web-app>
+

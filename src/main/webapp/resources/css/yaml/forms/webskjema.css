@@ -1,0 +1,537 @@
+	
+	/*		
+		Filnavn:    webskjema.css
+		Formï¿½l:     css til webskjema i ELMER-format. Overstyrer en del av verdiene som er satt i base.css, typography.css og webskjema-theme.css. Sistnevnte skal ikke rï¿½res.
+		Opprettet:  twg@kunnskapssenteret.no
+		Endringer:
+		18.12.2012(pcr): Kommentert ut "top"- og "left"-attributtet under ".rf-cal-popup" for å få korrekt plassering i samtlige nettlesere (fungerte ikke i Safari tidligere)
+						 og kommentert ut den tomme ".ym-form .ym-fbox-text input:active" (ga en bug i IE7)
+	*/
+	
+
+
+/**********FONT**********/
+/*
+<!-- IE -->
+@font-face { 
+	font-family: SunTT5; src: url(http://font.kunnskapssenteret.no/SunTT5_.eot); }
+  <!-- @font-face { font-family: SunTT7; src: url(/webtjenester_web/resources/fonts/SunTT7_.eot); } -->
+
+<!-- not IE -->
+@font-face { font-family: SunTT5; src: url(http://font.kunnskapssenteret.no/SunTT5_.woff) format("woff"); }
+	<!-- @font-face { font-family: SunTT7; src: url(/webtjenester_web/resources/fonts/SunTT7_.woff) format("woff"); } --> 
+*/
+
+
+
+/**********LAYOUT**********/
+body {
+	color: #222;
+	background-color: #F2F2F2;
+	font-family: "PT Sans","PT Sans Narrow", "Trebuchet MS", Sans-serif;
+	height:100%;
+	position:absolute; top:0px; bottom:0px; left:0px; right:0px;
+	/* YUI standard css under */
+	font:13px;
+  *font-size:small;
+  *font:x-small;	
+}
+
+header {
+	margin: 0 auto;  
+}
+
+header#logo {
+	width: 965px;
+	padding: 10px 30px 10px 0px;
+  background-color: white;  
+}
+
+header#logo img {
+		margin: 0 auto;
+    padding-right: 30px;
+}
+
+nav#top {
+	background-color:#00bcea; 
+	height:40px;
+	width:100%;
+}
+
+nav#top ul li {
+	list-style-type: none;
+  margin: 0;
+	display: inline;		
+}
+
+.ym-wrapper {
+  width: 965px;
+	margin: 0 auto;
+  padding-right: 30px;
+  padding-bottom:20px;
+}
+
+.ym-wbox {
+	padding: 0px;
+	margin-top: 40px;
+	border-radius: 4px 4px 4px 4px;
+	border:1px solid #dde0e3;
+	box-shadow: 0 0 4px #DDDDDD;
+}
+
+.ym-cbox {
+	border:0px solid #DDE0E3;
+	padding:0;
+}
+
+.ym-column {
+	background-color: #f2f2f2;
+}
+
+.ym-col1 {
+	margin: 0;
+}
+
+.ym-col2 {
+	margin: 0;
+	width: 170px;
+}
+
+.ym-col3 {	
+	/*margin-left: 15%; 					/* Kreves av YAML rammeverk */
+	width:auto;
+	margin-top:0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	margin-left: 213px;
+	/* -moz-margin-start:214px;		/* Mozilla finjustering */
+	border-top:0px solid #DDE0E3;
+	border-right:0px solid #DDE0E3;
+	border-left:1px solid #DDE0E3;
+	border-bottom:1px solid #DDE0E3;
+	background-color:white;	
+	padding:20px 170px 60px 20px;
+}
+
+.ym-g50 {
+    width: 45%;
+}
+/***********TOP SKJEMA**********/
+.ym-wbox header { 
+	background-image:url(/resources/images/backgroundSkjema.png);
+	background-repeat:repeat-x;
+	height: 53px;
+	padding:0px;	
+	border-radius: 4px 4px 0px 0px;
+	border:0px solid red;
+}
+
+
+/***********LENKER**********/
+a { color: #0195C3; }
+a:hover { text-decoration: underline; }
+
+
+/**********TYPOGRAFI**********/
+h1 { 
+	margin: 0px; 
+	padding: 14px 0px 0px 19px; 
+	font-size:200%; 
+	font-weight:bold; 
+	color:#666; 
+	font-family: "PT Sans Narrow", "Trebuchet MS", Sans-serif;
+	line-height: 0.8571em;
+	letter-spacing: 1.5px;
+}
+
+h2 { 
+	margin: 0 0 0.75em 0; 
+	font-size: 120%; 
+	font-weight: bold; 
+	border-bottom: 1px solid #ccc; 
+	color: #615046; 
+	font-family: "PT Sans", "PT Sans Narrow", "Trebuchet MS", Sans-serif; 
+}
+
+
+/**********MIDTEN**********/
+.ym-form { 
+	/* margin-top: 1em; */
+	margin-top:0;
+	/*padding: 2.2em 0.5em 2em 1.5em;*/
+	border: 0px solid #FFFFFF;
+	background: white;
+	box-shadow: 0 0 0px #DDDDDD;
+}
+
+.ym-form div.ym-fbox-check,
+.ym-form div.ym-fbox-select,
+.ym-form div.ym-fbox-text
+{
+	padding-left: 0;
+}
+
+input[type=radio] {
+	/* margin-bottom: 0.25em; */
+}
+
+.ym-form .ym-fbox-text textarea { 
+	width: 95%;
+	margin-top: 0.5em;	
+}
+
+.label-below {
+	margin-top: 0.3em;
+}
+
+.ym-form label {
+	color: #222;
+	letter-spacing:0.02em;
+	font-size:1.1em;
+}
+
+.ym-form label.ontop {
+	font-weight: normal;
+}
+
+.ym-form div.ym-fbox-text input:focus {
+	border: 1px solid #e5682f;
+}
+#where-when-who-form:spesialist:focus{
+	border: 1px solid #e5682f;
+}
+/* .ym-form .ym-fbox-text input:active{ */
+/* } */
+
+#where-when-who-form:sykehuslisteInput{
+	width:18em;
+}
+
+p.radiolist-label { /*Spï¿½rsmï¿½l ovenfor en liste med radiobuttons*/
+	margin-top: 0;
+	margin-bottom: 0.25em;
+}
+
+p.checkboxlist-label {
+	margin-top: 1em;
+	margin-bottom: 0.5em;
+}
+
+.checkbox-list { /*checkboxer som er i en liste (div,checkbox,label,div)*/
+	margin-bottom: 0.5em;
+}
+
+.two-col-checkboxes { /*grid som bestï¿½r av to kolonner med checkboxer*/
+	width: 60%;
+	margin-bottom: 0.75em;
+}
+
+input[type=tel] {
+	width: 8em;
+}
+
+input[type=text], input[type=email]  {
+	width: 85%;
+}
+
+input.birthyear {
+	width: 5em;
+}
+
+input.casenumber {
+	width: 10em;
+}
+
+p.description {
+	margin-top: 0;
+	margin-bottom: 1em;
+}
+
+/**********BUTTONS****************/
+.buttons {	
+	margin:1.5em 0em 0em 0em;
+	padding-top:1.5em;
+	border-top: 1px solid rgb(204, 204, 204);
+	width:100%;
+}
+	
+.replacement-neste {
+	float:right;	
+  height: 40px;
+  /*padding: 40px 0 0;*/
+  margin: 0;
+  border: 0;
+  background: transparent url(/resources/images/neste.png) no-repeat center top;	
+  overflow: hidden;
+  cursor: pointer; /* hand-shaped cursor */
+  cursor: hand; /* for IE 5.x */
+}
+
+.replacement-forrige {
+	float:right;	
+  height: 40px;
+  /*padding: 40px 0 0;*/
+  margin: 0;
+  border: 0;
+  background: transparent url(/resources/images/forrige.png) no-repeat center top;	
+  overflow: hidden;
+  cursor: pointer; /* hand-shaped cursor */
+  cursor: hand; /* for IE 5.x */
+}
+
+.replacement-kontroll {
+	float:right;	
+  height: 40px;
+  /*padding: 40px 0 0;*/
+  margin: 0;
+  border: 0;
+  background: transparent url(/resources/images/kontroller.png) no-repeat center top;	
+  overflow: hidden;
+  cursor: pointer; /* hand-shaped cursor */
+  cursor: hand; /* for IE 5.x */
+}
+.replacement-send {
+  height: 40px;
+  /*padding: 40px 0 0;*/
+  margin: 0;
+  border: 0;
+  background: transparent url(/resources/images/sendInn.png) no-repeat center top;	
+  overflow: hidden;
+  cursor: pointer; /* hand-shaped cursor */
+  cursor: hand; /* for IE 5.x */
+}
+
+.replacement-lukk {
+	float:right;
+  height: 40px;
+  /*padding: 40px 0 0;*/
+  margin: 0;
+  border: 0;
+  background: transparent url(/resources/images/lukk.png) no-repeat center top;	
+  overflow: hidden;
+  cursor: pointer; /* hand-shaped cursor */
+  cursor: hand; /* for IE 5.x */
+}
+
+input.rf-cal-inp {
+	display:inline;
+}
+
+img.rf-cal-btn {
+	margin-left:2px;
+	display:inline;
+	position:absolute; 
+	top:0; 
+	left:85px;
+}
+span#where-when-who-form:date-whenPopup{
+position:relative;
+}
+.button1 {
+            -moz-box-shadow: 0px 0px 0px 0px #ffffff;
+            -webkit-box-shadow: 0px 0px 0px 0px #ffffff;
+            box-shadow: 0px 0px 0px 0px #ffffff;
+            background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #f9f9f9), color-stop(1, #e9e9e9) );
+            background:-moz-linear-gradient( center top, #f9f9f9 5%, #e9e9e9 100% );
+            filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#f9f9f9', endColorstr='#e9e9e9');
+            background-color:#f9f9f9;
+            -moz-border-radius:3px;
+            -webkit-border-radius:3px;
+            border-radius:3px;
+            border:1px solid #c7c7c7;
+            display:inline-block;
+            color:#555555;
+            font-family:Trebuchet MS;
+            font-size:16px;
+            font-weight:bold;
+            padding:12px 31px;
+            text-decoration:none;
+}.button1:hover {
+            background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #e9e9e9), color-stop(1, #f9f9f9) );
+            background:-moz-linear-gradient( center top, #e9e9e9 5%, #f9f9f9 100% );
+            filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#e9e9e9', endColorstr='#f9f9f9');
+            background-color:#e9e9e9;
+            text-decoration:none;
+}.button1:active {
+            position:relative;
+            top:1px;
+}
+
+
+/**********VENSTREMENYEN**********/
+.ym-vlist {	
+	margin-top:15px;
+	margin-left: 0;
+	margin-bottom: 0;
+	padding-bottom: 0;
+	border: 0;
+}
+
+.ym-vlist li { 
+	list-style-type: none;
+	margin: 0;
+	padding: 1px 0px 1px 17px;
+	font-weight: bold;
+	font-size:150%;
+	letter-spacing:1px;	
+	font-family: "PT Sans Narrow", "Trebuchet MS", Sans-serif;
+	line-height: 1.8em;
+}
+
+.ym-vlist li.active {
+	padding: 4px 0px 4px 17px;
+	border-top: 1px solid #DDE0E3;
+	border-bottom: 1px solid #DDE0E3;
+	border-right:1px solid white;
+	background-color: white;
+	font-weight: bold;
+	color: #333333;	
+	width: 196px;	
+}
+
+.ym-vlist li a:hover {
+	text-decoration: underline;
+}
+
+.elmersteps {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+
+#event-time { /*klokkeslett*/
+	width: 5em;
+}
+/*******Radiotable**********/
+.radiotable{border:0;margin:0;}
+.radiotable td{border:0;line-height:1;}
+
+/******KALENDER*********/
+.rf-cal-popup{
+	position: absolute; 
+	z-index: 3; 
+	width: 40px; 
+/* 	left: 856px;  */
+/* 	top: 104px;  */
+	display: table;
+	background-color:white;
+	font-size:small;
+}
+td .rf-cal-week {
+	border-bottom: 1px solid;
+    border-right: 1px solid;
+    color: #00BCEA;
+    text-align: center;
+    vertical-align: middle;
+    width: 25px;
+}
+
+tr td rf-cal-today{
+	font-weight: bold;
+	color:white;
+	background-color: #00BCEA;
+}
+
+/********scriptstyles**********/
+#hide-hospital {
+	position: absolute;
+    width: 250px; /* mï¿½ tilpasses div'en over */
+    height: 170px; /* mï¿½ tilpasses div'en over */
+    background: #FFF;
+    -khtml-opacity: 0.8;/* gammel safari */
+    -moz-opacity:0.8;/* gammel ff */
+    filter: alpha(opacity=80);/* ie 5-8 */
+    opacity:0.8;
+}
+#hide-year-of-birth{
+background: none repeat scroll 0 0 #FFFFFF;
+	height: 60px;
+	opacity: 0.8;
+	position: absolute;
+	width: 210px;
+}
+
+.ym-form .ym-fbox-text input.form-error,
+.ym-form .ym-fbox-text textarea.form-error,
+input.form-error, textarea.form-error {
+    border: 2px solid red;
+}
+label.form-error {
+    color: red;
+    display: block;
+}
+.helparea {
+    border: 3px solid #CCCCCC;
+    display: none;
+    margin-left: 1em;
+    opacity: 0;
+    padding: 1em;
+    top: 27	0px;
+    width: 108px;
+    font-size:13px;    
+    margin-top:20px;
+}
+
+.helparea .info {
+    display: none;       
+}
+
+.circle {
+    background: none repeat scroll 0 0 #E5682F;
+    border-radius: 15px 15px 15px 15px;
+    color: #FFFFFF;
+    display: block;
+    font-size: 1.75em;
+    font-weight: normal;
+    height: 30px;
+    text-align: center;
+    width: 30px;
+}
+.info-icon {
+    cursor: pointer;
+}
+.ym-fbox-select {
+    /*position: relative;*/
+}
+.standalonepage{
+background-color:white;
+}
+.standalonepage div{
+padding-left:20px;
+width:95%;
+}
+.standalonepage div.leftcolumn{
+float:left;
+width:300px;
+}
+.standalonepage div.rightcolumn{
+float:left;
+width:300px;
+}
+#controll-form{
+/*padding:20px;*/
+ }
+/******KONTROLLSIDE********/
+#summary-form{
+padding:20px;
+ }
+.summary {
+border: 1px solid #CCCCCC;
+}
+.summary th{
+background-color: #F2F2F2;
+font-weight:bold;
+}
+.summary td{
+border: 1px solid #CCCCCC;
+}
+.summary td:first-child{
+width:40%;
+}
+.summary tr:first-child td{
+background-color:#F2F2F2;
+font-weight:bold;
+}
+ #controll-form{
+
+ }

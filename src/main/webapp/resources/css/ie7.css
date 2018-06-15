@@ -1,0 +1,71 @@
+/*		
+	Filnavn:    ie7.css
+	Formï¿½l:   CSS for å rette opp i IE7-feil
+	Opprettet:  per.christian.roine@evry.com
+*/
+
+.ym-column {
+	position: relative;
+}
+
+.ym-form .ym-column input {
+	overflow: auto;
+	position: static;
+}
+
+.ym-form .ym-fbox-check input:focus,.ym-form .ym-fbox-check input:hover,.ym-form .ym-fbox-check input:active
+{
+	border: none;
+}
+
+.ym-form .ym-column .ym-fbox-text input[type=text] {
+	margin-top: 0;
+}
+
+.ym-col2 {
+	position: absolute;
+	left: 795px;
+	z-index: 500;
+}
+
+.ym-form .ym-column label {
+	margin-bottom: 0;
+}
+
+.ym-form img.rf-cal-btn {
+	margin-left: 10px;
+}
+
+.ym-col3 {
+	border-left-color: #FFFFFF;
+}
+
+h1 {
+	padding-bottom: 10px;
+}
+
+.ym-form .checkbox-and-icon input {
+	width: 13px;
+	vertical-align: top;
+}
+
+.ym-form .checkbox-and-icon label {
+	width: 500px;
+}
+
+.ym-form .checkbox-and-icon img.info-icon {
+	width: 17px;
+	vertical-align: top;
+}
+
+.ym-form sup.ym-required {
+	padding-top: 6px;
+}
+
+.ym-form .radiotable td {
+	line-height: normal;
+}
+
+.ym-form div.ym-fbox-text input:focus, .ym-form div.ym-fbox-text input:hover {
+border: 1px solid #000000;
+}

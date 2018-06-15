@@ -1,0 +1,69 @@
+html {
+    background-color: #fff;
+}
+
+h1 {
+    padding: 20px 0px 20px 0px;
+}
+
+h2 {
+	padding: 20px 0px 0px 0px;
+}
+
+h3 {
+    color: #007fb1;
+    font-size: 29px;
+    padding-bottom: 20px;
+}
+
+.form-group {
+    padding-bottom:20px;
+}
+
+#tidligeretransfusjon, #blodkonsentrat, #temperaturstigning, #komp-annet-text, 
+#ahtr-valg0, #ahtr-valg1, #ahtr-valg2, #ahtr-valg3, #ahtr-valg4, #ahtr-valg5, 
+#ahtr1-valg0, #ahtr1-valg1, #ahtr1-valg2, #ahtr1-valg3, #ahtr1-valg4, #ahtr1-valg5, #ahtr1-valg6, #ahtr1-valg7,
+#dhtr1-valg0, #dhtr1-valg1, #dhtr1-valg2, #dhtr1-valg3, #dhtr1-valg4, #dhtr1-valg5, #dhtr1-valg6, #dhtr1-valg7,
+#fhtr1-valg0, #fhtr1-valg1, #fhtr1-valg2, #fhtr1-valg3, #fhtr1-valg4, #fhtr1-valg5, #fhtr1-valg6, #fhtr1-valg7,
+#ihtr1-valg0, #ihtr1-valg1, #ihtr1-valg2, #ihtr1-valg3, #ihtr1-valg4, #ihtr1-valg5, #ihtr1-valg6, #ihtr1-valg7,
+#alhtr1-valg0, #alhtr1-valg1, #alhtr1-valg2, #alhtr1-valg3, #alhtr1-valg4, #alhtr1-valg5, #alhtr1-valg6, #alhtr1-valg7,
+#khtr1-valg0, #khtr1-valg1,
+#phtr1-valg0, #phtr1-valg1, #phtr1-valg2, #phtr1-valg3,
+#trhtr1-valg0, #trhtr1-valg1, #trhtr1-valg2, #trhtr1-valg3, #trhtr1-valg4, #trhtr1-valg5, #trhtr1-valg6, #trhtr1-valg7, #trhtr1-valg8, #trhtr1-valg9,
+#tadhtr1-valg0, #tadhtr1-valg1, #tadhtr1-valg2, #tadhtr1-valg3, #tadhtr1-valg4,
+#tachtr1-valg0, #tachtr1-valg1, #tachtr1-valg2, #tachtr1-valg3, #tachtr1-valg4,
+#hemhtr1-valg0,
+#hyphtr1-valg0,
+#bakhtr1-valg0, #bakhtr1-valg1, #bakhtr1-valg2, #bakhtr1-valg3,
+#virhtr1-valg0, #virhtr1-valg1, #virhtr1-valg2,
+#asmhtr1-valg0, #asmhtr1-valg1, #asmhtr1-valg2,
+#aihtr-valg0, #aihtr-valg1, #aihtr-valg2, #aihtr-valg3, #aihtr-valg4, #aihtr-valg5, #aihtr-valg6, #aihtr-valg7,
+#transfusjonforebygg,
+#tab-tidligere, #beskriv-ja,
+#tabskaearm-ja, #systemiskbivirkning-ja, #behandling, #behandlingselected,
+#forbedringtiltak
+ {    
+    padding: 10px 20px;
+    background-color: #eee;
+    margin-left: 20px;
+}
+
+#behandlingJa, #tab-avregistrert-ja {
+    padding: 20px;
+    background-color: #eee;
+    margin-left: 20px;
+}
+
+#behandlingJa input[type="checkbox"] {
+    line-height: normal;
+    margin: 4px 4px 0 0;
+}
+
+#spesialist-txt {
+    padding-bottom: 10px;
+}
+
+#temperaturstigning label {
+    padding-left: 0px;;
+}
+
