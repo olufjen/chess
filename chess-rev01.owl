@@ -1,0 +1,1213 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.w3.org/2002/07/owl#"
+     xml:base="http://www.w3.org/2002/07/owl"
+     xmlns:chess="http://oljontologies.org/games/chess#"
+     xmlns:ont="http://www.co-ode.org/ontologies/ont.owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:swrlb="http://www.w3.org/2003/11/swrlb#"
+     xmlns:swrl="http://www.w3.org/2003/11/swrl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:swrla="http://swrl.stanford.edu/ontologies/3.3/swrla.owl#">
+    <Ontology rdf:about="http://oljontologies.org/games/chess">
+        <rdfs:comment>This ontology represent chess and chessgames.
+Some explainations:
+A domain of an object property is the subject of statements using the property
+A range of an object property is the object of statements using the property.
+
+DL:             OWL ontology:
+Concepts       Classes
+Elements       Individuals
+Roles           Object properties
+(binary relations or binary predicates on elements)
+r-filler        Domain and range of object properties
+
+From DL:
+TBox:  A General Concept Inclusion GCI A finite set of compound Concepts is for terminological knowledge
+It is independent of any actual instance data. Many reasoning tasks use only the TBox.
+ABox: A finite set of concepts and role assertions. Is for assertion knowledge.
+It contains facts about concrete instances.
+ABox consistency: Is there a model of (T ;A), i.e., is there an interpretation I such that I |= (T,A)?
+A universal restriction:
+If Role R has the range C, then anything one can reach by R is in C
+for any a and b, if &lt;a,b&gt;e RI, then b e CI, or
+any a is in the interpretation of VR.C, or
+the axiom TVR.C holds.
+&quot;Everything has R-relationships to C&apos;s only.&quot;
+Ranges can be expressed with universal restrictions.
+Example:
+a drive axle is either a front or a rear axle, so
+the range of driveAxle is FrontAxle U RearAxle.
+Axiom: T subsetof VdriveAxle:(FrontAxleURearAxle).
+
+If role R has the domain C,
+then anything from which one can go by R is in C, or
+for any a, if there is a b with &lt;a,b&gt;eRI, then a eCI, or
+any a in the interpretation of existR.T is in the interpretation of C, or
+the axiom existR.T subsetof C holds.
+&quot;Everything which is R-related (to a thing) is a C.&quot;
+Domains can be expressed with existential restrictions.
+Example:
+a drive axle is something cars have, so
+the domain of driveAxle is Car .
+Axiom: existdriveAxle.T subsetofCar .</rdfs:comment>
+        <rdfs:comment>Interpret:
+ Classes as sets of individuals
+ properties as relations between individuals i.e. sets of pairs
+For å lage en union av atomic sets brukes funksjonaliteten Equivalent To</rdfs:comment>
+        <rdfs:comment></rdfs:comment>
+    </Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://swrl.stanford.edu/ontologies/3.3/swrla.owl#isRuleEnabled -->
+
+    <AnnotationProperty rdf:about="http://swrl.stanford.edu/ontologies/3.3/swrla.owl#isRuleEnabled"/>
+    
+
+
+    <!-- http://www.w3.org/2002/07/owl#DASE_RULE -->
+
+    <AnnotationProperty rdf:about="http://www.w3.org/2002/07/owl#DASE_RULE"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://oljontologies.org/games/chess#hasAvailable -->
+
+    <ObjectProperty rdf:about="http://oljontologies.org/games/chess#hasAvailable">
+        <rdfs:domain>
+            <Restriction>
+                <onProperty rdf:resource="http://oljontologies.org/games/chess#hasAvailable"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Player"/>
+            </Restriction>
+        </rdfs:domain>
+        <rdfs:range>
+            <Restriction>
+                <onProperty rdf:resource="http://oljontologies.org/games/chess#hasAvailable"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+            </Restriction>
+        </rdfs:range>
+        <rdfs:comment>All players have available a set of Pieces</rdfs:comment>
+    </ObjectProperty>
+    
+
+
+    <!-- http://oljontologies.org/games/chess#isAvailablefor -->
+
+    <ObjectProperty rdf:about="http://oljontologies.org/games/chess#isAvailablefor">
+        <rdfs:domain>
+            <Restriction>
+                <onProperty rdf:resource="http://oljontologies.org/games/chess#isAvailablefor"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+            </Restriction>
+        </rdfs:domain>
+        <rdfs:range>
+            <Restriction>
+                <onProperty rdf:resource="http://oljontologies.org/games/chess#isAvailablefor"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Player"/>
+            </Restriction>
+        </rdfs:range>
+        <rdfs:comment>All Pieces are available for a Player</rdfs:comment>
+    </ObjectProperty>
+    
+
+
+    <!-- http://oljontologies.org/games/chess#moveFrom -->
+
+    <ObjectProperty rdf:about="http://oljontologies.org/games/chess#moveFrom">
+        <rdfs:subPropertyOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#move"/>
+        <rdfs:domain rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+        <rdfs:range rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BoardPosition"/>
+    </ObjectProperty>
+    
+
+
+    <!-- http://oljontologies.org/games/chess#moveTo -->
+
+    <ObjectProperty rdf:about="http://oljontologies.org/games/chess#moveTo">
+        <rdfs:subPropertyOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#move"/>
+        <rdfs:domain rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+        <rdfs:range rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BoardPosition"/>
+    </ObjectProperty>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#belongsTo -->
+
+    <ObjectProperty rdf:about="http://www.co-ode.org/ontologies/ont.owl#belongsTo"/>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#friend -->
+
+    <ObjectProperty rdf:about="http://www.co-ode.org/ontologies/ont.owl#friend">
+        <rdfs:comment>Every White Piece is a friend of any other White Piece</rdfs:comment>
+    </ObjectProperty>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#isOccupiedBy -->
+
+    <ObjectProperty rdf:about="http://www.co-ode.org/ontologies/ont.owl#isOccupiedBy">
+        <inverseOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#occupies"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+        <rdfs:domain>
+            <Restriction>
+                <onProperty rdf:resource="http://www.co-ode.org/ontologies/ont.owl#isOccupiedBy"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BoardPosition"/>
+            </Restriction>
+        </rdfs:domain>
+        <rdfs:range>
+            <Restriction>
+                <onProperty rdf:resource="http://www.co-ode.org/ontologies/ont.owl#isOccupiedBy"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+            </Restriction>
+        </rdfs:range>
+        <rdfs:comment>Every Boardposition may be occupied by some Piece</rdfs:comment>
+    </ObjectProperty>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#isPartOf -->
+
+    <ObjectProperty rdf:about="http://www.co-ode.org/ontologies/ont.owl#isPartOf"/>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#move -->
+
+    <ObjectProperty rdf:about="http://www.co-ode.org/ontologies/ont.owl#move">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdfs:domain>
+            <Restriction>
+                <onProperty rdf:resource="http://www.co-ode.org/ontologies/ont.owl#move"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+            </Restriction>
+        </rdfs:domain>
+        <rdfs:range>
+            <Restriction>
+                <onProperty rdf:resource="http://www.co-ode.org/ontologies/ont.owl#move"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BoardPosition"/>
+            </Restriction>
+        </rdfs:range>
+        <rdfs:comment>All pieces can move</rdfs:comment>
+    </ObjectProperty>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#occupies -->
+
+    <ObjectProperty rdf:about="http://www.co-ode.org/ontologies/ont.owl#occupies">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+        <rdfs:domain>
+            <Restriction>
+                <onProperty rdf:resource="http://www.co-ode.org/ontologies/ont.owl#occupies"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+            </Restriction>
+        </rdfs:domain>
+        <rdfs:range>
+            <Restriction>
+                <onProperty rdf:resource="http://www.co-ode.org/ontologies/ont.owl#occupies"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BoardPosition"/>
+            </Restriction>
+        </rdfs:range>
+        <rdfs:comment>Every Piece is an is an occupant of a Boardposition</rdfs:comment>
+    </ObjectProperty>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#opponents -->
+
+    <ObjectProperty rdf:about="http://www.co-ode.org/ontologies/ont.owl#opponents"/>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#plays -->
+
+    <ObjectProperty rdf:about="http://www.co-ode.org/ontologies/ont.owl#plays">
+        <rdfs:domain rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Player"/>
+        <rdfs:range rdf:resource="http://www.co-ode.org/ontologies/ont.owl#ChessGame"/>
+    </ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#hasName -->
+
+    <DatatypeProperty rdf:about="http://www.co-ode.org/ontologies/ont.owl#hasName">
+        <rdfs:domain rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </DatatypeProperty>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#hasValue -->
+
+    <DatatypeProperty rdf:about="http://www.co-ode.org/ontologies/ont.owl#hasValue">
+        <rdfs:domain rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+    </DatatypeProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://oljontologies.org/games/chess#ActivePlayer -->
+
+    <Class rdf:about="http://oljontologies.org/games/chess#ActivePlayer">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Chess"/>
+    </Class>
+    
+
+
+    <!-- http://oljontologies.org/games/chess#BlackPlayer -->
+
+    <Class rdf:about="http://oljontologies.org/games/chess#BlackPlayer">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Player"/>
+        <rdfs:subClassOf>
+            <Restriction>
+                <onProperty rdf:resource="http://oljontologies.org/games/chess#hasAvailable"/>
+                <allValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+            </Restriction>
+        </rdfs:subClassOf>
+        <disjointWith rdf:resource="http://oljontologies.org/games/chess#WhitePlayer"/>
+    </Class>
+    
+
+
+    <!-- http://oljontologies.org/games/chess#Occupant -->
+
+    <Class rdf:about="http://oljontologies.org/games/chess#Occupant">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Chess"/>
+        <rdfs:subClassOf>
+            <Class>
+                <unionOf rdf:parseType="Collection">
+                    <Restriction>
+                        <onProperty rdf:resource="http://www.co-ode.org/ontologies/ont.owl#occupies"/>
+                        <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+                    </Restriction>
+                    <Restriction>
+                        <onProperty rdf:resource="http://www.co-ode.org/ontologies/ont.owl#occupies"/>
+                        <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+                    </Restriction>
+                </unionOf>
+            </Class>
+        </rdfs:subClassOf>
+        <rdfs:comment>An Occupant is a Piece that occupies a boardpostion</rdfs:comment>
+    </Class>
+    
+
+
+    <!-- http://oljontologies.org/games/chess#OpponentPlayer -->
+
+    <Class rdf:about="http://oljontologies.org/games/chess#OpponentPlayer">
+        <equivalentClass>
+            <Class>
+                <intersectionOf rdf:parseType="Collection">
+                    <Restriction>
+                        <onProperty rdf:resource="http://oljontologies.org/games/chess#hasAvailable"/>
+                        <someValuesFrom rdf:resource="http://oljontologies.org/games/chess#BlackPlayer"/>
+                    </Restriction>
+                    <Restriction>
+                        <onProperty rdf:resource="http://oljontologies.org/games/chess#isAvailablefor"/>
+                        <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+                    </Restriction>
+                </intersectionOf>
+            </Class>
+        </equivalentClass>
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Chess"/>
+        <rdfs:comment>Trenger jeg denne?</rdfs:comment>
+    </Class>
+    
+
+
+    <!-- http://oljontologies.org/games/chess#WhitePlayer -->
+
+    <Class rdf:about="http://oljontologies.org/games/chess#WhitePlayer">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Player"/>
+        <rdfs:subClassOf>
+            <Restriction>
+                <onProperty rdf:resource="http://oljontologies.org/games/chess#hasAvailable"/>
+                <allValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+            </Restriction>
+        </rdfs:subClassOf>
+    </Class>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BoardPosition"/>
+        <disjointWith rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+    </Class>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackPiece -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackPiece">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+        <rdfs:subClassOf>
+            <Restriction>
+                <onProperty rdf:resource="http://oljontologies.org/games/chess#isAvailablefor"/>
+                <allValuesFrom rdf:resource="http://oljontologies.org/games/chess#BlackPlayer"/>
+            </Restriction>
+        </rdfs:subClassOf>
+        <disjointWith rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+    </Class>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BoardPosition -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#BoardPosition">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Chess"/>
+    </Class>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#Chess -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#Chess"/>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#ChessGame -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#ChessGame">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Chess"/>
+    </Class>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#Chessboard -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#Chessboard">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Chess"/>
+    </Class>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#Move -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#Move">
+        <equivalentClass>
+            <Class>
+                <intersectionOf rdf:parseType="Collection">
+                    <Restriction>
+                        <onProperty rdf:resource="http://oljontologies.org/games/chess#moveFrom"/>
+                        <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BoardPosition"/>
+                    </Restriction>
+                    <Restriction>
+                        <onProperty rdf:resource="http://oljontologies.org/games/chess#moveTo"/>
+                        <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BoardPosition"/>
+                    </Restriction>
+                </intersectionOf>
+            </Class>
+        </equivalentClass>
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Chess"/>
+    </Class>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#Piece -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#Piece">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Chess"/>
+        <rdfs:subClassOf>
+            <Class>
+                <unionOf rdf:parseType="Collection">
+                    <Restriction>
+                        <onProperty rdf:resource="http://www.co-ode.org/ontologies/ont.owl#occupies"/>
+                        <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+                    </Restriction>
+                    <Restriction>
+                        <onProperty rdf:resource="http://www.co-ode.org/ontologies/ont.owl#occupies"/>
+                        <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+                    </Restriction>
+                </unionOf>
+            </Class>
+        </rdfs:subClassOf>
+    </Class>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#Player -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#Player">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Chess"/>
+        <rdfs:subClassOf>
+            <Restriction>
+                <onProperty rdf:resource="http://oljontologies.org/games/chess#hasAvailable"/>
+                <someValuesFrom rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+            </Restriction>
+        </rdfs:subClassOf>
+    </Class>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BoardPosition"/>
+    </Class>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhitePiece -->
+
+    <Class rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhitePiece">
+        <rdfs:subClassOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Piece"/>
+        <rdfs:subClassOf>
+            <Restriction>
+                <onProperty rdf:resource="http://oljontologies.org/games/chess#isAvailablefor"/>
+                <allValuesFrom rdf:resource="http://oljontologies.org/games/chess#WhitePlayer"/>
+            </Restriction>
+        </rdfs:subClassOf>
+    </Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackBishop1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackBishop1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#c8"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bB</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackBishop2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackBishop2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#f8"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bB</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackKing -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackKing">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#e8"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bK</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackKnight2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackKnight2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#g8"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bN</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackPawn1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackPawn1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#a7"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackPawn2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackPawn2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#b7"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackPawn3 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackPawn3">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#c7"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackPawn4 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackPawn4">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#d7"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackPawn5 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackPawn5">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#e7"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackPawn6 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackPawn6">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#f7"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackPawn7 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackPawn7">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackPawn8 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackPawn8">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#h7"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackQueen -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackQueen">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#d8"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bQ</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">9</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackRook1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackRook1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#a8"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bR</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">5</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#BlackRook2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#BlackRook2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#h8"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bR</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">5</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhiteBishop1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhiteBishop1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#c1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wB</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhiteBishop2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhiteBishop2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#f1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wB</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhiteKing -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhiteKing">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#e1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wK</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhiteKnight1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhiteKnight1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#b1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wN</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhiteKnight2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhiteKnight2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#g1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wN</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhitePawn1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhitePawn1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#a2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhitePawn2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhitePawn2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#b2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhitePawn3 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhitePawn3">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#c2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhitePawn4 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhitePawn4">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#d2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhitePawn5 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhitePawn5">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhitePawn6 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhitePawn6">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#f2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhitePawn7 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhitePawn7">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#g2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhitePawn8 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhitePawn8">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#h2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wP</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhiteQueen -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhiteQueen">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#d1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wQ</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">9</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhiteRook1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhiteRook1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#a1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wR</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">5</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#WhiteRook2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#WhiteRook2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePiece"/>
+        <ont:occupies rdf:resource="http://www.co-ode.org/ontologies/ont.owl#h1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wR</ont:hasName>
+        <ont:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">5</ont:hasValue>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#a1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#a1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteRook1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">a1</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#a2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#a2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePawn1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">a2</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#a4 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#a4">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">a4</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#a5 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#a5">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">a5</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#a7 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#a7">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPawn1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">a7</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#a8 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#a8">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackRook1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">a8</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#b1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#b1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteKnight1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">b1</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#b2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#b2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePawn2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">b2</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#b7 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#b7">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPawn2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">b7</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#b8 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#b8">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">b8</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#c1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#c1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBishop1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">c1</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#c2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#c2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePawn3"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">c2</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#c7 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#c7">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPawn3"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">c7</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#c8 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#c8">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBishop1"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">c8</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#d1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#d1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteQueen"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">d1</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#d2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#d2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePawn4"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">d2</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#d7 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#d7">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPawn4"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">d7</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#d8 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#d8">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackQueen"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">d8</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#e1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#e1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteKing"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">e1</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#e2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#e2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePawn5"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">e2</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#e7 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#e7">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPawn5"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">e7</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#e8 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#e8">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackKing"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">e8</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#f1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#f1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBishop2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">f1</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#f2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#f2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePawn6"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">f2</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#f7 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#f7">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPawn6"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">f7</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#f8 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#f8">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBishop2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">f8</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#g1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#g1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteKnight2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">g1</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#g2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#g2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePawn7"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">g2</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#g5 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#g5">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">g5</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#g7 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#g7">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPawn7"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">g7</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#g8 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#g8">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackKnight2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">g8</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#h1 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#h1">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteRook2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">h1</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#h2 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#h2">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhitePawn8"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">h2</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#h7 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#h7">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#WhiteBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackPawn8"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">h7</ont:hasName>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.co-ode.org/ontologies/ont.owl#h8 -->
+
+    <NamedIndividual rdf:about="http://www.co-ode.org/ontologies/ont.owl#h8">
+        <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackBoardPosition"/>
+        <ont:isOccupiedBy rdf:resource="http://www.co-ode.org/ontologies/ont.owl#BlackRook2"/>
+        <ont:hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">h8</ont:hasName>
+    </NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.2.8.20170104-2310) https://github.com/owlcs/owlapi -->
+
