@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html;">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta content="En forside. " name="description">
+    <link href="/chess_web/resources/css/main.css" rel="stylesheet">
+    <link href="/chess_web/resources/css/chessboard.css" rel="stylesheet">
+    <link href="/chess_web/resources/css/foundation-3.2.5.min.css" rel="stylesheet">
+   <link href="/chess_web/resources/css/normalize-2.1.2.min.css" rel="stylesheet">    
+   <link href="/chess_web/resources/css/site.css" rel="stylesheet">   
+   <link href="/chess_web/resources/css/site2.css" rel="stylesheet">   
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <link href="/chess_web/resources/css/biovigilans.css" rel="stylesheet">
+  
+ 
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" /><!-- Viktig for dato !! -->
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script> <!-- Viktig for dato !! -->
+    <script src="https://cdn.jsdelivr.net/jquery.validation/1.14.0/jquery.validate.min.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.0.6-development-only.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js" ></script>
+
+<title>Chessboard using Pure CSS and HTML Min versjon</title>
+<style type="text/css">
+.chessboard {
+    width: 640px;
+    height: 640px;
+    margin: 20px;
+    border: 25px solid #333;
+}
+.black {
+    float: left;
+    width: 80px;
+    height: 80px;
+    background-color: #999;
+      font-size:50px;
+    text-align:center;
+    display: table-cell;
+    vertical-align:middle;
+}
+.white {
+    float: left;
+    width: 80px;
+    height: 80px;
+    background-color: #fff;
+    font-size:50px;
+    text-align:center;
+    display: table-cell;
+    vertical-align:middle;
+}
+</style>
+
+</head>
+
+<body>
+ <header>
+    <div class="container">
+      <figure title="Version 1.1 J8 November 2015" class="main-logo">        
+        <img alt="Logo Basis" src="/chess_web/resources/css/firmalogo.jpg">    
+   
+       </figure>
+    </div>    
+  </header>
+
+
+<div class="container">
+
+<form action="?method=PUT" method="post">
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<!-- <script src="http://code.jquery.com/jquery-latest.min.js"></script> -->
+<!-- <script src="/chess_web/resources/js/chessboard-0.3.0.js"></script> -->
+<!-- <script src="/chess_web/resources/js/chessboard-0.3.0.min.js"></script> -->
+<!-- <script src="/chess_web/resources/js/prettify.js"></script> -->
+<script src="/chess_web/resources/js/chessboard.js"></script>
+<script src="/chess_web/resources/js/chess.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js"></script>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script type="text/javascript">
+ function formSubmit(button){
+	var clickbutton = "#"+button;
+	console.log( "Form submit "+clickbutton );
+ $(clickbutton).click();
+}; 
+//--------------------
+//Egne variable
+//-------------------
+var  MOVE_MADE = false;
+
+function Position(position,piece){
+	this.position = position;
+	this.piece = piece;
+}
+
+function isTouchDevice() {
+	  return ('ontouchstart' in document.documentElement);
+	};
+
+	$(document).ready(function() {
+
+	 if (document.getElementById("posisjon").value !== 'pos'){
+		 MOVE_MADE = true;
+	 }
+
+	 var cfg = {
+			    draggable: true,
+			    dropOffBoard: 'trash',
+				position:
+					"${fenpos}"
+				 
+			};	
+
+// board2 is a window object named Chessboard
+	  var board2 = ChessBoard('board2', cfg);
+/* 	  var board2 = ChessBoard('board2', {
+	    draggable: true,
+	    dropOffBoard: 'trash',
+	    sparePieces: true
+	  }); */
+	  if (MOVE_MADE === true){
+		  console.log( "Starter board 2 formsubmit!" );
+//		  formSubmit('startBtn');
+//		  board2.start;
+//		  drawBoard();
+//drawBoard();
+		  console.log( "Tegnet brettet på nytt" );
+	  }
+	  $('#startBtn').on('click', board2.start);
+	  $('#clearBtn').on('click', board2.clear);
+
+	  // prevent "browser drag" of the black king
+	  $('#hero img').on('mousedown', function(e) { e.preventDefault(); });
+
+	  // prevent hover problems on touch devices
+	  if (isTouchDevice() === true) {
+	    $('#start').removeClass('hover-effect');
+	  }
+	  console.log(board2);
+	  console.log( "end ready!" );
+ 	});
+</script>
+<div class="body-width">
+
+<div class="clearfix"></div>
+<div class="col-sm-4">
+<h3>Available functions</h3>
+ <button type="submit" id="printBtnx" name="printBtnx" class="btn btn-primary" value="Print">Print ontology</button><br>
+ <button type="submit" id="relBtnx" name="relBtnx" class="btn btn-primary" value="reload">Reload ontology from file</button><br>
+ <button type="submit" id="qBtnx" name="qBtnx" class="btn btn-primary" value="query">Query ontology</button>
+</div>
+<div class="col">
+<!-- <div id="board" style="width: 400px"></div> -->
+  <div id="board2" style="width: 400px"></div>
+<!-- <input type="button" id="startBtn" value="Start" /> -->
+  <button type="submit" id="startBtnx" name="startBtnx" class="btn btn-primary" value="Startx">Restart Game</button>
+  <button type="submit" id="ontBtnx" name="ontBtnx" class="btn btn-primary" value="ontlogy">Create ontology position</button>
+<!--   <input type="button" id="clearBtn" value="Clear" /> -->
+  <input type="text" name="posisjon" value="pos" id="posisjon" size="20" style="display: none" >
+  <input type="text" name="piece" value="x" id="piece" size="20" style="display: none">
+  <input type="text" name="startposisjon" value="y" id="startposisjon" size="20" style="display: none">
+</div>
+<div class="clearfix"></div>
+</div>
+
+
+		  <button type="submit" id="btnmove" value="nokkel"  name="formValue" class="btn btn-primary" style="display: none" > getValue </button>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<!--<script src="js/bootstrap.min.js"></script>-->
+</form>
+</div> <!--slutt container-->
+</body>
+</html>

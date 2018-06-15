@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<style type="text/css">
+.chessboard {
+    width: 640px;
+    height: 640px;
+    margin: 20px;
+    border: 25px solid #333;
+}
+.black {
+    float: left;
+    width: 80px;
+    height: 80px;
+    background-color: #999;
+      font-size:50px;
+    text-align:center;
+    display: table-cell;
+    vertical-align:middle;
+}
+.white {
+    float: left;
+    width: 80px;
+    height: 80px;
+    background-color: #fff;
+    font-size:50px;
+    text-align:center;
+    display: table-cell;
+    vertical-align:middle;
+}
+</style>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>Start Position Example</title>
+  <base href="http://chessboardjs.com/" />
+
+  <link rel="stylesheet" href="css/chessboard.css" />
+<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> -->
+<!-- <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script> -->
+<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+<script src="/chess_web/resources/js/json3.min.js"></script>
+<script src="/chess_web/resources/js/jquery-1.10.1.min.js"></script>
+<script src="/chess_web/resources/js/chessboard.js"></script>
+
+<script src="/chess_web/resources/js/chessboard-03.0.js"></script>
+<script src="/chess_web/resources/js/chessboard-03.0.min.js"></script>
+<script src="/chess_web/resources/js/prettify.js"></script>
+
+
+<script>
+var init = function() {
+	console.log( "inside init!" );
+	//--- start example JS ---
+	var board = ChessBoard('board', 'start');
+
+}; // end init()
+$(document).ready(function(){
+	 console.log( "ready!" );
+/* 		var board = ChessBoard('board', 'start'); */
+    $("button").click(function(){
+    	 console.log( "Inside event function" );
+    	 var board = ChessBoard('board', 'start');
+        $("p").slideToggle();
+    });
+    console.log( "end ready!" );
+});
+</script>
+</head>
+<body>
+
+<p>This is a paragraph.</p>
+
+<button>Toggle between slide up and slide down for a p element</button>
+
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <title>Innmelding ny faggprosedyre</title>
+  <meta name="generator" content="Amaya, see http://www.w3.org/Amaya/" />
+  <script type="text/javascript" src="http://www.melde.no/_public/js/jquery-1.7.2.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/style.css" />
+</head>
+
+<body>
+<div id="container" > <!-- Main div start a container div-->
+<form id="innmelding" action="?method=PUT" method="POST">
+	<div  id="header">
+  <h1>Melding om ny fagprosedyre </h1>
+   </div>
+<script type="text/javascript">
+    if( sessionStorage.hits ){
+       sessionStorage.hits = Number(sessionStorage.hits) +1;
+       
+    }else{
+       sessionStorage.hits = 1;
+    }
+    
+      /*document.getElementById("result").innerHTML="You have clicked the button " + sessionStorage.hits + " time(s). ";*/
+    $('#session').val('You have clicked the button  time(s). ');
+    
+      document.write("Total Hits :" + sessionStorage.hits );
+/*       alert("You have clicked the button " + sessionStorage.hits + " time(s).");*/
+       $("#result").html("You have clicked the button  time(s). ");
+   
+  </script>
+  <p>Refresh the page to increase number of hits. </p>
+ <div id="leftmenu"  " style="height: 106px; width: 704px; ">
+  <h3>Bruk dette skjemaet til å gi sekretariatet til nasjonalt nettverk for
+  fagprosedyrer beskjed om at det planlegges å utvikle en fagprosedyre.</h3>
+<!-- Id attribute is available for css -->
+</div> 
+<div id="content">
+<div id="header">
+  <h3 title="Ekstra info with mouse over">Før du setter i gang</h3>
+</div>
+  <p>Har du forsikret deg om at det ikke allerede finnes en tilsvarende
+  prosedyre, og at det ikke allerde er satt i gang arbeid med å utvikle en?
+  Dette kan du undersøke ved å se på sidene: <a
+  href="http://www.helsebiblioteket.no/microsite/Fagprosedyrer">Fagprosedyrer</a>
+  og <a
+  href="http://www.helsebiblioteket.no/microsite/fagprosedyrer/p%C3%A5begynte-fagprosedyrer">Påbegynte
+  fagprosedyrer</a></p>
+<div style="color:#0000FF">
+	<input type="text" id="session" name="session" size="80"/>
+	<p id="result">R</p>
+</div>
+<table border="1" style="width: 80%">
+  <caption></caption>
+  <col />
+  <tbody>
+    <tr>
+      <td><b>Hva er prosedyrens tittel?</b></td>
+    </tr>
+    <tr>
+      <td>
+     <input type="text"  name="tittel" size="80"  value="${tittel}" /></td>
+    </tr>
+    <tr>
+      <td><b>Hvorfor er det viktig å utvikle denne prosedyren?</b></td>
+    </tr>
+    <tr>
+      <td><textarea
+        rows="10" cols="80" name="begrunnelse">${begrunnelse} </textarea></td>
+    </tr>
+  </tbody>
+</table>
+
+<table border="1" style="width: 80%">
+  <caption></caption>
+  <col />
+  <col />
+  <tbody>
+    <tr>
+      <td><b>Hvilke pasientgrupper er prosedyren rettet mot?</b></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><p>
+       
+     
+        	<input name ="pasientgruppe" list="pasientgruppe">
+ 
+        		<datalist id="pasientgruppe">
+        	    <#list pasientgruppe as pasienter> 
+        			<option >${pasienter}</option>
+			       </#list>  
+        		</datalist>
+	
+     
+       
+        </p>
+      </td>
+      <td>
+        <input type="submit" name="leggtilpasient" value="Legg til" /></td>
+    </tr>
+      <#list pasienterValgt as pasientervalgt>
+    <tr>
+    	<td><p>
+    		<output name="pasientgruppe">${pasientervalgt}</output>
+    		</p>
+    	</td>
+     </#list>
+    	<td>
+    		 <input type="submit" name="fjernpasient" value="Fjern" />
+    	</td>	
+    </tr>
+  </tbody>
+</table>
+
+<table border="1" style="width: 80%">
+  <caption></caption>
+  <col />
+  <col />
+  <tbody>
+    <tr>
+      <td><b>Hvilket helsepersonell skal bruke prosedyren?</b></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><p>
+
+   
+        	<input name ="helsepersonell" list="helsepersonellgruppe">
+ 
+        		<datalist id="helsepersonellgruppe">
+      	       <#list helsepersonell as personell>
+        			<option >${personell}</option>
+			       </#list>  
+        		</datalist>
+
+         </p>
+      </td>
+      <td>
+        <input type="submit" name="leggtilhelsepersonell" value="Legg til" /></td>
+    </tr>
+     <#list helsepersonellValgt as personer>
+        <tr>
+    	<td><p>
+    		<output name="helsepersonell">${personer}</output>
+    		</p>
+    	</td>
+    </#list>
+    	<td>
+    		 <input type="submit" name="fjernhelsepersonell" value="Fjern" />
+    	</td>	
+    </tr>
+  </tbody>
+</table>
+<h2>Praktisk informasjon</h2>
+<div style="border: 1px solid #ccc; width: 500px; margin: 0; padding: 0;">
+		<div style="width: 200px;float: left; border: 1px solid green;">
+		<label for="oppstart">Ca oppstart</label><br>
+		<input id="oppstart" name="oppstart" type="date" value="${oppstartSDato}">
+		</div>
+	<div style="width: 200px;margin: 0; padding: 0; float: left;  border: 1px solid green;">
+		<label for="ferdig">Ca ferdig</label><br>
+		<input id="ferdig" name="ferdig" type="date" value="${ferdigSDato}">
+		</div>
+</div><br><br>
+	<h4>Hvem skal lede arbeidet internt?</h4>		
+	<label for="internledernavn">Navn*</label><br>
+	<input id="internledernavn" name="internledernavn" type="text" value="${internledernavn}"><br>
+	<label for="internledertittel">Tittel</label><br>
+	<input id="internledertittel" name="internledertittel" type="text" value="${internledertittel}"><br>
+	<label for="internlederepost">E-post*</label><br>
+	<input id="internlederepost" name="internlederepost" type="email" value="${internlederepost}"><br>
+	<label for="internlederinstitusjon">Institusjon</label><br>
+	<input id="internlederinstitusjon" name="internlederinstitusjon" type="text" value="${internlederinstistusjon}"><br>
+	<h4>Hvem skal godkjenne prosedyren?<br></h4>
+	<select name="sekretariat">
+	  <option selected="selected">Sekretariatet</option>
+	</select>
+<h4>Hvem skal ha prosedyren på høring?</h4>
+<h5>Helseforetak</h5>
+
+		<input name="helseforetak" id="helseforetakid" type="radio" onclick="submit" formmethod="POST">Alle<br>
+		<input name="foretakutvalg" id="foretakutvalgid" type="radio" onclick="submit" formmethod="POST">Utvalgte<br>
+		
+<h3>Hva skjer etter at jeg har sendt skjema?</h3>
+<p>Sekretariatet vurderer meldingen og tar eventuelt kontakt for avklaringer. Informasjon om det planlagte prosedyrearbeidet publiseres så til 
+<a href="http://www.helsebiblioteket.no/microsite/fagprosedyrer/p%C3%A5begynte-fagprosedyrer">Påbegynte
+  fagprosedyrer</a> slik at andre prosedyremakere er informert.
+  </p><br>
+  <p>Den du har oppgitt at skal lede arbeidet vil (etter hvert, eller med en gang på skjerm og e-post?) motta en adgangskode som gir tilgang til en nettside der man kan legge inn innhold, informasjon om metode, kvalitet osv. mens arbeidet pågår, og til slutt sende den ferdige prosedyren inklusive alt innhold til sekretariatet.
+   
+  </p>
+     <input id="avslutt" type="submit" name="lagrekjema" value="Lagre skjema" />
+
+  </div>
+ 
+</form>	
+<div>
+  <form id="logout" action="?method=PUT" method="POST">
+    <input id="logout" type="submit" name="logout" value="Avslutt" />
+    
+</form>	
+</div>	
+</div> <!-- End main div -->
+</body>
+</html>

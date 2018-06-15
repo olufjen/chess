@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Rapporter hendelse - Hemovigilans</title>
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="http://newwindow.no/ks/nokc-0.1.7/css/fonts/font-source-sans-pro.css"/>
+<link rel="stylesheet" href="http://newwindow.no/ks/nokc-0.1.7/css/vendor/bootstrap.min.css"/>
+<link rel="stylesheet" href="http://newwindow.no/ks/nokc-0.1.7/css/defaults.css"/>
+<link rel="stylesheet" href="http://newwindow.no/ks/nokc-0.1.7/css/page.css"/>
+<link rel="stylesheet" href="http://newwindow.no/ks/nokc-0.1.7/css/components.css"/>	
+<link rel="stylesheet" href="http://newwindow.no/ks/nokc-0.1.7/css/custom.css"/>
+<!--<link rel="stylesheet" href="css/bootstrap.css">-->
+</head>
+<body class="events">
+ <header class="master-header" role="navigation">
+      <div class="container">
+        <div class="row">
+          <div class="col-xs-9 col-sm-6 col-sm-push-3 col-vertical-bottom-sm logo-container">
+            <div class="bottom">
+              <a class="home" href="#" id="home" rel="home" title="">
+                <img class="logo" src="http://newwindow.no/ks/nokc-0.1.7/img/ks-logo.png" alt="" />
+              </a>
+            </div>
+          </div>
+          <div class="hidden-xs col-sm-3 col-sm-push-5 col-vertical-bottom-sm">
+       
+          </div>
+          <div class="col-xs-3 col-sm-pull-9 col-vertical-bottom-sm">
+            <div class="bottom">
+				<button type="button" onclick="homePage()" class="btn btn-default">Tilbake</button>
+			</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+<div class="container">
+<form action="?method=PUT" method="post">
+<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+<script type="text/javascript">
+function homePage(){
+	var curAddr = document.location.href;
+//	 alert(curAddr);
+	var newAddr = curAddr.replace("passord.html","");
+//	alert(newAddr);
+	document.location = newAddr;
+
+}
+</script>
+
+<h1>Glemt passord </h1>
+  	<div class="form-group">
+        <label for="k-epost">Melders epost:</label>
+        <div>
+          <input name="k-epost" type="email" value="" class="form-control" id="k-epost" placeholder="Email"  />
+        </div>
+       
+      </div>
+ 
+    <div class="form-group" id="ingennokkel" >
+     	<label>${melding}</label>
+     </div>
+
+  	<button name="passord" type="submit" value="passord" class="btn btn-primary">Hent passord</button>
+</div>
+<div class="panel-group" id="accordion">
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<!--<script src="js/bootstrap.min.js"></script>-->
+</form>
+</div> <!--slutt container-->
+</body>
+</html>
