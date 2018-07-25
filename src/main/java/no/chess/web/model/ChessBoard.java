@@ -21,11 +21,18 @@ import com.hp.hpl.jena.sparql.core.Var;
 
 import no.basis.felles.model.OntologyModel;
 import no.basis.felles.model.ParentModel;
-import no.basis.felles.semanticweb.chess.BlackBoardPosition;
+/*import no.basis.felles.semanticweb.chess.BlackBoardPosition;
 import no.basis.felles.semanticweb.chess.BlackPiece;
 import no.basis.felles.semanticweb.chess.Piece;
 import no.basis.felles.semanticweb.chess.WhiteBoardPosition;
-import no.basis.felles.semanticweb.chess.WhitePiece;
+import no.basis.felles.semanticweb.chess.WhitePiece;*/
+import no.chess.ontology.BlackBoardPosition;
+import no.chess.ontology.BlackPiece;
+import no.chess.ontology.Piece;
+import no.chess.ontology.Taken;
+import no.chess.ontology.Vacant;
+import no.chess.ontology.WhiteBoardPosition;
+import no.chess.ontology.WhitePiece;
 
 import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.query.QuerySolution;
@@ -49,7 +56,8 @@ public class ChessBoard extends ParentModel {
 	private HashSet<WhiteBoardPosition> whitePositions;
 	private HashSet<BlackPiece> blackPieces;
 	private HashSet<WhitePiece> whitePieces;
-	
+	private HashSet<Taken> allTakenPositions;
+	private HashSet<Vacant> allVacantPositions;	
 	private Position position;
 	private HashMap<String,Position> positions;
 	private String startFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
@@ -110,6 +118,8 @@ public class ChessBoard extends ParentModel {
 		 whitePositions = chessModel.getallgivenWhitepositions();
 		 blackPieces = chessModel.getallgivenBlackpieces();
 		 whitePieces = chessModel.getallgivenWhitepieces();
+		 allTakenPositions = chessModel.getAllTakenPositions();
+		 allVacantPositions = chessModel.getAllVacantPositions();
 		if (positions != null){
 			positions = null;
 		}
@@ -169,29 +179,29 @@ public class ChessBoard extends ParentModel {
 	 * It is called when the chessBoard is created.
 	 */
 	public void createOntologyposition(){
-
-		Iterator<WhiteBoardPosition> whitePosIterator =  whitePositions.iterator();
-	      while(whitePosIterator.hasNext()){
-	    	  WhiteBoardPosition whitePos = whitePosIterator.next();
-	    	  IRI ir = whitePos.getOwlIndividual().getIRI();
-
-	    	  HashSet<Piece> pieces =  (HashSet<Piece>)whitePos.getIsOccupiedBy();
+		
+		Iterator<Taken> takenIterator = allTakenPositions.iterator();
+//		Iterator<WhiteBoardPosition> whitePosIterator =  whitePositions.iterator();
+	      while(takenIterator.hasNext()){
+	    	  Taken takenPos = takenIterator.next();
+	    	  IRI ir = takenPos.getOwlIndividual().getIRI();
+	    	  HashSet<Piece> pieces =  (HashSet<Piece>)( takenPos).getIsOccupiedBy();
 	    	  String irs = ir.toString();
-	    	  OWLNamedIndividual wp = whitePos.getOwlIndividual();
+	    	  OWLNamedIndividual wp = takenPos.getOwlIndividual();
 	    	  char sep = '#';
 	    	  String name = extractString(irs, sep,-1);
 //	    	  System.out.println(irs+" "+whitePos.toString()+ " "+ wp.toString()+ " "+name);
 	    	  Position position = positions.get(name);
 	    	  if (position != null){
-	    		  position.setWhiteBoardPosition(whitePos);
+//	    		  position.setWhiteBoardPosition(takenPos);
 	    		  position.setPieces(pieces);
 	    	  }
 	      }
-			Iterator<BlackBoardPosition> blackPosIterator =  blackPositions.iterator();
+/*			Iterator<BlackBoardPosition> blackPosIterator =  blackPositions.iterator();
 		      while(blackPosIterator.hasNext()){
 		    	  BlackBoardPosition blackPos = blackPosIterator.next();
 		    	  IRI ir = blackPos.getOwlIndividual().getIRI();
-
+		    	  
 		    	  HashSet<Piece> pieces =  (HashSet<Piece>)blackPos.getIsOccupiedBy();
 		    	  String irs = ir.toString();
 		    	  OWLNamedIndividual wp = blackPos.getOwlIndividual();
@@ -203,7 +213,7 @@ public class ChessBoard extends ParentModel {
 		    		  position.setBlackBoardPosition(blackPos);
 		    		  position.setPieces(pieces);
 		    	  }
-		      }	      
+		      }*/	      
 	}
 	public void queryOntology(){
 		String prefix = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>"

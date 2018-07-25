@@ -4,14 +4,18 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import no.basis.felles.model.ParentModel;
-import no.basis.felles.semanticweb.chess.BlackBoardPosition;
+import no.chess.ontology.BlackBoardPosition;
+/*import no.basis.felles.semanticweb.chess.BlackBoardPosition;
 import no.basis.felles.semanticweb.chess.BlackPiece;
 import no.basis.felles.semanticweb.chess.Piece;
 import no.basis.felles.semanticweb.chess.WhiteBoardPosition;
 import no.basis.felles.semanticweb.chess.WhitePiece;
 import no.basis.felles.semanticweb.chess.impl.DefaultBlackPiece;
-import no.basis.felles.semanticweb.chess.impl.DefaultWhitePiece;
-
+import no.basis.felles.semanticweb.chess.impl.DefaultWhitePiece;*/
+import no.chess.ontology.Piece;
+import no.chess.ontology.WhiteBoardPosition;
+import no.chess.ontology.impl.DefaultWhitePiece;
+import no.chess.ontology.Object;
 /**
  * This class represent a a front end chess piece.
  * It contains information about the ontology chesspiece and its position.
@@ -46,12 +50,12 @@ public class ChessPiece extends ParentModel{
 		this.pieceName = name.substring(1);
 		calculateValue();
 	}
-	private void setcorrectPieceName(HashSet<String> names){
-		Iterator<String> namesIterator = names.iterator();
+	private void setcorrectPieceName(HashSet<Object> names){
+		Iterator<Object> namesIterator = names.iterator();
 		while (namesIterator.hasNext()){
-			String ontpieceName = namesIterator.next();
+			Object ontpieceName = namesIterator.next();
 			if (pieceName != null){
-				name = ontpieceName;
+				name = ontpieceName.toString();
 				break;
 			}
 		}
@@ -79,7 +83,7 @@ public class ChessPiece extends ParentModel{
 
 	public void setBlackPiece(Piece blackPiece) {
 		this.blackPiece = blackPiece;
-		HashSet<String> names = (HashSet<String>) this.blackPiece.getHasName();
+		HashSet<Object> names = (HashSet<Object>) this.blackPiece.getHasName();
 		setcorrectPieceName(names);
 	}
 
@@ -93,7 +97,7 @@ public class ChessPiece extends ParentModel{
 
 	public void setWhitePiece(DefaultWhitePiece whitePiece) {
 		this.whitePiece = whitePiece;
-		HashSet<String> names = (HashSet<String>) this.whitePiece.getHasName();
+		HashSet<Object> names = (HashSet<Object>) this.whitePiece.getHasName();
 		setcorrectPieceName(names);
 	}
 

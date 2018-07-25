@@ -13,15 +13,21 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import no.basis.felles.model.OntologyModel;
 import no.basis.felles.model.ParentModel;
+import no.chess.ontology.BlackBoardPosition;
+import no.chess.ontology.BoardPosition;
+import no.chess.ontology.Piece;
+import no.chess.ontology.Taken;
+import no.chess.ontology.WhiteBoardPosition;
+import no.chess.ontology.impl.DefaultWhitePiece;
 
-import no.basis.felles.semanticweb.chess.BlackBoardPosition;
+/*import no.basis.felles.semanticweb.chess.BlackBoardPosition;
 import no.basis.felles.semanticweb.chess.BlackPiece;
 import no.basis.felles.semanticweb.chess.BoardPosition;
 import no.basis.felles.semanticweb.chess.Piece;
 import no.basis.felles.semanticweb.chess.WhiteBoardPosition;
 import no.basis.felles.semanticweb.chess.WhitePiece;
 import no.basis.felles.semanticweb.chess.impl.DefaultBlackPiece;
-import no.basis.felles.semanticweb.chess.impl.DefaultWhitePiece;
+import no.basis.felles.semanticweb.chess.impl.DefaultWhitePiece;*/
 
 /**
  * This class represent a position on the chessboard
@@ -138,13 +144,13 @@ public class Position extends ParentModel {
 					System.out.println("Occupies correct position: " + irs+ " " + name + " " +positionName);
 				}else {
 					System.out.println("Occupies wrong position: "+ irs+ " " + name + " " +positionName);
-					piece.removeOccupies(whitePos);
+					piece.removeOccupies((Taken) whitePos);
 					if (whiteBoardPosition != null){
-						piece.addOccupies(whiteBoardPosition);
+						piece.addOccupies((Taken) whiteBoardPosition);
 						System.out.println("New white position: "+ whiteBoardPosition.getOwlIndividual().getIRI().toString() + " " +positionName);
 					}
 					else if (blackBoardPosition != null){
-						piece.addOccupies(blackBoardPosition);
+						piece.addOccupies((Taken) blackBoardPosition);
 						System.out.println("New black position: "+ blackBoardPosition.getOwlIndividual().getIRI().toString() + " " +positionName);
 					}
 				
@@ -160,7 +166,7 @@ public class Position extends ParentModel {
 	      while(whitePosIterator.hasNext()){
 	    	  WhiteBoardPosition whitePos = whitePosIterator.next();
 	    	  IRI ir = whitePos.getOwlIndividual().getIRI();
-	    	  HashSet<Piece> pieces =  (HashSet<Piece>)whitePos.getIsOccupiedBy();
+	    	  HashSet<Piece> pieces =  (HashSet<Piece>)((Taken) whitePos).getIsOccupiedBy();
 	    	  String irs = ir.toString();
 	    	  OWLNamedIndividual wp = whitePos.getOwlIndividual();
 	    	  char sep = '#';
@@ -169,7 +175,7 @@ public class Position extends ParentModel {
 //	    		  CodeGenerationInference inference = usedBy.getWhitePiece().
 	    		  if (pieces.isEmpty() || pieces == null){
 	    			Piece newIsOccupiedBy = new DefaultWhitePiece(null, ir);
-					whitePos.addIsOccupiedBy(newIsOccupiedBy );
+					((Taken) whitePos).addIsOccupiedBy(newIsOccupiedBy );
 	    		  }
 	    		  if (pieces != null){
 	    			  Iterator<Piece> pieceIterator = pieces.iterator();
@@ -230,8 +236,8 @@ public class Position extends ParentModel {
 		return whiteBoardPosition;
 	}
 
-	public void setWhiteBoardPosition(WhiteBoardPosition whiteBoardPosition) {
-		this.whiteBoardPosition = whiteBoardPosition;
+	public void setWhiteBoardPosition(WhiteBoardPosition whitePos) {
+		this.whiteBoardPosition = whitePos;
 	}
 
 	public String getColumn() {
