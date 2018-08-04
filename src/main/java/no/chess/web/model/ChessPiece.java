@@ -50,10 +50,10 @@ public class ChessPiece extends ParentModel{
 		this.pieceName = name.substring(1);
 		calculateValue();
 	}
-	private void setcorrectPieceName(HashSet<Object> names){
-		Iterator<Object> namesIterator = names.iterator();
+	private void setcorrectPieceName(HashSet<String> names){
+		Iterator<String> namesIterator = names.iterator();
 		while (namesIterator.hasNext()){
-			Object ontpieceName = namesIterator.next();
+			String ontpieceName = namesIterator.next();
 			if (pieceName != null){
 				name = ontpieceName.toString();
 				break;
@@ -83,7 +83,7 @@ public class ChessPiece extends ParentModel{
 
 	public void setBlackPiece(Piece blackPiece) {
 		this.blackPiece = blackPiece;
-		HashSet<Object> names = (HashSet<Object>) this.blackPiece.getHasName();
+		HashSet<String> names = (HashSet<String>) this.blackPiece.getHasName();
 		setcorrectPieceName(names);
 	}
 
@@ -97,7 +97,7 @@ public class ChessPiece extends ParentModel{
 
 	public void setWhitePiece(DefaultWhitePiece whitePiece) {
 		this.whitePiece = whitePiece;
-		HashSet<Object> names = (HashSet<Object>) this.whitePiece.getHasName();
+		HashSet<String> names = (HashSet<String>) this.whitePiece.getHasName();
 		setcorrectPieceName(names);
 	}
 

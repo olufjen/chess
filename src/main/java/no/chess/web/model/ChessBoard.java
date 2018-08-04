@@ -2,18 +2,14 @@ package no.chess.web.model;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-
-
-
-
-
-
+import org.protege.owl.codegeneration.WrappedIndividual;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
@@ -28,6 +24,10 @@ import no.basis.felles.semanticweb.chess.WhiteBoardPosition;
 import no.basis.felles.semanticweb.chess.WhitePiece;*/
 import no.chess.ontology.BlackBoardPosition;
 import no.chess.ontology.BlackPiece;
+import no.chess.ontology.BoardPosition;
+import no.chess.ontology.ChessPosition;
+import no.chess.ontology.Entity;
+import no.chess.ontology.Object;
 import no.chess.ontology.Piece;
 import no.chess.ontology.Taken;
 import no.chess.ontology.Vacant;
@@ -58,6 +58,7 @@ public class ChessBoard extends ParentModel {
 	private HashSet<WhitePiece> whitePieces;
 	private HashSet<Taken> allTakenPositions;
 	private HashSet<Vacant> allVacantPositions;	
+	private HashSet<ChessPosition> allChessPositions;
 	private Position position;
 	private HashMap<String,Position> positions;
 	private String startFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
@@ -120,6 +121,7 @@ public class ChessBoard extends ParentModel {
 		 whitePieces = chessModel.getallgivenWhitepieces();
 		 allTakenPositions = chessModel.getAllTakenPositions();
 		 allVacantPositions = chessModel.getAllVacantPositions();
+		 allChessPositions = chessModel.getAllChessPositions();
 		if (positions != null){
 			positions = null;
 		}
@@ -162,13 +164,31 @@ public class ChessBoard extends ParentModel {
 		for (int i = 0; i <64;i++){
 			Position position = positions.get(allPositions[i]);
 			ChessPiece chessPiece = position.getUsedBy();
-			if (chessPiece != null && chessPiece.getOntlogyName() == null){
+			HashSet<Piece> pieces = position.getPieces();
+			Piece ontologyPiece = null;
+			if(pieces != null) {
+				for (Piece ontPiece :pieces) {
+					ontologyPiece = ontPiece;
+				}
+			}
+
+//			boolean ischessPiece = chessPiece.getClass().equals(Entity.class);
+			if (ontologyPiece != null) {
+				System.out.println(" An ontology piece: Name of piece: "+ontologyPiece.toString());
+			}
+			String ontName = "Unknown";
+			if (chessPiece != null && chessPiece.getOntlogyName() != null)
+				ontName = chessPiece.getOntlogyName();
+			System.out.println("Position "+position.getPositionName()+" Chessontology: Name of piece: "+chessPiece.getName()+" Name of chess piece: "+chessPiece.getPieceName()+" "+ontName);
+
+			if (ontologyPiece == null){
 				position.setUsedBy(null);
 				position.setInUse(false);
+				System.out.println("Setting position empty:  "+position.getPositionName());
 			}
-			if (chessPiece != null && chessPiece.getOntlogyName() != null){
+/*			if (chessPiece != null && chessPiece.getOntlogyName() != null){
 				System.out.println("Chessontology: Name of piece: "+chessPiece.getName()+" Name of chess piece: "+chessPiece.getPieceName()+" "+chessPiece.getOntlogyName());
-			}
+			}*/
 		}
 	}
 	/**
@@ -176,27 +196,136 @@ public class ChessBoard extends ParentModel {
 	 * This method creates the chessboard positions given the chess ontology.
 	 * It uses the HashSets: blackPositions, whitePositions, blackPieces, whitePieces, to find which piece occupies which position in the 
 	 * ontology, and places this information in the correct position of the board.
-	 * It is called when the chessBoard is created.
+	 * It is called from createStartPosition, when the chessBoard is created.
 	 */
 	public void createOntologyposition(){
-		
-		Iterator<Taken> takenIterator = allTakenPositions.iterator();
-//		Iterator<WhiteBoardPosition> whitePosIterator =  whitePositions.iterator();
-	      while(takenIterator.hasNext()){
-	    	  Taken takenPos = takenIterator.next();
-	    	  IRI ir = takenPos.getOwlIndividual().getIRI();
-	    	  HashSet<Piece> pieces =  (HashSet<Piece>)( takenPos).getIsOccupiedBy();
+		for (ChessPosition chessPos: allChessPositions) {
+			HashSet<String> names =  (HashSet<String>) chessPos.getHasName(); 
+//			HashSet<Vacant> vacants = (HashSet<Vacant>) chessPos.getIsVacant();
+//			OWLNamedIndividual individual = chessPos.getOwlIndividual();
+			String posx = null;
+			for (String pos : names) {
+				posx = pos;
+				break;
+			}
+			System.out.println("Chess positions: "+names.toString()+" "+posx);
+//			System.out.println("Chess vacant positions: "+vacants.toString()+" ");
+		}
+		for (Taken taken : allTakenPositions) {
+	    	  IRI ir = taken.getOwlIndividual().getIRI();
+	    	  HashSet<Piece> pieces =  (HashSet<Piece>)( taken).getIsOccupiedBy();
 	    	  String irs = ir.toString();
-	    	  OWLNamedIndividual wp = takenPos.getOwlIndividual();
+	    	  OWLNamedIndividual wp = taken.getOwlIndividual();
 	    	  char sep = '#';
 	    	  String name = extractString(irs, sep,-1);
-//	    	  System.out.println(irs+" "+whitePos.toString()+ " "+ wp.toString()+ " "+name);
+//	    	  System.out.println("Initial taken positions: "+irs+" "+taken.toString()+ " "+ wp.toString()+ " "+name);
 	    	  Position position = positions.get(name);
-	    	  if (position != null){
+/*	    	  if (position != null){
 //	    		  position.setWhiteBoardPosition(takenPos);
 	    		  position.setPieces(pieces);
-	    	  }
-	      }
+	    	  }*/
+		}
+		for (BlackPiece blackPiece : blackPieces) {
+			HashSet<Taken> taken = (HashSet<Taken>) blackPiece.getOccupies();
+			IRI irp = blackPiece.getOwlIndividual().getIRI();
+
+			String irpiece = irp.toString();
+			char sepp = '#';
+	    	String piecename = extractString(irpiece, sepp,-1);
+			System.out.println("Black piece: "+irpiece+" "+piecename);
+			 HashSet<Piece> pieces = new HashSet<Piece>();
+			for (Taken takenPos : taken) {
+				boolean whitePos = false;
+				boolean blackPos = false;
+				IRI ir = takenPos.getOwlIndividual().getIRI();
+				HashSet<WrappedIndividual> individuals =  (HashSet<WrappedIndividual>)( takenPos).getIsOccupiedBy();
+				Piece piece = (Piece)blackPiece;
+				 pieces.add(piece); 
+		    	 
+		    	 for ( WrappedIndividual individual: individuals) {
+		    		 boolean ispiece = individual.getClass().equals(Entity.class);
+//		    		 Piece piece = (Piece)individual;
+//		    		 Entity ent = (Entity)individual;
+		    		 System.out.println("Piece: "+individual.toString()+ " class "+ispiece);
+//		    		 pieces.add(piece); 
+		    	 }
+		    	 String irs = ir.toString();
+		    	 OWLNamedIndividual wp = takenPos.getOwlIndividual();
+		    	 char sep = '#';
+		    	 String name = extractString(irs, sep,-1);
+		    	 System.out.println("Taken position for black piece: "+irs+" "+takenPos.toString()+ " "+ wp.toString()+ " "+name);
+//		    	 HashSet<BoardPosition> parts = (HashSet<BoardPosition>) takenPos.getIsPartOf();
+		    	 BoardPosition boardPosition = (BoardPosition)takenPos;
+	    		 blackPos = boardPosition.getClass().equals(BlackBoardPosition.class);
+	    		 whitePos = boardPosition.getClass().equals(WhiteBoardPosition.class);
+		    	 Position position = positions.get(name);
+		    	 if (position != null){
+		    		 if (blackPos)
+		    			 position.setBlackBoardPosition((BlackBoardPosition)boardPosition);
+		    		 if (whitePos)
+		    			 position.setWhiteBoardPosition((WhiteBoardPosition)boardPosition);
+		    		 //			    		  position.setPieces(pieces);
+		    		 System.out.println("Found a position for black pieces "+name+" Position "+boardPosition.toString());
+		    		 position.setPieces(pieces);
+		    	 }
+		    
+//		    	 System.out.println("Initial taken positions: "+irs+" ToString takenPos: "+takenPos.toString()+ " OWL individual: "+ wp.toString()+ " "+name);
+
+
+			}
+		}
+		for (WhitePiece whitePiece : whitePieces) {
+			HashSet<Taken> taken = (HashSet<Taken>) whitePiece.getOccupies();
+			boolean whitePos = false;
+			boolean blackPos = false;
+			IRI irp = whitePiece.getOwlIndividual().getIRI();
+			String irpiece = irp.toString();
+			char sepp = '#';
+	    	String piecename = extractString(irpiece, sepp,-1);
+			System.out.println("White piece: "+irpiece+" "+piecename);
+			 HashSet<Piece> pieces = new HashSet<Piece>();
+			for (Taken takenPos : taken) {
+				IRI ir = takenPos.getOwlIndividual().getIRI();
+//		    	 HashSet<Piece> pieces =  (HashSet<Piece>)( takenPos).getIsOccupiedBy();
+	    		HashSet<WrappedIndividual> individuals =  (HashSet<WrappedIndividual>)( takenPos).getIsOccupiedBy();
+				Piece piece = (Piece)whitePiece;
+				pieces.add(piece);
+		    	 for ( WrappedIndividual individual: individuals) {
+		    		 boolean ispiece = individual.getClass().equals(Entity.class);
+//		    		 Piece piece = (Piece)individual;
+//		    		 Entity ent = (Entity)individual; 
+		    		 System.out.println("Piece: "+individual.toString()+ " class "+ispiece);
+//		    		 pieces.add(piece); 
+		    	 }
+		    	 String irs = ir.toString();
+		    	 OWLNamedIndividual wp = takenPos.getOwlIndividual();
+		    	 char sep = '#';
+		    	 String name = extractString(irs, sep,-1);
+//		    	 HashSet<BoardPosition> parts = (HashSet<BoardPosition>) takenPos.getIsPartOf();
+		    	 System.out.println("Taken position for white piece: "+irs+" "+takenPos.toString()+ " "+ wp.toString()+ " "+name);
+		    	 BoardPosition boardPosition = (BoardPosition)takenPos;
+		    	 blackPos = boardPosition.getClass().equals(BlackBoardPosition.class);
+		    	 whitePos = boardPosition.getClass().equals(WhiteBoardPosition.class);
+		    	 Position position = positions.get(name);
+		    	 if (position != null){
+		    		 if (blackPos)
+		    			 position.setBlackBoardPosition((BlackBoardPosition)boardPosition);
+		    		 if (whitePos)
+		    			 position.setWhiteBoardPosition((WhiteBoardPosition)boardPosition);
+		    		 //			    	  position.setPieces(pieces);
+		    		 System.out.println("Found a position for white pieces"+name+" Position "+boardPosition.toString());
+		    		 position.setPieces(pieces);
+		    	 }
+	
+//		    	 System.out.println("Initial taken positions: "+irs+" ToString takenPos: "+takenPos.toString()+ " OWL individual: "+ wp.toString()+ " "+name);
+
+			}
+		}		
+		
+/*		for (Vacant vacant : allVacantPositions) {
+			 System.out.println("Initial vacant positions: "+ vacant.toString());
+		}*/
+		
 /*			Iterator<BlackBoardPosition> blackPosIterator =  blackPositions.iterator();
 		      while(blackPosIterator.hasNext()){
 		    	  BlackBoardPosition blackPos = blackPosIterator.next();
