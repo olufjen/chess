@@ -293,7 +293,14 @@
 	          <version>1.0-SNAPSHOT</version>
 
       </dependency>
+<!--  chessontology added 24.07.18 -->      
+      <dependency>
+         
+	          <groupId>no.chess.ontology</groupId>
+	          <artifactId>chessontology</artifactId>
+	          <version>1.0-SNAPSHOT</version>
 
+      </dependency>
 	     <dependency>
 	          <groupId>no.kunnskapssenteret</groupId>
 	          <artifactId>rammeverk_web</artifactId>
