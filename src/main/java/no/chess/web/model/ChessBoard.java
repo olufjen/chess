@@ -8,10 +8,26 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.protege.owl.codegeneration.WrappedIndividual;
+import org.semanticweb.owlapi.io.OWLObjectRenderer;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.SWRLAtom;
+import org.semanticweb.owlapi.model.SWRLPredicate;
+import org.semanticweb.owlapi.model.SWRLRule;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
 
 import com.hp.hpl.jena.sparql.core.Var;
 
@@ -33,7 +49,9 @@ import no.chess.ontology.Taken;
 import no.chess.ontology.Vacant;
 import no.chess.ontology.WhiteBoardPosition;
 import no.chess.ontology.WhitePiece;
+import uk.ac.manchester.cs.owlapi.dlsyntax.DLSyntaxObjectRenderer;
 
+import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSetFormatter;
@@ -45,7 +63,7 @@ import com.hp.hpl.jena.reasoner.Derivation;
  * This class represent a chessboard
  * It uses FEN syntax to show board positions
  * @author oluf
- *
+ *  
  */
 public class ChessBoard extends ParentModel {
 	private OntologyModel chessModel;
@@ -155,6 +173,76 @@ public class ChessBoard extends ParentModel {
 		}
 		createOntologyposition();
 	}
+    public  void listSWRLRules(OWLOntology ontology, PrefixOWLOntologyFormat pm) {
+        OWLObjectRenderer renderer = new DLSyntaxObjectRenderer(); 
+        for (SWRLRule rule : ontology.getAxioms(AxiomType.SWRL_RULE)) { 
+        	Set<SWRLAtom>bodies =  rule.getBody();
+        	
+        	Set<OWLAnnotation>annotations = rule.getAnnotations();
+        	for (OWLAnnotation annotation : annotations) {
+        		Set<OWLAnnotation>ruleannotations = annotation.getAnnotations();
+        		for (OWLAnnotation anno : ruleannotations) {
+        			System.out.println("Rule annotation inside: "+anno.toString()); //Empty
+        		}
+        		System.out.println("Rule annotation: "+annotation.toString());
+        	}
+        	Set<SWRLAtom>heads =  rule.getHead();
+        	for (SWRLAtom head : heads) {
+        		SWRLPredicate pred = head.getPredicate();
+        		System.out.println("Rulehead: "+head.toString()+" Predicate "+pred.toString());
+        	}
+            System.out.println("Rule : "+renderer.render(rule)); 
+        } 
+    } 
+	private void reasonWith() {
+		OWLDataFactory factory = chessModel.getOwlDatafactory();
+		PrefixOWLOntologyFormat pm = chessModel.getPm();
+		OWLReasoner owlReasoner = chessModel.getOwlReasoner();
+		PelletReasoner pelletReasoner = chessModel.getClarkpelletReasoner();
+		OWLObjectRenderer renderer = chessModel.getOwlRenderer();
+		OWLOntology ontology = chessModel.getOntModel();//
+//		OWLOntology model = chessModel.getModel();
+		OWLClass pieceClass = factory.getOWLClass(":Piece", pm);
+		//Prøve med model individuals !!!!
+		Position position = positions.get(allPositions[0]);
+		HashSet<Piece> pieces = position.getPieces();
+		Piece ontologyPiece = null;
+		if(pieces != null) {
+			for (Piece ontPiece :pieces) {
+				ontologyPiece = ontPiece;
+				OWLNamedIndividual piece = ontologyPiece.getOwlIndividual();
+				System.out.println("Reasoning: Pieces from generated classes Named ind: "+piece.toString()+" ontology piece: "+ontologyPiece.toString()+" Rendering piece " +renderer.render(piece));
+			}
+		}
+		listSWRLRules(ontology, pm);
+		System.out.println("Reasoning: Piece owl class: "+ pieceClass.asOWLClass().toString());
+		HashSet<OWLNamedIndividual> namedpieces = (HashSet<OWLNamedIndividual>) owlReasoner.getInstances(pieceClass, false).getFlattened();
+		for (OWLNamedIndividual piece :namedpieces ){
+			System.out.println("Reasoning: Pieces: "+piece.toString()+" Class " +renderer.render(piece)); // Does not work HashSet is empty!!!!???
+		}
+		OWLObjectProperty occupies = factory.getOWLObjectProperty(":occupies", pm);
+//		factory.get
+		System.out.println("Reasoning: Property "+occupies.toString());
+		OWLNamedIndividual blackKing = factory.getOWLNamedIndividual(":BlackKing", pm);
+		System.out.println("Reasoning: Black King named ind: "+blackKing.asOWLNamedIndividual().toString()+" Top entity "+blackKing.isTopEntity()+" Bottom entity "+blackKing.isBottomEntity());
+//		Map<OWLObjectPropertyExpression,Set<OWLIndividual>> kingValues = blackKing.get
+		
+		System.out.println("Reasoning: Black King "+blackKing.toString()+" rendering "+renderer.render(blackKing) );
+		HashSet<OWLNamedIndividual> individuals = (HashSet<OWLNamedIndividual>) owlReasoner.getObjectPropertyValues(blackKing, occupies).getFlattened();
+//		owlReasoner.get
+		HashSet<OWLNamedIndividual> pelletindividuals = (HashSet<OWLNamedIndividual>) pelletReasoner.getObjectPropertyValues(blackKing, occupies).getFlattened();
+		for (OWLNamedIndividual ind : individuals)
+		{
+			System.out.println(blackKing.toStringID()+" occupies "+renderer.render(ind));// Does not work HashSet is empty!!!!???
+		}
+//		Set<OWLClassExpression> assertedClasses = blackKing.getTypes(ontology);
+		HashSet<OWLClass> classes = (HashSet<OWLClass>) owlReasoner.getTypes(blackKing, false).getFlattened(); // Does not work HashSet is empty!!!!???
+		for (OWLClass c: classes) {
+			boolean asserted = false;
+			System.out.println((asserted ? "Reasoning: asserted ":"Reasoning: inferred ")+ " class for Black King "+renderer.render(c) );
+		}
+		
+	}
 	/**
 	 * createChessontlogyPosition
 	 * This method creates positions on the chessboard given the ontology positions
@@ -175,6 +263,7 @@ public class ChessBoard extends ParentModel {
 //			boolean ischessPiece = chessPiece.getClass().equals(Entity.class);
 			if (ontologyPiece != null) {
 				System.out.println(" An ontology piece: Name of piece: "+ontologyPiece.toString());
+//				ontologyPiece.getOwlIndividual()
 			}
 			String ontName = "Unknown";
 			if (chessPiece != null && chessPiece.getOntlogyName() != null)
@@ -186,10 +275,12 @@ public class ChessBoard extends ParentModel {
 				position.setInUse(false);
 				System.out.println("Setting position empty:  "+position.getPositionName());
 			}
+		
 /*			if (chessPiece != null && chessPiece.getOntlogyName() != null){
 				System.out.println("Chessontology: Name of piece: "+chessPiece.getName()+" Name of chess piece: "+chessPiece.getPieceName()+" "+chessPiece.getOntlogyName());
 			}*/
 		}
+		reasonWith();
 	}
 	/**
 	 * createOntologyposition
