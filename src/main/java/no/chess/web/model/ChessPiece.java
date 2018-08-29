@@ -3,7 +3,7 @@ package no.chess.web.model;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import no.basis.felles.model.ParentModel;
+import no.basic.ontology.model.ParentModel;
 import no.chess.ontology.BlackBoardPosition;
 /*import no.basis.felles.semanticweb.chess.BlackBoardPosition;
 import no.basis.felles.semanticweb.chess.BlackPiece;

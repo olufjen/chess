@@ -11,8 +11,8 @@ import org.protege.owl.codegeneration.inference.CodeGenerationInference;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-import no.basis.felles.model.OntologyModel;
-import no.basis.felles.model.ParentModel;
+import no.basic.ontology.model.OntologyModel;
+import no.basic.ontology.model.ParentModel;
 import no.chess.ontology.BlackBoardPosition;
 import no.chess.ontology.BoardPosition;
 import no.chess.ontology.Piece;

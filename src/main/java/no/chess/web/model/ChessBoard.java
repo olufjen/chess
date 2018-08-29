@@ -28,11 +28,16 @@ import org.semanticweb.owlapi.model.SWRLPredicate;
 import org.semanticweb.owlapi.model.SWRLRule;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
+import org.swrlapi.parser.SWRLParseException;
+import org.swrlapi.sqwrl.SQWRLQueryEngine;
+import org.swrlapi.sqwrl.SQWRLResult;
+import org.swrlapi.sqwrl.exceptions.SQWRLException;
+import org.swrlapi.sqwrl.values.SQWRLResultValue;
 
 import com.hp.hpl.jena.sparql.core.Var;
 
-import no.basis.felles.model.OntologyModel;
-import no.basis.felles.model.ParentModel;
+import no.basic.ontology.model.OntologyModel;
+import no.basic.ontology.model.ParentModel;
 /*import no.basis.felles.semanticweb.chess.BlackBoardPosition;
 import no.basis.felles.semanticweb.chess.BlackPiece;
 import no.basis.felles.semanticweb.chess.Piece;
@@ -49,7 +54,7 @@ import no.chess.ontology.Taken;
 import no.chess.ontology.Vacant;
 import no.chess.ontology.WhiteBoardPosition;
 import no.chess.ontology.WhitePiece;
-import uk.ac.manchester.cs.owlapi.dlsyntax.DLSyntaxObjectRenderer;
+//import uk.ac.manchester.cs.owlapi.dlsyntax.DLSyntaxObjectRenderer;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.hp.hpl.jena.ontology.Individual;
@@ -77,7 +82,14 @@ public class ChessBoard extends ParentModel {
 	private HashSet<Taken> allTakenPositions;
 	private HashSet<Vacant> allVacantPositions;	
 	private HashSet<ChessPosition> allChessPositions;
+	private ArrayList<String> exeRules;
+	private ArrayList<String> exeLabels;
+	private ChessRules chessRule;
+	private ArrayList<ChessRules> chessRules;
 	private Position position;
+	/**
+	 * positions contains all available board positions and information on whether they are occupied
+	 */
 	private HashMap<String,Position> positions;
 	private String startFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 	// 27.06.17 King and Queen reversed start positions
@@ -109,6 +121,10 @@ public class ChessBoard extends ParentModel {
 		 System.out.println("Fetching individuals");
 		 individuals = chessModel.getIndividuals();
 		 System.out.println("Found individuals");
+
+		 chessRules = new ArrayList();
+		 chessRule = new ChessRules();
+		 chessRules.add(chessRule);
 /*
  * This routines takes a long time !!!		 
  */
@@ -126,9 +142,47 @@ public class ChessBoard extends ParentModel {
 		 
 //		 createOntologyposition();
 	}
+	
+
+	public ChessRules getChessRule() {
+		return chessRule;
+	}
+
+
+	public void setChessRule(ChessRules chessRule) {
+		this.chessRule = chessRule;
+	}
+
+
+	public ArrayList<ChessRules> getChessRules() {
+		return chessRules;
+	}
+
+
+	public void setChessRules(ArrayList<ChessRules> chessRules) {
+		this.chessRules = chessRules;
+	}
+
+
+	public ArrayList<String> getExeRules() {
+		return exeRules;
+	}
+
+	public void setExeRules(ArrayList<String> exeRules) {
+		this.exeRules = exeRules;
+	}
+
+	public ArrayList<String> getExeLabels() {
+		return exeLabels;
+	}
+
+	public void setExeLabels(ArrayList<String> exeLabels) {
+		this.exeLabels = exeLabels;
+	}
+
 	/**
 	 * createStartPosition()
-	 * This method creates a startposition without involving ontlogy
+	 * This method creates a startposition without involving ontology
 	 * It collects all defined positions and all defined pieces from the ontology model (org.semanticweb.owlapi.model.OWLOntology)
 	 * They are stored in Hashsets: blackPositions, whitePositions, blackPieces, whitePieces.
 	 */
@@ -173,36 +227,110 @@ public class ChessBoard extends ParentModel {
 		}
 		createOntologyposition();
 	}
-    public  void listSWRLRules(OWLOntology ontology, PrefixOWLOntologyFormat pm) {
-        OWLObjectRenderer renderer = new DLSyntaxObjectRenderer(); 
+    /**
+     * listSWRLRules
+     * This method produces available rules as an arraylist of strings, so that they can be run as rules 
+     * with the SQWRLQueryEngine queryEngine
+     * @param ontology
+     */
+    public  void listSWRLRules(OWLOntology ontology) {
+        //OWLObjectRenderer renderer = new DLSyntaxObjectRenderer();
+    	exeRules = new ArrayList();
+    	exeLabels = new ArrayList();
+
         for (SWRLRule rule : ontology.getAxioms(AxiomType.SWRL_RULE)) { 
+        	String ruleAnnotation = null;
+        	String completeRule = null;
+        	String concequence = "";
+        	String antecedent = "";
         	Set<SWRLAtom>bodies =  rule.getBody();
         	
         	Set<OWLAnnotation>annotations = rule.getAnnotations();
         	for (OWLAnnotation annotation : annotations) {
         		Set<OWLAnnotation>ruleannotations = annotation.getAnnotations();
+        		
         		for (OWLAnnotation anno : ruleannotations) {
         			System.out.println("Rule annotation inside: "+anno.toString()); //Empty
         		}
-        		System.out.println("Rule annotation: "+annotation.toString());
+        		ruleAnnotation = annotation.toString();
+        		if (ruleAnnotation.contains("label"))
+        				ruleAnnotation = createRuleLabel(ruleAnnotation);
+//        		System.out.println("Rule annotation: "+annotation.toString()+" Label: "+ruleAnnotation);
+
         	}
         	Set<SWRLAtom>heads =  rule.getHead();
         	for (SWRLAtom head : heads) {
         		SWRLPredicate pred = head.getPredicate();
-        		System.out.println("Rulehead: "+head.toString()+" Predicate "+pred.toString());
+        	
+        		String ruleString = createRuleString(pred.toString(),head.toString());
+//        		System.out.println("Rulehead: "+head.toString()+" Predicate: "+pred.toString()+ " Rulestring: "+ruleString);
+        		if (!concequence.isEmpty())
+        			concequence = concequence + "^" + ruleString;
+        		else
+        			concequence = ruleString;
         	}
-            System.out.println("Rule : "+renderer.render(rule)); 
-        } 
+        	for (SWRLAtom body : bodies) {
+        		SWRLPredicate pred = body.getPredicate();
+        		String ruleString = createRuleString(pred.toString(),body.toString());
+//        		System.out.println("Rulebody: "+body.toString()+" Predicate "+pred.toString()+ " Rulestring: "+ruleString);
+        		if (!antecedent.isEmpty())
+        			antecedent = antecedent + "^"+ruleString;
+        		else
+        			antecedent = ruleString;
+        	}
+        	completeRule = antecedent + "->" + concequence;
+   		 	chessRule = new ChessRules();
+        	exeRules.add(completeRule);
+        	exeLabels.add(ruleAnnotation);
+        	chessRule.setExeLabels(ruleAnnotation);
+        	chessRule.setExeRules(completeRule);
+        	chessRules.add(chessRule);
+        	
+         //   System.out.println("Rule : "+renderer.render(rule)); 
+        }
+        System.out.println("Ruleset : "+exeRules+ " Labels "+exeLabels);
+        int pos = 0;
+        for (String label:exeLabels) {
+        	if (label.equals("takenpos"))
+        		break;
+        	pos++;
+        }
+        SQWRLQueryEngine queryEngine = chessModel.getQueryEngine();
+        SQWRLResult result = null;
+        try {
+			result = queryEngine.runSQWRLQuery(exeLabels.get(pos), exeRules.get(pos));
+		} catch (SQWRLException | SWRLParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        try {
+			if (result != null) {
+				System.out.println(exeLabels.get(pos) + ": " + result.toString());
+				int nRows = result.getNumberOfRows();
+				int nC = result.getNumberOfColumns();
+				for (int i=0;i<nRows;i++) {
+					SQWRLResultValue resValue = result.getValue(0, i);
+					SQWRLResultValue resValue2 = result.getValue(1, i);
+					System.out.println(exeLabels.get(pos) + " row number:"+ i+" " + resValue.toString()+" "+resValue2.toString());
+					
+				}
+
+			}
+		} catch (SQWRLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
     } 
 	private void reasonWith() {
 		OWLDataFactory factory = chessModel.getOwlDatafactory();
-		PrefixOWLOntologyFormat pm = chessModel.getPm();
+//		PrefixOWLOntologyFormat pm = chessModel.getPm();
 		OWLReasoner owlReasoner = chessModel.getOwlReasoner();
 		PelletReasoner pelletReasoner = chessModel.getClarkpelletReasoner();
-		OWLObjectRenderer renderer = chessModel.getOwlRenderer();
+//		OWLObjectRenderer renderer = chessModel.getOwlRenderer();
 		OWLOntology ontology = chessModel.getOntModel();//
 //		OWLOntology model = chessModel.getModel();
-		OWLClass pieceClass = factory.getOWLClass(":Piece", pm);
+//		OWLClass pieceClass = factory.getOWLClass(":Piece", pm);
 		//Prøve med model individuals !!!!
 		Position position = positions.get(allPositions[0]);
 		HashSet<Piece> pieces = position.getPieces();
@@ -211,36 +339,36 @@ public class ChessBoard extends ParentModel {
 			for (Piece ontPiece :pieces) {
 				ontologyPiece = ontPiece;
 				OWLNamedIndividual piece = ontologyPiece.getOwlIndividual();
-				System.out.println("Reasoning: Pieces from generated classes Named ind: "+piece.toString()+" ontology piece: "+ontologyPiece.toString()+" Rendering piece " +renderer.render(piece));
+				System.out.println("Reasoning: Pieces from generated classes Named ind: "+piece.toString()+" ontology piece: "+ontologyPiece.toString());
 			}
 		}
-		listSWRLRules(ontology, pm);
-		System.out.println("Reasoning: Piece owl class: "+ pieceClass.asOWLClass().toString());
-		HashSet<OWLNamedIndividual> namedpieces = (HashSet<OWLNamedIndividual>) owlReasoner.getInstances(pieceClass, false).getFlattened();
-		for (OWLNamedIndividual piece :namedpieces ){
+		listSWRLRules(ontology);
+//		System.out.println("Reasoning: Piece owl class: "+ pieceClass.asOWLClass().toString());
+//		HashSet<OWLNamedIndividual> namedpieces = (HashSet<OWLNamedIndividual>) owlReasoner.getInstances(pieceClass, false).getFlattened();
+/*		for (OWLNamedIndividual piece :namedpieces ){
 			System.out.println("Reasoning: Pieces: "+piece.toString()+" Class " +renderer.render(piece)); // Does not work HashSet is empty!!!!???
-		}
-		OWLObjectProperty occupies = factory.getOWLObjectProperty(":occupies", pm);
+		}*/
+//		OWLObjectProperty occupies = factory.getOWLObjectProperty(":occupies", pm);
 //		factory.get
-		System.out.println("Reasoning: Property "+occupies.toString());
-		OWLNamedIndividual blackKing = factory.getOWLNamedIndividual(":BlackKing", pm);
-		System.out.println("Reasoning: Black King named ind: "+blackKing.asOWLNamedIndividual().toString()+" Top entity "+blackKing.isTopEntity()+" Bottom entity "+blackKing.isBottomEntity());
+//		System.out.println("Reasoning: Property "+occupies.toString());
+//		OWLNamedIndividual blackKing = factory.getOWLNamedIndividual(":BlackKing", pm);
+//		System.out.println("Reasoning: Black King named ind: "+blackKing.asOWLNamedIndividual().toString()+" Top entity "+blackKing.isTopEntity()+" Bottom entity "+blackKing.isBottomEntity());
 //		Map<OWLObjectPropertyExpression,Set<OWLIndividual>> kingValues = blackKing.get
 		
-		System.out.println("Reasoning: Black King "+blackKing.toString()+" rendering "+renderer.render(blackKing) );
-		HashSet<OWLNamedIndividual> individuals = (HashSet<OWLNamedIndividual>) owlReasoner.getObjectPropertyValues(blackKing, occupies).getFlattened();
+//		System.out.println("Reasoning: Black King "+blackKing.toString()+" rendering "+renderer.render(blackKing) );
+//		HashSet<OWLNamedIndividual> individuals = (HashSet<OWLNamedIndividual>) owlReasoner.getObjectPropertyValues(blackKing, occupies).getFlattened();
 //		owlReasoner.get
-		HashSet<OWLNamedIndividual> pelletindividuals = (HashSet<OWLNamedIndividual>) pelletReasoner.getObjectPropertyValues(blackKing, occupies).getFlattened();
-		for (OWLNamedIndividual ind : individuals)
+//		HashSet<OWLNamedIndividual> pelletindividuals = (HashSet<OWLNamedIndividual>) pelletReasoner.getObjectPropertyValues(blackKing, occupies).getFlattened();
+/*		for (OWLNamedIndividual ind : individuals)
 		{
 			System.out.println(blackKing.toStringID()+" occupies "+renderer.render(ind));// Does not work HashSet is empty!!!!???
-		}
+		}*/
 //		Set<OWLClassExpression> assertedClasses = blackKing.getTypes(ontology);
-		HashSet<OWLClass> classes = (HashSet<OWLClass>) owlReasoner.getTypes(blackKing, false).getFlattened(); // Does not work HashSet is empty!!!!???
-		for (OWLClass c: classes) {
+//		HashSet<OWLClass> classes = (HashSet<OWLClass>) owlReasoner.getTypes(blackKing, false).getFlattened(); // Does not work HashSet is empty!!!!???
+/*		for (OWLClass c: classes) {
 			boolean asserted = false;
 			System.out.println((asserted ? "Reasoning: asserted ":"Reasoning: inferred ")+ " class for Black King "+renderer.render(c) );
-		}
+		}*/
 		
 	}
 	/**
