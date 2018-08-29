@@ -157,14 +157,24 @@ function isTouchDevice() {
 <!-- <div id="board" style="width: 400px"></div> -->
   <div id="board2" style="width: 400px"></div>
 <!-- <input type="button" id="startBtn" value="Start" /> -->
-  <button type="submit" id="startBtnx" name="startBtnx" class="btn btn-primary" value="Startx">Restart Game</button>
-  <button type="submit" id="ontBtnx" name="ontBtnx" class="btn btn-primary" value="ontlogy">Create ontology position</button>
+  <button type="submit" id="startBtnx" name="startBtnx" class="btn btn-primary" value="Startx">Restart initial position</button>
+  <button type="submit" id="ontBtnx" name="ontBtnx" class="btn btn-primary" value="ontlogy" title="Creates the initial game position based on the loaded ontology ">Create ontology game</button>
 <!--   <input type="button" id="clearBtn" value="Clear" /> -->
   <input type="text" name="posisjon" value="pos" id="posisjon" size="20" style="display: none" >
   <input type="text" name="piece" value="x" id="piece" size="20" style="display: none">
   <input type="text" name="startposisjon" value="y" id="startposisjon" size="20" style="display: none">
 </div>
-<div class="clearfix"></div>
+<div class="form-group" id="tabeller">
+<h3>Available rules</h3>
+      <table class="table table-hover">
+  		<tr><th>Rule label</th><th>Rule description</th></tr>
+ 		<#list rules as rule>
+  			<tr id="labels"><td>"${rule.exeLabels}"</td><td>"${rule.exeRules}"</td></tr>
+		</#list>		
+  		
+ 	</table>  
+</div>
+
 </div>
 
 
