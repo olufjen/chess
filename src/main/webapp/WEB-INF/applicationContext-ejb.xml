@@ -4,7 +4,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+<!-- 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
 		<property name="driverClassName" value="${database.driver}"></property>
 		<property name="url" value="${database.url.innsiden}"></property>
 		<property name="username" value="${database.username}"></property>
@@ -18,7 +18,7 @@
 	</bean>
 	<bean id="jdbcTemplatebasis" class="org.springframework.jdbc.core.JdbcTemplate">
 		<property name="dataSource" ref="dataSourceskjemabank"></property>
-	</bean>
+	</bean> -->
 	<bean id="domainDictionary" class="no.naks.framework.web.control.DomainDictionaryImpl">
   </bean>
  

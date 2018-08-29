@@ -107,7 +107,7 @@
         </property> 
   -->       
 	</bean>
-	<bean id="sessionAdmin" class="no.basis.felles.control.SessionAdminImpl">
+	<bean id="sessionAdmin" class="no.chess.web.control.SessionAdminImpl">
 	</bean>
   <bean name="/chess/startside.html" id="rapporterstartServerResource" autowire="byName" scope="prototype"
              class="no.chess.web.server.resource.RapporterChessStartServerResourceHTML"> 
