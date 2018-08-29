@@ -24,7 +24,8 @@
     <url></url>
     
       <!-- Properties files -->
-    <properties>
+       <!-- Properties files  jena version prev: 3.0.0 olj 09.08.18 3.8.0 creates problems???!!  -->
+     <properties>
       <java.version>1.8</java.version>
         <jena.version>3.0.0</jena.version>
          <java-rdfa.version>0.4.2</java-rdfa.version>
@@ -286,13 +287,20 @@
 
 	 </dependency>
 -->	 
-      <dependency>
+ <!--      <dependency> Removed basis_felles and replaced by ontology_basis 14.08.18
          
 	          <groupId>no.basis</groupId>
 	          <artifactId>basis_felles</artifactId>
 	          <version>1.0-SNAPSHOT</version>
 
-      </dependency>
+      </dependency> -->
+     <dependency>
+         
+	          <groupId>no.basic</groupId>
+	          <artifactId>ontology_basis</artifactId>
+	          <version>1.0-SNAPSHOT</version>
+
+      </dependency>       
 <!--  chessontology added 24.07.18 -->      
       <dependency>
          
@@ -349,11 +357,11 @@
 	          <artifactId>elmo-skos-1.5</artifactId>
 	          <version>1.0-SNAPSHOT</version>
 	      </dependency> 
-	        <dependency>
+<!-- 	       <dependency> Removed org.openrdf.sesame 16.08.18 OJN owlapi-osgidistribution has reference to sesame
 	         <groupId>no.kunnskapssenteret</groupId>
 	          <artifactId>openrdf-sesame-2.4.0-onejar</artifactId>
 	          <version>1.0-SNAPSHOT</version>
-	      </dependency> 	      	           	      	      		
+	      </dependency>  -->	      	           	      	      		
    		<!-- Spring web flow -->
 	<!--      Removed 11.06.18 olj
    			<dependency>
@@ -573,7 +581,7 @@
 	<artifactId>org.apache.commons.io</artifactId>    
 	<version>2.4</version>
 </dependency>            
-<dependency>
+<!-- <dependency> Removed sesam libraries 15.08.18 olj sesame kommer med owlapi-osgidistribution
 	<groupId>org.openrdf.sesame</groupId>
 	<artifactId>sesame-repository-api</artifactId>
 	<version>2.7.1</version>
@@ -607,12 +615,28 @@
     <groupId>org.openrdf.sesame</groupId>
     <artifactId>sesame-rio-api</artifactId>
     <version>2.7.1</version>
-</dependency>
-<dependency>
+</dependency> -->
+<!-- https://mvnrepository.com/artifact/net.sourceforge.owlapi/owlapi-api -->
+<!-- <dependency>
+    <groupId>net.sourceforge.owlapi</groupId>
+    <artifactId>owlapi-api</artifactId>
+    <version>5.1.6</version>
+</dependency> -->
+
+<!--<dependency>
 	<groupId>net.sourceforge.owlapi</groupId>
 	<artifactId>owlapi-api</artifactId>
 	<version>3.4.3</version>
+</dependency>  -->
+<!-- https://mvnrepository.com/artifact/net.sourceforge.owlapi/owlapi-api -->
+<!-- Added 20.08. 18 olj or version 4.5.4 -->
+<!-- https://mvnrepository.com/artifact/net.sourceforge.owlapi/owlapi-distribution -->
+<dependency>
+    <groupId>net.sourceforge.owlapi</groupId>
+    <artifactId>owlapi-distribution</artifactId>
+    <version>4.5.4</version>
 </dependency>
+
 <!-- Restlet depenencies -->
 <dependency>
         <groupId>org.restlet.jee</groupId>
@@ -755,7 +779,7 @@
 </dependency>
 -->                        
  
-<dependency>
+<!-- <dependency> Removed org.openrdf.sesame 16.08.18 OJN owlapi-osgidistribution has reference to sesame
 	<groupId>org.openrdf.sesame</groupId>
 	<artifactId>sesame-http-protocol</artifactId>
 	<version>2.7.1</version>
@@ -765,7 +789,7 @@
 	<groupId>org.openrdf.sesame</groupId>
 	<artifactId>sesame-repository-http</artifactId>
 	<version>2.7.1</version>
-</dependency>
+</dependency> -->
 
 <!--  
         <dependencySets>
