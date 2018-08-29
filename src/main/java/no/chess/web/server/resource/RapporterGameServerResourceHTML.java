@@ -6,8 +6,6 @@ import java.util.Map;
 
 
 
-import no.basis.felles.server.resource.SessionServerResource;
-
 import org.restlet.Request;
 import org.restlet.data.Form;
 import org.restlet.data.LocalReference;

@@ -1,6 +1,5 @@
 package no.chess.web.server.resource;
 
-import no.basis.felles.server.resource.SessionServerResource;
 
 /**
  * Denne klasses er felles for alle resursklasser i Sjakk
