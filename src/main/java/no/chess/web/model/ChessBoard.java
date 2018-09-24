@@ -36,6 +36,7 @@ import org.swrlapi.sqwrl.values.SQWRLResultValue;
 
 import com.hp.hpl.jena.sparql.core.Var;
 
+import no.basic.ontology.control.OntologyContainer;
 import no.basic.ontology.model.OntologyModel;
 import no.basic.ontology.model.ParentModel;
 /*import no.basis.felles.semanticweb.chess.BlackBoardPosition;
@@ -87,6 +88,7 @@ public class ChessBoard extends ParentModel {
 	private ChessRules chessRule;
 	private ArrayList<ChessRules> chessRules;
 	private Position position;
+	private OntologyContainer modelContainer;
 	/**
 	 * positions contains all available board positions and information on whether they are occupied
 	 */
@@ -118,10 +120,10 @@ public class ChessBoard extends ParentModel {
  * From the chess ontology		
  */
 		 chessModel  = new OntologyModel();
-		 System.out.println("Fetching individuals");
-		 individuals = chessModel.getIndividuals();
-		 System.out.println("Found individuals");
-
+		 System.out.println("Fetching individuals removed");
+//		 individuals = chessModel.getIndividuals(); // These individuals are not used. OLJ 30.08.18
+//		 System.out.println("Found individuals");
+//		 chessModel.getOntindividuals();
 		 chessRules = new ArrayList();
 		 chessRule = new ChessRules();
 		 chessRules.add(chessRule);
@@ -131,13 +133,11 @@ public class ChessBoard extends ParentModel {
 //		 properties = chessModel.getProperties(individuals);
 // ==================================		 
 		 
-		 System.out.println("Properties collected");	
+//		 System.out.println("Properties collected");	
 //		 chessModel.getGenRulereasoner().getGraphCapabilities().toString();
 		 System.out.println("Reasoner capabilities "+chessModel.getGenRulereasoner().getGraphCapabilities().toString());	
-/*		 blackPositions = chessModel.getallgivenBlackpositions();
-		 whitePositions = chessModel.getallgivenWhitepositions();
-		 blackPieces = chessModel.getallgivenBlackpieces();
-		 whitePieces = chessModel.getallgivenWhitepieces();*/
+		 System.out.println("Clarkpellet reasoner for ontModel "+chessModel.getClarkpelletReasoner().toString());	
+		 modelContainer = chessModel.getModelContainer();
 		 createStartPosition();
 		 
 //		 createOntologyposition();
@@ -187,13 +187,21 @@ public class ChessBoard extends ParentModel {
 	 * They are stored in Hashsets: blackPositions, whitePositions, blackPieces, whitePieces.
 	 */
 	public void createStartPosition(){
-		 blackPositions = chessModel.getallgivenBlackpositions();
+/*		 blackPositions = chessModel.getallgivenBlackpositions();
 		 whitePositions = chessModel.getallgivenWhitepositions();
 		 blackPieces = chessModel.getallgivenBlackpieces();
 		 whitePieces = chessModel.getallgivenWhitepieces();
 		 allTakenPositions = chessModel.getAllTakenPositions();
 		 allVacantPositions = chessModel.getAllVacantPositions();
-		 allChessPositions = chessModel.getAllChessPositions();
+		 allChessPositions = chessModel.getAllChessPositions();*/
+		 
+		 blackPositions = modelContainer.getallgivenBlackpositions();
+		 whitePositions = modelContainer.getallgivenWhitepositions();
+		 blackPieces = modelContainer.getallgivenBlackpieces();
+		 whitePieces = modelContainer.getallgivenWhitepieces();
+		 allTakenPositions = modelContainer.getAllTakenPositions();
+		 allVacantPositions = modelContainer.getAllVacantPositions();
+		 allChessPositions = modelContainer.getAllChessPositions();
 		if (positions != null){
 			positions = null;
 		}
@@ -288,7 +296,7 @@ public class ChessBoard extends ParentModel {
         	
          //   System.out.println("Rule : "+renderer.render(rule)); 
         }
-        System.out.println("Ruleset : "+exeRules+ " Labels "+exeLabels);
+//        System.out.println("Ruleset : "+exeRules+ " Labels "+exeLabels);
         int pos = 0;
         for (String label:exeLabels) {
         	if (label.equals("takenpos"))
@@ -305,13 +313,13 @@ public class ChessBoard extends ParentModel {
 		}
         try {
 			if (result != null) {
-				System.out.println(exeLabels.get(pos) + ": " + result.toString());
+//				System.out.println(exeLabels.get(pos) + ": " + result.toString());
 				int nRows = result.getNumberOfRows();
 				int nC = result.getNumberOfColumns();
 				for (int i=0;i<nRows;i++) {
 					SQWRLResultValue resValue = result.getValue(0, i);
 					SQWRLResultValue resValue2 = result.getValue(1, i);
-					System.out.println(exeLabels.get(pos) + " row number:"+ i+" " + resValue.toString()+" "+resValue2.toString());
+//					System.out.println(exeLabels.get(pos) + " row number:"+ i+" " + resValue.toString()+" "+resValue2.toString());
 					
 				}
 
@@ -325,7 +333,7 @@ public class ChessBoard extends ParentModel {
 	private void reasonWith() {
 		OWLDataFactory factory = chessModel.getOwlDatafactory();
 //		PrefixOWLOntologyFormat pm = chessModel.getPm();
-		OWLReasoner owlReasoner = chessModel.getOwlReasoner();
+//		OWLReasoner owlReasoner = chessModel.getOwlReasoner();
 		PelletReasoner pelletReasoner = chessModel.getClarkpelletReasoner();
 //		OWLObjectRenderer renderer = chessModel.getOwlRenderer();
 		OWLOntology ontology = chessModel.getOntModel();//
@@ -339,7 +347,7 @@ public class ChessBoard extends ParentModel {
 			for (Piece ontPiece :pieces) {
 				ontologyPiece = ontPiece;
 				OWLNamedIndividual piece = ontologyPiece.getOwlIndividual();
-				System.out.println("Reasoning: Pieces from generated classes Named ind: "+piece.toString()+" ontology piece: "+ontologyPiece.toString());
+//				System.out.println("Reasoning: Pieces from generated classes Named ind: "+piece.toString()+" ontology piece: "+ontologyPiece.toString());
 			}
 		}
 		listSWRLRules(ontology);
@@ -408,7 +416,7 @@ public class ChessBoard extends ParentModel {
 				System.out.println("Chessontology: Name of piece: "+chessPiece.getName()+" Name of chess piece: "+chessPiece.getPieceName()+" "+chessPiece.getOntlogyName());
 			}*/
 		}
-		reasonWith();
+
 	}
 	/**
 	 * createOntologyposition
@@ -427,23 +435,10 @@ public class ChessBoard extends ParentModel {
 				posx = pos;
 				break;
 			}
-			System.out.println("Chess positions: "+names.toString()+" "+posx);
+//			System.out.println("createOntologyposition: Chess positions: "+names.toString()+" "+posx);
 //			System.out.println("Chess vacant positions: "+vacants.toString()+" ");
 		}
-		for (Taken taken : allTakenPositions) {
-	    	  IRI ir = taken.getOwlIndividual().getIRI();
-	    	  HashSet<Piece> pieces =  (HashSet<Piece>)( taken).getIsOccupiedBy();
-	    	  String irs = ir.toString();
-	    	  OWLNamedIndividual wp = taken.getOwlIndividual();
-	    	  char sep = '#';
-	    	  String name = extractString(irs, sep,-1);
-//	    	  System.out.println("Initial taken positions: "+irs+" "+taken.toString()+ " "+ wp.toString()+ " "+name);
-	    	  Position position = positions.get(name);
-/*	    	  if (position != null){
-//	    		  position.setWhiteBoardPosition(takenPos);
-	    		  position.setPieces(pieces);
-	    	  }*/
-		}
+
 		for (BlackPiece blackPiece : blackPieces) {
 			HashSet<Taken> taken = (HashSet<Taken>) blackPiece.getOccupies();
 			IRI irp = blackPiece.getOwlIndividual().getIRI();
@@ -451,7 +446,7 @@ public class ChessBoard extends ParentModel {
 			String irpiece = irp.toString();
 			char sepp = '#';
 	    	String piecename = extractString(irpiece, sepp,-1);
-			System.out.println("Black piece: "+irpiece+" "+piecename);
+//			System.out.println("createOntologyposition: Black piece: "+irpiece+" "+piecename);
 			 HashSet<Piece> pieces = new HashSet<Piece>();
 			for (Taken takenPos : taken) {
 				boolean whitePos = false;
@@ -465,14 +460,15 @@ public class ChessBoard extends ParentModel {
 		    		 boolean ispiece = individual.getClass().equals(Entity.class);
 //		    		 Piece piece = (Piece)individual;
 //		    		 Entity ent = (Entity)individual;
-		    		 System.out.println("Piece: "+individual.toString()+ " class "+ispiece);
+//		    		 System.out.println("createOntologyposition: individual Piece: "+individual.toString()+ " class "+ispiece);
 //		    		 pieces.add(piece); 
 		    	 }
 		    	 String irs = ir.toString();
 		    	 OWLNamedIndividual wp = takenPos.getOwlIndividual();
 		    	 char sep = '#';
 		    	 String name = extractString(irs, sep,-1);
-		    	 System.out.println("Taken position for black piece: "+irs+" "+takenPos.toString()+ " "+ wp.toString()+ " "+name);
+		    	 System.out.println("createOntologyposition: Taken position for black piece: "+irs+" "+takenPos.toString()+ " "+ wp.toString()+ " "+name);
+		    	 allTakenPositions.add(takenPos);
 //		    	 HashSet<BoardPosition> parts = (HashSet<BoardPosition>) takenPos.getIsPartOf();
 		    	 BoardPosition boardPosition = (BoardPosition)takenPos;
 	    		 blackPos = boardPosition.getClass().equals(BlackBoardPosition.class);
@@ -484,7 +480,7 @@ public class ChessBoard extends ParentModel {
 		    		 if (whitePos)
 		    			 position.setWhiteBoardPosition((WhiteBoardPosition)boardPosition);
 		    		 //			    		  position.setPieces(pieces);
-		    		 System.out.println("Found a position for black pieces "+name+" Position "+boardPosition.toString());
+//		    		 System.out.println("createOntologyposition: Found a position for black pieces "+name+" Position "+boardPosition.toString());
 		    		 position.setPieces(pieces);
 		    	 }
 		    
@@ -501,7 +497,7 @@ public class ChessBoard extends ParentModel {
 			String irpiece = irp.toString();
 			char sepp = '#';
 	    	String piecename = extractString(irpiece, sepp,-1);
-			System.out.println("White piece: "+irpiece+" "+piecename);
+//			System.out.println("createOntologyposition: White piece: "+irpiece+" "+piecename);
 			 HashSet<Piece> pieces = new HashSet<Piece>();
 			for (Taken takenPos : taken) {
 				IRI ir = takenPos.getOwlIndividual().getIRI();
@@ -513,7 +509,7 @@ public class ChessBoard extends ParentModel {
 		    		 boolean ispiece = individual.getClass().equals(Entity.class);
 //		    		 Piece piece = (Piece)individual;
 //		    		 Entity ent = (Entity)individual; 
-		    		 System.out.println("Piece: "+individual.toString()+ " class "+ispiece);
+//		    		 System.out.println("createOntologyposition: individual Piece: "+individual.toString()+ " class "+ispiece);
 //		    		 pieces.add(piece); 
 		    	 }
 		    	 String irs = ir.toString();
@@ -521,7 +517,8 @@ public class ChessBoard extends ParentModel {
 		    	 char sep = '#';
 		    	 String name = extractString(irs, sep,-1);
 //		    	 HashSet<BoardPosition> parts = (HashSet<BoardPosition>) takenPos.getIsPartOf();
-		    	 System.out.println("Taken position for white piece: "+irs+" "+takenPos.toString()+ " "+ wp.toString()+ " "+name);
+		    	 System.out.println("createOntologyposition: Taken position for white piece: "+irs+" "+takenPos.toString()+ " "+ wp.toString()+ " "+name);
+		    	 allTakenPositions.add(takenPos);
 		    	 BoardPosition boardPosition = (BoardPosition)takenPos;
 		    	 blackPos = boardPosition.getClass().equals(BlackBoardPosition.class);
 		    	 whitePos = boardPosition.getClass().equals(WhiteBoardPosition.class);
@@ -532,15 +529,32 @@ public class ChessBoard extends ParentModel {
 		    		 if (whitePos)
 		    			 position.setWhiteBoardPosition((WhiteBoardPosition)boardPosition);
 		    		 //			    	  position.setPieces(pieces);
-		    		 System.out.println("Found a position for white pieces"+name+" Position "+boardPosition.toString());
+//		    		 System.out.println("createOntologyposition: Found a position for white pieces"+name+" Position "+boardPosition.toString());
 		    		 position.setPieces(pieces);
 		    	 }
 	
 //		    	 System.out.println("Initial taken positions: "+irs+" ToString takenPos: "+takenPos.toString()+ " OWL individual: "+ wp.toString()+ " "+name);
 
 			}
-		}		
-		
+		}
+		for (Taken taken : allTakenPositions) {
+	    	  IRI ir = taken.getOwlIndividual().getIRI();
+	    	  HashSet<WrappedIndividual> pieces =  (HashSet<WrappedIndividual>)( taken).getIsOccupiedBy();
+	    	  String irs = ir.toString();
+	    	  OWLNamedIndividual wp = taken.getOwlIndividual();
+	    	  char sep = '#';
+	    	  String name = extractString(irs, sep,-1);
+	    	  System.out.println("createOntologyposition: Initial taken positions: "+irs+" "+taken.toString()+ " "+ wp.toString()+ " "+name);
+	    	  for (WrappedIndividual piece : pieces) {
+	    		  System.out.println("createOntologyposition: Position occupied by: "+piece.toString());
+	    	  }
+	    	  Position position = positions.get(name);
+/*	    	  if (position != null){
+//	    		  position.setWhiteBoardPosition(takenPos);
+	    		  position.setPieces(pieces);
+	    	  }*/
+		}
+		reasonWith();
 /*		for (Vacant vacant : allVacantPositions) {
 			 System.out.println("Initial vacant positions: "+ vacant.toString());
 		}*/

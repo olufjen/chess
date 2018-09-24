@@ -130,6 +130,12 @@ public class Position extends ParentModel {
 			}
 		} 
 	}
+	/**
+	 * checkPieceOccupation
+	 * This method checks if an individual piece occupies correct position.
+	 * It ensures that the piece individual always occupies correct postion after a move
+	 * @param piece
+	 */
 	public void checkPieceOccupation(Piece piece){
 		if (piece.getOccupies() != null){
 			HashSet<BoardPosition> whitePosset = (HashSet<BoardPosition>) piece.getOccupies();
@@ -141,7 +147,7 @@ public class Position extends ParentModel {
 				char sep = '#';
 				String name = extractString(irs, sep,-1);
 				if (name.equals(positionName)){
-					System.out.println("Occupies correct position: " + irs+ " " + name + " " +positionName);
+//					System.out.println("Occupies correct position: " + irs+ " " + name + " " +positionName);
 				}else {
 					System.out.println("Occupies wrong position: "+ irs+ " " + name + " " +positionName);
 					piece.removeOccupies((Taken) whitePos);
