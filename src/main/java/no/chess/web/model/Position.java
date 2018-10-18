@@ -111,7 +111,6 @@ public class Position extends ParentModel {
 				String irs = ir.toString();
 		    	char sep = '#';
 		    	String name = extractString(irs, sep,-1); 
-//		    	System.out.println("Name of piece: "+name+" Name of chess piece: "+usedBy.getPieceName()+" "+usedBy.getName());
 		    	if (name.startsWith("White")){
 		    		usedBy.setWhitePiece(piece);
 		    		if (piece != null)
@@ -127,13 +126,15 @@ public class Position extends ParentModel {
 		    			System.out.println("Piece is null!! Name of piece: "+name+" Name of chess piece: "+usedBy.getPieceName()+" "+usedBy.getName());
 		    	}
 		    	usedBy.setOntlogyName(name);
+		    	System.out.println("setPieces: Name of piece: "+name+" Name of chess piece: "+usedBy.getPieceName()+" "+usedBy.getName());
+
 			}
 		} 
 	}
 	/**
 	 * checkPieceOccupation
 	 * This method checks if an individual piece occupies correct position.
-	 * It ensures that the piece individual always occupies correct postion after a move
+	 * It ensures that the piece individual always occupies correct position after a move
 	 * @param piece
 	 */
 	public void checkPieceOccupation(Piece piece){

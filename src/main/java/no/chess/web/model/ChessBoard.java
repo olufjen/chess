@@ -49,7 +49,7 @@ import no.chess.ontology.BlackPiece;
 import no.chess.ontology.BoardPosition;
 import no.chess.ontology.ChessPosition;
 import no.chess.ontology.Entity;
-import no.chess.ontology.Object;
+import no.chess.ontology.BFObject;
 import no.chess.ontology.Piece;
 import no.chess.ontology.Taken;
 import no.chess.ontology.Vacant;
@@ -89,6 +89,10 @@ public class ChessBoard extends ParentModel {
 	private ArrayList<ChessRules> chessRules;
 	private Position position;
 	private OntologyContainer modelContainer;
+	private List<String> moves;
+	private List<String> blackMoves;
+	private ArrayList<ChessMoves> chessMoves;
+	private ChessMoves chessMove;
 	/**
 	 * positions contains all available board positions and information on whether they are occupied
 	 */
@@ -127,6 +131,9 @@ public class ChessBoard extends ParentModel {
 		 chessRules = new ArrayList();
 		 chessRule = new ChessRules();
 		 chessRules.add(chessRule);
+		 chessMove = new ChessMoves();
+		 chessMoves = new ArrayList();
+		 chessMoves.add(chessMove);
 /*
  * This routines takes a long time !!!		 
  */
@@ -139,13 +146,54 @@ public class ChessBoard extends ParentModel {
 		 System.out.println("Clarkpellet reasoner for ontModel "+chessModel.getClarkpelletReasoner().toString());	
 		 modelContainer = chessModel.getModelContainer();
 		 createStartPosition();
-		 
+	     moves = new ArrayList<String>();
+	     blackMoves = new ArrayList<String>();
 //		 createOntologyposition();
 	}
 	
 
+	public ArrayList<ChessMoves> getChessMoves() {
+		return chessMoves;
+	}
+
+
+	public void setChessMoves(ArrayList<ChessMoves> chessMoves) {
+		this.chessMoves = chessMoves;
+	}
+
+
+	public ChessMoves getChessMove() {
+		return chessMove;
+	}
+
+
+	public void setChessMove(ChessMoves chessMove) {
+		this.chessMove = chessMove;
+	}
+
+
 	public ChessRules getChessRule() {
 		return chessRule;
+	}
+
+
+	public List<String> getBlackMoves() {
+		return blackMoves;
+	}
+
+
+	public void setBlackMoves(List<String> blackMoves) {
+		this.blackMoves = blackMoves;
+	}
+
+
+	public List<String> getMoves() {
+		return moves;
+	}
+
+
+	public void setMoves(List<String> moves) {
+		this.moves = moves;
 	}
 
 
@@ -179,7 +227,11 @@ public class ChessBoard extends ParentModel {
 	public void setExeLabels(ArrayList<String> exeLabels) {
 		this.exeLabels = exeLabels;
 	}
-
+	
+	public void emptyGame() {
+		chessMoves.clear();
+		chessMoves.add(chessMove);
+	}
 	/**
 	 * createStartPosition()
 	 * This method creates a startposition without involving ontology
@@ -427,14 +479,14 @@ public class ChessBoard extends ParentModel {
 	 */
 	public void createOntologyposition(){
 		for (ChessPosition chessPos: allChessPositions) {
-			HashSet<String> names =  (HashSet<String>) chessPos.getHasName(); 
+//			HashSet<String> names =  (HashSet<String>) chessPos.getHasName(); 
 //			HashSet<Vacant> vacants = (HashSet<Vacant>) chessPos.getIsVacant();
 //			OWLNamedIndividual individual = chessPos.getOwlIndividual();
-			String posx = null;
+/*			String posx = null;
 			for (String pos : names) {
 				posx = pos;
 				break;
-			}
+			}*/
 //			System.out.println("createOntologyposition: Chess positions: "+names.toString()+" "+posx);
 //			System.out.println("Chess vacant positions: "+vacants.toString()+" ");
 		}

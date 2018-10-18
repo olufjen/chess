@@ -15,7 +15,7 @@ import no.basis.felles.semanticweb.chess.impl.DefaultWhitePiece;*/
 import no.chess.ontology.Piece;
 import no.chess.ontology.WhiteBoardPosition;
 import no.chess.ontology.impl.DefaultWhitePiece;
-import no.chess.ontology.Object;
+import no.chess.ontology.BFObject;
 /**
  * This class represent a a front end chess piece.
  * It contains information about the ontology chesspiece and its position.
@@ -28,10 +28,10 @@ public class ChessPiece extends ParentModel{
 	private String column;
 	private String color;
 	private int value;
-	private String name;
+	private String name; // The full name of the piece (wP, bP etc)
 	private String[] legalMoves;
 	private boolean use = true;
-	private String pieceName = "";
+	private String pieceName = ""; // The type of piece: P,R, K etc.
 	private Piece blackPiece = null;
 	private Piece whitePiece = null;
 	private BlackBoardPosition blackBoardPosition = null;
@@ -51,14 +51,10 @@ public class ChessPiece extends ParentModel{
 		calculateValue();
 	}
 	private void setcorrectPieceName(HashSet<String> names){
-		Iterator<String> namesIterator = names.iterator();
-		while (namesIterator.hasNext()){
-			String ontpieceName = namesIterator.next();
-			if (pieceName != null){
-				name = ontpieceName.toString();
-				break;
-			}
+		for (String o : names) {
+			name = o.toString();
 		}
+
 	}
 	public String getOntlogyName() {
 		return ontlogyName;
