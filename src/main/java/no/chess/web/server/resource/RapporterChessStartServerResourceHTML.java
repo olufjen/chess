@@ -9,6 +9,7 @@ import java.util.Map;
 import no.basic.ontology.model.OntologyModel;
 import no.chess.ontology.BlackBoardPosition;
 import no.chess.web.model.ChessBoard;
+import no.chess.web.model.ChessMoves;
 import no.chess.web.model.ChessPiece;
 import no.chess.web.model.ChessRules;
 import no.chess.web.model.Position;
@@ -37,7 +38,7 @@ import freemarker.template.SimpleScalar;
 
 /**
  * @author olj
- *  Denne resursen er knyttet til startsiden 
+ *  Denne resursen er knyttet til startsiden i
  *  Sjakkspillet
  */
 public class RapporterChessStartServerResourceHTML extends ChessServerResource {
@@ -51,9 +52,15 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	private String startPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 	private String rulesKey = "rules";
 	private String rulelabelKey = "rulelabels";
-	
-
-
+	private String movesKey = "moves";
+	private String blackmovesKey = "blackmoves";
+	private List<String> rules;
+	private List<String> labels;
+	private List<ChessRules> chessRules;
+	private List<String> moves;
+	private List<String> blackMoves;
+	private ChessMoves chessMove;
+	private ArrayList<ChessMoves> chessMoves;
 
 	public String getRulesKey() {
 		return rulesKey;
@@ -127,6 +134,46 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	}
 
 	/**
+	 * establishRules
+	 * @param chessBoard
+	 * This method puts rules available in the ontology up for display on screen
+	 */
+	private void establishRules(ChessBoard chessBoard) {
+		 rules = chessBoard.getExeRules();
+		 labels = chessBoard.getExeLabels();
+		 chessRules = chessBoard.getChessRules();
+
+
+		 if (rules == null || rules.isEmpty()) {
+			 rules = new ArrayList<String>();
+			 rules.add("No rules avaiable");
+		 }
+		 if (labels == null || labels.isEmpty()) {
+			 labels = new ArrayList<String>();
+			 labels.add("No rule");
+		 }
+	}
+	private void establishMoves(ChessBoard chessBoard,Position position) {
+		String move = position.getPositionName();
+		String pieceName = position.getUsedBy().getName();
+		String pieceType = position.getUsedBy().getPieceName();
+		if (!pieceType.equals("P"))
+			move = pieceType+move;
+		chessMoves = chessBoard.getChessMoves();
+		int last = chessMoves.size() ;
+		chessMove = chessMoves.get(last-1);
+		int moveNr = chessMove.getMoveNr();
+		if (pieceName.contains("w")) {
+			chessMove = new ChessMoves();
+			chessMove.setWhiteMove(move);
+			chessMove.setMoveNr(moveNr+1);
+			chessMoves.add(chessMove);
+		}else {
+			chessMove.setBlackMove(move);
+		}
+		
+	}
+	/**
 	 * getChess
 	 * Denne rutinen starter med startside.html
 	 * Denne rutinen henter inn nødvendige session objekter og  setter opp nettsiden for å 
@@ -156,38 +203,33 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	     Reference reference = new Reference(getReference(),"..").getTargetRef();
 	     Request request = getRequest();
 	     Map<String, Object> dataModel = new HashMap<String, Object>();
+	
+//	     establishMoves();
 	     String meldingsText = " ";
 	     SimpleScalar simple = new SimpleScalar(piece);
 	     SimpleScalar movedTo = new SimpleScalar(newPos);
 	     SimpleScalar chessPosition = new SimpleScalar(startPosition);
-	     
+//	     SimpleScalar chessMove = new SimpleScalar(moves);
 	     ChessBoard chessBoard = new ChessBoard();
 	     String[] legalMoves = {"a3","a4"};
 	     String fen = chessBoard.createFen();
 //	     System.out.println(fen);
+/*	     moves = chessBoard.getMoves();
+	     blackMoves = chessBoard.getBlackMoves();*/
 	     dataModel.put(fenPosid,fen);
-
+	     establishRules(chessBoard);
+	     chessMoves = chessBoard.getChessMoves();
 	     sessionAdmin.setSessionObject(request,chessBoard, chessBoardsession);
 //	     ChessPiece whitePawn1 = whitePawnpos.getUsedBy();
 //	     if (whitePawn1 != null)
 //	    	 whitePawn1.setLegalMoves(legalMoves);
 		 dataModel.put(pieceId,simple );
 		 dataModel.put(displayKey, chessPosition);
-		 List<String> rules = chessBoard.getExeRules();
-		 List<String> labels = chessBoard.getExeLabels();
-		 List<ChessRules> chessRules = chessBoard.getChessRules();
 
-
-		 if (rules == null || rules.isEmpty()) {
-			 rules = new ArrayList<String>();
-			 rules.add("No rules avaiable");
-		 }
-		 if (labels == null || labels.isEmpty()) {
-			 labels = new ArrayList<String>();
-			 labels.add("No rule");
-		 }
 		
    	 	dataModel.put(rulesKey,chessRules);
+   	 	dataModel.put(movesKey, chessMoves);
+ //  	 	dataModel.put(blackmovesKey, blackMoves);
 //   	 	dataModel.put(rulelabelKey, labels);
    	 	
 //		 dataModel.put(pawnId,whitePawn1);
@@ -236,6 +278,9 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	String[] legalMoves = {"",""};
     	ChessPiece chessPiece = null;
     	ChessBoard chessBoard = (ChessBoard)sessionAdmin.getSessionObject(request, chessBoardsession);
+	    moves = chessBoard.getMoves();
+	    blackMoves = chessBoard.getBlackMoves();
+	    chessMoves = chessBoard.getChessMoves();
     	Parameter restartGame = form.getFirst("startBtnx"); // Bruker oppgir å starte på nytt
     	Parameter ontology = form.getFirst("ontBtnx"); // User wants ontology position on chessboard
     	Parameter printOntology = form.getFirst("printBtnx"); // User wants ontology printed
@@ -258,8 +303,21 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	if (reload != null){
     		sessionAdmin.getSession(request,chessBoardsession).invalidate();
     		chessBoard = null;
+   	     	SimpleScalar simple = new SimpleScalar(piece);
+   	     	SimpleScalar movedTo = new SimpleScalar(newPos);
+   	     	SimpleScalar chessPosition = new SimpleScalar(startPosition);
     		chessBoard = new ChessBoard();
+   	     	moves = chessBoard.getMoves();
+   	     	blackMoves = chessBoard.getBlackMoves();
      		String fen = chessBoard.createFen();
+     		establishRules(chessBoard);
+     		dataModel.put(pieceId,simple );
+     		dataModel.put(displayKey, chessPosition);
+     		chessBoard.emptyGame();
+   		
+      	 	dataModel.put(rulesKey,chessRules);
+      		dataModel.put(movesKey, chessMoves);
+//      	 	dataModel.put(blackmovesKey, blackMoves);
     		//   	     System.out.println(fen);
     		dataModel.put(fenPosid,fen);
     		sessionAdmin.setSessionObject(request,chessBoard, chessBoardsession);
@@ -286,25 +344,27 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	}
     	if (ontology != null){
     		chessBoard.createChessontlogyPosition();
-     	     String fen = chessBoard.createFen();
-     	  
-       	     System.out.println(fen);
-       	     dataModel.put(fenPosid,fen);
-        	SimpleScalar pieceMoved = new SimpleScalar(piece);
-        	SimpleScalar movedTo = new SimpleScalar(newPos);
-    	     SimpleScalar chessPosition = new SimpleScalar(position);
-    		 dataModel.put(displayKey, chessPosition);
-       	 	dataModel.put(pieceId,pieceMoved );
-       	 List<ChessRules> chessRules = chessBoard.getChessRules();
-       	 	dataModel.put(rulesKey,chessRules);
- /*      	 	dataModel.put(rulesKey,chessBoard.getExeRules());
+    		String fen = chessBoard.createFen();
+
+    		System.out.println(fen);
+    		dataModel.put(fenPosid,fen);
+    		SimpleScalar pieceMoved = new SimpleScalar(piece);
+    		SimpleScalar movedTo = new SimpleScalar(newPos);
+    		SimpleScalar chessPosition = new SimpleScalar(position);
+    		dataModel.put(displayKey, chessPosition);
+    		dataModel.put(pieceId,pieceMoved );
+    		List<ChessRules> chessRules = chessBoard.getChessRules();
+    		dataModel.put(rulesKey,chessRules);
+    		dataModel.put(movesKey, chessMoves);
+//    		dataModel.put(blackmovesKey, blackMoves);
+    		/*      	 	dataModel.put(rulesKey,chessBoard.getExeRules());
        	 	dataModel.put(rulelabelKey, chessBoard.getExeLabels());*/
-     //		 dataModel.put(pawnId,whitePawn1);
-    	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-            Representation pasientkomplikasjonFtl = clres2.get();
-            templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-                    MediaType.TEXT_HTML);	
-        	return templateRep;
+    		//		 dataModel.put(pawnId,whitePawn1);
+    		ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
+    		Representation pasientkomplikasjonFtl = clres2.get();
+    		templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+    				MediaType.TEXT_HTML);	
+    		return templateRep;
     	}
     	if (restartGame != null){
     		chessBoard.createStartPosition();
@@ -314,6 +374,12 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
         	SimpleScalar pieceMoved = new SimpleScalar(piece);
         	SimpleScalar movedTo = new SimpleScalar(newPos);
     	     SimpleScalar chessPosition = new SimpleScalar(position);
+      		establishRules(chessBoard);
+     		chessBoard.emptyGame();
+//      		dataModel.put(pieceId,simple );
+       	 	dataModel.put(rulesKey,chessRules);
+       		dataModel.put(movesKey, chessMoves);
+//      	 	dataModel.put(blackmovesKey, blackMoves);
     		 dataModel.put(displayKey, chessPosition);
        	 	dataModel.put(pieceId,pieceMoved );
      //		 dataModel.put(pawnId,whitePawn1);
@@ -355,6 +421,8 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
            	newPosition.setUsedBy(chessPiece);
         	newPosition.setInUse(true);
         	newPosition.setPieces(pieces);
+        	establishMoves(chessBoard,newPosition);
+        	
        	}
 
    	     String fen = chessBoard.createFen();
@@ -365,6 +433,12 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	     SimpleScalar chessPosition = new SimpleScalar(position);
 		 dataModel.put(displayKey, chessPosition);
    	 	dataModel.put(pieceId,pieceMoved );
+  		establishRules(chessBoard);
+//		dataModel.put(pieceId,simple );
+	 	dataModel.put(rulesKey,chessRules);
+		dataModel.put(movesKey, chessMoves);
+//  	 	dataModel.put(blackmovesKey, blackMoves);
+
  //		 dataModel.put(pawnId,whitePawn1);
 	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
         Representation pasientkomplikasjonFtl = clres2.get();
