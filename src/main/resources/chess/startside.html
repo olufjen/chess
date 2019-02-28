@@ -75,6 +75,7 @@
             <ul>
                 <li><a href="javascript:void(0);" onclick="formSubmit('ontBtnx');" title="Creates the initial game position based on the loaded ontology ">Create ontology game</a></li>
                 <li><a href="javascript:void(0);" onclick="formSubmit('startBtnx');" title="Creates the chess start position">Restart initial position</a></li>
+                  <li><a href="javascript:void(0);" onclick="formSubmit('printgame');" title="Prints the game shown in algebraic notation">Print game</a></li>
                 <li><a href="#">Read chess game from pgn file</a></li>
             </ul>
         </li>
@@ -116,13 +117,13 @@
 <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
 <script type="text/javascript">
  function formSubmit(button){
-//	 alert("formsubmit");
+//	 alert("formsubmit "+button);
 	var clickbutton = "#"+button;
 	console.log( "Form submit "+clickbutton );
  $(clickbutton).click();
 }; 
 //--------------------
-//Egne variable
+//Egne variable 
 //-------------------
 var  MOVE_MADE = false;
 
@@ -188,6 +189,7 @@ function isTouchDevice() {
  <button type="submit" id="qBtnx" name="qBtnx" class="btn btn-primary" value="query">Query ontology</button>
 </div> -->
 <div class="row" style="background-color:lightgray;">
+ 
 <div class="col-sm-8">
 <!-- <div id="board" style="width: 400px"></div> -->
  
@@ -196,6 +198,8 @@ function isTouchDevice() {
   <button type="submit" id="startBtnx" name="startBtnx" class="btn btn-primary" value="Startx" style="display: none">Restart initial position</button>
   <button type="submit" id="ontBtnx" name="ontBtnx" class="btn btn-primary" value="ontlogy" title="Creates the initial game position based on the loaded ontology " style="display: none">Create ontology game</button>
  <button type="submit" id="qBtnx" name="qBtnx" class="btn btn-primary" value="query" style="display: none">Query ontology</button>
+ <button type="submit" id="printgame" name="printgame" class="btn btn-primary" value="printgame" style="display: none">Print</button>
+ <button type="submit" id="fileselect" name="fileselect" class="btn btn-primary" value="fileselect" style="display: none">file selected</button>
 <!--   <input type="button" id="clearBtn" value="Clear" /> -->
   <input type="text" name="posisjon" value="pos" id="posisjon" size="20" style="display: none" >
   <input type="text" name="piece" value="x" id="piece" size="20" style="display: none">
@@ -214,12 +218,14 @@ function isTouchDevice() {
 </div>
 
  <div class="col-sm-4" style="background-color:lavenderblush;">
+	<h4>Game File</h4><!-- This only reads local client files !! -->
+ 	<input type="file" id="fileinput" name="fileinput"><br><!--  onchange="formSubmit('fileselect');" THis must change to files available on server -->
+ 
        <table class="table table-hover">
   		<tr><th>Moves</th></tr>
  		<#list moves as move>
   			<tr id="moves"><td>"${move.moveNr}"<td>"${move.whiteMove}"</td><td>"${move.blackMove}"</td></tr>
 		</#list>		
-  		
  	</table>
  </div>
 </div>
