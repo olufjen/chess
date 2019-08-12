@@ -11,6 +11,8 @@ import org.protege.owl.codegeneration.inference.CodeGenerationInference;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
+import aima.core.search.csp.examples.NQueensCSP;
+import aima.core.util.datastructure.XYLocation;
 import no.basic.ontology.model.OntologyModel;
 import no.basic.ontology.model.ParentModel;
 import no.chess.ontology.BlackBoardPosition;
@@ -49,6 +51,7 @@ public class Position extends ParentModel {
 	private BlackBoardPosition blackBoardPosition = null;
 	private WhiteBoardPosition whiteBoardPosition = null;
 	private HashSet<Piece> pieces;
+	private XYLocation xyloc = null; // Represents the XYLocation of a aima board
 	
 	public Position(String positionName, boolean inUse, ChessPiece usedBy) {
 		super();
@@ -64,8 +67,35 @@ public class Position extends ParentModel {
 		this.usedBy = usedBy;
 		intColumn = findColumn();
 		calculateColor();
+		int ycol = getIntRow() - 1;	// This is the correct position definition
+		int xrow = getIntColumn() - 1;
+		xyloc = new XYLocation(xrow,ycol);
 	}
-	
+	public Position(XYLocation loc, boolean inUse, ChessPiece usedBy) {
+		this.xyloc = loc;
+		this.usedBy = usedBy;
+		this.inUse = inUse;
+		if (usedBy == null){
+			String[] legalMoves = {};
+			usedBy =  new ChessPiece("","x","ee",legalMoves);
+		}
+		int x = loc.getXCoOrdinate();
+		int y = loc.getYCoOrdinate();
+		setIntRow(y+1);
+		setIntColumn(x+1);
+		String row = String.valueOf(y+1);
+		String col = findColumnletter(x);
+		this.positionName = col+row;
+		calculateColor();
+	}
+	public XYLocation getXyloc() {
+		return xyloc;
+	}
+
+	public void setXyloc(XYLocation xyloc) {
+		this.xyloc = xyloc;
+	}
+
 	public HashSet<Piece> getPieces() {
 		return pieces;
 	}
@@ -79,7 +109,15 @@ public class Position extends ParentModel {
 	public <T,R> Integer transformValue(List<String> letters,Function<List<String>, Integer> f) {
 			return f.apply(letters);
 	}
-
+	private String findColumnletter(int col) {
+		List <String> letters  = Arrays.asList("a","b","c","d","e","f","g","h");
+		for (int i = 0;i<8;i++) {
+			if (i == col)
+				return letters.get(i);
+		}
+		return null;
+		
+	}
 	private int findColumn(){
 		List <String> letters  = Arrays.asList("a","b","c","d","e","f","g","h");
 		Function<List<String>,Integer> f = (List<String> l) -> {
@@ -94,6 +132,16 @@ public class Position extends ParentModel {
 			return ct;
 		};
 		return transformValue(letters,f);
+	}
+	/**
+	 * checkUsed
+	 * This method checks if there is disagreement between the inUse flag and 
+	 * the Piece in this position
+	 */
+	public void checkUsed() {
+		if (isInUse() &&getUsedBy() == null){
+			setInUse(false);
+		}
 	}
 	/**
 	 * setPieces
@@ -198,7 +246,7 @@ public class Position extends ParentModel {
 	      }
 		
 	}
-	
+
 	public int getIntColumn() {
 		return intColumn;
 	}
@@ -263,6 +311,9 @@ public class Position extends ParentModel {
 	}
 	public boolean isInUse() {
 		return inUse;
+	}
+	public boolean notisInUse() {
+		return !inUse;
 	}
 	public void setInUse(boolean inUse) {
 		this.inUse = inUse;

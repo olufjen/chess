@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.protege.owl.codegeneration.WrappedIndividual;
+import org.restlet.Request;
 import org.semanticweb.owlapi.io.OWLObjectRenderer;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
@@ -36,7 +37,13 @@ import org.swrlapi.sqwrl.values.SQWRLResultValue;
 
 import com.hp.hpl.jena.sparql.core.Var;
 
+import aima.core.environment.nqueens.NQueensBoard;
+import aima.core.search.csp.Domain;
+import aima.core.search.csp.Variable;
+import aima.core.search.csp.examples.NQueensCSP;
+import aima.core.util.datastructure.XYLocation;
 import no.basic.ontology.control.OntologyContainer;
+import no.basic.ontology.model.FileModel;
 import no.basic.ontology.model.OntologyModel;
 import no.basic.ontology.model.ParentModel;
 /*import no.basis.felles.semanticweb.chess.BlackBoardPosition;
@@ -56,6 +63,7 @@ import no.chess.ontology.Vacant;
 import no.chess.ontology.WhiteBoardPosition;
 import no.chess.ontology.WhitePiece;
 //import uk.ac.manchester.cs.owlapi.dlsyntax.DLSyntaxObjectRenderer;
+import no.chess.ontology.impl.DefaultChessPiece;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.hp.hpl.jena.ontology.Individual;
@@ -70,6 +78,10 @@ import com.hp.hpl.jena.reasoner.Derivation;
  * It uses FEN syntax to show board positions
  * @author oluf
  *  
+ */
+/**
+ * @author bruker
+ *
  */
 public class ChessBoard extends ParentModel {
 	private OntologyModel chessModel;
@@ -93,6 +105,11 @@ public class ChessBoard extends ParentModel {
 	private List<String> blackMoves;
 	private ArrayList<ChessMoves> chessMoves;
 	private ChessMoves chessMove;
+	private FileModel gameFile;
+	
+	private String ontologyKey = "ontologyfile";
+	
+	private boolean opposingOccupied = false; // True when a  piece move to an occupied position
 	/**
 	 * positions contains all available board positions and information on whether they are occupied
 	 */
@@ -118,12 +135,18 @@ public class ChessBoard extends ParentModel {
 	/**
 	 * 
 	 */
-	public ChessBoard() {
+	public ChessBoard(String fileName) {
 		super();
 /*
  * From the chess ontology		
  */
-		 chessModel  = new OntologyModel();
+
+		if (fileName == null) {
+			 chessModel  = new OntologyModel();
+
+		}else
+			chessModel = new OntologyModel(fileName);
+		 gameFile = new FileModel();
 		 System.out.println("Fetching individuals removed");
 //		 individuals = chessModel.getIndividuals(); // These individuals are not used. OLJ 30.08.18
 //		 System.out.println("Found individuals");
@@ -151,6 +174,16 @@ public class ChessBoard extends ParentModel {
 //		 createOntologyposition();
 	}
 	
+
+	public FileModel getGameFile() {
+		return gameFile;
+	}
+
+
+	public void setGameFile(FileModel gameFile) {
+		this.gameFile = gameFile;
+	}
+
 
 	public ArrayList<ChessMoves> getChessMoves() {
 		return chessMoves;
@@ -228,9 +261,113 @@ public class ChessBoard extends ParentModel {
 		this.exeLabels = exeLabels;
 	}
 	
+	/**
+	 * emptyGame
+	 * This method clears the list of moves from the board
+	 */
 	public void emptyGame() {
 		chessMoves.clear();
 		chessMoves.add(chessMove);
+	}
+	/**
+	 * establishMoves
+	 * This method creates a new move in the list of moves, it is stored in algebraic notation
+	 * @param chessBoard
+	 * @param position
+	 */
+	private void establishMoves(Position position) {
+		String move = position.getPositionName();
+		String stroke = "";
+		if (opposingOccupied)
+			stroke = "x";
+		String pieceName = position.getUsedBy().getName();
+		String pieceType = position.getUsedBy().getPieceName();
+		if (!pieceType.equals("P"))
+			move = pieceType+stroke+move;
+		chessMoves = getChessMoves();
+		int last = chessMoves.size() ;
+		chessMove = chessMoves.get(last-1);
+		int moveNr = chessMove.getMoveNr();
+		if (pieceName.contains("w")) {
+			chessMove = new ChessMoves();
+			chessMove.setWhiteMove(move);
+			chessMove.setMoveNr(moveNr+1);
+			chessMoves.add(chessMove);
+		}else {
+			chessMove.setBlackMove(move);
+		}
+		
+	}
+
+	
+	/**
+	 * findMoves
+	 * This method runs through a list of moves read from a pgn file of chessmoves, and
+	 * creates individual moves in Algebraic notation.
+	 * @param moveLines a list of moves 
+	 */
+	public void findMoves(List<String>moveLines) {
+		int wInd = -1;
+		boolean endGame = false;boolean moveCount = false;
+		for (String moveLine : moveLines) {
+			if (!moveLine.startsWith("[")) {
+				int len = moveLine.length();
+				int firstInd = 0;
+				int subind = 1;int subinx = 0;
+				if (moveCount)
+					subind = 2;
+				firstInd = moveLine.indexOf(".");
+				do {
+					int secondInn = moveLine.indexOf(".", firstInd+3);
+					if (secondInn < 0) {
+						secondInn = len +2;
+					}
+					String moveNr = moveLine.substring(firstInd-subind, firstInd-subinx);
+					String move = moveLine.substring(firstInd+1, secondInn-2);
+					String wMove = "";
+					String bMove = "";
+					move = move.trim();
+					wInd = move.indexOf(" ") + 1;
+					if (wInd > 0) {
+						wMove = move.substring(0,wInd);
+						bMove = move.substring(wInd);
+						int mv = Integer.parseInt(moveNr);
+						System.out.println("Moves: "+moveNr+ wMove+" "+bMove);
+						firstInd = secondInn+1;subind = 2;subinx = 1;
+						if (mv >= 9) {
+							subind = 3;
+							moveCount = true;
+						}
+						ChessMoves chessMove = new ChessMoves(wMove,bMove,mv);
+						chessMoves.add(chessMove);
+					}
+				endGame = move.contains("1-0");	
+				}while (firstInd < len);
+				if (endGame)
+					break;
+			}
+
+			
+		}
+	}
+	/**
+	 * clearChessBoard
+	 * This method creates an empty chessboard
+	 */
+	public void clearChessBoard() {
+		for (int i = 0; i <64;i++){
+			Position position = positions.get(allPositions[i]);
+			ChessPiece piece = position.getUsedBy();
+//			if (piece != null && !piece.getOntlogyName().equals("WhiteQueen") && !piece.getOntlogyName().equals("BlackQueen") ) {
+				position.setUsedBy(null);
+				position.setInUse(false);
+				System.out.println("Clearchessboard: Setting position empty:  "+position.getPositionName());
+//			}
+
+
+		}
+			
+
 	}
 	/**
 	 * createStartPosition()
@@ -435,6 +572,7 @@ public class ChessBoard extends ParentModel {
 	 * createChessontlogyPosition
 	 * This method creates positions on the chessboard given the ontology positions
 	 * It is called when user wants the correct ontologypositions on the chessboard.
+	 * OLJ 06.05.19 : Must be reworked when eightqueen problem has been run
 	 */
 	public void createChessontlogyPosition(){
 		for (int i = 0; i <64;i++){
@@ -447,15 +585,21 @@ public class ChessBoard extends ParentModel {
 					ontologyPiece = ontPiece;
 				}
 			}
-
+/*			if (chessPiece == null) {
+				
+			}*/
 //			boolean ischessPiece = chessPiece.getClass().equals(Entity.class);
 			if (ontologyPiece != null) {
-				System.out.println(" An ontology piece: Name of piece: "+ontologyPiece.toString());
+				Collection<? extends Object> nn = ontologyPiece.getHasName(); //This collection is a HashSet of strings
+				HashSet<String> nnx = (HashSet<String>) ontologyPiece.getHasName();
+				System.out.println(" An ontology piece: Name of piece: "+ontologyPiece.toString()+" ont piece name "+nnx.toString());
 //				ontologyPiece.getOwlIndividual()
 			}
 			String ontName = "Unknown";
 			if (chessPiece != null && chessPiece.getOntlogyName() != null)
 				ontName = chessPiece.getOntlogyName();
+			if (position.getPositionName() == null)
+				position.setPositionName("xx");
 			System.out.println("Position "+position.getPositionName()+" Chessontology: Name of piece: "+chessPiece.getName()+" Name of chess piece: "+chessPiece.getPieceName()+" "+ontName);
 
 			if (ontologyPiece == null){
@@ -745,7 +889,7 @@ public class ChessBoard extends ParentModel {
 		for (int i = 0;i<8;i++){
 			for (int j = 7;j>=0;j--){
 				Position position = (Position)positions.get(allPositions[fenCount]);
-				if (position.isInUse()){
+				if (position.isInUse() && position.getUsedBy() != null){ //midlertidig !!
 					pieceName = position.getUsedBy().getName().substring(1);
 					String color = position.getUsedBy().getColor();
 					if (color.equals("b"))
@@ -753,10 +897,14 @@ public class ChessBoard extends ParentModel {
 					boardRow[i][j] = pieceName;
 				}else{
 					boardRow[i][j] = "f";
+					if ( position.getUsedBy() == null) {
+						System.out.println("In use but no piece: "+position.getPositionName()
+						);
+					}
 				}
 
 				String cp = "ledig";
-				if (position.isInUse()){
+				if (position.isInUse()&& position.getUsedBy() != null){
 					cp = position.getUsedBy().getName();
 				}
 //				System.out.println(position.getPositionName()+ " "+cp+ " "+boardRow[i][j]+" "+fenCount+ " "+i+" "+j );
@@ -768,7 +916,34 @@ public class ChessBoard extends ParentModel {
 //		return startFEN;
 	}
 
+	/**
+	 * findPiece
+	 * This method finds which piece occupies a given position
+	 * @param posName
+	 * @param pieceName Not Used !!
+	 * @return
+	 */
 	public ChessPiece findPiece(String posName, String pieceName) {
+		String localposName = "";
+		ChessPiece piece = null;
+		for (int i = 0; i < 63; i++) {
+			Position position = (Position) positions.get(allPositions[i]);
+			localposName = position.getPositionName();
+			if (posName.equals(localposName)) {
+				piece = position.getUsedBy();
+				break;
+			}
+		}
+		return piece;
+
+	}
+	/**
+	 * findPiece
+	 * This method finds which piece occupies a given position
+	 * @param posName
+	 * @return
+	 */
+	public ChessPiece findPiece(String posName) {
 		String localposName = "";
 		ChessPiece piece = null;
 		for (int i = 0; i < 63; i++) {
@@ -789,6 +964,12 @@ public class ChessBoard extends ParentModel {
 		return localPosition;
 	}
 
+	/**
+	 * checkPosition
+	 * This method checks if a position is occupied by a piece
+	 * @param pos: Position to be checked
+	 * @return true if position is occupied
+	 */
 	public boolean checkPosition(String pos) {
 		boolean inUse = false;
 		for (int i = 0; i < 63; i++) {
@@ -802,5 +983,80 @@ public class ChessBoard extends ParentModel {
 		}
 		return inUse;
 	}
+	/**
+	 * determineMove
+	 * This method determines if a move is considered legal and if an opposing piece need to be removed.
+	 * It is called when the user makes a move on the chessboard
+	 */
+	public void determineMove(String oldPos,String newPos,String piece) {
+    	ChessPiece chessPiece = findPiece(oldPos,piece);
+       	chessPiece.setPosition(newPos);
+       	Position oldPosition = findPostion(oldPos);
+       	Position newPosition = findPostion(newPos);
+       	if (checkPosition(newPos)) { // If position is occupied find which piece it is occupied by and determine if move is legal
+       		boolean accept = chessPiece.acceptMove(newPos, oldPosition,newPosition);
+       		opposingOccupied = accept;
+       		if(!accept)
+       			chessPiece.setPosition(oldPos);
+       		if (accept)
+       			establishMoves(newPosition);
 
+       	}
+       	if (!checkPosition(newPos)){
+       	   	oldPosition.setUsedBy(null);
+           	oldPosition.setInUse(false);
+           	HashSet pieces = oldPosition.getPieces();
+           	oldPosition.setPieces(null);
+           	newPosition.setUsedBy(chessPiece);
+        	newPosition.setInUse(true);
+        	newPosition.setPieces(pieces);
+        	establishMoves(newPosition);
+        	
+       	}
+		
+	}
+
+
+	/**
+	 * setPiecetoPosition
+	 * This method places the eight queens from NQueensBoard in the correct positions on the chessboard
+	 * @param board The aima chessboard used
+	 * @param qCSP The queens CSP
+	 * The MoveMent class is used to places pieces correctly
+	 */
+	public void setPiecetoPosition( NQueensBoard board,NQueensCSP qCSP) {
+		MoveMent movements = new MoveMent(board,positions);
+		movements.setQueensPositions();
+		StringBuilder result = new StringBuilder();
+		List<Variable> var = qCSP.getVariables();
+		Variable v = var.get(0);
+		String varName = v.getName();
+		for (int i = 0; i < 63; i++) {
+			Position position = (Position) positions.get(allPositions[i]);
+			XYLocation loc = position.getXyloc();
+			if (board.queenExistsAt(loc)) {
+				String color = position.getPositionColor();
+				String name = position.getPositionName();
+				boolean inUse = position.isInUse();
+				result.append("\n xy location").append(loc.toString()).append(" Position "+name);
+				if (inUse) {
+					ChessPiece piece = position.getUsedBy();
+					HashSet<Piece> pieces = position.getPieces();
+					for (Piece occupier : pieces) {
+						HashSet<String> pNames = (HashSet<String>)occupier.getHasName();
+						String pName = pNames.toString();
+						result.append("\nOccupied by").append(pName);
+					}
+					result.append("\nColor : Position ").append(color).append(" : ").append(name).append(" Piece: "+piece.getOntlogyName()+" "+piece.getPieceName());
+				}
+
+			}
+
+		}
+
+		 System.out.println(result.toString());
+			
+	
+
+	}
 }

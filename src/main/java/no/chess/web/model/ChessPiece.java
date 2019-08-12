@@ -3,6 +3,7 @@ package no.chess.web.model;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import no.basic.ontology.control.OntologyContainer;
 import no.basic.ontology.model.ParentModel;
 import no.chess.ontology.BlackBoardPosition;
 /*import no.basis.felles.semanticweb.chess.BlackBoardPosition;
@@ -50,13 +51,24 @@ public class ChessPiece extends ParentModel{
 		this.pieceName = name.substring(1);
 		calculateValue();
 	}
+	public void createOntologyPiece(OntologyContainer modelContainer,String newName) {
+		String name = "http://www.co-ode.org/ontologies/ont.owl#" + newName;
+		no.chess.ontology.ChessPiece newPiece = modelContainer.getChessFactory().createPiece(name);
+		if (blackPiece != null)
+			blackPiece = null;
+		whitePiece = (Piece) newPiece;
+		System.out.println(whitePiece.toString());
+	}
 	private void setcorrectPieceName(HashSet<String> names){
 		for (String o : names) {
 			name = o.toString();
 		}
+		pieceName = name.substring(1);
 
 	}
 	public String getOntlogyName() {
+		if (ontlogyName == null)
+			ontlogyName = "x";
 		return ontlogyName;
 	}
 
@@ -112,7 +124,39 @@ public class ChessPiece extends ParentModel{
 	public void setWhiteBoardPosition(WhiteBoardPosition whiteBoardPosition) {
 		this.whiteBoardPosition = whiteBoardPosition;
 	}
-
+	/**
+	 * acceptMove
+	 * THis method accepts a move according to the rules of the chessgame for a given piece
+	 * @param newPos
+	 * @param position
+	 */
+	public boolean acceptMove(String newPos, Position oldPosition,Position newPosition) {
+		ChessPiece opposingPiece = newPosition.getUsedBy();
+		boolean accept = false;
+		if (blackPiece == null && opposingPiece.getWhitePiece() == null) {
+       	   	oldPosition.setUsedBy(null);
+           	oldPosition.setInUse(false);
+           	HashSet pieces = oldPosition.getPieces();
+           	newPosition.setUsedBy(this);
+        	newPosition.setInUse(true);
+        	newPosition.setPieces(pieces);
+        	accept = true;
+        	opposingPiece.setValue(-1); //How to set a piece inactive (vacant)? See Ontology
+			// move is legal. Later: Check move according to rules given for this piece
+		}
+		if (whitePiece == null && opposingPiece.getBlackPiece() == null) {
+			// Move is legal
+       	   	oldPosition.setUsedBy(null);
+           	oldPosition.setInUse(false);
+           	HashSet pieces = oldPosition.getPieces();
+           	newPosition.setUsedBy(this);
+        	newPosition.setInUse(true);
+        	newPosition.setPieces(pieces);
+        	opposingPiece.setValue(-1); //How to set a piece inactive (vacant)? See Ontology
+        	accept = true;
+		}
+		return accept;
+	}
 	public void calculateValue(){
 		char t = name.charAt(1);
 		switch(t)
