@@ -26,7 +26,7 @@
     <script src="https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.0.6-development-only.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js" ></script>
 
-<title>Chessboard using Pure CSS and HTML Min versjon</title>
+<title>Chessboard using Pure CSS and HTML Min versjon May 2019 </title>
 <style type="text/css">
 .chessboard {
     width: 640px;
@@ -61,7 +61,7 @@
 <body>
  <header>
     <div class="container">
-      <figure title="Version 1.2 Autumn 2018" class="main-logo">        
+      <figure title="Version 1.2 May 2019 " class="main-logo">        
         <img alt="Logo Basis" src="/chess_web/resources/css/firmalogo.jpg">    
    
        </figure>
@@ -76,7 +76,9 @@
                 <li><a href="javascript:void(0);" onclick="formSubmit('ontBtnx');" title="Creates the initial game position based on the loaded ontology ">Create ontology game</a></li>
                 <li><a href="javascript:void(0);" onclick="formSubmit('startBtnx');" title="Creates the chess start position">Restart initial position</a></li>
                   <li><a href="javascript:void(0);" onclick="formSubmit('printgame');" title="Prints the game shown in algebraic notation">Print game</a></li>
-                <li><a href="#">Read chess game from pgn file</a></li>
+                  <li><a href="javascript:void(0);" onclick="formSubmit('eightqueen');" title="Solves the Eight queen problem">The Eight queen problem start position</a></li>
+                  <li><a href="javascript:void(0);" onclick="formSubmit('playgame');" title="Start a game of chess from given startposition">Play a game of chess</a></li>
+   
             </ul>
         </li>
         <li><a href="#">Ontology &raquo;</a>
@@ -199,7 +201,10 @@ function isTouchDevice() {
   <button type="submit" id="ontBtnx" name="ontBtnx" class="btn btn-primary" value="ontlogy" title="Creates the initial game position based on the loaded ontology " style="display: none">Create ontology game</button>
  <button type="submit" id="qBtnx" name="qBtnx" class="btn btn-primary" value="query" style="display: none">Query ontology</button>
  <button type="submit" id="printgame" name="printgame" class="btn btn-primary" value="printgame" style="display: none">Print</button>
+  <button type="submit" id="eightqueen" name="eightqueen" class="btn btn-primary" value="eightqueen" style="display: none">queen</button>
+ <button type="submit" id="playgame" name="playgame" class="btn btn-primary" value="playgame" style="display: none">game</button>
  <button type="submit" id="fileselect" name="fileselect" class="btn btn-primary" value="fileselect" style="display: none">file selected</button>
+  <button type="submit" id="ontselect" name="ontselect" class="btn btn-primary" value="ontselect" style="display: none">file selected</button>
 <!--   <input type="button" id="clearBtn" value="Clear" /> -->
   <input type="text" name="posisjon" value="pos" id="posisjon" size="20" style="display: none" >
   <input type="text" name="piece" value="x" id="piece" size="20" style="display: none">
@@ -217,9 +222,11 @@ function isTouchDevice() {
 </div>
 </div>
 
- <div class="col-sm-4" style="background-color:lavenderblush;">
+ <div class="col-sm-4" style="background-color:Aquamarine;">
 	<h4>Game File</h4><!-- This only reads local client files !! -->
- 	<input type="file" id="fileinput" name="fileinput"><br><!--  onchange="formSubmit('fileselect');" THis must change to files available on server -->
+ 	<input type="file" id="fileinput" name="fileinput"><br><!--  onchange="formSubmit('fileselect');" This must change to files available on server -->
+ 	<h4>Ontlogy File</h4><!-- This only reads local client files !! -->
+	<input type="file" id="ontologyinput" name="ontologyinput" onchange="formSubmit('ontselect');"><br><!--  onchange="formSubmit('fileselect');" This must change to files available on server -->
  
        <table class="table table-hover">
   		<tr><th>Moves</th></tr>
