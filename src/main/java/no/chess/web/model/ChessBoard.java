@@ -74,7 +74,8 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.reasoner.Derivation;
 /**
- * This class represent a chessboard
+ * This class represent a front end chessboard as presented to the user
+ * It also contains a chosen chess ontology model
  * It uses FEN syntax to show board positions
  * @author oluf
  *  
@@ -898,7 +899,7 @@ public class ChessBoard extends ParentModel {
 				}else{
 					boardRow[i][j] = "f";
 					if ( position.getUsedBy() == null) {
-						System.out.println("In use but no piece: "+position.getPositionName()
+						System.out.println("No piece: "+position.toString()
 						);
 					}
 				}
@@ -987,6 +988,9 @@ public class ChessBoard extends ParentModel {
 	 * determineMove
 	 * This method determines if a move is considered legal and if an opposing piece need to be removed.
 	 * It is called when the user makes a move on the chessboard
+	 * The chess piece that is moved receives the new position if it is accepted
+	 * It uses the establishMoves method to create a move in algebraic notation
+	 * 
 	 */
 	public void determineMove(String oldPos,String newPos,String piece) {
     	ChessPiece chessPiece = findPiece(oldPos,piece);
@@ -1007,9 +1011,16 @@ public class ChessBoard extends ParentModel {
            	oldPosition.setInUse(false);
            	HashSet pieces = oldPosition.getPieces();
            	oldPosition.setPieces(null);
+           	oldPosition.setUsedBy(null);
            	newPosition.setUsedBy(chessPiece);
         	newPosition.setInUse(true);
         	newPosition.setPieces(pieces);
+        	chessPiece.setPosition(newPosition.getPositionName());
+ /*       	if (newPosition.getPositionColor().equalsIgnoreCase("w")) {
+        		chessPiece.setWhiteBoardPosition((WhiteBoardPosition) newPosition);
+        	}else {
+        		chessPiece.setBlackBoardPosition((BlackBoardPosition) newPosition);
+        	}*/
         	establishMoves(newPosition);
         	
        	}

@@ -1,5 +1,12 @@
 package no.chess.web.model;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,22 +23,32 @@ import no.chess.ontology.BlackPiece;
 import no.chess.ontology.WhitePiece;
 import no.chess.web.model.game.AchessGame;
 import no.chess.web.model.game.AgamePiece;
+import no.chess.web.model.game.ApieceMove;
 import no.games.chess.ChessAction;
+import no.games.chess.ChessAlphaBetaSearch;
+import no.games.chess.ChessSearch;
+import no.games.chess.ChessSearchImpl;
 import no.games.chess.ChessState;
-
+import no.games.chess.GameBoard;
+import no.games.chess.GamePiece;
 /**
  * This class is implemented to run a game of chess
  * It is created when the user has selected to play a game of chess.
- * It creates a AchessGame.
+ * It receives a HashMap of Positions with their chesspieces from the ontology
+ * From this it creates
+ * A list of used positions
+ * A list of not used positions.
+ * It creates a AchessGame. This object is given the HashMap of positions.
  * This AchessGame contains boardpositions from a given ontology game.
  * The AchessGame  transfers the current positions of the chess pieces to the AIMA chessboard
  * It also creates a AgamePiece for every chess piece found from the ontology game
  * and places these pieces in an array called piecesonBoard.
  * It also creates a white player and a black player and gives the correct chesspieces to each of the players.
  * It finally creates an initial state of the game with the initial gameboard and the two players.
+ * The initial state creates a list of actions that are available for the chosen search algorithm.
  * 
- * When a piece is moved it is placed in the correct HashSet of moved pieces.
- * The piece remains there until it is free to move again.
+ * When a piece is moved a new ApieceMove object is created and placed in the list over moves.
+ * 
  * @author oluf
  *
  */
@@ -51,8 +68,11 @@ public class PlayGame {
 	private AchessGame game;
 	private ChessBoard myFrontBoard;
 	private ChessState currentState;
-	
-	public PlayGame(HashMap<String, Position> positions,ChessBoard frontBoard) {
+	private List<ApieceMove> movements;
+	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\positions.txt";
+	private PrintWriter writer = null;
+	private FileWriter fw = null;
+	public PlayGame(HashMap<String, Position> positions,ChessBoard frontBoard)   {
 		super();
 		this.myFrontBoard = frontBoard;
 		this.positions = positions;
@@ -61,7 +81,18 @@ public class PlayGame {
 		availablePositions = new HashMap();
 		availablePositionlist = new ArrayList();
 		game = new AchessGame(8,positions,myFrontBoard);
+		game.setGamePlayer(this);
 		currentState = game.getInitialState();
+		movements = new ArrayList<ApieceMove>();
+
+	}
+
+	public List<ApieceMove> getMovements() {
+		return movements;
+	}
+
+	public void setMovements(List<ApieceMove> movements) {
+		this.movements = movements;
 	}
 
 	public ChessBoard getMyFrontBoard() {
@@ -169,16 +200,36 @@ public class PlayGame {
 	 * Find the old position positionName
 	 * Find the new position positionName
 	 * use myfrontBoard.determineMove to make the move
-	 * 
+	 * The determineMove method checks if the move is legal, then accepts it and carries out the move
+	 * The chess piece that is moved receives the new position, and the move is recorded as move in algebraic notation 
+	 * After each move a new search object is created to make a new search on the current state.
 	 */
 	public void proposeMove() {
-		AdversarialSearch<ChessState,ChessAction> search;
-		search = IterativeDeepeningAlphaBetaSearch.createFor(game, 0.0, 1.0, 2);
+		fw = null;
+		writer = null;
+		try {
+			fw = new FileWriter(outputFileName, true);
+		} catch (IOException e1) {
+
+			e1.printStackTrace();
+		}
+	      writer = new PrintWriter(new BufferedWriter(fw));
+
+		currentState = game.getInitialState();
+		AdversarialSearch<ChessState<GameBoard>, ChessAction<?, ?, ?,  GamePiece<?>, ?>> search; // FILL IN !!!!
+//		ChessSearch<ChessState,ChessAction> search;
+		search = ChessAlphaBetaSearch.createFor(game, 0.0, 1.0, 2);
+		
+//		search = ChessAlphaBetaSearch.createFor(game, 0.0, 1.0, 2);
+//		search = ChessSearchImpl.createFor(game, 0.0, 1.0, 5);
 //		search = MinimaxSearch.createFor(game);
 		search.setLogEnabled(true);
 /*
  * The makeDecision method returns either at timeout or when the state is terminal
- * (a lose or a win for the active player).		
+ * (a lose or a win for the active player).	
+ * The makeDecision method makes and creates a number of moves and returns the top action from a set of actions 
+ * that has been performed
+ * All the moves that are made is a result of the getResult method of the game object.
  */
 		ChessAction newAction = search.makeDecision(currentState);
 //		String a = newAction.toString();
@@ -188,17 +239,123 @@ public class PlayGame {
 		Position position = (Position) newAction.getPreferredPosition();
 		List<Position> availablePositions = (List<Position>) newAction.getAvailablePositions();
 		if (position == null)
-			position = availablePositions.get(0);
-/*		List<Position> availablePositions = (List<Position>) newAction.getAvailablePositions();
+			position = availablePositions.get(0); // Should not happen !!!
+		
+/*		Caused by: java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
+	at java.util.ArrayList.rangeCheck(Unknown Source)
+	at java.util.ArrayList.get(Unknown Source)
+	at no.chess.web.model.PlayGame.proposeMove(PlayGame.java:232)
+	
+ * List<Position> availablePositions = (List<Position>) newAction.getAvailablePositions();
 		Position position = availablePositions.get(0);*/
-		System.out.println(piece.toString());
+		writer.println("Proposemove\n"+piece.toString()+"Action\n"+newAction.toString());
 		String newPos = position.getPositionName();
 		String pieceName = piece.getMyPiece().getName();
 		String oldPos = piece.getMyPosition().getPositionName();
-		myFrontBoard.determineMove(oldPos, newPos, pieceName);
-		game.movePiece(piece.getMyPosition().getXyloc(),position.getXyloc());
+		Position oldPosition = piece.getMyPosition();
+		myFrontBoard.determineMove(oldPos, newPos, pieceName); // New fen is created based on this
+//		Position newPosition = myFrontBoard.findPostion(newPos);
+		currentState.emptyMovements();
+//		clearMoves();
+	    writer.println(game.getBoardPic());
+	    clearChessboard();
+	    piece.setMyPosition(position); // position is the preferred position from action This is the new position of the piece
+		game.movePiece(piece.getMyPosition().getXyloc(),position.getXyloc()); // The piece is moved to the new location on the chessboard held by the AbstractChessGame
 		
+		game.createNewboard(); // A new set of usedunused lists are created.
+		
+		createMove(piece,oldPosition, position);
+		 writer.println(game.getBoardPic());
+		 writer.close();
 	}
+	/**
+	 * createMove
+	 * This method creates a move based on a move carried out in the proposeMove method
+	 * The game piece to be moved calculates new available positions from the new position it is moved to.
+	 * This method is called from the chessState object during the makeDecision process
+	 * @param piece The game piece moved
+	 * @param from The from Position
+	 * @param to The to Position
+	 * @param moves A temporary list of moves created in the chessState object
+	 */
+	public void createMove(AgamePiece piece,Position from,Position to,List<ApieceMove> moves) {
+		int noofMoves = 0;
+		String algebraicmove = "";
+		ArrayList<ChessMoves> amoves = myFrontBoard.getChessMoves();
+		if (amoves != null && !amoves.isEmpty()) {
+			int ll = amoves.size();
+			ChessMoves move = amoves.get(ll-1);
+			algebraicmove = move.getBlackMove();
+			if (algebraicmove.equals(""))
+				algebraicmove = move.getWhiteMove();
+			
+		}
+		if (moves.isEmpty()) {
+			noofMoves = 0;
+		}
+		if (!moves.isEmpty()) {
+			noofMoves = moves.size();
+		}
+		noofMoves++;
+		piece.produceLegalmoves(to);
+//		piece.getLegalmoves(to); // Create a new list of available position after move
+		ApieceMove pieceMove = new ApieceMove(piece,from, to, noofMoves, algebraicmove);
 
+		moves.add(pieceMove);
+			
+	}
+	/**
+	 * createMove
+	 * This method creates a move based on a move carried out in the proposeMove method
+	 * THe game piece to be moved calculates new available positions from the new position it is moved to.
+	 * This method is called from the proposemove method
+	 * @param piece The game piece moved
+	 * @param from The from Position
+	 * @param to The to Position
+	 */
+	public void createMove(AgamePiece piece,Position from,Position to) {
+		int noofMoves = 0;
+		String algebraicmove = "";
+		ArrayList<ChessMoves> moves = myFrontBoard.getChessMoves();
+		if (moves != null && !moves.isEmpty()) {
+			int ll = moves.size();
+			ChessMoves move = moves.get(ll-1);
+			algebraicmove = move.getBlackMove();
+			if (algebraicmove.equals(""))
+				algebraicmove = move.getWhiteMove();
+			
+		}
+		if (movements.isEmpty()) {
+			noofMoves = 0;
+		}
+		if (!movements.isEmpty()) {
+			noofMoves = movements.size();
+		}
+		noofMoves++;
+		piece.produceLegalmoves(to);
+//		piece.getLegalmoves(to); // Create a new list of available position after move
+		ApieceMove pieceMove = new ApieceMove(piece,from, to, noofMoves, algebraicmove);
+		 writer.println("Creating piecemove "+pieceMove.toString());
+		movements.add(pieceMove);
+			
+	}
+	/**
+	 * clearMoves
+	 * This method clears the list containing ApieceMove
+	 * 
+	 */
+	public void clearMoves() {
+		if (!movements.isEmpty()) {
+			movements.clear();
+		}
+	
+	}
+	/**
+	 * clearChessboard
+	 * This method clears the aima chessboard
+	 */
+	public void clearChessboard() {
+		game.clear();
+	}
 	
 }

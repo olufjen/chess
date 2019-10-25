@@ -47,6 +47,10 @@ public class Position extends ParentModel {
 	private int intRow;
 	private String positionColor;
 	private boolean inUse;
+	private boolean centerlefthigh = false;
+	private boolean centerrighthigh = false;
+	private boolean centerrightlow = false;
+	private boolean centerleftlow = false;
 	private ChessPiece usedBy;
 	private BlackBoardPosition blackBoardPosition = null;
 	private WhiteBoardPosition whiteBoardPosition = null;
@@ -70,6 +74,10 @@ public class Position extends ParentModel {
 		int ycol = getIntRow() - 1;	// This is the correct position definition
 		int xrow = getIntColumn() - 1;
 		xyloc = new XYLocation(xrow,ycol);
+		centerleftlow = ycol == 3 && xrow == 3;
+		centerlefthigh = ycol == 3 && xrow == 4;
+		centerrightlow = ycol == 4 && xrow == 3;
+		centerrighthigh = ycol == 4 && xrow == 4;
 	}
 	public Position(XYLocation loc, boolean inUse, ChessPiece usedBy) {
 		this.xyloc = loc;
@@ -87,6 +95,37 @@ public class Position extends ParentModel {
 		String col = findColumnletter(x);
 		this.positionName = col+row;
 		calculateColor();
+		int ycol = getIntRow() - 1;	// This is the correct position definition
+		int xrow = getIntColumn() - 1;
+		centerleftlow = ycol == 3 && xrow == 3;
+		centerlefthigh = ycol == 3 && xrow == 4;
+		centerrightlow = ycol == 4 && xrow == 3;
+		centerrighthigh = ycol == 4 && xrow == 4;
+	}
+	
+	public boolean isCenterlefthigh() {
+		return centerlefthigh;
+	}
+	public void setCenterlefthigh(boolean centerlefthigh) {
+		this.centerlefthigh = centerlefthigh;
+	}
+	public boolean isCenterrighthigh() {
+		return centerrighthigh;
+	}
+	public void setCenterrighthigh(boolean centerrighthigh) {
+		this.centerrighthigh = centerrighthigh;
+	}
+	public boolean isCenterrightlow() {
+		return centerrightlow;
+	}
+	public void setCenterrightlow(boolean centerrightlow) {
+		this.centerrightlow = centerrightlow;
+	}
+	public boolean isCenterleftlow() {
+		return centerleftlow;
+	}
+	public void setCenterleftlow(boolean centerleftlow) {
+		this.centerleftlow = centerleftlow;
 	}
 	public XYLocation getXyloc() {
 		return xyloc;
@@ -325,5 +364,12 @@ public class Position extends ParentModel {
 		this.usedBy = usedBy;
 	}
 	
-
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		String p = "None";
+		if (usedBy != null)
+			p = usedBy.toString();
+		builder.append(positionName+ " Color "+positionColor+" Piece  "+p+" "+inUse+"\n");
+		return builder.toString();
+	}
 }

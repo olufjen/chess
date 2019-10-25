@@ -16,6 +16,7 @@ import no.basis.felles.semanticweb.chess.impl.DefaultWhitePiece;*/
 import no.chess.ontology.Piece;
 import no.chess.ontology.WhiteBoardPosition;
 import no.chess.ontology.impl.DefaultWhitePiece;
+import no.chess.web.model.game.AgamePiece;
 import no.chess.ontology.BFObject;
 /**
  * This class represent a a front end chess piece.
@@ -38,7 +39,7 @@ public class ChessPiece extends ParentModel{
 	private BlackBoardPosition blackBoardPosition = null;
 	private WhiteBoardPosition whiteBoardPosition = null;
 	private String ontlogyName = null;
-	
+	private AgamePiece myPiece;
 	public ChessPiece(String position, String color, String name,
 			String[] legalMoves) {
 		super();
@@ -65,6 +66,13 @@ public class ChessPiece extends ParentModel{
 		}
 		pieceName = name.substring(1);
 
+	}
+	
+	public AgamePiece getMyPiece() {
+		return myPiece;
+	}
+	public void setMyPiece(AgamePiece myPiece) {
+		this.myPiece = myPiece;
 	}
 	public String getOntlogyName() {
 		if (ontlogyName == null)
@@ -231,5 +239,9 @@ public class ChessPiece extends ParentModel{
 	public void setValue(int value) {
 		this.value = value;
 	}
-	
+	public String toString() {
+		StringBuilder result = new StringBuilder();
+		result.append("no.chess.web.model.ChessPiece Ontology name "+ontlogyName);
+		return result.toString();
+	}
 }
