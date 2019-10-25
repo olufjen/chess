@@ -628,9 +628,11 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  */
     	if (achessGame != null) { // User wants to play a game of chess
     		chessBoard.createChessontlogyPosition();
-    		game = new PlayGame(chessBoard.getPositions(),chessBoard); // Creates start position based on ontology start position
-    		 sessionAdmin.setSessionObject(request,game, gameboardSession);
-
+    		if (game == null) {
+    			game = new PlayGame(chessBoard.getPositions(),chessBoard); // Creates start position based on ontology start position
+    			sessionAdmin.setSessionObject(request,game, gameboardSession);
+    		}
+       	    System.out.println("Start positions\n"+game.getGame().getBoardPic());
     		SimpleScalar pieceMoved = new SimpleScalar(piece);
     		SimpleScalar movedTo = new SimpleScalar(newPos);
     		SimpleScalar chessPosition = new SimpleScalar(position);
@@ -640,6 +642,10 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
       	    String fen = chessBoard.createFen();
 //       	    System.out.println("Piece name "+chessPiece.getOntlogyName());
        	    System.out.println(fen);
+       	    // End positions:
+       	    System.out.println(game.getGame().getBoardPic());
+//       	    game.clearChessboard();
+ //      	    System.out.println(game.getGame().getBoardPic());
     		dataModel.put(fenPosid,fen);
     		//     		dataModel.put(pieceId,simple );
     		dataModel.put(rulesKey,chessRules);
@@ -684,11 +690,21 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    String fen = chessBoard.createFen();
    	    System.out.println("Piece name "+chessPiece.getOntlogyName());
    	    System.out.println(fen);
-   	    dataModel.put(fenPosid,fen);
+
    	    if (game != null) {
+   	    	chessPiece.getMyPiece().setMyPosition(newPosition);
    	    	game.getGame().movePiece(oldPosition.getXyloc(),newPosition.getXyloc());
+   	    	game.createMove(chessPiece.getMyPiece(), oldPosition, newPosition);
+   	    	game.getGame().createNewboard();
+   	    	System.out.println(game.getGame().getBoardPic());
+   	    	game.getGame().setChosenPlayer();
+   	    	game.proposeMove();
+     	    fen = chessBoard.createFen();
+//   	    System.out.println("Piece name "+chessPiece.getOntlogyName());
+     	    System.out.println(fen);
    	    	System.out.println(game.getGame().getBoardPic());
    	    }
+   	    dataModel.put(fenPosid,fen);
     	SimpleScalar pieceMoved = new SimpleScalar(piece);
     	SimpleScalar movedTo = new SimpleScalar(newPos);
 	    SimpleScalar chessPosition = new SimpleScalar(position);
