@@ -10,6 +10,8 @@ import no.games.chess.AbstractGamePiece;
 import no.games.chess.AbstractGamePiece.pieceType;
 import no.games.chess.AbstractPlayer;
 import no.games.chess.ChessAction;
+import no.games.chess.ChessFunctions;
+import no.games.chess.ChessPlayer;
 import no.games.chess.ChessState;
 
 /**
@@ -21,7 +23,7 @@ import no.games.chess.ChessState;
  *
  * @param <P>
  */
-public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> {
+public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements ChessPlayer<AgamePiece,ApieceMove>{
 
 	private HashMap<String,AgamePiece> myPieces;
 	private HashMap<String,ApieceMove> myMoves;
@@ -72,6 +74,8 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> {
 
 	/**
 	 * calculatePreferredPosition
+	 * This method is called when the chessAction is requested to return a preferred position.
+	 * If the action does not contain a preferred position then this method is called.
 	 * This method calculates a preferred position for a given piece.
 	 * The questions asked are:
 	 * Which rank has this piece?
@@ -81,62 +85,13 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> {
 	 * @return
 	 */
 	public Position calculatePreferredPosition(AgamePiece piece, ChessActionImpl action) {
-		preferredPositions = new ArrayList<>();
-		int rank = piece.getMyPiece().getValue();
-		pieceType thispieceType = piece.getMyType();
+		PreferredMoveProcessor pr = new PreferredMoveProcessor();
+		ApieceMove move = ChessFunctions.processChessgame(action,piece,pr); // The processor can be replaced by a lambda expression
 		Position preferredPosition = null;
-		List<Position> removedPositions =  (List<Position>) action.getPositionRemoved();
-		List<Position> availablePositions = (List<Position>) action.getAvailablePositions();
-		switch(thispieceType.ordinal()) {
-		case 1: // Rook
-		case 2: //Bishop
-		case 5: //Queen	
-			List<Position> tempList = new ArrayList<>();
-			for (Position removedPos:removedPositions) {
-				int row = removedPos.getIntRow();
-				for (Position availablePos:availablePositions) {
-					int arow = availablePos.getIntRow();
-					if (arow >= row) {
-						tempList.add(availablePos);
-					}
-					if (arow < row) {
-						tempList.add(availablePos);
-					}
-				}
-			}
-			for (Position temp:tempList) {
-				removedPositions.add(temp);
-			}
-			tempList = null;
-		
+		if (move != null) {
+			preferredPosition = move.getToPosition();
 		}
-		for (Position removedPos:removedPositions) {
-			boolean available = true;
-			for (Position availablePos:availablePositions) {
-				if (removedPos.getPositionName().equals(availablePos.getPositionName())) {
-					available = false;
-					break;
-				}
-				if (available) {
-					preferredPositions.add(availablePos);
-				}
-			}
-		}
-		if (preferredPositions.isEmpty()) {
-			return null;
-		}
-		for (Position preferredPos:preferredPositions) {
-			if (preferredPos.isInUse()) {
-				preferredPosition = preferredPos;
-				return preferredPosition;
-			}
-			if (!(preferredPos.getPositionName().contains("a")||preferredPos.getPositionName().contains("h"))) {
-				preferredPosition = preferredPos;
-				return preferredPosition;
-			}
-		}
-
-		return null;
+		return preferredPosition;
 	}
 
 	public HashMap<String, AgamePiece> getMyPieces() {

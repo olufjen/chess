@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import no.chess.web.model.Position;
 import no.games.chess.AbstractgameBoard;
+import no.games.chess.GameBoard;
 
 /**
  * This is the implementation of the Abstractgameboard class
@@ -15,14 +16,14 @@ import no.games.chess.AbstractgameBoard;
  *
  * @param <P>
  */
-public class AgameBoard<P> extends AbstractgameBoard<P> {
+public class AgameBoard extends AbstractgameBoard<Position> implements GameBoard {
 
 
 	private HashMap<String,Position> availablePositions;
 	private HashMap<String,Position> allPositions; // All positions on the board
 	
 	public AgameBoard(HashMap<String, Position> positions) {
-		super((HashMap<String, P>) positions);
+		super((HashMap<String, Position>) positions);
 		this.allPositions = positions;
 		positionlist = new ArrayList(positions.values());
 		setusedunused();
@@ -30,9 +31,14 @@ public class AgameBoard<P> extends AbstractgameBoard<P> {
 		availablePositionlist = new ArrayList();
 	}
 
+	/**
+	 * setusedunused
+	 * This method calculates a new set of lists of used and unused positions
+	 * It is called whenever a move is made. From AchessGame movePiece method
+	 */
 	public void setusedunused() {
-		usedPositionlist = (List<P>) ((List<Position>) positionlist).stream().filter(Position::isInUse).collect(Collectors.toList());
-		notusedPositionlist = (List<P>) ((List<Position>) positionlist).stream().filter(Position::notisInUse).collect(Collectors.toList());
+		usedPositionlist = (List<Position>) ((List<Position>) positionlist).stream().filter(Position::isInUse).collect(Collectors.toList());
+		notusedPositionlist = (List<Position>) ((List<Position>) positionlist).stream().filter(Position::notisInUse).collect(Collectors.toList());
 
 //		notusedPositions = (List<Position>) ((List<Position>) positions).stream().filter(board.queenExistsAt(position.getXyloc())).collect(Collectors.toList());
 	}

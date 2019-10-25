@@ -1,6 +1,8 @@
 package no.chess.web.model.game;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import aima.core.util.datastructure.XYLocation;
 import no.chess.web.model.ChessPiece;
@@ -8,6 +10,7 @@ import no.chess.web.model.Position;
 import no.games.chess.AbstractGamePiece;
 import no.games.chess.ChessPieceType;
 import no.games.chess.GamePiece;
+import no.games.chess.AbstractGamePiece.pieceColor;
 
 /**
  * This class represent the King chesspiece 
@@ -16,12 +19,14 @@ import no.games.chess.GamePiece;
  * @param <P>
  *
  */
-public class Aking<P> extends AbstractGamePiece<P>  implements ChessPieceType {
+public class Aking extends AbstractGamePiece<Position>  implements ChessPieceType {
 
 	private pieceType localType = pieceType.KING;
+	private pieceColor localColor;
 	private int[][] reachablesqueres;
 	private String[][] reachablepiecePosition;
-	HashMap<String,Position> newPositions;
+	private HashMap<String,Position> newPositions;
+	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
 	private int size = 8;
 	private String color;
 	private ChessPiece myPiece;
@@ -46,6 +51,10 @@ public class Aking<P> extends AbstractGamePiece<P>  implements ChessPieceType {
 	public Aking(Position myPosition, ChessPiece myPiece) {
 		super();
 		color = myPiece.getColor();
+		if (color.equals("w"))
+			localColor = pieceColor.WHITE;
+		else
+			localColor = pieceColor.BLACK;
 		this.myPiece = myPiece;
 		this.myPosition = myPosition;
 		reachablesqueres = new int[size][size];
@@ -168,8 +177,8 @@ public class Aking<P> extends AbstractGamePiece<P>  implements ChessPieceType {
 		newPositions = new HashMap();
 		int x = loc.getXCoOrdinate();
 		int y = loc.getYCoOrdinate();
-		if (y != 0 && x != 0) { // OBS BAck king at e8 !!!! 
-			if (y < 7) {
+		if (y != 0 && x != 0) { // OBS Black king at e8 !!!!  
+			if (y < 7 && x < 7) {
 				reachablesqueres[x][y+1] = 1;
 				reachablepiecePosition[x][y+1] = "K";
 				createPosition(newPositions, x, y+1);
@@ -270,15 +279,61 @@ public class Aking<P> extends AbstractGamePiece<P>  implements ChessPieceType {
 
 	@Override
 	public pieceType getPieceType() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		return localType;
 	}
 
 	@Override
-	public P getmyPosition() {
-		return (P) myPosition;
+	public Position getmyPosition() {
+		
+		return myPosition;
+	}
+
+	@Override
+	public void produceLegalmoves(Position position) {
+		newPositions.clear();
+		myPosition = position;
+		getLegalmoves(position);
+		createontPosition(newPositions);
 		
 	}
+	/**
+	 * createPosition
+	 * This method moves any ontologypositions to the list of positions reachable by this piece
+	 * It is called from the determinPieceType method and the produceLegalmove method
+	 * @param newPositions a HashMap of positions calculated by the piecetype
+
+	 */
+	protected void createontPosition(HashMap<String,Position> newPositions) {
+//		XYLocation newloc = new XYLocation(x,y);
+		List<Position> tempPositions = new ArrayList(newPositions.values());
+		for (Position pos : tempPositions) {
+			String name = pos.getPositionName();
+			Position ontPosition = ontologyPositions.get(name);
+			if (ontPosition != null) {
+				newPositions.put(name, ontPosition);
+			}
+		}
+
+	}
+	@Override
+	public pieceColor getPieceColor() {
+		
+		return localColor;
+	}
+
+	@Override
+	public HashMap<String, Position> getOntologyPositions() {
+		
+		return this.ontologyPositions;
+	}
+
+	@Override
+	public void setOntologyPositions(HashMap<String, Position> ontologyPositions) {
+		this.ontologyPositions = ontologyPositions;
+		
+	}
+
 
 
 }

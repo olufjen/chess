@@ -6,33 +6,52 @@ import java.util.List;
 
 import no.chess.web.model.Position;
 import no.games.chess.ChessAction;
+import no.games.chess.ChessFunctions;
 
 /**
  * ChessActionImpl
  * This class implements the ChessAction interface.
  * It contains an AgamePiece and its available (reachable) positions
- * From this a preferred position for this piece is calculated by the player
+ * Revised: From this a preferred position for this piece is calculated by the player
+ * From this a possible move and a preferred position is calculated
  * It also calculates which reachable positions are occupied by other pieces belonging to the same player.
+ * They are held in the List positionRemoved
+ * The PreferredMove processor uses this information to determine which positions are available for a given piece
  * @author oluf 
  *
  */
-public class ChessActionImpl implements ChessAction<HashMap<String, Position>,List<Position>,List<Position>,AgamePiece<Position>,Position> {
+public class ChessActionImpl implements ChessAction<HashMap<String, Position>,List<Position>,List<Position>,AgamePiece,Position> {
 
 	private HashMap<String, Position> positions;
 	private AgamePiece chessPiece;
 	private List<Position> availablePositions;
 	private List<Position> positionRemoved;
-	private Position preferredPosition; // Each action has a preferred position that the piece should move to
+	private Position preferredPosition = null; // Each action has a preferred position that the piece should move to
 	private APlayer player;
+	private ApieceMove possibleMove;
 
 	public ChessActionImpl(HashMap<String, Position> positions, AgamePiece chessPiece,APlayer player) {
 		super();
 		this.positions = positions;
 		this.chessPiece = chessPiece;
 		this.player = player;
-		this.availablePositions = getActions();
-		preferredPosition = player.calculatePreferredPosition(chessPiece,this);
+		this.availablePositions = getActions(); // The positionRemoved are also created and filled. They are positions occupied by other pieces owned by the player
+		PreferredMoveProcessor pr = new PreferredMoveProcessor();
+		possibleMove = ChessFunctions.processChessgame(this,chessPiece, pr); // The processor can be replaced by a lambda expression?
+		if (possibleMove != null)
+			preferredPosition = possibleMove.getToPosition();
+//		preferredPosition = player.calculatePreferredPosition(chessPiece,this);      
 
+	}
+
+
+	public ApieceMove getPossibleMove() {
+		return possibleMove;
+	}
+
+
+	public void setPossibleMove(ApieceMove possibleMove) {
+		this.possibleMove = possibleMove;
 	}
 
 
@@ -105,21 +124,23 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * @return
 	 */
 	public List<Position> getActions(){
-		List<Position> availablePositions = new ArrayList(positions.values());
+		availablePositions = new ArrayList(positions.values());
 		positionRemoved = new ArrayList();
-		//List<AgamePiece> pieces = player.getMygamePieces(); Available positions only for the chessPiee belonging to the action !!
+		List<AgamePiece> pieces = player.getMygamePieces(); 
 		for (Position position:availablePositions) {
-			
-				if (chessPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
+			for (AgamePiece otherPiece:pieces) {
+				if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
 					positionRemoved.add(position);
 				}
+			}
+
 		
 		}
 		return availablePositions;
 		
 	}
 	public String toString() {
-		String posName = "Unkown";
+		String posName = "Unknown";
 		if (preferredPosition != null)
 			posName = preferredPosition.getPositionName();
 		StringBuffer logText = new StringBuffer("Preferred Position " + posName+ " Piece " + chessPiece.toString());
