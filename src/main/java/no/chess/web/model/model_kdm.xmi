@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ASCII"?>
+<kdm:Segment xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:kdm="http://www.eclipse.org/MoDisco/kdm/kdm" xmlns:source="http://www.eclipse.org/MoDisco/kdm/source">
+  <model xsi:type="source:InventoryModel" name="model">
+    <inventoryElement xsi:type="source:Directory" name="model" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model">
+      <inventoryElement xsi:type="source:SourceFile" name="AbstractSaksbehandler.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\AbstractSaksbehandler.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="ChessBoard.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\ChessBoard.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="ChessMoves.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\ChessMoves.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="ChessPiece.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\ChessPiece.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="ChessRules.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\ChessRules.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="EightQueenProblem.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\EightQueenProblem.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="LoginModel.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\LoginModel.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="MoveMent.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\MoveMent.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="Position.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\Position.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="QueensEnvironment.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\QueensEnvironment.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="Saksbehandler.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\Saksbehandler.java"/>
+      <inventoryElement xsi:type="source:SourceFile" name="SaksbehandlerImpl.java" path="C:\svnroot\chess\chess\trunk\chess_web\src\main\java\no\chess\web\model\SaksbehandlerImpl.java"/>
+    </inventoryElement>
+  </model>
+</kdm:Segment>

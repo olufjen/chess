@@ -196,6 +196,7 @@ public class PlayGame {
 	/**
 	 * proposeMove
 	 * This method uses a chosen (aima) search algorithm to find the best next move
+	 * The search object is created every time this method is called
 	 * Find the name of the piece to be moved (web.model.ChessPiece)
 	 * Find the old position positionName
 	 * Find the new position positionName
@@ -230,6 +231,7 @@ public class PlayGame {
  * The makeDecision method makes and creates a number of moves and returns the top action from a set of actions 
  * that has been performed
  * All the moves that are made is a result of the getResult method of the game object.
+ * 13.11.2019 : makeDecision must not return an action that has an inactive piece.
  */
 		ChessAction newAction = search.makeDecision(currentState);
 //		String a = newAction.toString();
@@ -253,14 +255,20 @@ public class PlayGame {
 		String pieceName = piece.getMyPiece().getName();
 		String oldPos = piece.getMyPosition().getPositionName();
 		Position oldPosition = piece.getMyPosition();
+		currentState.emptyMovements(); // empty all movements before the chosen action and move.
 		myFrontBoard.determineMove(oldPos, newPos, pieceName); // New fen is created based on this
 //		Position newPosition = myFrontBoard.findPostion(newPos);
-		currentState.emptyMovements();
+
 //		clearMoves();
 	    writer.println(game.getBoardPic());
 	    clearChessboard();
+/*
+ * OBS: Move from old to new position	!!! OJN 3.12.19    
+ */
+	    game.movePiece(piece, position," Playgame"); // This call creates the move on the aima chessboard
 	    piece.setMyPosition(position); // position is the preferred position from action This is the new position of the piece
-		game.movePiece(piece.getMyPosition().getXyloc(),position.getXyloc()); // The piece is moved to the new location on the chessboard held by the AbstractChessGame
+
+//		game.movePiece(piece.getMyPosition().getXyloc(),position.getXyloc()); // The piece is moved to the new location on the chessboard held by the AbstractChessGame
 		
 		game.createNewboard(); // A new set of usedunused lists are created.
 		
@@ -270,7 +278,7 @@ public class PlayGame {
 	}
 	/**
 	 * createMove
-	 * This method creates a move based on a move carried out in the proposeMove method
+	 * This method creates a move based on a move carried out in the during the search.makedecision call.
 	 * The game piece to be moved calculates new available positions from the new position it is moved to.
 	 * This method is called from the chessState object during the makeDecision process
 	 * @param piece The game piece moved
@@ -309,6 +317,7 @@ public class PlayGame {
 	 * This method creates a move based on a move carried out in the proposeMove method
 	 * THe game piece to be moved calculates new available positions from the new position it is moved to.
 	 * This method is called from the proposemove method
+	 * THe method is also called when the opponent player makes a move (from RapporterChessStartServerResource)
 	 * @param piece The game piece moved
 	 * @param from The from Position
 	 * @param to The to Position
@@ -335,6 +344,7 @@ public class PlayGame {
 		piece.produceLegalmoves(to);
 //		piece.getLegalmoves(to); // Create a new list of available position after move
 		ApieceMove pieceMove = new ApieceMove(piece,from, to, noofMoves, algebraicmove);
+		pieceMove.setMoveNumber(noofMoves);
 		 writer.println("Creating piecemove "+pieceMove.toString());
 		movements.add(pieceMove);
 			

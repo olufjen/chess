@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Stack;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 
@@ -52,6 +53,8 @@ public class Position extends ParentModel {
 	private boolean centerrightlow = false;
 	private boolean centerleftlow = false;
 	private ChessPiece usedBy;
+	private ChessPiece removed;
+	private Stack<ChessPiece> removedPieces;
 	private BlackBoardPosition blackBoardPosition = null;
 	private WhiteBoardPosition whiteBoardPosition = null;
 	private HashSet<Piece> pieces;
@@ -78,6 +81,7 @@ public class Position extends ParentModel {
 		centerlefthigh = ycol == 3 && xrow == 4;
 		centerrightlow = ycol == 4 && xrow == 3;
 		centerrighthigh = ycol == 4 && xrow == 4;
+		removedPieces = new Stack();
 	}
 	public Position(XYLocation loc, boolean inUse, ChessPiece usedBy) {
 		this.xyloc = loc;
@@ -101,6 +105,7 @@ public class Position extends ParentModel {
 		centerlefthigh = ycol == 3 && xrow == 4;
 		centerrightlow = ycol == 4 && xrow == 3;
 		centerrighthigh = ycol == 4 && xrow == 4;
+		removedPieces = new Stack();
 	}
 	
 	public boolean isCenterlefthigh() {
@@ -138,6 +143,14 @@ public class Position extends ParentModel {
 	public HashSet<Piece> getPieces() {
 		return pieces;
 	}
+	
+	public Stack<ChessPiece> getRemovedPieces() {
+		return removedPieces;
+	}
+	public void setRemovedPieces(Stack<ChessPiece> removedPieces) {
+		this.removedPieces = removedPieces;
+	}
+
 	private IntPredicate evenNumbers = (int i) -> i%2 == 0;
 	private void calculateColor(){
 		if (evenNumbers.test(intRow+intColumn)){
@@ -176,9 +189,10 @@ public class Position extends ParentModel {
 	 * checkUsed
 	 * This method checks if there is disagreement between the inUse flag and 
 	 * the Piece in this position
+	 * @since 6.12.19 must incorporate the case when the piece is inactive (removed by opponent)
 	 */
 	public void checkUsed() {
-		if (isInUse() &&getUsedBy() == null){
+		if (inUse &&getUsedBy() == null){
 			setInUse(false);
 		}
 	}
@@ -348,7 +362,23 @@ public class Position extends ParentModel {
 	public void setPositionName(String positionName) {
 		this.positionName = positionName;
 	}
+	public boolean returnInuse() {
+		return inUse;
+	}
+	/**
+	 * isInUse()
+	 * Checks if position is in use
+	 * @return true if position is in use and piece is active
+	 * @since 15.11.19 check if piece in position is occupied by a piece that has been removed
+	 */
 	public boolean isInUse() {
+		boolean active = false;
+		if (usedBy != null && usedBy.getMyPiece() != null)
+			active = usedBy.getMyPiece().isActive();
+		if (active && inUse)
+			return inUse;
+		if (!active && usedBy != null && usedBy.getMyPiece() != null)
+			return active;
 		return inUse;
 	}
 	public boolean notisInUse() {
@@ -360,8 +390,62 @@ public class Position extends ParentModel {
 	public ChessPiece getUsedBy() {
 		return usedBy;
 	}
+	
+	public ChessPiece getRemoved() {
+		return removed;
+	}
+	public void setRemoved(ChessPiece removed) {
+		this.removed = removed;
+	}
+
+	/**
+	 * returnPiece()
+	 * This method sets a removed piece back in position and sets it active again.
+	 * It is called from the chessstateimpl object emptyMovements() and checkPlayers() methods
+	 */
+	public void returnPiece() {
+		if (removedPieces.empty()) {
+			setUsedBy();
+		}
+		if (removedPieces != null && !removedPieces.empty()) {
+			usedBy = removedPieces.pop();
+			usedBy.getMyPiece().setActive(true);
+		}
+
+	}
+	public void returnPiece(ChessPiece piece) {
+		this.usedBy = piece;
+	}
+	/**
+	 * This method is used when a position is set vacant.
+	 * IT Is called from the Chessboard object and from the ChessPiece object .acceptMove method
+	 * 
+	 */
+	public void setUsedBy() {
+		this.usedBy = null;
+		inUse = false;
+	}
+	/**
+	 * This method is used when a piece is moved from this position
+	 * and so the position becomes vacant.
+	 * The method is called from Chessboard when:
+	 * 1 Creating an empty chessboard
+	 * 2 Creating ontology positions
+	 * 3 Determine if a move is legal . This is checked when a move is made
+	 * The determinemove method calls the chesspiece's acceptmove method
+	 * which calls this method.
+	 * The method is also called from the AchessGame object movePiece method when this object is used by the
+	 * ChessSate object in the search process
+	 * @param usedBy
+	 */
 	public void setUsedBy(ChessPiece usedBy) {
+		if (this.usedBy != null && this.usedBy.getMyPiece() != null && this.usedBy != usedBy) {
+			removed = this.usedBy;
+			removed.getMyPiece().setActive(false);
+			removedPieces.push(removed);
+		}
 		this.usedBy = usedBy;
+		inUse = true;
 	}
 	
 	public String toString() {

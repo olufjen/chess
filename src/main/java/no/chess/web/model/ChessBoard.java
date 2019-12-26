@@ -360,8 +360,8 @@ public class ChessBoard extends ParentModel {
 			Position position = positions.get(allPositions[i]);
 			ChessPiece piece = position.getUsedBy();
 //			if (piece != null && !piece.getOntlogyName().equals("WhiteQueen") && !piece.getOntlogyName().equals("BlackQueen") ) {
-				position.setUsedBy(null);
-				position.setInUse(false);
+				position.setUsedBy();
+//				position.setInUse(false);
 				System.out.println("Clearchessboard: Setting position empty:  "+position.getPositionName());
 //			}
 
@@ -604,8 +604,8 @@ public class ChessBoard extends ParentModel {
 			System.out.println("Position "+position.getPositionName()+" Chessontology: Name of piece: "+chessPiece.getName()+" Name of chess piece: "+chessPiece.getPieceName()+" "+ontName);
 
 			if (ontologyPiece == null){
-				position.setUsedBy(null);
-				position.setInUse(false);
+				position.setUsedBy();
+//				position.setInUse(false);
 				System.out.println("Setting position empty:  "+position.getPositionName());
 			}
 		
@@ -987,7 +987,10 @@ public class ChessBoard extends ParentModel {
 	/**
 	 * determineMove
 	 * This method determines if a move is considered legal and if an opposing piece need to be removed.
-	 * It is called when the user makes a move on the chessboard
+	 * It is called: 
+	 * 1. From RapporterChessStartServerResource when a user makes a move
+	 * 2. From the playgame object in the proposemove method.
+	 * 
 	 * The chess piece that is moved receives the new position if it is accepted
 	 * It uses the establishMoves method to create a move in algebraic notation
 	 * 
@@ -1007,11 +1010,11 @@ public class ChessBoard extends ParentModel {
 
        	}
        	if (!checkPosition(newPos)){
-       	   	oldPosition.setUsedBy(null);
-           	oldPosition.setInUse(false);
+//       	   	oldPosition.setUsedBy(null);
+//           	oldPosition.setInUse(false);
            	HashSet pieces = oldPosition.getPieces();
            	oldPosition.setPieces(null);
-           	oldPosition.setUsedBy(null);
+           	oldPosition.setUsedBy();
            	newPosition.setUsedBy(chessPiece);
         	newPosition.setInUse(true);
         	newPosition.setPieces(pieces);

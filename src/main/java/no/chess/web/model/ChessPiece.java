@@ -142,25 +142,25 @@ public class ChessPiece extends ParentModel{
 		ChessPiece opposingPiece = newPosition.getUsedBy();
 		boolean accept = false;
 		if (blackPiece == null && opposingPiece.getWhitePiece() == null) {
-       	   	oldPosition.setUsedBy(null);
-           	oldPosition.setInUse(false);
+       	   	oldPosition.setUsedBy();
+//           	oldPosition.setInUse(false);
            	HashSet pieces = oldPosition.getPieces();
            	newPosition.setUsedBy(this);
         	newPosition.setInUse(true);
         	newPosition.setPieces(pieces);
         	accept = true;
-        	opposingPiece.setValue(-1); //How to set a piece inactive (vacant)? See Ontology
+//        	opposingPiece.setValue(-1); //How to set a piece inactive (vacant)? See Ontology
 			// move is legal. Later: Check move according to rules given for this piece
 		}
 		if (whitePiece == null && opposingPiece.getBlackPiece() == null) {
 			// Move is legal
-       	   	oldPosition.setUsedBy(null);
-           	oldPosition.setInUse(false);
+       	   	oldPosition.setUsedBy();
+//           	oldPosition.setInUse(false);
            	HashSet pieces = oldPosition.getPieces();
            	newPosition.setUsedBy(this);
         	newPosition.setInUse(true);
         	newPosition.setPieces(pieces);
-        	opposingPiece.setValue(-1); //How to set a piece inactive (vacant)? See Ontology
+//        	opposingPiece.setValue(-1); //How to set a piece inactive (vacant)? See Ontology
         	accept = true;
 		}
 		return accept;
@@ -241,7 +241,9 @@ public class ChessPiece extends ParentModel{
 	}
 	public String toString() {
 		StringBuilder result = new StringBuilder();
-		result.append("no.chess.web.model.ChessPiece Ontology name "+ontlogyName);
+		result.append("no.chess.web.model.ChessPiece Ontology name "+ontlogyName+"\nChesspiece position "+position.toString());
+		if (getMyPiece() != null)
+			result.append("\n Piece active: "+getMyPiece().isActive());
 		return result.toString();
 	}
 }

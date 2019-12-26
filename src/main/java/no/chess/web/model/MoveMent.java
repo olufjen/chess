@@ -148,8 +148,8 @@ public class MoveMent {
 				position.setPieces( available.getPieces());
 				position.setInUse(true);
 				available.setPieces(null);
-				available.setUsedBy(null);
-				available.setInUse(false);
+				available.setUsedBy();
+//				available.setInUse(false);
 				available.checkUsed();
 				position.checkUsed();
 				i++;
