@@ -184,7 +184,7 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 			int y = xloc.getYCoOrdinate();
 			reachablesqueres[x][y] = 1;
 			reachablepiecePosition[x][y] = "P";
-			createPosition(newPositions, x, y);
+			createPosition(newPositions, xloc);
 		}		
 /*		int x = loc.getXCoOrdinate();
 		int y = loc.getYCoOrdinate();
@@ -247,8 +247,8 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 	 * @param x
 	 * @param y
 	 */
-	private void createPosition(HashMap<String,Position> newPositions,int x,int y) {
-		XYLocation newloc = new XYLocation(x,y);
+	private void createPosition(HashMap<String,Position> newPositions,XYLocation newloc) {
+//		XYLocation newloc = new XYLocation(x,y);
 		Position newPosxyp = new Position(newloc,false,null);
 		newPositions.put(newPosxyp.getPositionName(), newPosxyp);
 	}

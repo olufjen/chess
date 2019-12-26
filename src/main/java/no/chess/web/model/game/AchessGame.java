@@ -1,6 +1,9 @@
 package no.chess.web.model.game;
 
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,19 +32,24 @@ import no.games.chess.PieceMove;
 
 /**
  * AChessGame inherits from the abstract class AbstractChessgame
- * It is created when the user wants to play a game of chess from th PlayGame object
+ * It is created when the user wants to play a game of chess from the PlayGame object
+ * It collects all the pieces and their board positions from the chosen ontology game file. 
  * It transfers the current positions of the chess pieces to the AIMA chessboard
- * It also creates a AgamePiece for every chess piece found from the ontology game
+ * It also creates a AgamePiece for every chess piece found from the ontology game file
  * and places these pieces in an array called piecesonBoard.
  * It also creates a white player and a black player and gives the correct chesspieces to each of the players.
  * It finally creates an initial state of the game with the initial gameboard and the two players
  * This initial state calculates all available actions for this state.
+ * NOTE: The removePiece method sets a piece passive.
  * @author oluf
  *
  */
 public class AchessGame extends AbstractChessGame{
 	private AgameBoard gameBoard;
-	private HashMap<String, Position> positions; // THe HashMap of Positions from the ontology
+	private List<Position> opponentPositions;
+	private HashMap<String, Position> positions; // The HashMap of Positions from the ontology
+	private List<Position> allPositions; // The list of Positions from the ontology
+	private List<Position> orgPositions; // The list of Positions as originally
 	private ArrayList<Position> usedPositionlist;
 	private ArrayList<AgamePiece> piecesonBoard;
 	private PlayGame gamePlayer;
@@ -52,23 +60,81 @@ public class AchessGame extends AbstractChessGame{
 	private ChessBoard myFrontBoard; // The front chessboard to display board and pieces
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\analysis.txt";
 	private PrintWriter writer = null;
+	private FileWriter fw = null;
 	
 	public AchessGame(int size,HashMap<String, Position> positions,ChessBoard frontBoard) {
 		super(size);
+		try {
+			fw = new FileWriter(outputFileName, true);
+		} catch (IOException e1) {
+
+			e1.printStackTrace();
+		}
+	    writer = new PrintWriter(new BufferedWriter(fw));		
 		gameBoard = new AgameBoard(positions); // Represents the chess gameboard with aima board positions
 		this.positions = positions;
+		allPositions = new ArrayList(positions.values());
+		
 		piecesonBoard = new ArrayList();
+		createStart();
 		tranferBoard(); // transfers piece positions to the aima chessboard
 		chessState = new ChessStateImpl(this, gameBoard,localwhitePlayer,localblackPlayer);
-	      try 
-	      {
-	         writer = new PrintWriter(outputFileName);
-	      } catch (FileNotFoundException e) {
-	         System.err.println("'" + outputFileName 
-	            + "' is an invalid output file.");
-	      }
+
+
 	}
-	
+	public void restorePositions() {
+		for (Position position:allPositions) {
+			restoreposition(position);
+		}
+		createStart();
+	}
+	/**
+	 * createStart
+	 * This method creates a list of positions that contains the original values of the positions.
+	 * It is called when the AChessGame object is created. 
+	 */
+	public void createStart() {
+		orgPositions = null;
+		orgPositions = new ArrayList();
+		for (Position position:allPositions) {
+			Position orgPos = new Position(position.getPositionName(),position.isInUse(),position.getUsedBy());
+			orgPositions.add(orgPos);
+		}
+	}
+	/**
+	 * restorepositions
+	 * This method returns original values to a given position.
+	 * @param pos
+	 */
+	public void restoreposition(Position pos) {
+		for (Position position:orgPositions) {
+			String posName = position.getPositionName();
+			boolean inUse = position.returnInuse();
+			ChessPiece piece = position.getUsedBy();
+			if (pos.getPositionName().equals(posName)) {
+				pos.setInUse(inUse);
+				pos.returnPiece(piece);
+				break;
+			}
+			
+		}
+	}
+	public List<Position> getAllPositions() {
+		return allPositions;
+	}
+
+	public void setAllPositions(List<Position> allPositions) {
+		this.allPositions = allPositions;
+	}
+
+	public List<Position> getOpponentPositions() {
+		return opponentPositions;
+	}
+
+	public void setOpponentPositions(List<Position> opponentPositions) {
+		this.opponentPositions = opponentPositions;
+	}
+
 	public APlayer getLocalwhitePlayer() {
 		return localwhitePlayer;
 	}
@@ -92,7 +158,7 @@ public class AchessGame extends AbstractChessGame{
 	 * transferBoard
 	 * This method transfers piece positions to the aima chessboard
 	 * It also creates all available pieces determine their type and calculates all reachable positions
-	 * And it creates a white player and a black player with their available pieces ad their available positions.
+	 * And it creates a white player and a black player with their available pieces and their available positions.
 	 */
 	public void tranferBoard() {
 		usedPositionlist = (ArrayList<Position>) gameBoard.getUsedPositionlist();
@@ -132,8 +198,9 @@ public class AchessGame extends AbstractChessGame{
 			builder.append("\n");
 		}
 		builder.append("End transferBoard\n");
-//		System.out.println(getBoardPic());
-//		System.out.println(builder.toString());
+		writer.println(getBoardPic());
+		writer.println(builder.toString());
+		writer.flush();
 	}
 	/**
 	 * createNewboard
@@ -158,7 +225,7 @@ public class AchessGame extends AbstractChessGame{
 				addPieceAt(loc);
 				addPieceAtPos(loc, pieceName);
 			}else {
-				System.out.println("AchessGame: Used position not in use !!! \n"+position.toString());
+				writer.println("AchessGame: Used position not in use !!! \n"+position.toString());
 			}
 
 	//		builder.append(gamePiece.toString());
@@ -172,18 +239,153 @@ public class AchessGame extends AbstractChessGame{
 	public void setGamePlayer(PlayGame gamePlayer) {
 		this.gamePlayer = gamePlayer;
 	}
-
+	/**
+	 * movePiece
+	 * This method is called from the chessstate object to perform a move
+	 * It uses the position .setUsedBy method to perform the move.
+	 * When a piece is moved using the position.setUsedBy method, then 
+	 * the piece position must be set accordingly.
+	 * @param piece
+	 * @param to
+	 */
+	public void movePiece(AgamePiece piece,Position to) {
+		boolean removed = false;
+		writer.println("To move Piece ===================="+"Chessstate"+"\n"+piece.toString());
+		XYLocation from = piece.getMyPosition().getXyloc();
+		XYLocation xyto = to.getXyloc();
+		if (piece != null)
+			removed = removePiece(piece,xyto);
+		if (!removed)
+			pieceMove(piece,xyto);
+		movePiece(piece.getMyPosition().getXyloc(),to.getXyloc());
+	}
+	/**
+	 * movePiece
+	 * This method is called from the PlayGame object to perform a move.
+	 * It is called after a call to the chessboard .determineMove method
+	 * The chessboard .determineMove method uses the position .setUsedBy method
+	 * @param piece
+	 * @param to
+	 * @param source
+	 */
+	public void movePiece(AgamePiece piece,Position to, String source) {
+		writer.println("To move Piece ===================="+source+"\n"+piece.toString());
+		movePiece(piece.getMyPosition().getXyloc(),to.getXyloc());
+		
+	}
 	/* movePiece
 	 * This method moves a piece from its present location to a new location
 	 * It is called from the PlayGame object when a piece is moved.
+	 * It is also called from the chessstate object during the makeDecision - getResult and  - mark procedure
+	 * This method must include a procedure to remove an opponent piece as a result of the move
 	 * 
 	 */
 	public void movePiece(XYLocation from, XYLocation to) {
-		
+//		boolean removed = false;
+		writer.println("Move from to ====================\n");
+		writer.println("From "+from.toString()+ " To "+to.toString());
+//		AgamePiece activePiece = findPiece(from);
+//		position.setUsedBy(activePiece.getMyPiece());
+/*		if (activePiece != null)
+			removed = removePiece(activePiece,to);
+		if (!removed)
+			pieceMove(activePiece,to);*/
 		super.movePiece(from, to);
-//		gameBoard.setusedunused();
+		writer.flush();
+		gameBoard.setusedunused();
 	}
 
+	private void pieceMove(AgamePiece piece,XYLocation to) {
+		if (piece != null) {
+			Position mypos = piece.getMyPosition();
+			for (Position pos: allPositions) {
+				XYLocation loc = pos.getXyloc();
+				int x = loc.getXCoOrdinate();
+				int y = loc.getYCoOrdinate();
+				int tx = to.getXCoOrdinate();
+				int ty = to.getYCoOrdinate();
+				if (x == tx && y == ty ) {
+					pos.setUsedBy(piece.getMyPiece());
+					piece.setMyPosition(pos); // When a piece is moved using the position.setUsedBy method, then 
+					// the piece position must be set accordingly.
+					writer.println("*** Active piece moved **** "+piece.toString()+"\n");
+				}
+			}
+		}
+		
+	}
+	/**
+	 * @param location
+	 * @deprecated !!?? as of december 2019
+	 * @return
+	 */
+	private AgamePiece findPiece (XYLocation location) {
+		APlayer activePlayer = null;
+		AgamePiece activePiece = null;
+		APlayer blackPlayer = getLocalblackPlayer();
+		APlayer whitePlayer = getLocalwhitePlayer();
+		boolean whiteTurn = whitePlayer.isActive();
+		boolean blackTurn = blackPlayer.isActive();
+		if (whiteTurn)
+			activePlayer = whitePlayer;
+		else
+			activePlayer = blackPlayer;
+		List<AgamePiece> pieces = activePlayer.getMygamePieces();
+		for (AgamePiece piece:pieces) {
+			Position position = piece.getMyPosition();
+			if (position != null && piece.isActive()) {
+				opponentPositions.add(position);
+				XYLocation xyloc = position.getXyloc();
+				int x = xyloc.getXCoOrdinate();
+				int y = xyloc.getYCoOrdinate();
+				int tx = location.getXCoOrdinate();
+				int ty = location.getYCoOrdinate();
+				if (x == tx && y == ty && piece.isActive()) {
+					writer.println("*** Active piece found **** "+piece.toString()+" "+piece.getMyPiece().toString()+"\n");
+					activePiece = piece;
+				}
+			}
+		}
+		return activePiece;
+	}
+
+	private boolean removePiece(AgamePiece activePiece,XYLocation to) {
+		APlayer opponent = null;
+		Position moveTo = null;
+		boolean removed = false;
+		APlayer blackPlayer = getLocalblackPlayer();
+		APlayer whitePlayer = getLocalwhitePlayer();
+		boolean whiteTurn = whitePlayer.isActive();
+		boolean blackTurn = blackPlayer.isActive();
+		opponentPositions.clear();
+		if (whiteTurn)
+			opponent = blackPlayer;
+		else
+			opponent = whitePlayer;
+		List<AgamePiece> pieces = opponent.getMygamePieces();
+		for (AgamePiece piece:pieces) {
+			Position position = piece.getMyPosition();
+			if (position != null && piece.isActive()) {
+				opponentPositions.add(position);
+				XYLocation xyloc = position.getXyloc();
+				int x = xyloc.getXCoOrdinate();
+				int y = xyloc.getYCoOrdinate();
+				int tx = to.getXCoOrdinate();
+				int ty = to.getYCoOrdinate();
+				if (x == tx && y == ty && piece.isActive()) {
+					writer.println("*** Opponent piece Taken **** "+piece.toString()+" "+piece.getMyPiece().toString()+"\n");
+					removed = true;
+					position.setUsedBy(activePiece.getMyPiece());
+					activePiece.setMyPosition(position); // When a piece is moved using the position.setUsedBy method, then 
+					// the piece position must be set accordingly.
+//					piece.setActive(false);
+//					piece.setValue(-1);
+//					piece.setMypositionEmpty(null);
+				}
+			}
+		}
+		return removed;
+	}
 
 	public ChessBoard getMyFrontBoard() {
 		return myFrontBoard;
@@ -244,26 +446,40 @@ public class AchessGame extends AbstractChessGame{
 /*
  * analyzePieceandPosition
  * This method returns a utility value that is high if the preferred position is a central position and the piece has a
- * high ranking 
- * Multiply the utility value with a factor depending on:
- * - Early/late in the game
- * - Other??
+ * It makes use of an action processor that returns utility value for the given action.
  */
 
 	public double analyzePieceandPosition(ChessAction action) {
 		List<ApieceMove> movements = null;
+/*		fw = null;
+		writer = null;*/
+/*		try {
+			fw = new FileWriter(outputFileName, true);
+		} catch (IOException e1) {
+
+			e1.printStackTrace();
+		}
+	      writer = new PrintWriter(new BufferedWriter(fw));		*/
+
 		StringBuilder builder = new StringBuilder();
 		builder.append("Analyzepieceandposition\n");
 		builder.append("Analyzing action: "+action.toString()+"\n");
+		
 		Integer pNumber = new Integer(pn);
 		pn++;
-		ActionProcessor actionProcessor = new ActionProcessor(pNumber);
-//		AgamePiece p = (AgamePiece) action.getChessPiece();
+		AgamePiece piece = (AgamePiece) action.getChessPiece();
+		String name = piece.getMyPiece().getPieceName();
+		ActionProcessor actionProcessor = new ActionProcessor(pNumber,name);
 		Double d  = ChessFunctions.processChessgame(action, gamePlayer,actionProcessor);
+		opponentPositions = actionProcessor.getOpponentPositions();
+		builder.append("Evaluation value "+ d.toString()+"\n");
+		writer.println(builder.toString());
+		builder = null;
+		writer.flush();
 		return d.doubleValue();
 		
 /*		int noofMoves = 0;
-		int factor = 1;
+		int factor = 1;bhfgdchgcfdg
 		if (gamePlayer != null) {
 			movements = gamePlayer.getMovements();
 		}

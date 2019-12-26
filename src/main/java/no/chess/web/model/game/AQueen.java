@@ -187,14 +187,14 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 			int y = xloc.getYCoOrdinate();
 			reachablesqueres[x][y] = 1;
 			reachablepiecePosition[x][y] = "P";
-			createPosition(newPositions, x, y);
+			createPosition(newPositions, xloc);
 		}
 		for (XYLocation xloc:blocations) {
 			int x = xloc.getXCoOrdinate();
 			int y = xloc.getYCoOrdinate();
 			reachablesqueres[x][y] = 1;
 			reachablepiecePosition[x][y] = "P";
-			createPosition(newPositions, x, y);
+			createPosition(newPositions,xloc);
 		}		
 		
 /*		
@@ -278,8 +278,8 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 	 * @param x
 	 * @param y
 	 */
-	private void createPosition(HashMap<String,Position> newPositions,int x,int y) {
-		XYLocation newloc = new XYLocation(x,y);
+	private void createPosition(HashMap<String,Position> newPositions,XYLocation newloc) {
+//		XYLocation newloc = new XYLocation(x,y);
 		Position newPosxyp = new Position(newloc,false,null);
 		newPositions.put(newPosxyp.getPositionName(), newPosxyp);
 	}

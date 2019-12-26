@@ -85,7 +85,10 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 	 * @return
 	 */
 	public Position calculatePreferredPosition(AgamePiece piece, ChessActionImpl action) {
-		PreferredMoveProcessor pr = new PreferredMoveProcessor();
+		String name = piece.getMyPiece().getPieceName();
+		int pn = piece.getMyPosition().getIntRow();
+		Integer prn = new Integer(pn);
+		PreferredMoveProcessor pr = new PreferredMoveProcessor(prn,name);
 		ApieceMove move = ChessFunctions.processChessgame(action,piece,pr); // The processor can be replaced by a lambda expression
 		Position preferredPosition = null;
 		if (move != null) {

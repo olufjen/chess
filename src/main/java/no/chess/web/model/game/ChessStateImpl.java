@@ -7,17 +7,20 @@ import java.util.List;
 
 import no.chess.web.model.Position;
 import no.games.chess.ChessAction;
+import no.games.chess.ChessPieceType;
 import no.games.chess.ChessPlayer;
 import no.games.chess.ChessState;
 
 /**
  * This class represent the state defined in the games java project and the no.games.chess structure.
  * It implements ChessState from games structure
- * It creates an initial state based on the boardpositions from a given ontology game.
+ * An initial state is created by the AChessGame object when this object is created.
+ * It creates an initial state based on the boardpositions from a given ontology game file.
  * The state must be able to return an answer to the question whether this current state is a final state.
  * A final state is either a loss, a win or a draw.
  * A ChessState is characterized by a AgameBoard and positions held in a HashMap.
  * The positions tell which positions are vacant or occupied by a chessPiece. 
+ * THere exists only one ChessState object, and the values of the state changes only when the .mark method is called.
  * 
  * @author oluf
  * @param <GameBoard> Represent the AIMA Gameboard
@@ -91,16 +94,51 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 	 *emptyMovements
 	 * This method clears all movements made during a makeDecision process
 	 * and restores available positions in accordance with the piece's position.
+	 * It then produces new legal moves for all involved pieces.
 	 */
 	public void emptyMovements() {
+		checkPlayers();
 		for (ApieceMove move:movements) {
 			AgamePiece piece = move.getPiece();
 			Position pos = move.getPiece().getmyPosition();
+//			piece.setActive(true); // Always set piece active again !!!!
+//			if (piece.isActive())
 			piece.produceLegalmoves(pos);
 		}
 		movements.clear();
+//		checkPlayers();
 	}
 
+	/**
+	 * checkPlayers
+	 * This method restores any removed pieces in a search for the best move
+	 * It is called from the emptyMovements method
+	 */
+	public void checkPlayers() {
+		List<AgamePiece> pieces = whitePlayer.getMygamePieces();
+		
+		for (AgamePiece piece:pieces) {
+			if (!piece.isActive()) {
+				piece.getMyPosition().returnPiece();
+//				piece.setActive(true);
+//				piece.restorePosition();
+//				piece.restoreValue();
+			}
+			piece.restorePosition(); // Restore positions for all pieces
+//			piece.produceLegalmoves(pos); // Should it also produce new legal moves ??
+		}
+		List<AgamePiece> blackpieces = blackPlayer.getMygamePieces();
+		for (AgamePiece piece:blackpieces) {
+			if (!piece.isActive()) {
+				piece.getMyPosition().returnPiece();
+//				piece.setActive(true);
+//				piece.restorePosition();
+//				piece.restoreValue();
+			}
+			piece.restorePosition(); // Restore positions for all pieces
+//			piece.produceLegalmoves(pos);
+		}		
+	}
 /*	public ChessStateImpl(AchessGame achessGame, AgameBoard gameBoard, ChessPlayer<?, ?> whitePlayer,
 			ChessPlayer<?, ?> blackPlayer) {
 		// TODO Auto-generated constructor stub
@@ -140,39 +178,61 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 	 * and creating new set of actions available for the active player
 	 * Before switching active player the method performs the move suggested by the received action
 	 * This method is called from the game object's getresult method
-	 * The method must perform the action and then use the analyzeutility function 
+	 * The method performs the action and then a new set of actions are produced, and the analyzeutility function changes
+	 * the value of the state's utility based on the new set of actions.
 	 * Once this has been performed, the active player is switched.
 	 * Question: How to perform a given number of moves and then store these such that
 	 * the preferred player executes them and waits for the opponents move???
+	 * @since 13.11 2019: Only active pieces are used and analyzed - removed !!!
+	 * Also if piece is passive (taken) then no movement takes place and active player does not change
+	 * @since 18.12 2019:
+	 * If the action's piece is a pawn and it is blocked then this action is not considered
 	 */
 	public void mark(ChessAction action) {
+		boolean blocked = false;
+		ChessActionImpl localAction = (ChessActionImpl) action;
 		AgamePiece piece = (AgamePiece) action.getChessPiece();
+		ChessPieceType pieceType = piece.getChessType();
+		if (pieceType instanceof APawn) {
+			APawn pawn = (APawn) pieceType;
+			blocked = pawn.isBlocked();
+			if (localAction.isStrike())
+				blocked = false;
+		}
 		Position position = (Position) action.getPreferredPosition();
 		List<Position> availablePositions = (List<Position>) action.getAvailablePositions();
-		if (position != null) {
-			game.movePiece(piece.getMyPosition().getXyloc(),position.getXyloc()); // Performes the move: 
-//			The piece is moved to the new location on the chessboard held by the AbstractChessGame
+		if (!blocked && position != null && piece.getmyPosition() != null) {
+//			if (piece.isActive()) { // Should this be reopened again??
+				game.movePiece(piece, position);
+//				game.movePiece(piece.getMyPosition().getXyloc(),position.getXyloc()); // Performes the move: 
+//				The piece is moved to the new location on the chessboard held by the AbstractChessGame
+				
+				game.getGamePlayer().createMove(piece, piece.getMyPosition(), position,movements); // Creates a local list of movements
+				if(playerTomove.getPlayerName() == playerTomove.getWhitePlayer()) {
+					whitePlayer.setActive(false);
+					blackPlayer.setActive(true);
 			
-			game.getGamePlayer().createMove(piece, piece.getMyPosition(), position,movements); // Creates a local list of movements
-			if(playerTomove.getPlayerName() == playerTomove.getWhitePlayer()) {
-				whitePlayer.setActive(false);
-				blackPlayer.setActive(true);
-		
-			}
-			if(playerTomove.getPlayerName() == playerTomove.getBlackPlayer()) {
-				whitePlayer.setActive(true);
-				blackPlayer.setActive(false);
+				}
+				if(playerTomove.getPlayerName() == playerTomove.getBlackPlayer()) {
+					whitePlayer.setActive(true);
+					blackPlayer.setActive(false);
 
-			}
-			if (whitePlayer.isActive())
-				playerTomove  = whitePlayer;
-			else if (blackPlayer.isActive())
-				playerTomove = blackPlayer;
+				}
+				if (whitePlayer.isActive())
+					playerTomove  = whitePlayer;
+				else if (blackPlayer.isActive())
+					playerTomove = blackPlayer;
 
+//			}
 		}
-		actions = getActions();
-		analyzeutility();
-		playerTomove.setActions(actions);
+
+
+//		if (piece.isActive()) { The getActions method checks if piece is active
+			actions = getActions();
+			analyzeutility();
+			playerTomove.setActions(actions);
+//		}
+	
 	}
 	/**
 	 * analyzeutility
@@ -180,6 +240,7 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 	 * Then the utility is the value of the rank of this piece.
 	 * if it is early in the game and the piece is a pawn, then the rank is multiplied by a factor
 	 * How to determine if the state is a final state? 
+	 * @since 13.11 2019 Only active pieces are used and analyzed
 	 * 
 	 */
 	private void analyzeutility() {
@@ -193,7 +254,9 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 				if (movements != null && !movements.isEmpty()) {
 					noofmoves = movements.size() - 1;
 				}
-				if (pieceName.equals("P") && noofmoves <= 3) {
+				ChessPieceType pieceType = piece.getChessType();
+				if (pieceType instanceof APawn && noofmoves < 3)  {
+		 
 					factor = 10;
 					int col = piece.getMyPosition().getXyloc().getXCoOrdinate();
 					if (col > 3 && col < 5)
@@ -255,7 +318,9 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 	 * getActions
 	 * This method returns a list of actions that is possible to perform by the active player
 	 * These actions contain an AgamePiece and its available (reachable) positions.
+	 * Only active pieces is involved in producing new actions.
 	 * Each action also calculates which reachable positions are occupied by other pieces belonging to the same player.
+	 * @since 13.11.2019 Only active pieces are considered
 	 * @return
 	 */
 	@Override
@@ -264,10 +329,11 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 		List<ChessAction> actions = new ArrayList<ChessAction>();
 		ArrayList<AgamePiece> pieces = playerTomove.getMygamePieces();
 		for (AgamePiece piece : pieces) {
-			HashMap<String,Position> reachablePositions = piece.getReacablePositions();
-			ChessAction action = new ChessActionImpl(reachablePositions,piece,playerTomove);
-			actions.add(action);
-
+			if (piece.isActive()) {
+				HashMap<String,Position> reachablePositions = piece.getReacablePositions();
+				ChessAction action = new ChessActionImpl(reachablePositions,piece,playerTomove);
+				actions.add(action);
+			}
 		}
 		return actions;
 		

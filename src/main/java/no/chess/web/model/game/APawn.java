@@ -31,6 +31,7 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	private String color;
 	private ChessPiece myPiece;
 	private Position myPosition;
+	private boolean blocked = false;
 	
 	public APawn() {
 		super();
@@ -88,6 +89,16 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			}
 		}
 		getLegalmoves(myPosition);
+	}
+
+
+	public boolean isBlocked() {
+		return blocked;
+	}
+
+
+	public void setBlocked(boolean blocked) {
+		this.blocked = blocked;
 	}
 
 
@@ -188,7 +199,7 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			int y = xloc.getYCoOrdinate();
 			reachablesqueres[x][y] = 1;
 			reachablepiecePosition[x][y] = "P";
-			createPosition(newPositions, x, y);
+			createPosition(newPositions,xloc);
 		}
 /*		
 		int x = loc.getXCoOrdinate();
@@ -234,8 +245,8 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	 * @param x
 	 * @param y
 	 */
-	private void createPosition(HashMap<String,Position> newPositions,int x,int y) {
-		XYLocation newloc = new XYLocation(x,y);
+	private void createPosition(HashMap<String,Position> newPositions,XYLocation newloc) {
+//		XYLocation newloc = new XYLocation(x,y);
 		Position newPosxyp = new Position(newloc,false,null);
 		newPositions.put(newPosxyp.getPositionName(), newPosxyp);
 	}
@@ -280,6 +291,7 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	 * createontPosition
 	 * This method moves any ontologypositions to the list of positions reachable by this piece
 	 * It is called from the determinPieceType method of the AgamePiece object and the produceLegalmoves method
+	 * when the piece is moved to a new position.
 	 * @param newPositions a HashMap of positions calculated by the piecetype
 
 	 */

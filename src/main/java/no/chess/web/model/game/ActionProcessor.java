@@ -1,6 +1,9 @@
 package no.chess.web.model.game;
 
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,7 +19,7 @@ import no.games.chess.AbstractGamePiece.pieceType;
 
 /**
  * ActionProcessor
- * It is created and called when the chess game (AchessGame) attempts to analyze (evaluate) a given chess action.
+ * It is created and called whenever the chess game (AchessGame) attempts to analyze (evaluate) a given chess action.
  * This is the given structure:
  * The chess game has an initial chess state. A Chess State contains a set of available chess actions for this given chess state.
  *  
@@ -32,29 +35,42 @@ import no.games.chess.AbstractGamePiece.pieceType;
 public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,Double> {
 
 	private List<Position> opponentPositions;
+	private Position strikePosition = null;
 	private boolean black = false;
 	private boolean white = false;
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\";
 	private PrintWriter writer = null;
+	private FileWriter fw = null;
 	private Integer processNumber;
 	
-	public ActionProcessor(Integer processNumber) {
+	public ActionProcessor(Integer processNumber, String pname) {
 		super();
 		this.processNumber = processNumber;
 		String pNumber = processNumber.toString();
-		outputFileName = outputFileName + "ontpositions" + pNumber+".txt";
-	      try 
+		outputFileName = outputFileName + "ontpositions"+pname +".txt";
+		try {
+			fw = new FileWriter(outputFileName, true);
+		} catch (IOException e1) {
+
+			e1.printStackTrace();
+		}
+	    writer = new PrintWriter(new BufferedWriter(fw));	
+		
+/*	      try 
 	      {
 	         writer = new PrintWriter(outputFileName);
 	      } catch (FileNotFoundException e) {
 	         System.err.println("'" + outputFileName 
 	            + "' is an invalid output file.");
-	      }	
+	      }	*/
 	}
 
 	@Override
 	public Double processChessObject(ChessActionImpl p, PlayGame q) {
 		Position prefPosx = null;
+
+		boolean pawnblocked = false;
+		boolean pawnStrike = false;
 //		ApieceMove move = null;
 		AgamePiece lastPiece = null;
 		opponentPositions = new ArrayList<Position>();
@@ -71,7 +87,7 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 			movefactor = noofMoves -1;
 			for (ApieceMove move:movements) {
 				lastPiece = move.getPiece();
-				writer.println("Previous moves "+move.toString());
+				writer.println("===== Previous moves ====== \n"+move.toString());
 			}
 //			move = movements.get(movefactor);
 		}
@@ -83,8 +99,16 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 			prefPos = position.toString();
 		Position tempPos = null; // Used to give the action a new preferred position ??
 		AgamePiece piece =  (AgamePiece) p.getChessPiece();
+		if (!piece.isActive()) { // If piece is inactive it cannot be used
+			writer.println("Piece is inactive ======================:\n"+piece.toString());
+			Double evaluation = new Double(0);
+		    writer.close();
+			return evaluation;
+		}
 		List<Position> prefPositions = piece.getPreferredPositions();
-		
+		boolean newPos = piece.checkPositions(); // Creates new available positions if empty !!
+		if (newPos)
+			writer.println("New available positions are created for piece:\n"+piece.toString());
 		AchessGame game = q.getGame();
 		APlayer opponent = null;
 		APlayer blackPlayer = game.getLocalblackPlayer();
@@ -102,11 +126,12 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		
 		if (pieceType instanceof APawn) {
 			APawn pawn = (APawn) pieceType;
-// Temporary			
+			pawn.setBlocked(false);
 			Position from = pawn.getmyPosition();
 			XYLocation loc = from.getXyloc();
 			int x = loc.getXCoOrdinate();
 			int y = loc.getYCoOrdinate();
+// Temporary			
 			List<Position> tempPositions = new ArrayList(np.values());
 			if (x == 1) {
 				for (Position pos:tempPositions) {
@@ -119,10 +144,21 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 				}
 			}
 // End temporary
-			if (movefactor < 4)
+			if (movefactor < 2)
 				pieceFactor = 5;
 			if (checkPawnopponents(np)) {
 				pieceFactor = 0;
+				pawnblocked = true;
+				pawn.setBlocked(pawnblocked);
+			}
+			if (strikeOpponent(from, whiteTurn)) {
+				pawnStrike = true;
+				pieceFactor = 5;
+				p.setPreferredPosition(strikePosition);
+				p.setStrikePosition(strikePosition);
+				p.setStrike(true);
+				removeOpponentPiece(piece,opponent, strikePosition);
+				writer.println("Pawn strike at "+strikePosition.toString());
 			}
 		}
 		pieceColor colorType = piece.getPieceColor();
@@ -136,7 +172,7 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		posFactor = calculatePositionFactor(np);
 		if (lastPiece != null && lastPiece == piece)
 			posFactor = 0;
-		if (posFactor == 4) {
+		if (posFactor == 4 && !pawnStrike) {
 			List<Position> tempPositions = new ArrayList(np.values());
 			for (Position pos:tempPositions) {
 				if (pos.isCenterlefthigh()) {
@@ -158,6 +194,9 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 				posFactor = 0;pieceFactor = 0;movefactor =  0;
 			}
 		}
+		if (pawnblocked && !pawnStrike) {
+			posFactor = 0;pieceFactor = 0;movefactor =  0;
+		}
 		Double evaluation = new Double(posFactor+pieceFactor+movefactor);
 		writer.println("Piece:\n");
 		writer.println(piece.toString());
@@ -167,9 +206,17 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		return evaluation;
 	}
 
+	public List<Position> getOpponentPositions() {
+		return opponentPositions;
+	}
+
+	public void setOpponentPositions(List<Position> opponentPositions) {
+		this.opponentPositions = opponentPositions;
+	}
+
 	/**
 	 * findOpponentPieces
-	 * This method finds all opponent's piece's positions
+	 * This method finds all opponent's active piece's positions
 	 * and places them in the list opponentPositions
 	 */
 	private void findOpponentPieces(APlayer opponent) {
@@ -177,13 +224,40 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		List<AgamePiece> pieces = opponent.getMygamePieces();
 		for (AgamePiece piece:pieces) {
 			Position position = piece.getMyPosition();
-			opponentPositions.add(position);
+			if (position != null && piece.isActive())
+				opponentPositions.add(position);
 		}
 	}
-
+	/**
+	 * removeOpponentPiece
+	 * This method removes a player's piece from the set of active and available pieces.
+	 * @param opponent
+	 * @param position
+	 */
+	private void removeOpponentPiece(AgamePiece activePiece,APlayer opponent,Position position) {
+		List<AgamePiece> pieces = opponent.getMygamePieces();
+		writer.println("Active piece checking removes \n"+activePiece.toString()+" "+activePiece.getMyPiece().toString());
+		for (AgamePiece piece:pieces) {
+			Position pos = piece.getMyPosition();
+			if (pos == position) {
+				writer.println("Opponent piece taken:\n"+piece.toString()+" "+piece.getMyPiece().toString() );
+/*
+ * The pos.setUsedBy call is not necessary
+ * This call is carried out when the Playgame object uses the determineMove method of the chessboard			
+ */
+//				pos.setUsedBy(activePiece.getMyPiece());
+//				piece.setActive(false);
+//				piece.setValue(-1);
+//				piece.setMypositionEmpty(null);
+//				position.setUsedBy(null);
+//				position.setInUse(false);
+				
+			}
+		}
+	}
 	/**
 	 * calculatePositionFactor
-	 * This method calculates if a rechable position is a center position on the chessboard
+	 * This method calculates if a reachable position is a center position on the chessboard
 	 * @param op
 	 * @return an integer value indicating if a position is a center position
 	 */
@@ -232,9 +306,11 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 	 */
 	private boolean checkPawnopponents(HashMap<String,Position>np) {
 		boolean blocked = false;
-		List<Position> tempPositions = new ArrayList(np.values());
+		writer.println("Checking opponent\n");
+		List<Position> tempPositions = new ArrayList(np.values()); // np contains available positions
 		for (Position pos:tempPositions) {
 			for (Position oponentPos : opponentPositions) {
+				writer.println("Opponent "+oponentPos.toString()+ " Available positions "+pos.toString());
 				blocked = oponentPos.getPositionName().equals(pos.getPositionName());
 				if (blocked) {
 					writer.println("Pawn blocked  "+pos.getPositionName());
@@ -246,7 +322,34 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		return blocked;
 	}
 
-
+	/**
+	 * strikeOpponent
+	 * This method return true if a pawn can strike an opponent piece
+	 * @param from
+	 * @return
+	 */
+	private boolean strikeOpponent(Position from,boolean whiteTurn) {
+		boolean strike = false;
+		int ic = 1;
+		if (!whiteTurn)
+			ic = -1;
+		for (Position oponentPos:opponentPositions) {
+			XYLocation loc = from.getXyloc();
+			int x = loc.getXCoOrdinate();
+			int y = loc.getYCoOrdinate();
+			XYLocation oploc = oponentPos.getXyloc();
+			int ox = oploc.getXCoOrdinate();
+			int oy = oploc.getYCoOrdinate();
+			strike = (oy==(y+ic)&&ox==(x-1))||(oy==(y+ic)&&ox==(x+1));
+			if (strike) {
+				strikePosition = oponentPos;
+				break;
+			}
+		
+		}
+		return strike;
+		
+	}
 
 
 }

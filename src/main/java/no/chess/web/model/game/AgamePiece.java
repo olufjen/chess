@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Stack;
 
 import aima.core.util.datastructure.XYLocation;
 import no.chess.web.model.ChessPiece;
@@ -30,6 +31,7 @@ import no.games.chess.AbstractGamePiece.pieceColor;
 public class AgamePiece extends AbstractGamePiece<Position>{
 
 	private Position myPosition;
+	private Position heldPosition = null; // This position is used to hold former position if piece is removed from board       
 	private ChessPiece myPiece; // Represent the ontology chesspiece
 	private String color;
 	private pieceType myType;
@@ -39,6 +41,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private HashMap<String,Position> reacablePositions;
 	private ArrayList<Position> newPositions;
 	private List<Position> preferredPositions;
+	private Stack<Position> heldPositions;
+	private boolean active = true; // Set if piece is active participating, set to false when removed from board
 	
 	public AgamePiece(Position myPosition) {
 		super();
@@ -50,6 +54,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		super();
 		this.myPosition = myPosition;
 		this.myPiece = myPiece;
+		heldPositions = new Stack();
+		
 //		determinePieceType(); Moved to setOntologyPositions: Then new available positions are replaced by ontology positions
 	}
 
@@ -73,6 +79,16 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		determinePieceType();
 	}
 
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+	public void restoreValue() {
+		value = orgValue;
+	}
 	public pieceColor getLocalColor() {
 		return localColor;
 	}
@@ -252,7 +268,42 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	}
 
 	public void setMyPosition(Position myPosition) {
+		if (this.myPosition != null)
+			heldPositions.push(this.myPosition);
 		this.myPosition = myPosition;
+	}
+
+	/**
+	 * setMypositionEmpty
+	 * This method is used to save last used position in case the piece is removed from board
+	 * @deprecated !!?? as of December 2019
+	 * @param position
+	 */
+	public void setMypositionEmpty(Position position) {
+		heldPosition = myPosition;
+		myPosition = position;
+		if (myPosition == null && heldPosition == null) {
+			System.out.println("Both positions empty !!--");
+		}
+	}
+	/**
+	 * restorePosition
+	 * This method is used to restore last held position in case a piece has been removed from the board
+	 */
+	public void restorePosition() {
+		if (heldPositions != null && !heldPositions.isEmpty())
+			this.myPosition = heldPositions.pop();
+		active = true;
+		
+//		myPosition = heldPosition;
+	}
+	
+	public Position getHeldPosition() {
+		return heldPosition;
+	}
+
+	public void setHeldPosition(Position heldPosition) {
+		this.heldPosition = heldPosition;
 	}
 
 	public ChessPiece getMyPiece() {
@@ -301,7 +352,15 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 
 	public String toString() {
 		StringBuilder result = new StringBuilder();
-		result.append(myPosition.getPositionName() + " X, Y "+myPosition.getXyloc().toString()  + " "+myPiece.getName() + " "+ myType);
+		String posName = "Removed!!!";
+		XYLocation localXY = new XYLocation(0,0);
+		
+		if (myPosition != null) {
+			posName = myPosition.getPositionName();
+			localXY = myPosition.getXyloc();
+		}
+		
+		result.append("Piece position"+posName + " X, Y "+localXY.toString()  + " "+myPiece.getName() + " "+ myType);
 	
 		String na = myPiece.getPieceName();
 		result.append("Name " + na + "\n" + "Available positions\n");
@@ -322,6 +381,10 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		return false;
 	}
 
+	/**
+	 * @deprecated as of December 2019
+	 * @param position
+	 */
 	@Override
 	public void getLegalmoves(Position position) {
 		AgamePiece localpiece = (AgamePiece) chessType;
@@ -385,6 +448,15 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		
 	}
 
+	public boolean checkPositions() {
+		boolean newPos = false;
+		if (newPositions == null || newPositions.isEmpty()) {
+			newPositions = null;
+			newPositions = new ArrayList(reacablePositions.values());
+			newPos = true;
+		}
+		return newPos;
+	}
 	@Override
 	public pieceColor getPieceColor() {
 		// TODO Auto-generated method stub

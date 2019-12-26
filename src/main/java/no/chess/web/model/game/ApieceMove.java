@@ -73,6 +73,6 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	}
 
 	public String toString() {
-		return "Move "+piece.toString()+" "+fromPosition.toString()+" "+toPosition.toString()+" "+moveNotation;
+		return "Move\nPiece "+piece.toString()+"\nFrom position "+fromPosition.toString()+"\nTo position "+toPosition.toString()+" Move number "+moveNumber+moveNotation;
 	}
 }

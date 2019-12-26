@@ -27,8 +27,12 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private List<Position> availablePositions;
 	private List<Position> positionRemoved;
 	private Position preferredPosition = null; // Each action has a preferred position that the piece should move to
+	private Position strikePosition = null; // This position is set if it is occupied by an opponent piece
+	private boolean strike = false;
 	private APlayer player;
 	private ApieceMove possibleMove;
+	private int pn = 0;
+	private int pny = 0;
 
 	public ChessActionImpl(HashMap<String, Position> positions, AgamePiece chessPiece,APlayer player) {
 		super();
@@ -36,12 +40,36 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		this.chessPiece = chessPiece;
 		this.player = player;
 		this.availablePositions = getActions(); // The positionRemoved are also created and filled. They are positions occupied by other pieces owned by the player
-		PreferredMoveProcessor pr = new PreferredMoveProcessor();
+		String name = this.chessPiece.getMyPiece().getPieceName();
+		pn = this.chessPiece.getMyPosition().getIntRow()*10;
+		pny = this.chessPiece.getMyPosition().getIntColumn();
+		Integer prn = new Integer(pn+pny);
+		PreferredMoveProcessor pr = new PreferredMoveProcessor(prn,name);
 		possibleMove = ChessFunctions.processChessgame(this,chessPiece, pr); // The processor can be replaced by a lambda expression?
 		if (possibleMove != null)
 			preferredPosition = possibleMove.getToPosition();
 //		preferredPosition = player.calculatePreferredPosition(chessPiece,this);      
 
+	}
+
+
+	public Position getStrikePosition() {
+		return strikePosition;
+	}
+
+
+	public void setStrikePosition(Position strikePosition) {
+		this.strikePosition = strikePosition;
+	}
+
+
+	public boolean isStrike() {
+		return strike;
+	}
+
+
+	public void setStrike(boolean strike) {
+		this.strike = strike;
 	}
 
 
@@ -129,8 +157,12 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		List<AgamePiece> pieces = player.getMygamePieces(); 
 		for (Position position:availablePositions) {
 			for (AgamePiece otherPiece:pieces) {
-				if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
-					positionRemoved.add(position);
+				Position pos = otherPiece.getMyPosition();
+				if (pos != null) {
+					if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
+						positionRemoved.add(position);
+					}
+
 				}
 			}
 
@@ -143,7 +175,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		String posName = "Unknown";
 		if (preferredPosition != null)
 			posName = preferredPosition.getPositionName();
-		StringBuffer logText = new StringBuffer("Preferred Position " + posName+ " Piece " + chessPiece.toString());
+		StringBuffer logText = new StringBuffer("ChessAction: Preferred Position " + posName+ " Piece " + chessPiece.toString());
 		return logText.toString();
 	}
 }

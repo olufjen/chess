@@ -184,7 +184,7 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			int y = xloc.getYCoOrdinate();
 			reachablesqueres[x][y] = 1;
 			reachablepiecePosition[x][y] = "P";
-			createPosition(newPositions, x, y);
+			createPosition(newPositions, xloc);
 		}
 /*		newPositions = new HashMap();
 		int x = loc.getXCoOrdinate();
@@ -218,8 +218,8 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	 * @param x
 	 * @param y
 	 */
-	private void createPosition(HashMap<String,Position> newPositions,int x,int y) {
-		XYLocation newloc = new XYLocation(x,y);
+	private void createPosition(HashMap<String,Position> newPositions,XYLocation newloc) {
+//		XYLocation newloc = new XYLocation(x,y);
 		Position newPosxyp = new Position(newloc,false,null);
 		newPositions.put(newPosxyp.getPositionName(), newPosxyp);
 	}
