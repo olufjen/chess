@@ -70,7 +70,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 
 	/**
 	 * setOntologyPositions
-	 * This method is called from AchessGame so that onlologypositions are available
+	 * This method is called from AchessGame so that ontologypositions are available
 	 * Then determinePieceType is called
 	 * @param ontologyPositions
 	 */
@@ -268,8 +268,10 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	}
 
 	public void setMyPosition(Position myPosition) {
-		if (this.myPosition != null)
+		if (this.myPosition != null) {
 			heldPositions.push(this.myPosition);
+			this.heldPosition = myPosition;
+		}
 		this.myPosition = myPosition;
 	}
 
@@ -289,8 +291,12 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	/**
 	 * restorePosition
 	 * This method is used to restore last held position in case a piece has been removed from the board
+	 * or in case the piece has been moved as part of a search
 	 */
 	public void restorePosition() {
+/*		if (active && heldPositions != null) {
+			heldPositions.clear();
+		}*/
 		if (heldPositions != null && !heldPositions.isEmpty())
 			this.myPosition = heldPositions.pop();
 		active = true;
@@ -299,11 +305,23 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	}
 	
 	public Position getHeldPosition() {
+		if (heldPosition == null && heldPositions == null)
+			return null;
+		if (heldPosition == null && heldPositions.isEmpty())
+			return null;
+		if (!heldPositions.isEmpty())
+			heldPosition = heldPositions.pop();
 		return heldPosition;
 	}
 
 	public void setHeldPosition(Position heldPosition) {
 		this.heldPosition = heldPosition;
+		if (heldPosition == null) {
+			heldPositions.clear();
+		}
+		if (heldPosition != null) {
+			heldPositions.push(heldPosition);
+		}
 	}
 
 	public ChessPiece getMyPiece() {
@@ -360,7 +378,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 			localXY = myPosition.getXyloc();
 		}
 		
-		result.append("Piece position"+posName + " X, Y "+localXY.toString()  + " "+myPiece.getName() + " "+ myType);
+		result.append("Piece position"+posName + " X, Y "+localXY.toString()  + " "+myPiece.getName()+ " "+myPiece.getPosition().toString()+ myType);
 	
 		String na = myPiece.getPieceName();
 		result.append("Name " + na + "\n" + "Available positions\n");

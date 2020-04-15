@@ -34,30 +34,54 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 	private List<ChessAction> actions; //Actions available to this player
 	private AgamePiece preferredPiece;
 	private List<Position> preferredPositions;
+	private List<Position> heldPositions; // The list of positions held by the pieces belonging to the player
 	
 	public APlayer(ArrayList<AgamePiece> mygamePieces) {
 		super();
 		this.mygamePieces = mygamePieces;
+		heldPositions = new ArrayList<Position>();
 	}
 
 	public APlayer() {
 		super();
 		mygamePieces = new ArrayList<AgamePiece>();
-		
+		heldPositions = new ArrayList<Position>();
 	}
 
 	public APlayer(player playerName) {
 		super();
 		this.playerName = playerName;
 		mygamePieces = new ArrayList<AgamePiece>();
+		heldPositions = new ArrayList<Position>();
 	}
-
+	public void emptyPositions() {
+		heldPositions.clear();
+	}
 	public List<ChessAction> getActions() {
 		return actions;
 	}
+ /**
+  * checkPreferredPosition
+  * This method sets the action's preferred position to null, 
+  * if it is the same as one of the the heldpositions of the player's pieces.
+ * @param action
+ */
+public void checkPreferredPosition(ChessAction action) {
+	 for (Position heldPos:heldPositions) {
+			Position prefPos = (Position) action.getPreferredPosition();
+			if(prefPos == null)
+				break;
+			if (prefPos == heldPos) {
+				action.setPreferredPosition(null);
+				break;
+			}
+			
 
+	}
+ }
 	public void setActions(List<ChessAction> actions) {
 		this.actions = actions;
+
 	}
 
 	@Override
@@ -70,6 +94,14 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 	public void collectmyPieces() {
 		
 		
+	}
+
+	public List<Position> getHeldPositions() {
+		return heldPositions;
+	}
+
+	public void setHeldPositions(List<Position> heldPositions) {
+		this.heldPositions = heldPositions;
 	}
 
 	/**

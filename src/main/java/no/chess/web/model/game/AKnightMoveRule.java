@@ -40,12 +40,20 @@ public class AKnightMoveRule implements MoveRule<AKnight, List<XYLocation>> {
 			XYLocation xloc = new XYLocation(x+1,y-2);
 			locations.add(xloc);
 		}
-		if (x<6 && y<7) {
+		if (x<6 && y<7) { // from b1
 			XYLocation xloc = new XYLocation(x+2,y+1);
 			locations.add(xloc);
 		}
-		if (x<6 && y>0) {
+		if (x<6 && y>0) { // from b8
 			XYLocation xloc = new XYLocation(x+2,y-1);
+			locations.add(xloc);
+		}
+		if (x == 6 && y == 0) {  // From g1
+			XYLocation xloc = new XYLocation(x-2,y+1);
+			locations.add(xloc);
+		}
+		if (x == 6 && y == 7) {  // From g8
+			XYLocation xloc = new XYLocation(x-2,y-1);
 			locations.add(xloc);
 		}
 		return locations;

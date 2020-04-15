@@ -17,7 +17,9 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	private Position fromPosition;
 	private Position toPosition;
 	private AgamePiece piece;
-
+	private String creation = "";
+	private boolean blackMove = false;
+	private boolean whiteMove = false;
 
 
 	public ApieceMove(Position toPosition, AgamePiece piece) {
@@ -25,9 +27,14 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 		this.toPosition = toPosition;
 		this.piece = piece;
 		this.moveNumber = 0;
-		this.fromPosition = piece.getmyPosition();
+//		this.fromPosition = piece.getmyPosition();
+		this.fromPosition = piece.getHeldPosition();
+		if (fromPosition == null)
+			this.fromPosition = piece.getmyPosition();
 		this.moveNotation = ""; // Calculate the move notation
-		
+		blackMove = piece.checkBlack();
+		whiteMove = piece.checkWhite();
+		creation = "Created from gamepiece position";
 		
 	}
 
@@ -38,9 +45,27 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 		this.moveNumber = movenr;
 		this.moveNotation = moveNotation;
 		this.piece = piece;
-	
+		blackMove = piece.checkBlack();
+		whiteMove = piece.checkWhite();		
+		creation = "Created with from and to position";
 	}
 
+
+	public boolean isBlackMove() {
+		return blackMove;
+	}
+
+	public void setBlackMove(boolean blackMove) {
+		this.blackMove = blackMove;
+	}
+
+	public boolean isWhiteMove() {
+		return whiteMove;
+	}
+
+	public void setWhiteMove(boolean whiteMove) {
+		this.whiteMove = whiteMove;
+	}
 
 	public AgamePiece getPiece() {
 		return piece;
@@ -73,6 +98,6 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	}
 
 	public String toString() {
-		return "Move\nPiece "+piece.toString()+"\nFrom position "+fromPosition.toString()+"\nTo position "+toPosition.toString()+" Move number "+moveNumber+moveNotation;
+		return "Move\nPiece "+piece.toString()+"\nFrom position "+fromPosition.toString()+"\nTo position "+toPosition.toString()+" Move number "+moveNumber+moveNotation+"\nCreation "+creation;
 	}
 }

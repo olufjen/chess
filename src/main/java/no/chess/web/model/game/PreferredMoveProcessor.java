@@ -34,7 +34,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 	private PrintWriter writer = null;
 	private Integer processNumber; // The process number is created by the piece's introw*10 + intcolumn position
 	private FileWriter fw = null;
-	
+	private Position heldPosition; // This is the position held by the piece under consideration
 	
 	public PreferredMoveProcessor(Integer processNumber,String pname) {
 		super();
@@ -66,10 +66,13 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		List<Position> preferredPositions = new ArrayList<>();
 		Position preferredPosition = null;
 		Position from = p.getmyPosition();
+		heldPosition = from;
 		APawn pn = null;
 		ABishop b = null;
 		ARook r = null;
 		AQueen qt = null;
+		AKnight kn = null;
+		Aking king = null;
 		ChessPieceType pieceType = p.getChessType();
 		if (pieceType instanceof APawn) {
 			pn = (APawn) pieceType;
@@ -82,6 +85,9 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		}
 		if (pieceType instanceof AQueen) {
 			qt = (AQueen) pieceType;
+		}
+		if (pieceType instanceof AKnight) {
+			kn = (AKnight) pieceType;
 		}
 /*		try {
 			pn = ChessFunctions.findpieceType(p,(AgamePiece c )->p.getPieceType() == p.getMyType().PAWN);
@@ -136,6 +142,9 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			tempList = null;
 
 		}
+/*		if (kn != null) {
+			
+		}*/
 		for (Position availablePos:availablePositions) {
 			boolean available = true;
 			for (Position removedPos:removedPositions) {
@@ -158,7 +167,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		}
 		p.setPreferredPositions(preferredPositions);
 		for (Position preferredPos:preferredPositions) {
-			if (preferredPos.isInUse() && pn == null) {
+			if (preferredPos.isInUse() && pn == null) { // The active piece is not a pawn ?!
 				preferredPosition = preferredPos;
 			}
 		}
@@ -170,6 +179,12 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		writer.close();
 	return move;
 	}
+
+
+	public Position getHeldPosition() {
+		return heldPosition;
+	}
+
 
 
 }

@@ -13,7 +13,7 @@ import no.games.chess.ChessFunctions;
  * This class implements the ChessAction interface.
  * It contains an AgamePiece and its available (reachable) positions
  * Revised: From this a preferred position for this piece is calculated by the player
- * From this a possible move and a preferred position is calculated
+ * From this a possible move is created and a preferred position is calculated
  * It also calculates which reachable positions are occupied by other pieces belonging to the same player.
  * They are held in the List positionRemoved
  * The PreferredMove processor uses this information to determine which positions are available for a given piece
@@ -22,7 +22,7 @@ import no.games.chess.ChessFunctions;
  */
 public class ChessActionImpl implements ChessAction<HashMap<String, Position>,List<Position>,List<Position>,AgamePiece,Position> {
 
-	private HashMap<String, Position> positions;
+	private HashMap<String, Position> positions; // All the reachable positions
 	private AgamePiece chessPiece;
 	private List<Position> availablePositions;
 	private List<Position> positionRemoved;
@@ -49,7 +49,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		if (possibleMove != null)
 			preferredPosition = possibleMove.getToPosition();
 //		preferredPosition = player.calculatePreferredPosition(chessPiece,this);      
-
+		player.getHeldPositions().add(pr.getHeldPosition()); // This is the position held by the piece under consideration
 	}
 
 
@@ -152,17 +152,27 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * @return
 	 */
 	public List<Position> getActions(){
+		if (availablePositions != null) {
+			availablePositions.clear();
+			availablePositions = null;
+		}
+		if (positionRemoved != null) {
+			positionRemoved.clear();
+			positionRemoved = null;
+		}
 		availablePositions = new ArrayList(positions.values());
 		positionRemoved = new ArrayList();
 		List<AgamePiece> pieces = player.getMygamePieces(); 
 		for (Position position:availablePositions) {
 			for (AgamePiece otherPiece:pieces) {
-				Position pos = otherPiece.getMyPosition();
-				if (pos != null) {
-					if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
-						positionRemoved.add(position);
-					}
+				if (otherPiece != chessPiece) {
+					Position pos = otherPiece.getMyPosition();
+					if (pos != null) {
+						if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
+							positionRemoved.add(position);
+						}
 
+					}
 				}
 			}
 
@@ -171,11 +181,55 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		return availablePositions;
 		
 	}
+	/**
+	 * getActions
+	 * This method returns all possible position reachable by the piece belonging to this action
+	 * If a position is occupied by another piece for this action's player, this position is placed in the removed list
+	 * This is only done if the chosen player is the same as the action's player
+	 * @return
+	 */
+	public List<Position> getActions(APlayer theplayer){
+
+		List<AgamePiece> pieces = theplayer.getMygamePieces(); 
+		if (theplayer == player) {
+			if (availablePositions != null) {
+				availablePositions.clear();
+				availablePositions = null;
+			}
+			if (positionRemoved != null) {
+				positionRemoved.clear();
+				positionRemoved = null;
+			}
+			availablePositions = new ArrayList(positions.values());
+			positionRemoved = new ArrayList();
+			for (Position position:availablePositions) {
+				for (AgamePiece otherPiece:pieces) {
+					if (otherPiece != chessPiece) {
+						Position pos = otherPiece.getMyPosition();
+						if (pos != null) {
+							if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
+								positionRemoved.add(position);
+							}
+
+						}
+					}
+				}
+
+			
+			}
+		}
+
+		return availablePositions;
+		
+	}
 	public String toString() {
 		String posName = "Unknown";
+		String pMove = " === No move ===";
+		if (possibleMove != null)
+			pMove = possibleMove.toString();
 		if (preferredPosition != null)
 			posName = preferredPosition.getPositionName();
-		StringBuffer logText = new StringBuffer("ChessAction: Preferred Position " + posName+ " Piece " + chessPiece.toString());
+		StringBuffer logText = new StringBuffer("ChessAction: Preferred Position " + posName+ " Piece " + chessPiece.toString()+" Possible move "+pMove);
 		return logText.toString();
 	}
 }

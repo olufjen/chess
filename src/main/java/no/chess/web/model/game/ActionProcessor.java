@@ -78,7 +78,7 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		int noofMoves = 0;
 		int movefactor = 1;
 		int pieceFactor = 0;
-		
+
 		if (q != null) {
 			movements = q.getMovements();
 		}
@@ -91,7 +91,14 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 			}
 //			move = movements.get(movefactor);
 		}
-			
+		AchessGame game = q.getGame();
+		APlayer opponent = null;
+		APlayer playerTomove = null;
+		APlayer blackPlayer = game.getLocalblackPlayer();
+		APlayer whitePlayer = game.getLocalwhitePlayer();
+		boolean whiteTurn = whitePlayer.isActive();
+		boolean blackTurn = blackPlayer.isActive();
+
 		Position position = (Position) p.getPreferredPosition();
 		 
 		String prefPos = "None ";
@@ -105,20 +112,81 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		    writer.close();
 			return evaluation;
 		}
+		ApieceMove actionMove = p.getPossibleMove();
+		if (actionMove == null) {
+			writer.println("Action has no move  ======================:\n"+p.toString());
+			Double evaluation = new Double(0);
+		    writer.close();
+			return evaluation;
+		}
+		if (position == null) {
+			writer.println("No preferred position  ======================:\n"+p.toString());
+			Double evaluation = new Double(0);
+		    writer.close();
+			return evaluation;
+		}
+		boolean checkMoves = false;
+		if (position != null) {
+			checkMoves = checkPlayedMovements(p, movements,whiteTurn,blackTurn);
+			if (checkMoves) {
+				writer.println("Moveconflict !!!! ======================:\n"+p.toString());
+				Double evaluation = new Double(0);
+			    writer.close();
+				return evaluation;
+			}
+		}
+
 		List<Position> prefPositions = piece.getPreferredPositions();
 		boolean newPos = piece.checkPositions(); // Creates new available positions if empty !!
 		if (newPos)
 			writer.println("New available positions are created for piece:\n"+piece.toString());
-		AchessGame game = q.getGame();
-		APlayer opponent = null;
-		APlayer blackPlayer = game.getLocalblackPlayer();
-		APlayer whitePlayer = game.getLocalwhitePlayer();
-		boolean whiteTurn = whitePlayer.isActive();
-		boolean blackTurn = blackPlayer.isActive();
-		if (whiteTurn)
+
+
+		if (whiteTurn) {
 			opponent = blackPlayer;
-		else
+			playerTomove = whitePlayer;
+		}else {
 			opponent = whitePlayer;
+			playerTomove = blackPlayer;
+		}
+
+		// Removed temporary
+/*		p.getActions(playerTomove);
+		List<Position> availablePositions = (List<Position>) p.getAvailablePositions();
+		List<Position>  removedPos = (List<Position>)p.getPositionRemoved();
+		*/
+		 /* Added 24.02.20		
+		 * When a move has been made then the pieces belonging to the same player must get new
+		 * available positions calculated
+		 */	
+				
+// Removed	temporary	? 
+/*				boolean available = false;
+				boolean removed = false;
+				for (Position pos:availablePositions) {
+					if (position == pos) {
+						available = true;
+						break;
+					}
+				}
+				for (Position pos:removedPos) {
+					if (position == pos) {
+						removed = true;
+						break;
+					}
+				}*/
+		
+		 /* end added	
+		  *
+		*/	
+// REmoved temporary?		 
+/*		if (removed) {
+			writer.println("Piece preferable position is occupied by friendly piece:\n"+piece.toString()+"\n Position "+position.toString());
+			Double evaluation = new Double(0);
+		    writer.close();
+			return evaluation;
+		}*/
+		
 		findOpponentPieces(opponent); // All opponent's positions are known in opponentPositions
 		ChessPieceType pieceType = piece.getChessType();
 		pieceType type =  piece.getMyType();
@@ -205,7 +273,39 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
         writer.close();
 		return evaluation;
 	}
-
+	/**
+	 * checkPlayedMovements
+	 * This method checks if a chosen action has a preferred position that is in conflict with 
+	 * a played move
+	 * @param localAction
+	 * @param playedMovements
+	 */
+	private boolean checkPlayedMovements(ChessActionImpl localAction,List<ApieceMove> playedMovements,boolean whiteTurn,boolean blackTurn) {
+		boolean result = false;
+		if (playedMovements != null && !playedMovements.isEmpty()) {
+			for (ApieceMove move: playedMovements) {
+				boolean whiteMove = move.isWhiteMove();
+				boolean blackMove = move.isBlackMove();
+				Position toPosition = move.getToPosition();
+				Position preferredPosition = localAction.getPreferredPosition();
+				if (preferredPosition == null) {
+					writer.println("No preferred position:\n"+localAction.toString());
+					break;
+				}
+				if (toPosition == preferredPosition && whiteMove && whiteTurn) {
+					result = true;
+					writer.println("White turn:\n"+localAction.toString());
+					break;
+				}
+				if (toPosition == preferredPosition && blackMove && blackTurn) {
+					result = true;
+					writer.println("Black turn:\n"+localAction.toString());
+					break;
+				}
+			}
+		}
+		return result;
+	}
 	public List<Position> getOpponentPositions() {
 		return opponentPositions;
 	}
