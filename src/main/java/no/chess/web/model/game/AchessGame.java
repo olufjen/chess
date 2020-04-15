@@ -55,8 +55,9 @@ public class AchessGame extends AbstractChessGame{
 	private PlayGame gamePlayer;
 	private APlayer localwhitePlayer;
 	private APlayer localblackPlayer;
+	private APlayer playerTomove;
 	private int pn = 1;
-
+	private List<ApieceMove> movements; // Movements made during the game
 	private ChessBoard myFrontBoard; // The front chessboard to display board and pieces
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\analysis.txt";
 	private PrintWriter writer = null;
@@ -76,12 +77,17 @@ public class AchessGame extends AbstractChessGame{
 		allPositions = new ArrayList(positions.values());
 		
 		piecesonBoard = new ArrayList();
-		createStart();
+//		createStart();
 		tranferBoard(); // transfers piece positions to the aima chessboard
 		chessState = new ChessStateImpl(this, gameBoard,localwhitePlayer,localblackPlayer);
-
+		playerTomove = (APlayer) chessState.getPlayerTomove();
 
 	}
+	/**
+	 * restorepositions
+	 * This method returns original values to all positions.
+	 * @deprecated - Not necessary
+	 */
 	public void restorePositions() {
 		for (Position position:allPositions) {
 			restoreposition(position);
@@ -91,7 +97,8 @@ public class AchessGame extends AbstractChessGame{
 	/**
 	 * createStart
 	 * This method creates a list of positions that contains the original values of the positions.
-	 * It is called when the AChessGame object is created. 
+	 * It is called when the AChessGame object is created.
+	 * @deprecated - Not necessary 
 	 */
 	public void createStart() {
 		orgPositions = null;
@@ -102,8 +109,9 @@ public class AchessGame extends AbstractChessGame{
 		}
 	}
 	/**
-	 * restorepositions
+	 * restoreposition
 	 * This method returns original values to a given position.
+	 * @deprecated - Not necessary 
 	 * @param pos
 	 */
 	public void restoreposition(Position pos) {
@@ -118,6 +126,46 @@ public class AchessGame extends AbstractChessGame{
 			}
 			
 		}
+	}
+	/**
+	 * @param location
+	 * @deprecated !!?? as of december 2019
+	 * @return
+	 */
+	private AgamePiece findPiece (XYLocation location) {
+		APlayer activePlayer = null;
+		AgamePiece activePiece = null;
+		APlayer blackPlayer = getLocalblackPlayer();
+		APlayer whitePlayer = getLocalwhitePlayer();
+		boolean whiteTurn = whitePlayer.isActive();
+		boolean blackTurn = blackPlayer.isActive();
+		if (whiteTurn)
+			activePlayer = whitePlayer;
+		else
+			activePlayer = blackPlayer;
+		List<AgamePiece> pieces = activePlayer.getMygamePieces();
+		for (AgamePiece piece:pieces) {
+			Position position = piece.getMyPosition();
+			if (position != null && piece.isActive()) {
+				opponentPositions.add(position);
+				XYLocation xyloc = position.getXyloc();
+				int x = xyloc.getXCoOrdinate();
+				int y = xyloc.getYCoOrdinate();
+				int tx = location.getXCoOrdinate();
+				int ty = location.getYCoOrdinate();
+				if (x == tx && y == ty && piece.isActive()) {
+					writer.println("*** Active piece found **** "+piece.toString()+" "+piece.getMyPiece().toString()+"\n");
+					activePiece = piece;
+				}
+			}
+		}
+		return activePiece;
+	}	
+	public List<ApieceMove> getMovements() {
+		return movements;
+	}
+	public void setMovements(List<ApieceMove> movements) {
+		this.movements = movements;
 	}
 	public List<Position> getAllPositions() {
 		return allPositions;
@@ -220,8 +268,8 @@ public class AchessGame extends AbstractChessGame{
 			XYLocation loc = position.getXyloc();
 			if (position.isInUse()) {
 				String pieceName = position.getUsedBy().getName();
-				ChessPiece piece = position.getUsedBy();
-				AgamePiece gamePiece = new AgamePiece(position,piece);
+//				ChessPiece piece = position.getUsedBy();
+//				AgamePiece gamePiece = new AgamePiece(position,piece);
 				addPieceAt(loc);
 				addPieceAtPos(loc, pieceName);
 			}else {
@@ -250,14 +298,18 @@ public class AchessGame extends AbstractChessGame{
 	 */
 	public void movePiece(AgamePiece piece,Position to) {
 		boolean removed = false;
-		writer.println("To move Piece ===================="+"Chessstate"+"\n"+piece.toString());
+		writer.println("To move Piece ===================="+" Chessstate"+"\n"+piece.toString());
 		XYLocation from = piece.getMyPosition().getXyloc();
+		if (piece.getHeldPosition() != null) {
+			writer.println("From position collected from heldPosition\n"+piece.getHeldPosition().toString());
+		    from = piece.getHeldPosition().getXyloc();
+		}
 		XYLocation xyto = to.getXyloc();
 		if (piece != null)
 			removed = removePiece(piece,xyto);
 		if (!removed)
 			pieceMove(piece,xyto);
-		movePiece(piece.getMyPosition().getXyloc(),to.getXyloc());
+		movePiece(from,to.getXyloc());
 	}
 	/**
 	 * movePiece
@@ -270,8 +322,18 @@ public class AchessGame extends AbstractChessGame{
 	 */
 	public void movePiece(AgamePiece piece,Position to, String source) {
 		writer.println("To move Piece ===================="+source+"\n"+piece.toString());
-		movePiece(piece.getMyPosition().getXyloc(),to.getXyloc());
-		
+		boolean removed = false;
+		XYLocation xyto = to.getXyloc();
+		Position heldPosition = piece.getHeldPosition();
+		if (heldPosition == null)
+			heldPosition = piece.getmyPosition();
+		if (piece != null)
+			removed = removePiece(piece,xyto);
+		if (!removed)
+			pieceMove(piece,xyto);
+		movePiece(heldPosition.getXyloc(),to.getXyloc());
+//		ChessStateImpl localState = (ChessStateImpl) chessState;
+		// Return to original utility value
 	}
 	/* movePiece
 	 * This method moves a piece from its present location to a new location
@@ -295,6 +357,13 @@ public class AchessGame extends AbstractChessGame{
 		gameBoard.setusedunused();
 	}
 
+	/**
+	 * pieceMove
+	 * This method performs the actual move to the new location for the piece
+	 * and places the piece in that location, and the piece is given that new location.
+	 * @param piece
+	 * @param to
+	 */
 	private void pieceMove(AgamePiece piece,XYLocation to) {
 		if (piece != null) {
 			Position mypos = piece.getMyPosition();
@@ -307,47 +376,14 @@ public class AchessGame extends AbstractChessGame{
 				if (x == tx && y == ty ) {
 					pos.setUsedBy(piece.getMyPiece());
 					piece.setMyPosition(pos); // When a piece is moved using the position.setUsedBy method, then 
-					// the piece position must be set accordingly.
+					// the piece position must be set accordingly. The piece.setMyposition pushes the former position to stack of held positions.
 					writer.println("*** Active piece moved **** "+piece.toString()+"\n");
 				}
 			}
 		}
 		
 	}
-	/**
-	 * @param location
-	 * @deprecated !!?? as of december 2019
-	 * @return
-	 */
-	private AgamePiece findPiece (XYLocation location) {
-		APlayer activePlayer = null;
-		AgamePiece activePiece = null;
-		APlayer blackPlayer = getLocalblackPlayer();
-		APlayer whitePlayer = getLocalwhitePlayer();
-		boolean whiteTurn = whitePlayer.isActive();
-		boolean blackTurn = blackPlayer.isActive();
-		if (whiteTurn)
-			activePlayer = whitePlayer;
-		else
-			activePlayer = blackPlayer;
-		List<AgamePiece> pieces = activePlayer.getMygamePieces();
-		for (AgamePiece piece:pieces) {
-			Position position = piece.getMyPosition();
-			if (position != null && piece.isActive()) {
-				opponentPositions.add(position);
-				XYLocation xyloc = position.getXyloc();
-				int x = xyloc.getXCoOrdinate();
-				int y = xyloc.getYCoOrdinate();
-				int tx = location.getXCoOrdinate();
-				int ty = location.getYCoOrdinate();
-				if (x == tx && y == ty && piece.isActive()) {
-					writer.println("*** Active piece found **** "+piece.toString()+" "+piece.getMyPiece().toString()+"\n");
-					activePiece = piece;
-				}
-			}
-		}
-		return activePiece;
-	}
+
 
 	private boolean removePiece(AgamePiece activePiece,XYLocation to) {
 		APlayer opponent = null;
@@ -447,6 +483,7 @@ public class AchessGame extends AbstractChessGame{
  * analyzePieceandPosition
  * This method returns a utility value that is high if the preferred position is a central position and the piece has a
  * It makes use of an action processor that returns utility value for the given action.
+ * This value is used by the search object to order the actions.
  */
 
 	public double analyzePieceandPosition(ChessAction action) {
@@ -460,7 +497,8 @@ public class AchessGame extends AbstractChessGame{
 			e1.printStackTrace();
 		}
 	      writer = new PrintWriter(new BufferedWriter(fw));		*/
-
+		playerTomove = (APlayer) chessState.getPlayerTomove();
+//		playerTomove.checkPreferredPosition(action);
 		StringBuilder builder = new StringBuilder();
 		builder.append("Analyzepieceandposition\n");
 		builder.append("Analyzing action: "+action.toString()+"\n");
@@ -571,25 +609,101 @@ public class AchessGame extends AbstractChessGame{
 		return null;
 	}
 
+	/* 
+	 * getPlayer
+	 * returns the active player
+	 */
 	@Override
 	public ChessPlayer<GamePiece, PieceMove> getPlayer(ChessState<GameBoard> state) {
-		// TODO Auto-generated method stub
+		if (localwhitePlayer.isActive())
+			return (ChessPlayer) localwhitePlayer;
+		if (localblackPlayer.isActive())
+			return (ChessPlayer)localblackPlayer;
+		
 		return null;
 	}
-
-
-
-/*
- * 
- */
-
-
-
-
-
-
-
-
+	/* 
+	 * analyzeState
+	 * This method is part of the evaluation function for the agent object
+	 * and is called from the search object's evaluation function.
+	 * The method attempts to analyze the features of the state.
+	 * @see no.games.chess.ChessGame#analyzeState(java.lang.Object)
+	 */
+	@Override
+	public double analyzeState(ChessState<GameBoard> state) {
+		StringBuilder builder = new StringBuilder();
+		builder.append(" ** Analyzing state ***\n");
+		boolean opponentToplay = false;
+		double evaluation = 0;
+		ChessStateImpl localState = (ChessStateImpl) state;
+		APlayer playerTomove = localState.getPlayerTomove();
+		APlayer opponent = localState.getBlackPlayer();
+		List<AgamePiece> myPieces =  localState.getPlayerTomove().getMygamePieces();
+		List<AgamePiece> opponentPieces = opponent.getMygamePieces();
+		if(playerTomove.getPlayerName() == playerTomove.getBlackPlayer()) {
+			opponent = localState.getMyPlayer();
+			opponentToplay = true;
+			builder.append("Opponent to play\n");
+// 			
+		}
+		int myFeatures = analyzeFeatures(myPieces);
+		int opponentFeatures = analyzeFeatures(opponentPieces);
+		int myCount= countPieces(myPieces);
+		int opponentCount= countPieces(opponentPieces);		
+		builder.append("My features "+myFeatures+" Oppenent features "+opponentFeatures+ " state utility "+localState.getUtility()+" No of pieces white "+myCount+" No of pieces black "+opponentCount );
+		writer.println(builder.toString());
+//		writer.flush();
+		evaluation = myFeatures - opponentFeatures; 
+		int pieceCount = myCount - opponentCount;
+		if (evaluation < 0)
+			evaluation = 0;
+		evaluation = evaluation + localState.getUtility() + pieceCount;
+		return evaluation;
+	}
+	private int countPieces(List<AgamePiece> myPieces) {
+		int nofPieces = 0;
+		for (AgamePiece piece:myPieces) {
+			boolean active = piece.isActive();
+			if (active) {
+				nofPieces++;
+			}
+		}
+		return nofPieces;
+		
+	}
+	/**
+	 * analyzeFeatures
+	 * This method makes an analysis of all the available features of a list of pieces
+	 * and their positions.
+	 * @param myPieces
+	 * @return
+	 */
+	private int analyzeFeatures(List<AgamePiece> myPieces) {
+		int nofOfactivePieces = 0;
+		int featureValue = 0;
+		for (AgamePiece piece:myPieces) {
+			boolean active = piece.isActive();
+			int pieceValue = 0;
+			int posValue = 0;
+			if (active) {
+				posValue = 1;
+				nofOfactivePieces++;
+				pieceValue = piece.getMyPiece().getValue();
+				Position position = piece.getMyPosition();
+				boolean leftHigh = position.isCenterlefthigh();
+				boolean rightHigh = position.isCenterrighthigh();
+				boolean leftLow = position.isCenterleftlow();
+				boolean rightLow = position.isCenterrightlow();
+				if (leftHigh || leftLow || rightHigh || rightLow) {
+					posValue = 4;
+					featureValue++;
+				}
+			}
+			featureValue = featureValue + pieceValue + posValue;
+			
+		}
+		return featureValue;
+	}
 
 	
 }
