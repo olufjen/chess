@@ -693,6 +693,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 
    	    if (game != null) {
    	    	chessPiece.getMyPiece().setMyPosition(newPosition);
+   	    	chessPiece.getMyPiece().setHeldPosition(null); // Then there are no previous positions to restore from
    	    	game.getGame().movePiece(oldPosition.getXyloc(),newPosition.getXyloc());
    	    	game.createMove(chessPiece.getMyPiece(), oldPosition, newPosition);
    	    	game.getGame().createNewboard();
