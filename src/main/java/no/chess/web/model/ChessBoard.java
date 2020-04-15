@@ -997,7 +997,11 @@ public class ChessBoard extends ParentModel {
 	 */
 	public void determineMove(String oldPos,String newPos,String piece) {
     	ChessPiece chessPiece = findPiece(oldPos,piece);
-       	chessPiece.setPosition(newPos);
+    	if (chessPiece != null)
+    		chessPiece.setPosition(newPos);
+    	if (chessPiece == null) {
+    		System.out.println("!!Chessboard nullpointer!!"+oldPos+" ny Posisjon "+newPos);
+    	}
        	Position oldPosition = findPostion(oldPos);
        	Position newPosition = findPostion(newPos);
        	if (checkPosition(newPos)) { // If position is occupied find which piece it is occupied by and determine if move is legal
@@ -1013,6 +1017,9 @@ public class ChessBoard extends ParentModel {
 //       	   	oldPosition.setUsedBy(null);
 //           	oldPosition.setInUse(false);
            	HashSet pieces = oldPosition.getPieces();
+    		if (newPosition.getPositionName().equals("a3")) {
+				System.out.println("!!determinemove position !! "+newPosition.toString());
+			}
            	oldPosition.setPieces(null);
            	oldPosition.setUsedBy();
            	newPosition.setUsedBy(chessPiece);

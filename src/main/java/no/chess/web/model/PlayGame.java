@@ -21,9 +21,12 @@ import aima.core.search.adversarial.IterativeDeepeningAlphaBetaSearch;
 import aima.core.search.adversarial.MinimaxSearch;
 import no.chess.ontology.BlackPiece;
 import no.chess.ontology.WhitePiece;
+import no.chess.web.model.game.APlayer;
 import no.chess.web.model.game.AchessGame;
 import no.chess.web.model.game.AgamePiece;
 import no.chess.web.model.game.ApieceMove;
+import no.chess.web.model.game.ChessActionImpl;
+import no.chess.web.model.game.ChessStateImpl;
 import no.games.chess.ChessAction;
 import no.games.chess.ChessAlphaBetaSearch;
 import no.games.chess.ChessSearch;
@@ -84,7 +87,7 @@ public class PlayGame {
 		game.setGamePlayer(this);
 		currentState = game.getInitialState();
 		movements = new ArrayList<ApieceMove>();
-
+		game.setMovements(movements);
 	}
 
 	public List<ApieceMove> getMovements() {
@@ -217,6 +220,7 @@ public class PlayGame {
 	      writer = new PrintWriter(new BufferedWriter(fw));
 
 		currentState = game.getInitialState();
+		ChessStateImpl stateImpl = (ChessStateImpl) currentState;
 		AdversarialSearch<ChessState<GameBoard>, ChessAction<?, ?, ?,  GamePiece<?>, ?>> search; // FILL IN !!!!
 //		ChessSearch<ChessState,ChessAction> search;
 		search = ChessAlphaBetaSearch.createFor(game, 0.0, 1.0, 2);
@@ -231,50 +235,200 @@ public class PlayGame {
  * The makeDecision method makes and creates a number of moves and returns the top action from a set of actions 
  * that has been performed
  * All the moves that are made is a result of the getResult method of the game object.
- * 13.11.2019 : makeDecision must not return an action that has an inactive piece.
+ * 13.11.2019 : makeDecision must not return an action that has an inactive piece. 
  */
 		ChessAction newAction = search.makeDecision(currentState);
+		ChessActionImpl localAction = (ChessActionImpl) newAction;
+		ApieceMove chosenMove = localAction.getPossibleMove();
+		APlayer playerTomove = stateImpl.getMyPlayer();
+		currentState.setAction(newAction); // Set state action to action to be performed
 //		String a = newAction.toString();
 /*		List<ChessAction> actions = currentState.getActions();
 		ChessAction action = actions.get(0);*/
+		writer.println("Before call to emptymovements \n"+game.getBoardPic());
+		for (Position pos:positionlist) {
+			if (pos.getPositionName().equals("a3")) {
+				writer.println("!!Playgame position!! "+pos.toString());
+			}
+		}
+		List<ApieceMove> stateMoves = stateImpl.getMovements();
+		writer.println("State moves \n");
+		for (ApieceMove stateMove : stateMoves) {
+			writer.println(stateMove.toString());
+			Position pos = stateMove.getFromPosition();
+			AgamePiece piece = stateMove.getPiece();
+			AgamePiece posPiece = pos.getUsedBy().getMyPiece();
+			if (piece != posPiece) {
+				AgamePiece removed = pos.getRemoved().getMyPiece();
+				ChessPiece removedfromstack = pos.getRemovedPieces().pop();
+				AgamePiece removedGamepiece = removedfromstack.getMyPiece();
+				writer.println("Move piece different from position piece "+piece.toString()+" Position piece "+posPiece.toString() );
+				if (removed != null)
+					writer.println("Removed piece "+ removed.toString());
+			}
+			
+			
+		}
+		stateImpl.setChosenMove(chosenMove);
+		currentState.emptyMovements(); // empty all movements before the chosen action and move.
 		AgamePiece piece = (AgamePiece) newAction.getChessPiece();
 		Position position = (Position) newAction.getPreferredPosition();
-		List<Position> availablePositions = (List<Position>) newAction.getAvailablePositions();
+		
+/*		List<Position> availablePositions = (List<Position>) newAction.getAvailablePositions();
 		if (position == null)
 			position = availablePositions.get(0); // Should not happen !!!
-		
+*/		
 /*		Caused by: java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
 	at java.util.ArrayList.rangeCheck(Unknown Source)
 	at java.util.ArrayList.get(Unknown Source)
 	at no.chess.web.model.PlayGame.proposeMove(PlayGame.java:232)
 	
- * List<Position> availablePositions = (List<Position>) newAction.getAvailablePositions();
+ * List<Position> availablePositions = (List<Position>) newAction.getAvailablePositions(); 
 		Position position = availablePositions.get(0);*/
 		writer.println("Proposemove\n"+piece.toString()+"Action\n"+newAction.toString());
+/*
+ * The chosen action must be verified. OLJ 28.02.20:
+ * This must be done as follows:
+ *  1. The current state must be emptied of all movements made during the makeDecision process.
+ *  2. New available positions and removed positions must be calculated for the piece belonging to the action.
+ *  3. Based on this, the preferable position of the action must be changed, - if necessary. 
+ * 		
+ */
+//		verifyAction(localAction, piece, position, playerTomove);
 		String newPos = position.getPositionName();
 		String pieceName = piece.getMyPiece().getName();
+		Position piecePos = piece.getMyPosition();
+		Position oldPosition = null;
+/*
+ * position is preferred position.
+ * Does it contain a piece?
+ */
+		AgamePiece activeGamePiece = null;
+		ChessPiece activePiece = position.getUsedBy();
+		if (activePiece != null)
+			activeGamePiece = activePiece.getMyPiece();
+		
+		if (activeGamePiece != null && activeGamePiece == piece) {
+			writer.println(" Chosen Piece must be cleared from suggested position "+piece.toString()+"\n");
+//			currentState.clearMovements(piece); // This creates problems !!!! The emptymovements method is ok. !!!
+//			position.returnPiece();
+			piecePos = piece.getMyPosition();
+		}else {
+			writer.println(" == Gamepieces are not the same "+piece.toString()+"\n"+"In position "+position.toString()+"\n");
+			// This indicate an opponent piece that must be removed in case position is occupied !!!
+			// 31.01 2020 Removes also black Knight !!!
+			if (activeGamePiece != null) {
+				writer.println(activeGamePiece.toString()+"\n");
+/*				activeGamePiece.setActive(false); This must be done after call to determineMove OJN 3.02.20
+				activeGamePiece.setMyPosition(null);
+				position.setUsedBy();*/
+//				currentState.clearMovements(piece);
+//				position.returnPiece();
+				piecePos = piece.getMyPosition();
+			}
+		}
+			
+		writer.println("After call to emptymovements \n"+game.getBoardPic());
+/*
+ * These two statements executed before call to emptyMovements	
+ * OBS!!! oldpos and newpos are the same. the .emptymovewments clears this !!!	
+ */
 		String oldPos = piece.getMyPosition().getPositionName();
-		Position oldPosition = piece.getMyPosition();
-		currentState.emptyMovements(); // empty all movements before the chosen action and move.
-		myFrontBoard.determineMove(oldPos, newPos, pieceName); // New fen is created based on this
+		oldPosition = piece.getMyPosition();
+		if (position == piecePos) {
+			Position heldPosition = piece.getHeldPosition();
+			if (heldPosition == null) {
+				piece.restorePosition();
+				heldPosition = piece.getmyPosition();
+			}
+			oldPosition = heldPosition;
+			oldPos = oldPosition.getPositionName();
+		}
+
+		// This call must be carried out before check of activegamepiece !!!
+		 writer.println("Positionlist before determinemove \n");
+		 for ( Position pos : positionlist) {
+			 writer.println(pos.toString());
+		 }
+		myFrontBoard.determineMove(oldPos, newPos, pieceName); // New fen is created based on this. This is done after the call to proposemove
+
+	    piece.setMyPosition(position); // position is the preferred position from action This is the new position of the piece
+//	    piece.setHeldPosition(null); // Then there are no previous positions to restore from 
+	    
+//		currentState.emptyMovements(); // empty all movements before the chosen action and move.
+	    writer.println("After call to board.determineMove \n"+game.getBoardPic()); // OK
+
+		piece.setHeldPosition(position); // New position to the position to restore to
+		position.setUsedandRemoved(piece.getMyPiece());
+//		myFrontBoard.determineMove(oldPos, newPos, pieceName); // New fen is created based on this
 //		Position newPosition = myFrontBoard.findPostion(newPos);
+	
 
 //		clearMoves();
-	    writer.println(game.getBoardPic());
+//	    writer.println(game.getBoardPic());
 	    clearChessboard();
+		 writer.println("After call to clearchessboard \n"+game.getBoardPic());
 /*
  * OBS: Move from old to new position	!!! OJN 3.12.19    
  */
 	    game.movePiece(piece, position," Playgame"); // This call creates the move on the aima chessboard
-	    piece.setMyPosition(position); // position is the preferred position from action This is the new position of the piece
 
 //		game.movePiece(piece.getMyPosition().getXyloc(),position.getXyloc()); // The piece is moved to the new location on the chessboard held by the AbstractChessGame
 		
-		game.createNewboard(); // A new set of usedunused lists are created.
+	    writer.println("After call to game.movepiece \n"+game.getBoardPic());
 		
 		createMove(piece,oldPosition, position);
-		 writer.println(game.getBoardPic());
+//		localAction.getActions(playerTomove); // Added 24.02.20 When a move has been made then the pieces belonging to the same player must get new
+//available positions calculated		
+		game.createNewboard(); // A new set of usedunused lists are created.
+		 writer.println("After call to game.createnewboard \n"+game.getBoardPic()+"\n");
+		 for ( Position pos : positionlist) {
+			 writer.println(pos.toString());
+		 }
 		 writer.close();
+	}
+	/**
+	 * verifyAction
+	 * This method is used to verify the action chosen by the search object
+	 * If the action has a preferable position that is occupied by a friendly piece
+	 * an alterative position must be chosen.
+	 * @param action
+	 * @param piece
+	 * @param position
+	 * @param playerTomove
+	 */
+	private void verifyAction(ChessActionImpl action,AgamePiece piece,Position position,APlayer playerTomove) {
+		action.getActions(playerTomove);
+		List<Position> availablePositions = (List<Position>) action.getAvailablePositions();
+		List<Position>  removedPos = (List<Position>)action.getPositionRemoved();
+		/*
+		 * Added 24.02.20		
+		 * When a move has been made then the pieces belonging to the same player must get new
+		 * available positions calculated				
+		 */
+				boolean available = false;
+				boolean removed = false;
+				for (Position pos:availablePositions) {
+					if (position == pos) {
+						available = true;
+						break;
+					}
+				}
+				for (Position pos:removedPos) {
+					if (position == pos) {
+						removed = true;
+						break;
+					}
+				}
+		/*
+		 * end added		
+		 */
+		if (removed) {
+			writer.println("Piece preferable position is occupied by friendly piece:\n"+piece.toString()+"\n Position "+position.toString());
+//			Double evaluation = new Double(0);
+		    writer.close();
+//			return evaluation;
+		}		
 	}
 	/**
 	 * createMove
@@ -289,7 +443,7 @@ public class PlayGame {
 	public void createMove(AgamePiece piece,Position from,Position to,List<ApieceMove> moves) {
 		int noofMoves = 0;
 		String algebraicmove = "";
-		ArrayList<ChessMoves> amoves = myFrontBoard.getChessMoves();
+/*		ArrayList<ChessMoves> amoves = myFrontBoard.getChessMoves();
 		if (amoves != null && !amoves.isEmpty()) {
 			int ll = amoves.size();
 			ChessMoves move = amoves.get(ll-1);
@@ -297,7 +451,7 @@ public class PlayGame {
 			if (algebraicmove.equals(""))
 				algebraicmove = move.getWhiteMove();
 			
-		}
+		} This procedure is not necessary here*/
 		if (moves.isEmpty()) {
 			noofMoves = 0;
 		}
@@ -306,9 +460,9 @@ public class PlayGame {
 		}
 		noofMoves++;
 		piece.produceLegalmoves(to);
-//		piece.getLegalmoves(to); // Create a new list of available position after move
+//		piece.getLegalmoves(to); // Create a new list of available position after move 
 		ApieceMove pieceMove = new ApieceMove(piece,from, to, noofMoves, algebraicmove);
-
+		 writer.println("Creating a move with the makeDecision call: Piece "+piece.toString()+" is moved to \n"+to.toString()+"\n");
 		moves.add(pieceMove);
 			
 	}

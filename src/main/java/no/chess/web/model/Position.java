@@ -404,7 +404,10 @@ public class Position extends ParentModel {
 	 * It is called from the chessstateimpl object emptyMovements() and checkPlayers() methods
 	 */
 	public void returnPiece() {
-		if (removedPieces.empty()) {
+/*		if (removed != null) {
+			usedBy = removed;
+		}*/
+		if (removed == null && removedPieces.empty()) {
 			setUsedBy();
 		}
 		if (removedPieces != null && !removedPieces.empty()) {
@@ -425,9 +428,16 @@ public class Position extends ParentModel {
 		this.usedBy = null;
 		inUse = false;
 	}
+	public void setUsedandRemoved(ChessPiece usedBy) {
+		this.usedBy = usedBy;
+		inUse = true;
+		setRemoved(usedBy);
+		removedPieces.push(removed);
+		
+	}
 	/**
 	 * This method is used when a piece is moved from this position
-	 * and so the position becomes vacant.
+	 * and so the position becomes vacant or the piece occupying this position is removed.
 	 * The method is called from Chessboard when:
 	 * 1 Creating an empty chessboard
 	 * 2 Creating ontology positions
@@ -435,7 +445,7 @@ public class Position extends ParentModel {
 	 * The determinemove method calls the chesspiece's acceptmove method
 	 * which calls this method.
 	 * The method is also called from the AchessGame object movePiece method when this object is used by the
-	 * ChessSate object in the search process
+	 * ChessState object in the search process
 	 * @param usedBy
 	 */
 	public void setUsedBy(ChessPiece usedBy) {
@@ -451,9 +461,13 @@ public class Position extends ParentModel {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		String p = "None";
-		if (usedBy != null)
+		String gp = "Gamenone";
+		if (usedBy != null) {
 			p = usedBy.toString();
-		builder.append(positionName+ " Color "+positionColor+" Piece  "+p+" "+inUse+"\n");
+			gp = usedBy.getMyPiece().toString();
+		}
+		
+		builder.append(positionName+ " Color "+positionColor+" Piece  "+p+" "+inUse+" gamepiece "+gp+"\n");
 		return builder.toString();
 	}
 }
