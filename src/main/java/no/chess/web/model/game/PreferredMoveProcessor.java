@@ -67,6 +67,19 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		Position preferredPosition = null;
 		Position from = p.getmyPosition();
 		heldPosition = from;
+/*
+ * Checking if piece is active: Added 21.04.20		
+ */
+		if (!p.isActive()) {
+			writer.println("Piece taken 1: "+p.toString());
+			return null;
+		}
+		if (!p.getMyPiece().isUse()) {
+			writer.println("Piece taken 2: "+p.toString());
+			p.setActive(false);
+			return null;
+		}
+			
 		APawn pn = null;
 		ABishop b = null;
 		ARook r = null;

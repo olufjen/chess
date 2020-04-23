@@ -249,6 +249,24 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 		this.myPlayer = myPlayer;
 	}
 	/**
+	 * switchActivePlayer
+	 * This method switches the active player
+	 */
+	public void switchActivePlayer() {
+		boolean w = whitePlayer.isActive();
+		boolean b = blackPlayer.isActive();
+		if (w) {
+			whitePlayer.setActive(false);
+			blackPlayer.setActive(true);
+			playerTomove = blackPlayer;
+		}
+		if (b) {
+			whitePlayer.setActive(true);
+			blackPlayer.setActive(false);
+			playerTomove = whitePlayer;
+		}
+	}
+	/**
 	 * returnMyplayer
 	 * This method sets the active player to myPlayer
 	 * which is the player that the game represent
@@ -264,6 +282,16 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 		playerTomove.setActions(actions);
 		analyzeutility();
 	}
+	/**
+	 * checkToposition
+	 * This method checks if the to position of a move contains a friendly piece
+	 * and if this piece is not the same as the moving piece.
+	 * It also checks if the to position is different from the moving piece' position.
+	 * Then this move should not be considered.
+	 * This method is called from the chessstate mark method.
+	 * @param move
+	 * @return true if any of the two conditions above are true
+	 */
 	private boolean checkToposition(ApieceMove move) {
 		boolean result = false;
 		Position  to = move.getToPosition();
