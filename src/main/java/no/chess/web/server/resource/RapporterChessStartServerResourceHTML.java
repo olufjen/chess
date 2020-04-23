@@ -17,6 +17,7 @@ import no.chess.web.model.EightQueenProblem;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
 import no.chess.web.model.QueensEnvironment;
+import no.chess.web.model.game.AgamePiece;
 
 import org.restlet.Request;
 import org.restlet.Response;
@@ -692,18 +693,35 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    System.out.println(fen);
 
    	    if (game != null) {
-   	    	chessPiece.getMyPiece().setMyPosition(newPosition);
-   	    	chessPiece.getMyPiece().setHeldPosition(null); // Then there are no previous positions to restore from
-   	    	game.getGame().movePiece(oldPosition.getXyloc(),newPosition.getXyloc());
-   	    	game.createMove(chessPiece.getMyPiece(), oldPosition, newPosition);
+ /*
+  *  New 16.04.20 similar to proposemove
+  */
+ 
+   	    	AgamePiece movedPiece = chessPiece.getMyPiece();
+ 	    	chessPiece.getMyPiece().setMyPosition(newPosition);
+ 	    	chessPiece.getMyPiece().setHeldPosition(newPosition); // All pieces are now set in correct positions
+ 	    	newPosition.setUsedandRemoved(chessPiece); // When this call is removed, a piece is removed from the board!!!
+ /*
+  * end new	    	
+  */
+ 	    // setHeldPosition(oldPosition); in this position removes the black pawn in move nr. 3 
+  	    	game.getGame().movePiece(movedPiece, newPosition,"Opponent");// 16.04.20 Move piece before setting new position.
+ // 	    	chessPiece.getMyPiece().setHeldPosition(oldPosition); // Then there are no previous positions to restore from
+// setHeldPosition(oldPosition); in this position removes the black pawn in move nr. 2
+//   	    	game.getGame().movePiece(oldPosition.getXyloc(),newPosition.getXyloc());
+   	    	game.createMove(movedPiece, oldPosition, newPosition);
+   	    	game.getActiveState().switchActivePlayer(); // New 16.04.20 After a move, must switch active player
    	    	game.getGame().createNewboard();
    	    	System.out.println(game.getGame().getBoardPic());
-   	    	game.getGame().setChosenPlayer();
+//   	    	game.getGame().setChosenPlayer(); // This method is only used at startup OLJ 20.04.20
    	    	game.proposeMove();
      	    fen = chessBoard.createFen();
 //   	    System.out.println("Piece name "+chessPiece.getOntlogyName());
      	    System.out.println(fen);
    	    	System.out.println(game.getGame().getBoardPic());
+   	    	for (ChessMoves move:chessMoves) {
+   	    		System.out.println(move.toString());
+   	    	}
    	    }
    	    dataModel.put(fenPosid,fen);
     	SimpleScalar pieceMoved = new SimpleScalar(piece);
