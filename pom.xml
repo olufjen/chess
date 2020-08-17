@@ -309,6 +309,12 @@
 	          <version>1.0-SNAPSHOT</version>
 
       </dependency>
+<!-- Games added 01.05.19  -->      
+	  <dependency>
+	  	 <groupId>no.games</groupId>
+	      <artifactId>games</artifactId>
+	      <version>1.0-SNAPSHOT</version>	  	 
+	  </dependency>      
 	     <dependency>
 	          <groupId>no.kunnskapssenteret</groupId>
 	          <artifactId>rammeverk_web</artifactId>
@@ -324,6 +330,14 @@
 	          <artifactId>hive-core</artifactId>
 	          <version>1.0-SNAPSHOT</version>
 	      </dependency>
+<!-- Added 28.08.20  International Component for Unicode for Java (ICU4J) is a mature, widely used Java library providing Unicode and Globalization support-->	
+<!-- https://mvnrepository.com/artifact/com.ibm.icu/icu4j -->
+		<dependency>
+		    <groupId>com.ibm.icu</groupId>
+		    <artifactId>icu4j</artifactId>
+		    <version>67.1</version>
+		</dependency>
+      
  <!--   Removed 11.06.18 olj
 	      <dependency>
 	         <groupId>no.kunnskapssenteret</groupId>
