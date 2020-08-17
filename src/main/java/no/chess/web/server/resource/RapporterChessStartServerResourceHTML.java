@@ -18,6 +18,7 @@ import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
 import no.chess.web.model.QueensEnvironment;
 import no.chess.web.model.game.AgamePiece;
+import no.chess.web.model.game.ApieceMove;
 
 import org.restlet.Request;
 import org.restlet.Response;
@@ -687,7 +688,8 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
        	Position oldPosition = chessBoard.findPostion(oldPos);
        	Position newPosition = chessBoard.findPostion(newPos);
        	chessBoard.determineMove(oldPos, newPos, piece); // Determine if move is legal
-
+    	AgamePiece movedPiece = chessPiece.getMyPiece();
+    	chessPiece.getMyPiece().setMyPosition(newPosition);
    	    String fen = chessBoard.createFen();
    	    System.out.println("Piece name "+chessPiece.getOntlogyName());
    	    System.out.println(fen);
@@ -696,21 +698,38 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  /*
   *  New 16.04.20 similar to proposemove
   */
- 
-   	    	AgamePiece movedPiece = chessPiece.getMyPiece();
- 	    	chessPiece.getMyPiece().setMyPosition(newPosition);
- 	    	chessPiece.getMyPiece().setHeldPosition(newPosition); // All pieces are now set in correct positions
+
+/*
+ * Is this correct ??? OLJ 10.07.20 ???? 	    	
+ */
+// 	    	chessPiece.getMyPiece().setHeldPosition(newPosition); // All pieces are now set in correct positions: Should this line be removed ??? OLJ 10.07.20
  	    	newPosition.setUsedandRemoved(chessPiece); // When this call is removed, a piece is removed from the board!!!
  /*
   * end new	    	
   */
+ 	    	  System.out.println("Old position "+oldPosition.toString()+ " New position "+newPosition.toString());
  	    // setHeldPosition(oldPosition); in this position removes the black pawn in move nr. 3 
+ 	    	List<ApieceMove>  movesofar = game.getMovements();
+ 	    	for (ApieceMove  piecemove:movesofar) {
+ 	    		System.out.println(piecemove.toString());
+ 	    		Position topos = piecemove.getToPosition();
+ 	    		AgamePiece movePiece = piecemove.getPiece();
+ 	    		Position piecePos = movePiece.getmyPosition();
+ 	    		Position heldPos = movePiece.getHeldPosition();
+ 	    		if (topos == heldPos && piecePos != topos) {
+ 	    			System.out.println(movePiece.toString());
+ 	    		}
+ 	    		
+ 	    	}
   	    	game.getGame().movePiece(movedPiece, newPosition,"Opponent");// 16.04.20 Move piece before setting new position.
+
  // 	    	chessPiece.getMyPiece().setHeldPosition(oldPosition); // Then there are no previous positions to restore from
 // setHeldPosition(oldPosition); in this position removes the black pawn in move nr. 2
 //   	    	game.getGame().movePiece(oldPosition.getXyloc(),newPosition.getXyloc());
    	    	game.createMove(movedPiece, oldPosition, newPosition);
-   	    	game.getActiveState().switchActivePlayer(); // New 16.04.20 After a move, must switch active player
+  	    	movedPiece.produceLegalmoves(newPosition); // Added 23.06.20 produces new available positions for the moved piece
+//   	    	game.getActiveState().switchActivePlayer(); // OBS 11.08.20: Must ensure that player now switches to the game player (white) New 16.04.20 After a move, must switch active player
+   	    	game.getActiveState().returnMyplayer();
    	    	game.getGame().createNewboard();
    	    	System.out.println(game.getGame().getBoardPic());
 //   	    	game.getGame().setChosenPlayer(); // This method is only used at startup OLJ 20.04.20
