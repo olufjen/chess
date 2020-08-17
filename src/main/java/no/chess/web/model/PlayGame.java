@@ -75,6 +75,7 @@ public class PlayGame {
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\positions.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
+	private ChessStateImpl activeState;
 	public PlayGame(HashMap<String, Position> positions,ChessBoard frontBoard)   {
 		super();
 		this.myFrontBoard = frontBoard;
@@ -196,6 +197,15 @@ public class PlayGame {
 
 //		notusedPositions = (List<Position>) ((List<Position>) positions).stream().filter(board.queenExistsAt(position.getXyloc())).collect(Collectors.toList());
 	}
+	
+	public ChessStateImpl getActiveState() {
+		return activeState;
+	}
+
+	public void setActiveState(ChessStateImpl activeState) {
+		this.activeState = activeState;
+	}
+
 	/**
 	 * proposeMove
 	 * This method uses a chosen (aima) search algorithm to find the best next move
@@ -221,6 +231,7 @@ public class PlayGame {
 
 		currentState = game.getInitialState();
 		ChessStateImpl stateImpl = (ChessStateImpl) currentState;
+		activeState = stateImpl;
 		AdversarialSearch<ChessState<GameBoard>, ChessAction<?, ?, ?,  GamePiece<?>, ?>> search; // FILL IN !!!!
 //		ChessSearch<ChessState,ChessAction> search;
 		search = ChessAlphaBetaSearch.createFor(game, 0.0, 1.0, 2);
@@ -240,25 +251,33 @@ public class PlayGame {
 		ChessAction newAction = search.makeDecision(currentState);
 		ChessActionImpl localAction = (ChessActionImpl) newAction;
 		ApieceMove chosenMove = localAction.getPossibleMove();
+		Position movPos = chosenMove.getToPosition();
 		APlayer playerTomove = stateImpl.getMyPlayer();
+	
+		writer.println("Player to move "+playerTomove.getPlayerName()); 
+		if (playerTomove.getPlayerName() == playerTomove.getBlackPlayer()) {
+			writer.println("Wrong player "+playerTomove.getPlayerName());
+		}
 		currentState.setAction(newAction); // Set state action to action to be performed
 //		String a = newAction.toString();
 /*		List<ChessAction> actions = currentState.getActions();
 		ChessAction action = actions.get(0);*/
 		writer.println("Before call to emptymovements \n"+game.getBoardPic());
-		for (Position pos:positionlist) {
+/*		for (Position pos:positionlist) {
 			if (pos.getPositionName().equals("a3")) {
 				writer.println("!!Playgame position!! "+pos.toString());
 			}
-		}
+		}*/
 		List<ApieceMove> stateMoves = stateImpl.getMovements();
-		writer.println("State moves \n");
+/*		writer.println("State moves\n"); // OBS: 01.05.20 state moves are always empty !!
 		for (ApieceMove stateMove : stateMoves) {
 			writer.println(stateMove.toString());
 			Position pos = stateMove.getFromPosition();
 			AgamePiece piece = stateMove.getPiece();
-			AgamePiece posPiece = pos.getUsedBy().getMyPiece();
-			if (piece != posPiece) {
+			AgamePiece posPiece = null;
+			if (pos.isInUse())
+				posPiece = pos.getUsedBy().getMyPiece();
+			if (posPiece != null && piece != posPiece) {
 				AgamePiece removed = pos.getRemoved().getMyPiece();
 				ChessPiece removedfromstack = pos.getRemovedPieces().pop();
 				AgamePiece removedGamepiece = removedfromstack.getMyPiece();
@@ -268,12 +287,22 @@ public class PlayGame {
 			}
 			
 			
-		}
+		}*/
 		stateImpl.setChosenMove(chosenMove);
-		currentState.emptyMovements(); // empty all movements before the chosen action and move.
+	
 		AgamePiece piece = (AgamePiece) newAction.getChessPiece();
+		if (!piece.isActive()) {
+			writer.println("Chosen action has a passive piece "+ piece.toString() );
+		}
+		currentState.emptyMovements(); // empty all movements before the chosen action and move.
+		if (piece.isActive()) {
+			writer.println("Passive piece set active"+ piece.toString() );
+		}		
 		Position position = (Position) newAction.getPreferredPosition();
-		
+		if (position != movPos) {
+			writer.println("Preferred position different from move position "+ position.toString()+" Move Position: "+movPos.toString() );
+			
+		}
 /*		List<Position> availablePositions = (List<Position>) newAction.getAvailablePositions();
 		if (position == null)
 			position = availablePositions.get(0); // Should not happen !!!
@@ -285,6 +314,11 @@ public class PlayGame {
 	
  * List<Position> availablePositions = (List<Position>) newAction.getAvailablePositions(); 
 		Position position = availablePositions.get(0);*/
+		
+		
+/*
+ * At this call the holds the correct from position !!!!		
+ */
 		writer.println("Proposemove\n"+piece.toString()+"Action\n"+newAction.toString());
 /*
  * The chosen action must be verified. OLJ 28.02.20:
@@ -294,10 +328,11 @@ public class PlayGame {
  *  3. Based on this, the preferable position of the action must be changed, - if necessary. 
  * 		
  */
-//		verifyAction(localAction, piece, position, playerTomove);
+//		verifyAction(localAction, piece, position, playerTomove); Noty Used !!!
 		String newPos = position.getPositionName();
 		String pieceName = piece.getMyPiece().getName();
 		Position piecePos = piece.getMyPosition();
+		writer.println("Proposemove The piece start position:\n"+ piecePos.toString()+"\nPosition contains: "+piecePos.getUsedBy().toString());
 		Position oldPosition = null;
 /*
  * position is preferred position.
@@ -318,7 +353,7 @@ public class PlayGame {
 			// This indicate an opponent piece that must be removed in case position is occupied !!!
 			// 31.01 2020 Removes also black Knight !!!
 			if (activeGamePiece != null) {
-				writer.println(activeGamePiece.toString()+"\n");
+				writer.println("Taken piece: "+ activeGamePiece.toString()+"\n");
 /*				activeGamePiece.setActive(false); This must be done after call to determineMove OJN 3.02.20
 				activeGamePiece.setMyPosition(null);
 				position.setUsedBy();*/
@@ -346,20 +381,20 @@ public class PlayGame {
 		}
 
 		// This call must be carried out before check of activegamepiece !!!
-		 writer.println("Positionlist before determinemove \n");
-		 for ( Position pos : positionlist) {
+		 writer.println("Positionlist before determinemove removed \n");
+/*		 for ( Position pos : positionlist) {
 			 writer.println(pos.toString());
-		 }
+		 }*/
 		myFrontBoard.determineMove(oldPos, newPos, pieceName); // New fen is created based on this. This is done after the call to proposemove
-
+// The determinemove method sets new position Name in chesspiece !!
 	    piece.setMyPosition(position); // position is the preferred position from action This is the new position of the piece
 //	    piece.setHeldPosition(null); // Then there are no previous positions to restore from 
 	    
 //		currentState.emptyMovements(); // empty all movements before the chosen action and move.
 	    writer.println("After call to board.determineMove \n"+game.getBoardPic()); // OK
 
-		piece.setHeldPosition(position); // New position to the position to restore to
-		position.setUsedandRemoved(piece.getMyPiece());
+//		piece.setHeldPosition(position); // New position to the position to restore to removed olj 10.07.20 !!!
+		position.setUsedandRemoved(piece.getMyPiece()); // Sets chesspiece to new position and also sets in the remvoed list
 //		myFrontBoard.determineMove(oldPos, newPos, pieceName); // New fen is created based on this
 //		Position newPosition = myFrontBoard.findPostion(newPos);
 	
@@ -378,6 +413,7 @@ public class PlayGame {
 	    writer.println("After call to game.movepiece \n"+game.getBoardPic());
 		
 		createMove(piece,oldPosition, position);
+		stateImpl.switchActivePlayer(); // 16.04.20 After a move, must switch active player
 //		localAction.getActions(playerTomove); // Added 24.02.20 When a move has been made then the pieces belonging to the same player must get new
 //available positions calculated		
 		game.createNewboard(); // A new set of usedunused lists are created.
@@ -392,6 +428,7 @@ public class PlayGame {
 	 * This method is used to verify the action chosen by the search object
 	 * If the action has a preferable position that is occupied by a friendly piece
 	 * an alterative position must be chosen.
+	 * @deprecated
 	 * @param action
 	 * @param piece
 	 * @param position
@@ -435,6 +472,7 @@ public class PlayGame {
 	 * This method creates a move based on a move carried out in the during the search.makedecision call.
 	 * The game piece to be moved calculates new available positions from the new position it is moved to.
 	 * This method is called from the chessState object during the makeDecision process
+	 * @deprecated Not used by chessstate olj 01.05.20
 	 * @param piece The game piece moved
 	 * @param from The from Position
 	 * @param to The to Position

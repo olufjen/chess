@@ -274,17 +274,22 @@ public class ChessBoard extends ParentModel {
 	 * establishMoves
 	 * This method creates a new move in the list of moves, it is stored in algebraic notation
 	 * @param chessBoard
-	 * @param position
+	 * @param position The new position
 	 */
-	private void establishMoves(Position position) {
+	private void establishMoves(Position position,String oldName) {
 		String move = position.getPositionName();
 		String stroke = "";
-		if (opposingOccupied)
+		String startPos = "";
+		if (opposingOccupied) {
 			stroke = "x";
+			startPos = oldName;
+		}
 		String pieceName = position.getUsedBy().getName();
 		String pieceType = position.getUsedBy().getPieceName();
 		if (!pieceType.equals("P"))
 			move = pieceType+stroke+move;
+		else
+			move = startPos+stroke+move;
 		chessMoves = getChessMoves();
 		int last = chessMoves.size() ;
 		chessMove = chessMoves.get(last-1);
@@ -927,7 +932,7 @@ public class ChessBoard extends ParentModel {
 	public ChessPiece findPiece(String posName, String pieceName) {
 		String localposName = "";
 		ChessPiece piece = null;
-		for (int i = 0; i < 63; i++) {
+		for (int i = 0; i < 64; i++) {
 			Position position = (Position) positions.get(allPositions[i]);
 			localposName = position.getPositionName();
 			if (posName.equals(localposName)) {
@@ -947,7 +952,7 @@ public class ChessBoard extends ParentModel {
 	public ChessPiece findPiece(String posName) {
 		String localposName = "";
 		ChessPiece piece = null;
-		for (int i = 0; i < 63; i++) {
+		for (int i = 0; i < 64; i++) {
 			Position position = (Position) positions.get(allPositions[i]);
 			localposName = position.getPositionName();
 			if (posName.equals(localposName)) {
@@ -968,12 +973,12 @@ public class ChessBoard extends ParentModel {
 	/**
 	 * checkPosition
 	 * This method checks if a position is occupied by a piece
-	 * @param pos: Position to be checked
+	 * @param pos: Position to be checked (The name of the position)
 	 * @return true if position is occupied
 	 */
 	public boolean checkPosition(String pos) {
 		boolean inUse = false;
-		for (int i = 0; i < 63; i++) {
+		for (int i = 0; i < 64; i++) {
 			Position position = (Position) positions.get(allPositions[i]);
 			if (position.getPositionName().equals(pos)) {
 				if (position.isInUse()) {
@@ -996,6 +1001,8 @@ public class ChessBoard extends ParentModel {
 	 * 
 	 */
 	public void determineMove(String oldPos,String newPos,String piece) {
+		opposingOccupied = false;
+		String oldName = oldPos.substring(0, 1);
     	ChessPiece chessPiece = findPiece(oldPos,piece);
     	if (chessPiece != null)
     		chessPiece.setPosition(newPos);
@@ -1005,21 +1012,22 @@ public class ChessBoard extends ParentModel {
        	Position oldPosition = findPostion(oldPos);
        	Position newPosition = findPostion(newPos);
        	if (checkPosition(newPos)) { // If position is occupied find which piece it is occupied by and determine if move is legal
+       		
        		boolean accept = chessPiece.acceptMove(newPos, oldPosition,newPosition);
        		opposingOccupied = accept;
        		if(!accept)
        			chessPiece.setPosition(oldPos);
        		if (accept)
-       			establishMoves(newPosition);
+       			establishMoves(newPosition,oldName);
 
        	}
        	if (!checkPosition(newPos)){
 //       	   	oldPosition.setUsedBy(null);
 //           	oldPosition.setInUse(false);
            	HashSet pieces = oldPosition.getPieces();
-    		if (newPosition.getPositionName().equals("a3")) {
+/*    		if (newPosition.getPositionName().equals("a3")) {
 				System.out.println("!!determinemove position !! "+newPosition.toString());
-			}
+			}*/
            	oldPosition.setPieces(null);
            	oldPosition.setUsedBy();
            	newPosition.setUsedBy(chessPiece);
@@ -1031,7 +1039,7 @@ public class ChessBoard extends ParentModel {
         	}else {
         		chessPiece.setBlackBoardPosition((BlackBoardPosition) newPosition);
         	}*/
-        	establishMoves(newPosition);
+        	establishMoves(newPosition,oldName);
         	
        	}
 		
@@ -1052,7 +1060,7 @@ public class ChessBoard extends ParentModel {
 		List<Variable> var = qCSP.getVariables();
 		Variable v = var.get(0);
 		String varName = v.getName();
-		for (int i = 0; i < 63; i++) {
+		for (int i = 0; i < 64; i++) {
 			Position position = (Position) positions.get(allPositions[i]);
 			XYLocation loc = position.getXyloc();
 			if (board.queenExistsAt(loc)) {

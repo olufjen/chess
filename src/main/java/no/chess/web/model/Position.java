@@ -411,8 +411,12 @@ public class Position extends ParentModel {
 			setUsedBy();
 		}
 		if (removedPieces != null && !removedPieces.empty()) {
-			usedBy = removedPieces.pop();
-			usedBy.getMyPiece().setActive(true);
+			ChessPiece removed = removedPieces.pop();
+			if (removed.isUse()) { // Added 21.04.20  The use flag is only set false in chesspiece acceptmove method
+				usedBy = removed;
+				usedBy.getMyPiece().setActive(true);
+				inUse = true; // Added 4.08.20 olj
+			}
 		}
 
 	}
@@ -428,6 +432,14 @@ public class Position extends ParentModel {
 		this.usedBy = null;
 		inUse = false;
 	}
+	/**
+	 * setUsedandRemoved
+	 * This method sets the chosen ChessPiece to this position
+	 * and also puts it in the removed list.
+	 * This make sure that the piece is correctly restored after a search process
+	 * and all moves generated in the search are removed.
+	 * @param usedBy - the chesspiece
+	 */
 	public void setUsedandRemoved(ChessPiece usedBy) {
 		this.usedBy = usedBy;
 		inUse = true;

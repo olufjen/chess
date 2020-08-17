@@ -134,7 +134,8 @@ public class ChessPiece extends ParentModel{
 	}
 	/**
 	 * acceptMove
-	 * THis method accepts a move according to the rules of the chessgame for a given piece
+	 * This method accepts a move according to the rules of the chessgame for a given piece.
+	 * The move is only accepted if it is an opposing piece that is removed
 	 * @param newPos
 	 * @param position
 	 */
@@ -142,13 +143,18 @@ public class ChessPiece extends ParentModel{
 		ChessPiece opposingPiece = newPosition.getUsedBy();
 		boolean accept = false;
 		if (blackPiece == null && opposingPiece.getWhitePiece() == null) {
-       	   	oldPosition.setUsedBy();
+       	   	oldPosition.setUsedBy(); // The start position is emptied
 //           	oldPosition.setInUse(false);
            	HashSet pieces = oldPosition.getPieces();
            	newPosition.setUsedBy(this);
         	newPosition.setInUse(true);
         	newPosition.setPieces(pieces);
         	accept = true;
+ /*
+  * Setting opponent piece passive: added 21.04.20       	
+  */
+        	opposingPiece.setUse(false);
+        	opposingPiece.getMyPiece().setActive(false);
 //        	opposingPiece.setValue(-1); //How to set a piece inactive (vacant)? See Ontology
 			// move is legal. Later: Check move according to rules given for this piece
 		}
@@ -162,6 +168,11 @@ public class ChessPiece extends ParentModel{
         	newPosition.setPieces(pieces);
 //        	opposingPiece.setValue(-1); //How to set a piece inactive (vacant)? See Ontology
         	accept = true;
+ /*
+ * Setting opponent piece passive: added 21.04.20       	
+ */        	
+        	opposingPiece.setUse(false);
+        	opposingPiece.getMyPiece().setActive(false);
 		}
 		return accept;
 	}
