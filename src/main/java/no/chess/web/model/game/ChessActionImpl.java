@@ -11,6 +11,7 @@ import no.games.chess.ChessFunctions;
 /**
  * ChessActionImpl
  * This class implements the ChessAction interface.
+ * A ChessAction is created by the call to the ChesState getActions() method
  * It contains an AgamePiece and its available (reachable) positions
  * Revised: From this a preferred position for this piece is calculated by the player
  * From this a possible move is created and a preferred position is calculated
@@ -28,11 +29,12 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private List<Position> positionRemoved;
 	private Position preferredPosition = null; // Each action has a preferred position that the piece should move to
 	private Position strikePosition = null; // This position is set if it is occupied by an opponent piece
-	private boolean strike = false;
+	private boolean strike = false; // This flag is set by the actionprocessor
 	private APlayer player;
 	private ApieceMove possibleMove;
 	private int pn = 0;
 	private int pny = 0;
+	private PreferredMoveProcessor myProcessor;
 
 	public ChessActionImpl(HashMap<String, Position> positions, AgamePiece chessPiece,APlayer player) {
 		super();
@@ -45,6 +47,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		pny = this.chessPiece.getMyPosition().getIntColumn();
 		Integer prn = new Integer(pn+pny);
 		PreferredMoveProcessor pr = new PreferredMoveProcessor(prn,name);
+		myProcessor = pr;
 		possibleMove = ChessFunctions.processChessgame(this,chessPiece, pr); // The processor can be replaced by a lambda expression?
 		if (possibleMove != null)
 			preferredPosition = possibleMove.getToPosition();
@@ -149,6 +152,8 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * getActions
 	 * This method returns all possible position reachable by the piece belonging to this action
 	 * If a position is occupied by another piece for this action's player, this position is placed in the removed list
+	 * This method is called when the ChessAction is created.
+	 * A ChessAction is created by the call to the ChesState getActions() method
 	 * @return
 	 */
 	public List<Position> getActions(){
@@ -165,13 +170,17 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		List<AgamePiece> pieces = player.getMygamePieces(); 
 		for (Position position:availablePositions) {
 			for (AgamePiece otherPiece:pieces) {
-				if (otherPiece != chessPiece) {
+				boolean inuse = otherPiece.getMyPiece().isUse();// inuse is false if a piece is removed permanently olj 1.08.20
+				if (inuse && otherPiece.isActive() && otherPiece != chessPiece) { // Added 31.07.20 Check if piece is active
 					Position pos = otherPiece.getMyPosition();
 					if (pos != null) {
-						if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
-							positionRemoved.add(position);
+						if (pos.isInUse()) { // OBS: Added 14.05.20 Are never active !! ??
+							if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
+								positionRemoved.add(position);
+							}
+						}else {
+							 System.out.println("??????? piece has position that is not in use ?????????????? "+otherPiece.toString()+"\n Posisjon: "+pos.toString()+"\n"+this.toString());
 						}
-
 					}
 				}
 			}
@@ -185,6 +194,8 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * getActions
 	 * This method returns all possible position reachable by the piece belonging to this action
 	 * If a position is occupied by another piece for this action's player, this position is placed in the removed list
+	 * This method is called from the ChessState mark method, when a move has been made during the search process.
+	 * 
 	 * This is only done if the chosen player is the same as the action's player
 	 * @return
 	 */

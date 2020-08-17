@@ -34,7 +34,7 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 		this.moveNotation = ""; // Calculate the move notation
 		blackMove = piece.checkBlack();
 		whiteMove = piece.checkWhite();
-		creation = "Created from gamepiece position";
+		creation = "Created from gamepiece preferred position";
 		
 	}
 

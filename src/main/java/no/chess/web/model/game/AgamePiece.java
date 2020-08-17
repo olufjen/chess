@@ -267,12 +267,12 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		return myPosition;
 	}
 
-	public void setMyPosition(Position myPosition) {
+	public void setMyPosition(Position newPosition) {
 		if (this.myPosition != null) {
 			heldPositions.push(this.myPosition);
 			this.heldPosition = myPosition;
 		}
-		this.myPosition = myPosition;
+		this.myPosition = newPosition;
 	}
 
 	/**
@@ -299,7 +299,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		}*/
 		if (heldPositions != null && !heldPositions.isEmpty())
 			this.myPosition = heldPositions.pop();
-		active = true;
+		if (myPosition != null) // Added 1.08.20
+			active = true;
 		
 //		myPosition = heldPosition;
 	}

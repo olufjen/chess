@@ -201,41 +201,7 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			reachablepiecePosition[x][y] = "P";
 			createPosition(newPositions,xloc);
 		}
-/*		
-		int x = loc.getXCoOrdinate();
-		int y = loc.getYCoOrdinate();
-		if (y != 0 && color.equals("w")) {  
-			if (y < 7 && y > 1) {
-				reachablesqueres[x][y+1] = 1;
-				reachablepiecePosition[x][y+1] = "P";
-				createPosition(newPositions, x, y+1);
 
-			}
-		}
-		if (y != 0 && color.equals("b")) {  
-			if (y >1 && y < 6) {
-				reachablesqueres[x][y-1] = 1;
-				reachablepiecePosition[x][y-1] = "P";
-				createPosition(newPositions, x, y-1);
-
-			}
-		}
-		if (y == 1 && color.equals("w")) {
-			reachablesqueres[x][y+1] = 1;
-			reachablepiecePosition[x][y+1] = "P";
-			createPosition(newPositions, x, y+1);
-			reachablesqueres[x][y+2] = 1;
-			reachablepiecePosition[x][y+2] = "P";
-			createPosition(newPositions, x, y+2);
-		}	
-		if (y == 6 && color.equals("b")) {
-			reachablesqueres[x][y-1] = 1;
-			reachablepiecePosition[x][y-1] = "P";
-			createPosition(newPositions, x, y-1);
-			reachablesqueres[x][y-2] = 1;
-			reachablepiecePosition[x][y-2] = "P";
-			createPosition(newPositions, x, y-2);
-		}*/
 		
 	}
 	/**

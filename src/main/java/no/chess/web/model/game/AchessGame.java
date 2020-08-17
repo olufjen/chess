@@ -79,9 +79,12 @@ public class AchessGame extends AbstractChessGame{
 		piecesonBoard = new ArrayList();
 //		createStart();
 		tranferBoard(); // transfers piece positions to the aima chessboard
+
+
+	}
+	private void createInitialState() {
 		chessState = new ChessStateImpl(this, gameBoard,localwhitePlayer,localblackPlayer);
 		playerTomove = (APlayer) chessState.getPlayerTomove();
-
 	}
 	/**
 	 * restorepositions
@@ -286,6 +289,7 @@ public class AchessGame extends AbstractChessGame{
 
 	public void setGamePlayer(PlayGame gamePlayer) {
 		this.gamePlayer = gamePlayer;
+		createInitialState();
 	}
 	/**
 	 * movePiece
@@ -304,8 +308,25 @@ public class AchessGame extends AbstractChessGame{
 			writer.println("From position collected from heldPosition\n"+piece.getHeldPosition().toString());
 		    from = piece.getHeldPosition().getXyloc();
 		}
+
 		XYLocation xyto = to.getXyloc();
-		if (piece != null)
+
+/*
+ * This event does not occur here ojn 13.08.20		
+ */
+		
+		boolean same = false;		
+		ChessPiece chessPiece = to.getUsedBy();
+		if (chessPiece != null) {
+			AgamePiece otherPiece = chessPiece.getMyPiece();
+			if (otherPiece == piece) {
+				writer.println("Same piece occupies from and to position "+piece.toString());
+				same = true;
+			}
+				
+		}
+		
+		if (piece != null && !same)
 			removed = removePiece(piece,xyto);
 		if (!removed)
 			pieceMove(piece,xyto);
@@ -325,9 +346,27 @@ public class AchessGame extends AbstractChessGame{
 		boolean removed = false;
 		XYLocation xyto = to.getXyloc();
 		Position heldPosition = piece.getHeldPosition();
+		Position fromPos = piece.getmyPosition();
+		if (fromPos == heldPosition) {
+			writer.println("From position and To position are the same !! "+piece.toString());
+		}
+		
+		boolean same = false;		
+		ChessPiece chessPiece = to.getUsedBy();
+		
+		if (chessPiece != null) {
+			AgamePiece otherPiece = chessPiece.getMyPiece();
+			if (otherPiece == piece) {
+				writer.println("Same piece occupies from and to position "+source+" "+piece.toString()+"\n Position: "+to.toString());
+				same = false;
+			}
+				
+		}
+		
+		
 		if (heldPosition == null)
 			heldPosition = piece.getmyPosition();
-		if (piece != null)
+		if (piece != null && !same)
 			removed = removePiece(piece,xyto);
 		if (!removed)
 			pieceMove(piece,xyto);
@@ -380,6 +419,7 @@ public class AchessGame extends AbstractChessGame{
 					writer.println("*** Active piece moved **** "+piece.toString()+"\n");
 				}
 			}
+			writer.println("*** Moved from **** "+mypos.toString()+"\n");
 		}
 		
 	}
@@ -516,80 +556,14 @@ public class AchessGame extends AbstractChessGame{
 		writer.flush();
 		return d.doubleValue();
 		
-/*		int noofMoves = 0;
-		int factor = 1;bhfgdchgcfdg
-		if (gamePlayer != null) {
-			movements = gamePlayer.getMovements();
-		}
-		if (movements != null && !movements.isEmpty()) {
-			noofMoves = movements.size();
-			factor = noofMoves -1;
-		}
-			
-		Position position = (Position) action.getPreferredPosition();
-		String prefPos = "None ";
-		if (position != null)
-			prefPos = position.toString();
-		Position tempPos = null;
-		int row = -1;
-		AgamePiece piece =  (AgamePiece) action.getChessPiece();
 
-		String pieceName = piece.getMyPiece().getPieceName();
-		List<Position> preferredPositions = piece.getPreferredPositions();
-		String color = piece.getColor();
-		String preferred = ((preferredPositions != null && !preferredPositions.isEmpty() ? " not empty" : " empty"));
-		builder.append("Piece "+piece.toString()+" Position "+piece.getMyPosition().toString()+" Xcoordinate "+
-				piece.getMyPosition().getXyloc().getXCoOrdinate()+" Ycoordinate "+piece.getMyPosition().getXyloc().getYCoOrdinate()+"\n"+"Preferred position: "
-				+prefPos+preferred);	
-		
-		if (pieceName.equals("P") && factor <= 3) {
-	
-			factor = 10;
-			int col = piece.getMyPosition().getXyloc().getXCoOrdinate();
-			int lrow = piece.getMyPosition().getXyloc().getYCoOrdinate();
-			if (col > 3 && col < 5)
-				factor = factor*col; // 22.08 19: Alle samme verdi???
-//			System.out.println(builder.toString());
-			
-		}
-		if (position != null && preferredPositions != null && !preferredPositions.isEmpty()) {
-			row = position.getIntRow();
-			for (Position pos : preferredPositions) {
-				int nRow = pos.getIntRow();
-				if (color.equals("w") && nRow > row) {
-					row = nRow;
-					tempPos = pos; //Must break loop???
-//					System.out.println("Analyzepieceandposition - loop: "+tempPos.toString());
-				}
-				if (color.equals("b") && nRow < row) {
-					row = nRow;
-					tempPos = pos;
-				}
-			}
-		}
-		if (tempPos != null) {
-//			System.out.println("Analyzepieceandposition: "+position.toString()+"\n"+tempPos.toString());
-			position = tempPos;
-			builder.append("New Preferred position: "+position.toString());
-		}
-		int val = piece.getMyPiece().getValue();
-		action.setPreferredPosition(position);
-//		
-		int col = 0; 
-		if (position != null)
-			col = position.getIntColumn();
-		if (col > 4)
-			col = 7 - col;
-		writer.println(builder.toString());
-		builder = null;
-		writer.close();
-		return factor*val;*/
 	}
 
 	/**
 	 * getActions
 	 * This method returns a list of all possible moves all available pieces 
 	 * for the active player can make from the current state
+	 * The chessstate getAction method produces a new set of actions for this state
 	 */
 	public List<ChessAction> getActions(ChessState<GameBoard> state) {
 		List<ChessAction> actions = state.getActions();
@@ -638,19 +612,23 @@ public class AchessGame extends AbstractChessGame{
 		ChessStateImpl localState = (ChessStateImpl) state;
 		APlayer playerTomove = localState.getPlayerTomove();
 		APlayer opponent = localState.getBlackPlayer();
-		List<AgamePiece> myPieces =  localState.getPlayerTomove().getMygamePieces();
+		APlayer gamePlayer = localState.getWhitePlayer();
+		List<AgamePiece> myPieces = gamePlayer.getMygamePieces();
+//		List<AgamePiece> myPieces =  localState.getPlayerTomove().getMygamePieces();
 		List<AgamePiece> opponentPieces = opponent.getMygamePieces();
 		if(playerTomove.getPlayerName() == playerTomove.getBlackPlayer()) {
-			opponent = localState.getMyPlayer();
+//			opponent = localState.getMyPlayer();
+//			opponentPieces = opponent.getMygamePieces(); // Added 01.05.20: If opponent to play, then the opponent pieces are my pieces?
 			opponentToplay = true;
-			builder.append("Opponent to play\n");
+			builder.append("Opponent to play "+opponent.getPlayerName()+"\n");
+			return 0;
 // 			
 		}
 		int myFeatures = analyzeFeatures(myPieces);
 		int opponentFeatures = analyzeFeatures(opponentPieces);
 		int myCount= countPieces(myPieces);
 		int opponentCount= countPieces(opponentPieces);		
-		builder.append("My features "+myFeatures+" Oppenent features "+opponentFeatures+ " state utility "+localState.getUtility()+" No of pieces white "+myCount+" No of pieces black "+opponentCount );
+		builder.append("My features "+myFeatures+" Opponent features "+opponentFeatures+ " state utility "+localState.getUtility()+" No of pieces white "+myCount+" No of pieces black "+opponentCount );
 		writer.println(builder.toString());
 //		writer.flush();
 		evaluation = myFeatures - opponentFeatures; 

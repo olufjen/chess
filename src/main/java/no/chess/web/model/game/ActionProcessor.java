@@ -8,18 +8,21 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
+import java.util.function.Predicate;
 import aima.core.util.datastructure.XYLocation;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
+import no.games.chess.ChessFunctions;
 import no.games.chess.ChessPieceType;
 import no.games.chess.ChessProcessor;
+import no.games.chess.FilterMove;
 import no.games.chess.AbstractGamePiece.pieceColor;
 import no.games.chess.AbstractGamePiece.pieceType;
 
 /**
  * ActionProcessor
- * It is created and called whenever the chess game (AchessGame) attempts to analyze (evaluate) a given chess action.
+ * It is created and called whenever the chess game (AchessGame) attempts to analyze (evaluate) a given chess action or
+ * when the chess state is created. This is necessary in order to give the initial state an evaluation for each action.
  * This is the given structure:
  * The chess game has an initial chess state. A Chess State contains a set of available chess actions for this given chess state.
  *  
@@ -29,6 +32,7 @@ import no.games.chess.AbstractGamePiece.pieceType;
  * The algorithm for calculating the action value is as follows:
  * Suggestion: Make several types of action processors to choose from depending on ????
  * See notes (3) on Favourable positions.
+ * The results of the evaluations are shown in the file ontpositions(p).txt where (p) is the piece name
  * @author oluf
  *
  */
@@ -79,6 +83,8 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		int movefactor = 1;
 		int pieceFactor = 0;
 
+		ChessStateImpl state = q.getActiveState();
+		
 		if (q != null) {
 			movements = q.getMovements();
 		}
@@ -92,6 +98,10 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 //			move = movements.get(movefactor);
 		}
 		AchessGame game = q.getGame();
+		ApieceMove move = p.getPossibleMove();
+		Position toPosition = null;
+		if (move != null)
+			toPosition = move.getToPosition();
 		APlayer opponent = null;
 		APlayer playerTomove = null;
 		APlayer blackPlayer = game.getLocalblackPlayer();
@@ -106,6 +116,8 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 			prefPos = position.toString();
 		Position tempPos = null; // Used to give the action a new preferred position ??
 		AgamePiece piece =  (AgamePiece) p.getChessPiece();
+		List<Position> availablePositions = new ArrayList(piece.getReacablePositions().values());
+		;
 		if (!piece.isActive()) { // If piece is inactive it cannot be used
 			writer.println("Piece is inactive ======================:\n"+piece.toString());
 			Double evaluation = new Double(0);
@@ -149,7 +161,52 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 			opponent = whitePlayer;
 			playerTomove = blackPlayer;
 		}
-
+		List<Position> opponentPos = p.getActions(opponent);
+		List<Position> opponentRemoved = p.getPositionRemoved();
+		List<Position> playerTomovePositions = p.getActions(playerTomove);
+		List<Position> playerRemoved = p.getPositionRemoved();
+		List<AgamePiece> pieces = playerTomove.getMygamePieces();
+		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
+		
+/*
+ * The filterpiece is part of the list of pieces.		
+ * The pos is part of the list of OpponentPos
+ */
+//		List<AgamePiece> protectors = ChessFunctions.filterPiece(pieces, (AgamePiece filterpiece) -> filterpiece.getmyPosition() == position);
+		List<Position> attackedPositions = ChessFunctions.filterPiece(opponentPos, (Position pos) -> pos == position);
+		List<Position> notAttackedPos = ChessFunctions.filterPiece(opponentRemoved, (Position pos) -> pos == position);
+		List<Position> notProtected = ChessFunctions.filterPiece(playerRemoved, (Position pos) -> pos == position);
+		List<Position> protectedPositions = ChessFunctions.filterPiece(playerTomovePositions, (Position pos) -> pos == position);
+		List<AgamePiece> attacked = ChessFunctions.filterPiece(opponentpieces, (AgamePiece filterpiece) -> filterpiece.getmyPosition() == position);
+		List<Position> otherattackedPositions = new ArrayList();
+		for (Position availpos:availablePositions) {
+			List<Position> tempattackedPositions = ChessFunctions.filterPiece(opponentPos, (Position pos) -> pos == availpos);
+			otherattackedPositions.addAll(tempattackedPositions);
+		}
+		List<Position> otherprotectedPositions = new ArrayList();
+		for (Position availpos:availablePositions) {
+			List<Position> tempPositions = ChessFunctions.filterPiece(playerTomovePositions, (Position pos) -> pos == availpos);
+			otherprotectedPositions.addAll(tempPositions);
+		}
+		for (Position pos:otherattackedPositions) {
+			writer.println("Other attacked positions "+pos.toString()+"\n");
+		}
+		for (Position pos:otherprotectedPositions) {
+			writer.println("Other protected positions "+pos.toString()+"\n");
+		}	
+		for (Position pos:notProtected) {
+			writer.println("Not protected positions "+pos.toString()+"\n");
+		}
+		for (Position pos:protectedPositions) {
+			writer.println("Protected positions "+pos.toString()+"\n");
+		}
+		
+		for (Position pos:attackedPositions) {
+			writer.println("Attacked positions "+pos.toString()+"\n");
+		}
+		for (Position pos:notAttackedPos) {
+			writer.println("Not attacked positions "+pos.toString()+"\n");
+		}
 		// Removed temporary
 /*		p.getActions(playerTomove);
 		List<Position> availablePositions = (List<Position>) p.getAvailablePositions();
@@ -187,20 +244,20 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 			return evaluation;
 		}*/
 		
-		findOpponentPieces(opponent); // All opponent's positions are known in opponentPositions
+		findOpponentPieces(opponent); // All opponent's positions are held in opponentPositions
 		ChessPieceType pieceType = piece.getChessType();
 		pieceType type =  piece.getMyType();
 		HashMap<String,Position>np = piece.getNewPositions(); // New positions available for piece	
-		
+		APawn pawn = null;
 		if (pieceType instanceof APawn) {
-			APawn pawn = (APawn) pieceType;
+			pawn = (APawn) pieceType;
 			pawn.setBlocked(false);
 			Position from = pawn.getmyPosition();
 			XYLocation loc = from.getXyloc();
 			int x = loc.getXCoOrdinate();
 			int y = loc.getYCoOrdinate();
-// Temporary			
-			List<Position> tempPositions = new ArrayList(np.values());
+// Temporary	 This temporary test does not occur!!!		
+			List<Position> tempPositions = new ArrayList(np.values()); // New positions as an array.
 			if (x == 1) {
 				for (Position pos:tempPositions) {
 					XYLocation ploc = pos.getXyloc();
@@ -225,6 +282,7 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 				p.setPreferredPosition(strikePosition);
 				p.setStrikePosition(strikePosition);
 				p.setStrike(true);
+				move.setToPosition(strikePosition);
 				removeOpponentPiece(piece,opponent, strikePosition);
 				writer.println("Pawn strike at "+strikePosition.toString());
 			}
@@ -240,14 +298,21 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		posFactor = calculatePositionFactor(np);
 		if (lastPiece != null && lastPiece == piece)
 			posFactor = 0;
-		if (posFactor == 4 && !pawnStrike) {
+/*
+ * This code is removed olj 31.07.20: It sets the preferred position different from the move position
+ * 
+ * ????????????????????
+ */
+		if (posFactor == 4 && !pawnStrike && pawn != null) {
 			List<Position> tempPositions = new ArrayList(np.values());
 			for (Position pos:tempPositions) {
 				if (pos.isCenterlefthigh()) {
 					p.setPreferredPosition(pos);
+					move.setToPosition(pos);
 					break;
 				}
 				if (pos.isCenterrighthigh()) {
+					move.setToPosition(pos);
 					p.setPreferredPosition(pos);
 					break;
 				}
@@ -410,7 +475,7 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		List<Position> tempPositions = new ArrayList(np.values()); // np contains available positions
 		for (Position pos:tempPositions) {
 			for (Position oponentPos : opponentPositions) {
-				writer.println("Opponent "+oponentPos.toString()+ " Available positions "+pos.toString());
+//				writer.println("Opponent "+oponentPos.toString()+ " Available positions "+pos.toString());
 				blocked = oponentPos.getPositionName().equals(pos.getPositionName());
 				if (blocked) {
 					writer.println("Pawn blocked  "+pos.getPositionName());
