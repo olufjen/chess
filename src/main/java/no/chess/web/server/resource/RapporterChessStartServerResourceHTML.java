@@ -727,6 +727,19 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 // setHeldPosition(oldPosition); in this position removes the black pawn in move nr. 2
 //   	    	game.getGame().movePiece(oldPosition.getXyloc(),newPosition.getXyloc());
    	    	game.createMove(movedPiece, oldPosition, newPosition);
+/*
+ * Put the last move to the list of movements for the player  
+ * 
+ */
+
+   	    	HashMap<String,ApieceMove> myMoves = game.getActiveState().getOpponent().getMyMoves();
+   	    	int index = game.getMovements().size();
+   	    	ApieceMove lastMove = game.getMovements().get(index-1);
+   	    	String moveNot = lastMove.getMoveNotation(); // OBS move notation is not set !!!
+   	    	myMoves.put(moveNot, lastMove);
+   	    	
+   	    	
+   	    	
   	    	movedPiece.produceLegalmoves(newPosition); // Added 23.06.20 produces new available positions for the moved piece
 //   	    	game.getActiveState().switchActivePlayer(); // OBS 11.08.20: Must ensure that player now switches to the game player (white) New 16.04.20 After a move, must switch active player
    	    	game.getActiveState().returnMyplayer();
