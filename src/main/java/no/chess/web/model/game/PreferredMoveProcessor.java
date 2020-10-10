@@ -20,7 +20,7 @@ import no.games.chess.ChessProcessor;
  * This class calculates a preferred move (ApieceMove) for a given chessaction and its piece.
  * This ApieceMove contains a Preferred Position for a given piece and action.
  * It is created and called when the chess action is created and from The active player's calculatepreferredPosition method.
- * Also when an action is analyzed and found not to contain any preferred position (the action.getpreferredPosition() method).
+ * It is also created and used when an action is analyzed and found not to contain any preferred position (the action.getpreferredPosition() method).
  * Then The active player's calculatepreferredPosition method is called, to determine a preferred position.
  * This processor also removes positions from available positions of
  * bishop,rook, and queen when positions are occupied by friendly pieces.
@@ -35,7 +35,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 	private Integer processNumber; // The process number is created by the piece's introw*10 + intcolumn position
 	private FileWriter fw = null;
 	private Position heldPosition; // This is the position held by the piece under consideration
-	
+	private List<Position> removedPositions = null;
 	public PreferredMoveProcessor(Integer processNumber,String pname) {
 		super();
 		this.processNumber = processNumber;
@@ -61,12 +61,20 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 
 
 	public ApieceMove processChessObject(ChessActionImpl action, AgamePiece p) {
-		List<Position> removedPositions =  (List<Position>) action.getPositionRemoved(); // Removed positions are positions occupied by friendly pieces
+		removedPositions =  (List<Position>) action.getPositionRemoved(); // Removed positions are positions occupied by friendly pieces
 		List<Position> availablePositions = (List<Position>) action.getAvailablePositions();
 		List<Position> preferredPositions = new ArrayList<>();
 		Position preferredPosition = null;
 		Position from = p.getmyPosition();
+		
+		String name =action.getChessPiece().getMyPiece().getOntlogyName();
+		String otherName = p.getMyPiece().getOntlogyName();
+		if (name.equals(otherName) && name.equals("WhiteBishop2")) {
+			 System.out.println("PreferredMove: Checking bishop");
+		}
+		
 		heldPosition = from;
+		String color = p.getColor();
 /*
  * Checking if piece is active: Added 21.04.20		
  */
@@ -98,6 +106,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		}
 		if (pieceType instanceof AQueen) {
 			qt = (AQueen) pieceType;
+			writer.println("the piece is a queen ");
 		}
 		if (pieceType instanceof AKnight) {
 			kn = (AKnight) pieceType;
@@ -129,21 +138,46 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 /*
  * If the chess piece is a rook, a bishop, a pawn or a queen
  * then remove all positions in path that are occupied by friendly pieces:
+ * OLJ 09.09.20: This is only correct for rook
+ * 
  */
 		if (b != null || r != null || qt != null || pn != null) {
 			String pName = p.toString();
 			writer.println("Checking additional removals For "+pName);
 			List<Position> tempList = new ArrayList<>();
+			int pcol = from.getIntColumn();
+			int prow = from.getIntRow();
 			for (Position removedPos:removedPositions) {
 				int row = removedPos.getIntRow();
+				int col = removedPos.getIntColumn();
 				for (Position availablePos:availablePositions) {
 					int arow = availablePos.getIntRow();
-					if (arow >= row) {
+					int acol = availablePos.getIntColumn();
+					if ((r != null || pn != null || qt != null) && prow < row && pcol == col && arow > row && acol == col) { // not applicable when from row > row
 						tempList.add(availablePos);
 					}
-					if (arow < row) {
+					if ((r != null || pn != null || qt != null) && prow > row && pcol == col && arow < row && acol == col) { // Not applicable when the from row < row
 						tempList.add(availablePos);
 					}
+/*
+ * Check for bishop	and queen				
+ */
+					if ((b != null || qt != null) && col < pcol && arow > row && acol < col) {
+						tempList.add(availablePos);
+					}
+					if ((b != null || qt != null) && col < pcol && arow < row && acol < col) {
+						tempList.add(availablePos);
+					}
+					if ((b != null || qt != null) && col > pcol && arow < row && acol > col) {
+						tempList.add(availablePos);
+					}
+					if ((b != null || qt != null) && col > pcol && arow > row && acol > col) {
+						tempList.add(availablePos);
+					}
+/*					if (b != null && arow < row && acol >= col) {
+						tempList.add(availablePos);
+					}
+*/
 				}
 			}
 			for (Position temp:tempList) {
@@ -152,7 +186,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 				writer.println("Added removed position "+temp.toString()+" For "+pName);
 				removedPositions.add(temp);
 			}
-			tempList = null;
+//			tempList = null;
 
 		}
 /*		if (kn != null) {
@@ -188,6 +222,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			preferredPosition = preferredPositions.get(0);
 		}
 		ApieceMove move = new ApieceMove(preferredPosition,p);	
+		move.setPreferredPositions(preferredPositions);
 		writer.println("Move: "+move.toString()+"\n"+"piece: "+p.toString());
 		writer.close();
 	return move;

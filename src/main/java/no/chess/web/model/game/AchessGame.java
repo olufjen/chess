@@ -210,6 +210,8 @@ public class AchessGame extends AbstractChessGame{
 	 * This method transfers piece positions to the aima chessboard
 	 * It also creates all available pieces determine their type and calculates all reachable positions
 	 * And it creates a white player and a black player with their available pieces and their available positions.
+	 * @since 01.09.20
+	 * The ontology pieces and their rank are collected for both players
 	 */
 	public void tranferBoard() {
 		usedPositionlist = (ArrayList<Position>) gameBoard.getUsedPositionlist();
@@ -218,9 +220,16 @@ public class AchessGame extends AbstractChessGame{
 		localwhitePlayer = new APlayer();
 		localwhitePlayer.setPlayerName( localwhitePlayer.getWhitePlayer());
 		localblackPlayer = new APlayer();
+//		writer.println("One "+localwhitePlayer.toString());
 		localblackPlayer.setPlayerName(localblackPlayer.getBlackPlayer());
+		whitePlayer = (ChessPlayer)localwhitePlayer;
+		blackPlayer = (ChessPlayer)localblackPlayer;
+//		writer.println("Two "+localwhitePlayer.toString());
+//		writer.println(localblackPlayer.toString());
 		setBlackPlayer(blackPlayer);
 		setWhitePlayer(whitePlayer);
+		writer.println(localwhitePlayer.toString());
+		writer.println(localblackPlayer.toString());
 //		whitePlayer = (ChessPlayer<GamePiece<?>, PieceMove<?, ?>>) localwhitePlayer;
 //		blackPlayer = (ChessPlayer<?, ?>) localblackPlayer;
 		for (Position position:usedPositionlist) {
@@ -248,6 +257,11 @@ public class AchessGame extends AbstractChessGame{
 			builder.append(gamePiece.toString());
 			builder.append("\n");
 		}
+/*
+ * Collect all ontology pieces and their rank to the players		
+ */
+		localwhitePlayer.collectOntlogyPieces();
+		localblackPlayer.collectOntlogyPieces();
 		builder.append("End transferBoard\n");
 		writer.println(getBoardPic());
 		writer.println(builder.toString());
@@ -523,6 +537,7 @@ public class AchessGame extends AbstractChessGame{
  * analyzePieceandPosition
  * This method returns a utility value that is high if the preferred position is a central position and the piece has a
  * It makes use of an action processor that returns utility value for the given action.
+ * The method is called when the search object attempt to order actions
  * This value is used by the search object to order the actions.
  */
 
@@ -538,9 +553,16 @@ public class AchessGame extends AbstractChessGame{
 		}
 	      writer = new PrintWriter(new BufferedWriter(fw));		*/
 		playerTomove = (APlayer) chessState.getPlayerTomove();
+		boolean opponentToplay = false;
 //		playerTomove.checkPreferredPosition(action);
 		StringBuilder builder = new StringBuilder();
 		builder.append("Analyzepieceandposition\n");
+		if(playerTomove.getPlayerName() == playerTomove.getBlackPlayer()) {
+//			opponent = localState.getMyPlayer();
+//			opponentPieces = opponent.getMygamePieces(); // Added 01.05.20: If opponent to play, then the opponent pieces are my pieces?
+			opponentToplay = true;
+			builder.append("Opponent to play "+localblackPlayer.getPlayerName()+"\n");
+		}
 		builder.append("Analyzing action: "+action.toString()+"\n");
 		
 		Integer pNumber = new Integer(pn);
@@ -585,16 +607,17 @@ public class AchessGame extends AbstractChessGame{
 
 	/* 
 	 * getPlayer
-	 * returns the active player
+	 * returns the active player playertoMove
 	 */
 	@Override
 	public ChessPlayer<GamePiece, PieceMove> getPlayer(ChessState<GameBoard> state) {
-		if (localwhitePlayer.isActive())
+		return state.getPlayerTomove();
+/*		if (localwhitePlayer.isActive())
 			return (ChessPlayer) localwhitePlayer;
 		if (localblackPlayer.isActive())
 			return (ChessPlayer)localblackPlayer;
 		
-		return null;
+		return null;*/
 	}
 	/* 
 	 * analyzeState

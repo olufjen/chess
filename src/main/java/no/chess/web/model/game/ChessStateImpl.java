@@ -29,7 +29,8 @@ import no.games.chess.GamePiece;
  * There exists only one ChessState object, and the values of the state changes only when the .mark method is called.
  * The current state represent the current node in the search tree. Alle the available actions to the state 
  * represent leaves in the search tree.
- * 
+ * @since 25.08.20
+ * The Chessstate interface extends the AIMA Percept interface
  * @author oluf
  * @param <GameBoard> Represent the AIMA Gameboard
  *
@@ -45,6 +46,7 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 	private APlayer blackPlayer;
 	private APlayer playerTomove = null;
 	private APlayer myPlayer = null; // The player that PlayGame represent At present: can only represent the white player
+	private APlayer opponent = null; // At present, only the black player is the opponent
 	private ChessActionImpl chessAction; // This is the preferred action for this state
 	private List<ChessAction> actions;
 	
@@ -72,7 +74,15 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 		super();
 		
 	}
-
+	/**
+	 * getallActions()
+	 * This method returns all available actions for the state
+	 * @see also getActions() which creates new actions.
+	 * @return
+	 */
+	public List<ChessAction> getallActions(){
+		return actions;
+	}
 	public ChessStateImpl(AgameBoard gameBoard) {
 		super();
 		this.gameBoard = gameBoard;
@@ -99,8 +109,9 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 		this.gameBoard = gameBoard;
 		this.whitePlayer = whitePlayer;
 		this.blackPlayer = blackPlayer;
-		this.whitePlayer.setActive(true);
+		this.whitePlayer.setActive(true); // At present only the white player is the game's player
 		this.myPlayer = whitePlayer; // Set to represent the white player
+		this.opponent = blackPlayer; // At present only the black player is the opponent
 		positions = this.game.getPositions();
 		allPositions =  new ArrayList(positions.values());
 		piecePosition = this.game.getPiecePosition();
@@ -139,6 +150,12 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 	}
 	
 	
+	public APlayer getOpponent() {
+		return opponent;
+	}
+	public void setOpponent(APlayer opponent) {
+		this.opponent = opponent;
+	}
 	public ApieceMove getChosenMove() {
 		return chosenMove;
 	}
@@ -343,8 +360,9 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 			}
 
 		}
-		Position piecePos = movePiece.getMyPosition();
+		Position piecePos = movePiece.getMyPosition(); // olj 21.08.20 Why is this necessary?
 		if (occupant == null && piecePos != to) {
+//			result = true; // What happens if we remove this?
 			result = true;
 		}
 		return result;
@@ -394,6 +412,7 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 			if (localAction.isStrike())
 				blocked = false;
 		}
+		localAction.setBlocked(blocked);
 		Position position = (Position) action.getPreferredPosition();
 		List<Position> availablePositions = (List<Position>) action.getAvailablePositions();
 		List<Position>  removedPos = (List<Position>)action.getPositionRemoved();

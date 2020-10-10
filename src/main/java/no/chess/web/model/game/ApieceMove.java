@@ -1,5 +1,8 @@
 package no.chess.web.model.game;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import no.chess.web.model.Position;
 import no.games.chess.AbstractPieceMove;
 
@@ -15,7 +18,8 @@ import no.games.chess.AbstractPieceMove;
 public class ApieceMove extends AbstractPieceMove<Position,Position> {
 
 	private Position fromPosition;
-	private Position toPosition;
+	private Position toPosition; // This is the preferred position created by the preferredMove processor
+	private List<Position> preferredPositions = null; // This list contains all preferred positions as found by preferred move Processor
 	private AgamePiece piece;
 	private String creation = "";
 	private boolean blackMove = false;
@@ -50,6 +54,14 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 		creation = "Created with from and to position";
 	}
 
+
+	public List<Position> getPreferredPositions() {
+		return preferredPositions;
+	}
+
+	public void setPreferredPositions(List<Position> preferredPositions) {
+		this.preferredPositions = preferredPositions;
+	}
 
 	public boolean isBlackMove() {
 		return blackMove;

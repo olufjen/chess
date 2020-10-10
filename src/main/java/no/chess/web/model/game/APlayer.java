@@ -1,10 +1,20 @@
 package no.chess.web.model.game;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+
+import no.chess.ontology.Piece;
 import no.chess.web.model.Position;
 import no.games.chess.AbstractGamePiece;
 import no.games.chess.AbstractGamePiece.pieceType;
@@ -19,6 +29,7 @@ import no.games.chess.ChessState;
  * It is the player who possesses the white or black chess pieces
  * depending on the playerName
  * The player is responsible for calculating the preferred position of a given piece.
+ * The player contains a list of its own pieces and their rank.
  * @author oluf
  *
  * @param <P>
@@ -29,6 +40,10 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 	private HashMap<String,ApieceMove> myMoves;
 	private ApieceMove currentMove;
 	private ArrayList<AgamePiece> mygamePieces;
+	private ArrayList<Piece> myontologyPieces;
+	private List<String> pieceNames; // The names of my ontology pieces
+	private List<Integer> pieceValues; // The rank of my ontology pieces
+	private HashMap<String,Integer>namesAndrank;
 	private player playerName; // Tells if player is white or black
 	private boolean active = false;
 	private List<ChessAction> actions; //Actions available to this player
@@ -36,34 +51,133 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 	private List<Position> preferredPositions;
 	private List<Position> heldPositions; // The list of positions held by the pieces belonging to the player
 	
+	
 	public APlayer(ArrayList<AgamePiece> mygamePieces) {
 		super();
 		this.mygamePieces = mygamePieces;
 		heldPositions = new ArrayList<Position>();
+		myMoves = new HashMap<String,ApieceMove>();
+		pieceNames = new ArrayList<String>();
+		pieceValues = new ArrayList<Integer>();
+		myontologyPieces = new ArrayList<Piece>();
+		namesAndrank = new HashMap();
 	}
 
 	public APlayer() {
 		super();
 		mygamePieces = new ArrayList<AgamePiece>();
 		heldPositions = new ArrayList<Position>();
+		myMoves = new HashMap<String,ApieceMove>();
+		pieceNames = new ArrayList<String>();
+		pieceValues = new ArrayList<Integer>();
+		myontologyPieces = new ArrayList<Piece>();
+		namesAndrank = new HashMap();
 	}
-
 	public APlayer(player playerName) {
 		super();
 		this.playerName = playerName;
 		mygamePieces = new ArrayList<AgamePiece>();
 		heldPositions = new ArrayList<Position>();
+		myMoves = new HashMap<String,ApieceMove>();
+		pieceNames = new ArrayList<String>();
+		pieceValues = new ArrayList<Integer>();
+		myontologyPieces = new ArrayList<Piece>();
+		namesAndrank = new HashMap();
 	}
+	public ArrayList<Piece> getMyontologyPieces() {
+		return myontologyPieces;
+	}
+
+	public void setMyontologyPieces(ArrayList<Piece> myontologyPieces) {
+		this.myontologyPieces = myontologyPieces;
+	}
+
+	public List<String> getPieceNames() {
+		return pieceNames;
+	}
+
+	public void setPieceNames(List<String> pieceNames) {
+		this.pieceNames = pieceNames;
+	}
+
+	public List<Integer> getPieceValues() {
+		return pieceValues;
+	}
+
+	public void setPieceValues(List<Integer> pieceValues) {
+		this.pieceValues = pieceValues;
+	}
+
+
 	public void emptyPositions() {
 		heldPositions.clear();
 	}
 	public List<ChessAction> getActions() {
 		return actions;
 	}
+	/**
+	 * collectOntlogyPieces()
+	 * This method collects all ontology pieces belonging to the player
+	 */
+	public void collectOntlogyPieces() {
+		if (playerName == getWhitePlayer()) {
+			for (AgamePiece piece:mygamePieces ) {
+				Piece ontPiece = piece.getMyPiece().getWhitePiece();
+				myontologyPieces.add(ontPiece);
+			}
+		}
+		if (playerName == getBlackPlayer()) {
+			for (AgamePiece piece:mygamePieces ) {
+				Piece ontPiece = piece.getMyPiece().getBlackPiece();
+				myontologyPieces.add(ontPiece);
+			}
+		}
+		producePrioritylist();
+	}
+	/**
+	 * producePrioritylist
+	 * This method produces a list containing piece names and their priority for movement
+	 * This method is called at the start of the game to collect all ontology pieces and their rank.
+	 * 
+	 */
+	public void producePrioritylist() {
+		List<OWLNamedIndividual> ontNames =	myontologyPieces.stream().map(Piece::getOwlIndividual).collect(Collectors.toList());
+		List<IRI>iris = ontNames.stream().map(OWLNamedIndividual::getIRI).collect(Collectors.toList());
+		pieceNames = iris.stream().map(IRI::toString).collect(Collectors.toList());
+//		List<List<Integer>>valueList = new ArrayList<List<Integer>>();
+		List<Integer>valueList = new ArrayList<Integer>();
+		for (Piece ontPiece:myontologyPieces) {
+			HashSet<Integer> values =  (HashSet) ontPiece.getHasValue();
+			pieceValues.addAll(values);
+//			List<List<Integer>>tempList = new ArrayList<List<Integer>>(((Map<String, AgamePiece>) values).values());
+//			tempList.forEach(valueList::addAll);
+//			tempList.forEach(pieceValues::addAll);
+		}
+/*
+ * This stream operation collects the ontology piecenames and their rank to a hashmap.		
+ */
+		namesAndrank = (HashMap<String,Integer>) IntStream.range(0,pieceNames.size()).boxed().collect(Collectors.toMap(i -> pieceNames.get(i), i -> pieceValues.get(i)));
+/*		Map<Double, String> map = IntStream.range(0, list1.size())
+	            .boxed()
+	            .collect(Collectors.toMap(i -> list1.get(i), i -> list2.get(i)));*/
+//		List<List<Integer>>valueList = (List<List<Integer>>)(List<?>) myontologyPieces.stream().map(Piece::getHasValue).collect(Collectors.toList());
+//		pieceValues = valueList.stream().flatMap(List::stream).collect(Collectors.toList());
+//		List<Integer>valuesimple
+//		List<Integer>valueList = (List<Integer>)(List<?>) myontologyPieces.stream().map(Piece::getHasValue).collect(Collectors.toList());
+//		valuesimple.forEach(pieceValues::addAll);
+//		Stream<List<Integer>> streamArray = Stream.of(valueList);
+
+//		pieceValues = streamArray.stream().flatMap(List::stream).collect(Collectors.toList());
+//		streamArray.forEach(pieceValues::addAll);
+/*		for (Piece ontPiece:myontologyPieces) {
+			//ontPiece.
+		}*/
+	}
  /**
   * checkPreferredPosition
   * This method sets the action's preferred position to null, 
   * if it is the same as one of the the heldpositions of the player's pieces.
+  * @since 17.08.20 This method is not in use.
  * @param action
  */
 public void checkPreferredPosition(ChessAction action) {
@@ -167,6 +281,12 @@ public void checkPreferredPosition(ChessAction action) {
 
 	public void setPlayerName(player playerName) {
 		this.playerName = playerName;
+		if (playerName == whitePlayer) {
+			setWhitePlayer(playerName);
+		}
+		if (playerName == blackPlayer) {
+			setBlackPlayer(playerName);
+		}
 	}
 
 	public boolean isActive() {
@@ -175,6 +295,36 @@ public void checkPreferredPosition(ChessAction action) {
 
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		// TODO Auto-generated method stub
+		return super.clone();
+	}
+
+	@Override
+	public boolean equals(Object arg0) {
+		// TODO Auto-generated method stub
+		return super.equals(arg0);
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		// TODO Auto-generated method stub
+		super.finalize();
+	}
+
+	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		return super.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		
+		return playerName+" "+playerId;
 	}
 
 	
