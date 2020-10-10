@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import aima.core.logic.propositional.parsing.ast.Sentence;
 import no.chess.web.model.Position;
 import no.games.chess.ChessAction;
 import no.games.chess.ChessFunctions;
@@ -24,7 +25,7 @@ import no.games.chess.ChessFunctions;
 public class ChessActionImpl implements ChessAction<HashMap<String, Position>,List<Position>,List<Position>,AgamePiece,Position> {
 
 	private HashMap<String, Position> positions; // All the reachable positions
-	private AgamePiece chessPiece;
+	private AgamePiece chessPiece; //  The chesspiece involved in this action
 	private List<Position> availablePositions;
 	private List<Position> positionRemoved;
 	private Position preferredPosition = null; // Each action has a preferred position that the piece should move to
@@ -35,6 +36,16 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private int pn = 0;
 	private int pny = 0;
 	private PreferredMoveProcessor myProcessor;
+	private Sentence sentence = null; // Contains a possible action sentence contained in the chess knowledge base
+	private boolean blocked = false;
+	
+	private List<Position> attackedPositions = null;
+	private List<Position> notAttackedPos = null;
+	private List<Position> notProtected = null;
+	private List<Position> protectedPositions = null;
+	private List<AgamePiece> attacked = null;
+	private List<Position> otherattackedPositions = null;
+	private List<Position> otherprotectedPositions  = null;
 
 	public ChessActionImpl(HashMap<String, Position> positions, AgamePiece chessPiece,APlayer player) {
 		super();
@@ -53,6 +64,103 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			preferredPosition = possibleMove.getToPosition();
 //		preferredPosition = player.calculatePreferredPosition(chessPiece,this);      
 		player.getHeldPositions().add(pr.getHeldPosition()); // This is the position held by the piece under consideration
+	}
+
+
+	/**
+	 * processPositions
+	 * This method recalculates removed positions for this action.
+	 */
+	public void processPositions() {
+		possibleMove = ChessFunctions.processChessgame(this,chessPiece, myProcessor);
+	}
+	public List<Position> getAttackedPositions() {
+		return attackedPositions;
+	}
+
+
+	public void setAttackedPositions(List<Position> attackedPositions) {
+		this.attackedPositions = attackedPositions;
+	}
+
+
+	public List<Position> getNotAttackedPos() {
+		return notAttackedPos;
+	}
+
+
+	public void setNotAttackedPos(List<Position> notAttackedPos) {
+		this.notAttackedPos = notAttackedPos;
+	}
+
+
+	public List<Position> getNotProtected() {
+		return notProtected;
+	}
+
+
+	public void setNotProtected(List<Position> notProtected) {
+		this.notProtected = notProtected;
+	}
+
+
+	public List<Position> getProtectedPositions() {
+		return protectedPositions;
+	}
+
+
+	public void setProtectedPositions(List<Position> protectedPositions) {
+		this.protectedPositions = protectedPositions;
+	}
+
+
+	public List<AgamePiece> getAttacked() {
+		return attacked;
+	}
+
+
+	public void setAttacked(List<AgamePiece> attacked) {
+		this.attacked = attacked;
+	}
+
+
+	public List<Position> getOtherattackedPositions() {
+		return otherattackedPositions;
+	}
+
+
+	public void setOtherattackedPositions(List<Position> otherattackedPositions) {
+		this.otherattackedPositions = otherattackedPositions;
+	}
+
+
+	public List<Position> getOtherprotectedPositions() {
+		return otherprotectedPositions;
+	}
+
+
+	public void setOtherprotectedPositions(List<Position> otherprotectedPositions) {
+		this.otherprotectedPositions = otherprotectedPositions;
+	}
+
+
+	public Sentence getSentence() {
+		return sentence;
+	}
+
+
+	public void setSentence(Sentence sentence) {
+		this.sentence = sentence;
+	}
+
+
+	public boolean isBlocked() {
+		return blocked;
+	}
+
+
+	public void setBlocked(boolean blocked) {
+		this.blocked = blocked;
 	}
 
 
@@ -242,5 +350,18 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			posName = preferredPosition.getPositionName();
 		StringBuffer logText = new StringBuffer("ChessAction: Preferred Position " + posName+ " Piece " + chessPiece.toString()+" Possible move "+pMove);
 		return logText.toString();
+	}
+	/**
+	 * Indicates whether or not this Action is a 'No Operation'.<br>
+	 * Note: AIMA3e - NoOp, or no operation, is the name of an assembly language
+	 * instruction that does nothing.
+	 * 
+	 * @return true if this is a NoOp Action.
+	 */
+
+	@Override
+	public boolean isNoOp() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }
