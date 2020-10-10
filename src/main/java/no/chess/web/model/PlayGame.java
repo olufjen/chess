@@ -21,11 +21,13 @@ import aima.core.search.adversarial.IterativeDeepeningAlphaBetaSearch;
 import aima.core.search.adversarial.MinimaxSearch;
 import no.chess.ontology.BlackPiece;
 import no.chess.ontology.WhitePiece;
+import no.chess.web.model.game.AChessAgent;
 import no.chess.web.model.game.APlayer;
 import no.chess.web.model.game.AchessGame;
 import no.chess.web.model.game.AgamePiece;
 import no.chess.web.model.game.ApieceMove;
 import no.chess.web.model.game.ChessActionImpl;
+import no.chess.web.model.game.ChessKnowledgeBase;
 import no.chess.web.model.game.ChessStateImpl;
 import no.games.chess.ChessAction;
 import no.games.chess.ChessAlphaBetaSearch;
@@ -60,7 +62,7 @@ public class PlayGame {
 	
 	private HashSet<BlackPiece> movedblackPieces;
 	private HashSet<WhitePiece> movedwhitePieces;
-	private HashMap<String,Position> positions;
+	private HashMap<String,Position> positions; // The original HashMap of positions
 	private HashMap<String,Position> usedPositions;
 	private HashMap<String,Position> notusedPositions;
 	private HashMap<String,Position> availablePositions;
@@ -75,7 +77,9 @@ public class PlayGame {
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\positions.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
-	private ChessStateImpl activeState;
+	private ChessStateImpl activeState; // Is the active state of the game; a node in the game tree
+	private AChessAgent chessAgent = null;
+	private ChessKnowledgeBase kb = null;
 	public PlayGame(HashMap<String, Position> positions,ChessBoard frontBoard)   {
 		super();
 		this.myFrontBoard = frontBoard;
@@ -89,6 +93,7 @@ public class PlayGame {
 		currentState = game.getInitialState();
 		movements = new ArrayList<ApieceMove>();
 		game.setMovements(movements);
+//		kb = new ChessKnowledgeBase();
 	}
 
 	public List<ApieceMove> getMovements() {
@@ -234,7 +239,7 @@ public class PlayGame {
 		activeState = stateImpl;
 		AdversarialSearch<ChessState<GameBoard>, ChessAction<?, ?, ?,  GamePiece<?>, ?>> search; // FILL IN !!!!
 //		ChessSearch<ChessState,ChessAction> search;
-		search = ChessAlphaBetaSearch.createFor(game, 0.0, 1.0, 2);
+		search = ChessAlphaBetaSearch.createFor(game, 0.0, 1.0, 1); // Changed timer from 2 to 1.
 		
 //		search = ChessAlphaBetaSearch.createFor(game, 0.0, 1.0, 2);
 //		search = ChessSearchImpl.createFor(game, 0.0, 1.0, 5);
@@ -250,15 +255,28 @@ public class PlayGame {
  */
 		ChessAction newAction = search.makeDecision(currentState);
 		ChessActionImpl localAction = (ChessActionImpl) newAction;
+/*
+ * For every move a new knowledge base and agent must be created		
+ */
+		kb = null;
+		kb = new ChessKnowledgeBase();
+		kb.setStateImpl(stateImpl);
+		chessAgent = null;
+		chessAgent = new AChessAgent(kb,localAction,this);
+//		chessAgent.execute(currentState); // Creates new knowledge for the knowledge base
+		localAction = (ChessActionImpl) chessAgent.execute(currentState); // Creates new knowledge for the knowledge base
+		if (localAction != newAction)
+			newAction = localAction;
 		ApieceMove chosenMove = localAction.getPossibleMove();
 		Position movPos = chosenMove.getToPosition();
 		APlayer playerTomove = stateImpl.getMyPlayer();
 	
-		writer.println("Player to move "+playerTomove.getPlayerName()); 
+		writer.println("Player to move "+playerTomove.getPlayerName()+" "+playerTomove.getPlayerId()); 
 		if (playerTomove.getPlayerName() == playerTomove.getBlackPlayer()) {
 			writer.println("Wrong player "+playerTomove.getPlayerName());
 		}
 		currentState.setAction(newAction); // Set state action to action to be performed
+
 //		String a = newAction.toString();
 /*		List<ChessAction> actions = currentState.getActions();
 		ChessAction action = actions.get(0);*/
@@ -413,6 +431,11 @@ public class PlayGame {
 	    writer.println("After call to game.movepiece \n"+game.getBoardPic());
 		
 		createMove(piece,oldPosition, position);
+		HashMap<String,ApieceMove> myMoves = stateImpl.getMyPlayer().getMyMoves();
+		int index = movements.size();
+		ApieceMove lastMove = movements.get(index-1);
+		String moveNot = lastMove.getMoveNotation(); // OBS move notation is not set !!!
+		myMoves.put(moveNot, lastMove);
 		stateImpl.switchActivePlayer(); // 16.04.20 After a move, must switch active player
 //		localAction.getActions(playerTomove); // Added 24.02.20 When a move has been made then the pieces belonging to the same player must get new
 //available positions calculated		
@@ -507,9 +530,9 @@ public class PlayGame {
 	/**
 	 * createMove
 	 * This method creates a move based on a move carried out in the proposeMove method
-	 * THe game piece to be moved calculates new available positions from the new position it is moved to.
+	 * The game piece to be moved calculates new available positions from the new position it is moved to.
 	 * This method is called from the proposemove method
-	 * THe method is also called when the opponent player makes a move (from RapporterChessStartServerResource)
+	 * The method is also called when the opponent player makes a move (from RapporterChessStartServerResource)
 	 * @param piece The game piece moved
 	 * @param from The from Position
 	 * @param to The to Position
@@ -533,6 +556,7 @@ public class PlayGame {
 			noofMoves = movements.size();
 		}
 		noofMoves++;
+		algebraicmove = myFrontBoard.getAlgebraicNotation();
 		piece.produceLegalmoves(to);
 //		piece.getLegalmoves(to); // Create a new list of available position after move
 		ApieceMove pieceMove = new ApieceMove(piece,from, to, noofMoves, algebraicmove);

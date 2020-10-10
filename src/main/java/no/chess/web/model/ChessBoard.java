@@ -107,7 +107,7 @@ public class ChessBoard extends ParentModel {
 	private ArrayList<ChessMoves> chessMoves;
 	private ChessMoves chessMove;
 	private FileModel gameFile;
-	
+	private String algebraicNotation = null; // contains the algebraic notation of the latest move
 	private String ontologyKey = "ontologyfile";
 	
 	private boolean opposingOccupied = false; // True when a  piece move to an occupied position
@@ -175,6 +175,16 @@ public class ChessBoard extends ParentModel {
 //		 createOntologyposition();
 	}
 	
+
+	public String getAlgebraicNotation() {
+		return algebraicNotation;
+	}
+
+
+	public void setAlgebraicNotation(String algebraicNotation) {
+		this.algebraicNotation = algebraicNotation;
+	}
+
 
 	public FileModel getGameFile() {
 		return gameFile;
@@ -302,7 +312,7 @@ public class ChessBoard extends ParentModel {
 		}else {
 			chessMove.setBlackMove(move);
 		}
-		
+		algebraicNotation = move; // contains the algebraic notation of the latest move
 	}
 
 	
@@ -693,6 +703,7 @@ public class ChessBoard extends ParentModel {
 		}
 		for (WhitePiece whitePiece : whitePieces) {
 			HashSet<Taken> taken = (HashSet<Taken>) whitePiece.getOccupies();
+		
 			boolean whitePos = false;
 			boolean blackPos = false;
 			IRI irp = whitePiece.getOwlIndividual().getIRI();

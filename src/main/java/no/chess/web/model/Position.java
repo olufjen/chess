@@ -227,6 +227,7 @@ public class Position extends ParentModel {
 		    			System.out.println("Piece is null!! Name of piece: "+name+" Name of chess piece: "+usedBy.getPieceName()+" "+usedBy.getName());
 		    	}
 		    	usedBy.setOntlogyName(name);
+		    	usedBy.setFullName(irs);
 		    	System.out.println("setPieces: Name of piece: "+name+" Name of chess piece: "+usedBy.getPieceName()+" "+usedBy.getName());
 
 			}

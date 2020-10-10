@@ -34,11 +34,12 @@ public class ChessPiece extends ParentModel{
 	private String[] legalMoves;
 	private boolean use = true;
 	private String pieceName = ""; // The type of piece: P,R, K etc.
-	private Piece blackPiece = null;
-	private Piece whitePiece = null;
+	private Piece blackPiece = null; // The ontology piece for this piece if it is black.
+	private Piece whitePiece = null;// The ontology piece for this piece if it is white.
 	private BlackBoardPosition blackBoardPosition = null;
 	private WhiteBoardPosition whiteBoardPosition = null;
 	private String ontlogyName = null;
+	private String fullName =null; // This represent the full ontology name of the piece
 	private AgamePiece myPiece;
 	public ChessPiece(String position, String color, String name,
 			String[] legalMoves) {
@@ -80,6 +81,12 @@ public class ChessPiece extends ParentModel{
 		return ontlogyName;
 	}
 
+	public String getFullName() {
+		return fullName;
+	}
+	public void setFullName(String fullName) {
+		this.fullName = fullName;
+	}
 	public void setOntlogyName(String ontlogyName) {
 		this.ontlogyName = ontlogyName;
 	}
@@ -105,10 +112,13 @@ public class ChessPiece extends ParentModel{
 
 	public Piece getWhitePiece() {
 		return whitePiece;
+
 	}
 
 	public void setWhitePiece(Piece whitePiece) {
 		this.whitePiece = whitePiece;
+		HashSet<String> names = (HashSet<String>) this.whitePiece.getHasName();
+		setcorrectPieceName(names);
 	}
 
 	public void setWhitePiece(DefaultWhitePiece whitePiece) {
