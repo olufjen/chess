@@ -41,6 +41,7 @@ public class ChessPiece extends ParentModel{
 	private String ontlogyName = null;
 	private String fullName =null; // This represent the full ontology name of the piece
 	private AgamePiece myPiece;
+	private String predicate = "none"; //The predicate used by this object
 	public ChessPiece(String position, String color, String name,
 			String[] legalMoves) {
 		super();
@@ -69,6 +70,12 @@ public class ChessPiece extends ParentModel{
 
 	}
 	
+	public String getPredicate() {
+		return predicate;
+	}
+	public void setPredicate(String predicate) {
+		this.predicate = predicate;
+	}
 	public AgamePiece getMyPiece() {
 		return myPiece;
 	}

@@ -260,14 +260,16 @@ public class PlayGame {
  */
 		kb = null;
 		kb = new ChessKnowledgeBase();
-		kb.setStateImpl(stateImpl);
+		kb.setStateImpl(stateImpl); // The knowledge base receives the percepts of the the game which is the state of the game
 		chessAgent = null;
 		chessAgent = new AChessAgent(kb,localAction,this);
 //		chessAgent.execute(currentState); // Creates new knowledge for the knowledge base
-		localAction = (ChessActionImpl) chessAgent.execute(currentState); // Creates new knowledge for the knowledge base
+		localAction = (ChessActionImpl) chessAgent.execute(currentState); // Creates new knowledge for the knowledge base and determines the next move.
+// The next move is in the returned action.		
 		if (localAction != newAction)
 			newAction = localAction;
 		ApieceMove chosenMove = localAction.getPossibleMove();
+
 		Position movPos = chosenMove.getToPosition();
 		APlayer playerTomove = stateImpl.getMyPlayer();
 	
@@ -309,6 +311,11 @@ public class PlayGame {
 		stateImpl.setChosenMove(chosenMove);
 	
 		AgamePiece piece = (AgamePiece) newAction.getChessPiece();
+/*
+ * Keeps track of move numbers and the number of moves		
+ */
+		piece.setNofMoves(0);
+
 		if (!piece.isActive()) {
 			writer.println("Chosen action has a passive piece "+ piece.toString() );
 		}
@@ -412,7 +419,7 @@ public class PlayGame {
 	    writer.println("After call to board.determineMove \n"+game.getBoardPic()); // OK
 
 //		piece.setHeldPosition(position); // New position to the position to restore to removed olj 10.07.20 !!!
-		position.setUsedandRemoved(piece.getMyPiece()); // Sets chesspiece to new position and also sets in the remvoed list
+		position.setUsedandRemoved(piece.getMyPiece()); // Sets chesspiece to new position and also sets in the removed list
 //		myFrontBoard.determineMove(oldPos, newPos, pieceName); // New fen is created based on this
 //		Position newPosition = myFrontBoard.findPostion(newPos);
 	
@@ -431,11 +438,14 @@ public class PlayGame {
 	    writer.println("After call to game.movepiece \n"+game.getBoardPic());
 		
 		createMove(piece,oldPosition, position);
+
 		HashMap<String,ApieceMove> myMoves = stateImpl.getMyPlayer().getMyMoves();
 		int index = movements.size();
 		ApieceMove lastMove = movements.get(index-1);
 		String moveNot = lastMove.getMoveNotation(); // OBS move notation is not set !!!
 		myMoves.put(moveNot, lastMove);
+		Integer moveNumber = new Integer(lastMove.getMoveNumber());
+		piece.getMoveNumbers().add(moveNumber);
 		stateImpl.switchActivePlayer(); // 16.04.20 After a move, must switch active player
 //		localAction.getActions(playerTomove); // Added 24.02.20 When a move has been made then the pieces belonging to the same player must get new
 //available positions calculated		

@@ -1,5 +1,6 @@
 package no.chess.web.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -52,6 +53,9 @@ public class Position extends ParentModel {
 	private boolean centerrighthigh = false;
 	private boolean centerrightlow = false;
 	private boolean centerleftlow = false;
+	private String predicate = "none"; //The predicate used by this object
+	private String piecePred = "none";
+	private List<String> predicates; 
 	private ChessPiece usedBy;
 	private ChessPiece removed;
 	private Stack<ChessPiece> removedPieces;
@@ -82,6 +86,7 @@ public class Position extends ParentModel {
 		centerrightlow = ycol == 4 && xrow == 3;
 		centerrighthigh = ycol == 4 && xrow == 4;
 		removedPieces = new Stack();
+		predicates = new ArrayList<String>();
 	}
 	public Position(XYLocation loc, boolean inUse, ChessPiece usedBy) {
 		this.xyloc = loc;
@@ -106,8 +111,30 @@ public class Position extends ParentModel {
 		centerrightlow = ycol == 4 && xrow == 3;
 		centerrighthigh = ycol == 4 && xrow == 4;
 		removedPieces = new Stack();
+		predicates = new ArrayList<String>();
 	}
 	
+	public String getPiecePred() {
+		return piecePred;
+	}
+	public void setPiecePred(String piecePred) {
+		this.piecePred = piecePred;
+	}
+	public String getPredicate() {
+		return predicate;
+	}
+	public void setPredicate(String predicate) {
+		this.predicate = predicate;
+		String str[] = this.predicate.split(";");
+		predicates = Arrays.asList(str);
+	}
+	
+	public List<String> getPredicates() {
+		return predicates;
+	}
+	public void setPredicates(List<String> predicates) {
+		this.predicates = predicates;
+	}
 	public boolean isCenterlefthigh() {
 		return centerlefthigh;
 	}
@@ -228,6 +255,7 @@ public class Position extends ParentModel {
 		    	}
 		    	usedBy.setOntlogyName(name);
 		    	usedBy.setFullName(irs);
+		    	usedBy.setPredicate(piecePred);
 		    	System.out.println("setPieces: Name of piece: "+name+" Name of chess piece: "+usedBy.getPieceName()+" "+usedBy.getName());
 
 			}
