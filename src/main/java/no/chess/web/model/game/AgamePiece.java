@@ -1,6 +1,7 @@
 package no.chess.web.model.game;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -39,10 +40,16 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private ChessPieceType chessType = null;
 	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
 	private HashMap<String,Position> reacablePositions;
-	private ArrayList<Position> newPositions;
+	private HashMap<String,Position> attackPositions; // Are only valid for type pawn
+	private ArrayList<Position> newlistPositions; // Refactored from newPositions olj 09.11.20 IUt contains all reachable positions
+	private List<Position> removedPositions = null;
 	private List<Position> preferredPositions;
 	private Stack<Position> heldPositions;
+	private int nofMoves = 0; // Keep track of how many moves the piece has been involved in
+	private List<Integer> moveNumbers = null; // Contains all the movenumbers this piece has been involved in
 	private boolean active = true; // Set if piece is active participating, set to false when removed from board
+	private String predicate = "none"; //The predicate used by this object
+	private List<String> predicates; 
 	
 	public AgamePiece(Position myPosition) {
 		super();
@@ -55,7 +62,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		this.myPosition = myPosition;
 		this.myPiece = myPiece;
 		heldPositions = new Stack();
-		
+		moveNumbers = new ArrayList<Integer>();
+		predicates = new ArrayList<String>();
 //		determinePieceType(); Moved to setOntologyPositions: Then new available positions are replaced by ontology positions
 	}
 
@@ -64,6 +72,28 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		
 	}
 	
+	public String getPredicate() {
+		return predicate;
+	}
+
+	public void setPredicate(String predicate) {
+		this.predicate = predicate;
+		String str[] = this.predicate.split(";");
+		predicates = Arrays.asList(str);
+	}
+	public String returnPredicate() {
+		String pred = predicates.get(0);
+		String endPredicate[] = pred.split(":");
+		return endPredicate[0];
+	}
+	public List<String> getPredicates() {
+		return predicates;
+	}
+
+	public void setPredicates(List<String> predicates) {
+		this.predicates = predicates;
+	}
+
 	public HashMap<String, Position> getOntologyPositions() {
 		return ontologyPositions;
 	}
@@ -79,10 +109,53 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		determinePieceType();
 	}
 
+	public int getNofMoves() {
+		return nofMoves;
+	}
+
+	public void setNofMoves(int nofMoves) {
+		this.nofMoves = this.nofMoves + 1;
+	}
+
+	public List<Integer> getMoveNumbers() {
+		return moveNumbers;
+	}
+
+	public void setMoveNumbers(List<Integer> moveNumbers) {
+		this.moveNumbers = moveNumbers;
+	}
+
 	public boolean isActive() {
 		return active;
 	}
 
+	public List<Position> getRemovedPositions() {
+		return removedPositions;
+	}
+
+	public void setRemovedPositions(List<Position> removedPositions) {
+		this.removedPositions = removedPositions;
+	}
+
+	/**
+	 * checkRemoved
+	 * This method checks if a particular position is removed from the available positions
+	 * @param pos
+	 * @return true if removed
+	 */
+	public boolean checkRemoved(Position pos) {
+		boolean removed = false;
+		if (removedPositions != null) {
+			for (Position position:removedPositions) {
+				if (pos == position) {
+					removed = true;
+					break;
+				}
+			}
+		}
+
+		return removed;
+	}
 	public void setActive(boolean active) {
 		this.active = active;
 	}
@@ -110,6 +183,15 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	public boolean checkWhite() {
 		return localColor == pieceColor.WHITE;
 	}
+	
+	public HashMap<String, Position> getAttackPositions() {
+		return attackPositions;
+	}
+
+	public void setAttackPositions(HashMap<String, Position> attackPositions) {
+		this.attackPositions = attackPositions;
+	}
+
 	/**
 	 * createPosition
 	 * This method moves any ontologypositions to the list of positions reachable by this piece
@@ -155,12 +237,16 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 			case "P":
 				myType = pieceType.PAWN;
 				chessType = new APawn(myPosition,myPiece);
+				APawn pawn = (APawn) chessType;
+//				pawn.setMother(this);
+				attackPositions = pawn.getAttackPositions();
 				gamePiece = (GamePiece) chessType;
+//				gamePiece.g
 				reacablePositions = gamePiece.getNewPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
-				newPositions = new ArrayList(reacablePositions.values());
-/*				for (Position pos:newPositions) {
+				newlistPositions = new ArrayList(reacablePositions.values());
+/*				for (Position pos:newlistPositions) {
 					System.out.println("Pawn positions: "+pos.getPositionName() + " " + pos.getPositionColor());
 				}*/
 				break;
@@ -173,8 +259,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
 //				reacablePositions = chessType.getNewPositions();
-				newPositions = new ArrayList(reacablePositions.values());
-/*				for (Position pos:newPositions) {
+				newlistPositions = new ArrayList(reacablePositions.values());
+/*				for (Position pos:newlistPositions) {
 					System.out.println(pieceColorB+" Bishop positions: "+pos.getPositionName() + " " + pos.getPositionColor());
 				}*/
 				break;	
@@ -187,8 +273,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
 //				reacablePositions = chessType.getNewPositions();
-				newPositions = new ArrayList(reacablePositions.values());
-/*				for (Position pos:newPositions) {
+				newlistPositions = new ArrayList(reacablePositions.values());
+/*				for (Position pos:newlistPositions) {
 					System.out.println("Knight positions: "+pos.getPositionName() + " " + pos.getPositionColor());
 				}	*/
 				break;
@@ -200,8 +286,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
 //				reacablePositions = chessType.getNewPositions();
-				newPositions = new ArrayList(reacablePositions.values());
-/*				for (Position pos:newPositions) {
+				newlistPositions = new ArrayList(reacablePositions.values());
+/*				for (Position pos:newlistPositions) {
 					System.out.println("King positions: "+pos.getPositionName() + " " + pos.getPositionColor());
 				}*/
 				break;
@@ -214,8 +300,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
 //				reacablePositions = chessType.getNewPositions();
-				newPositions = new ArrayList(reacablePositions.values());
-/*				for (Position pos:newPositions) {
+				newlistPositions = new ArrayList(reacablePositions.values());
+/*				for (Position pos:newlistPositions) {
 					System.out.println(pieceColorR+" Rook positions: "+pos.getPositionName() + " " + pos.getPositionColor());
 				}*/
 				break;
@@ -228,8 +314,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
 //				reacablePositions = chessType.getNewPositions();
-				newPositions = new ArrayList(reacablePositions.values());
-/*				for (Position pos:newPositions) {
+				newlistPositions = new ArrayList(reacablePositions.values());
+/*				for (Position pos:newlistPositions) {
 					System.out.println(pieceColorQ+" Queens positions: "+pos.getPositionName() + " " + pos.getPositionColor());
 				}*/				
 				break;
@@ -365,8 +451,12 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 
 
 
-	public void setNewPositions(ArrayList<Position> newPositions) {
-		this.newPositions = newPositions;
+	public void setNewlistPositions(ArrayList<Position> newPositions) {
+		this.newlistPositions = newPositions;
+	}
+
+	public ArrayList<Position> getNewlistPositions() {
+		return newlistPositions;
 	}
 
 	public String toString() {
@@ -383,7 +473,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	
 		String na = myPiece.getPieceName();
 		result.append("Name " + na + "\n" + "Available positions\n");
-		for (Position pos:newPositions) {
+		for (Position pos:newlistPositions) {
 			result.append("Position: "+pos.getPositionName() + " " + pos.getPositionColor() + " X, Y "+pos.getXyloc().toString() + "\n");
 
 		}			
@@ -411,9 +501,9 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		localpiece.produceLegalmoves(position);
 		reacablePositions = localpiece.getNewPositions();
 //		reacablePositions =  chessType.getNewPositions();
-		newPositions = null;
-		newPositions = new ArrayList(reacablePositions.values());
-//		newPositions =  (List<Position>) reacablePositions.values();
+		newlistPositions = null;
+		newlistPositions = new ArrayList(reacablePositions.values());
+//		newlistPositions =  (List<Position>) reacablePositions.values();
 	}
 
 	/* (non-Javadoc)
@@ -425,6 +515,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		if (chessType instanceof APawn) {
 			APawn p = (APawn) chessType;
 			p.produceLegalmoves(position);
+			attackPositions = p.getAttackPositions();
 		}
 		if (chessType instanceof AKnight) {
 			AKnight p = (AKnight) chessType;
@@ -462,16 +553,16 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		GamePiece gamePiece = (GamePiece) chessType;
 		reacablePositions = gamePiece.getNewPositions();	
 //		reacablePositions =  chessType.getNewPositions();
-		newPositions = null;
-		newPositions = new ArrayList(reacablePositions.values());
+		newlistPositions = null;
+		newlistPositions = new ArrayList(reacablePositions.values());
 		
 	}
 
 	public boolean checkPositions() {
 		boolean newPos = false;
-		if (newPositions == null || newPositions.isEmpty()) {
-			newPositions = null;
-			newPositions = new ArrayList(reacablePositions.values());
+		if (newlistPositions == null || newlistPositions.isEmpty()) {
+			newlistPositions = null;
+			newlistPositions = new ArrayList(reacablePositions.values());
 			newPos = true;
 		}
 		return newPos;

@@ -45,6 +45,7 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 	private List<Integer> pieceValues; // The rank of my ontology pieces
 	private HashMap<String,Integer>namesAndrank;
 	private player playerName; // Tells if player is white or black
+	private String nameOfplayer = null;
 	private boolean active = false;
 	private List<ChessAction> actions; //Actions available to this player
 	private AgamePiece preferredPiece;
@@ -84,6 +85,15 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 		myontologyPieces = new ArrayList<Piece>();
 		namesAndrank = new HashMap();
 	}
+	
+	public String getNameOfplayer() {
+		return nameOfplayer;
+	}
+
+	public void setNameOfplayer(String nameOfplayer) {
+		this.nameOfplayer = nameOfplayer;
+	}
+
 	public ArrayList<Piece> getMyontologyPieces() {
 		return myontologyPieces;
 	}
@@ -243,6 +253,20 @@ public void checkPreferredPosition(ChessAction action) {
 		return preferredPosition;
 	}
 
+	/**
+	 * calculateOpponentPositions
+	 * This method calculates all removed positions for opponent
+	 */
+	public void calculateOpponentPositions() {
+		for (AgamePiece piece:mygamePieces ) {
+			String name = piece.getMyPiece().getPieceName();
+			int pn = piece.getMyPosition().getIntRow();
+			Integer prn = new Integer(pn);
+			OpponentMoveProcessor op = new OpponentMoveProcessor(prn,name);
+			ApieceMove move = ChessFunctions.processChessgame(this, piece,op);
+			currentMove = move;
+		}
+	}
 	public HashMap<String, AgamePiece> getMyPieces() {
 		return myPieces;
 	}
@@ -283,9 +307,11 @@ public void checkPreferredPosition(ChessAction action) {
 		this.playerName = playerName;
 		if (playerName == whitePlayer) {
 			setWhitePlayer(playerName);
+			nameOfplayer = "WhitePlayer";
 		}
 		if (playerName == blackPlayer) {
 			setBlackPlayer(playerName);
+			nameOfplayer = "BlackPlayer";
 		}
 	}
 

@@ -15,6 +15,7 @@ import no.games.chess.GamePiece;
 /**
  * This class represent the Pawn chesspiece 
  * It implements the method legalMoves for the Pawn 
+ * @since 14.10.20 Positions available for attack is added
  * @author oluf
  * @param <P>
  *
@@ -26,12 +27,14 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	private int[][] reachablesqueres;
 	private String[][] reachablepiecePosition;
 	private HashMap<String,Position> newPositions; // contains positions reachable by the piece 
+	private HashMap<String,Position> attackPositions; // contains positions that can be attacked by the piece 
 	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
 	private int size = 8;
 	private String color;
 	private ChessPiece myPiece;
 	private Position myPosition;
 	private boolean blocked = false;
+	private AgamePiece mother = null; // Not necessary
 	
 	public APawn() {
 		super();
@@ -89,6 +92,26 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			}
 		}
 		getLegalmoves(myPosition);
+	}
+
+
+	public AgamePiece getMother() {
+		return mother;
+	}
+
+
+	public void setMother(AgamePiece mother) {
+		this.mother = mother;
+	}
+
+
+	public HashMap<String, Position> getAttackPositions() {
+		return attackPositions;
+	}
+
+
+	public void setAttackPositions(HashMap<String, Position> attackPositions) {
+		this.attackPositions = attackPositions;
 	}
 
 
@@ -192,8 +215,11 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		String posName = position.getPositionName();
 		APawnMoveRuler pawnRules = new APawnMoveRuler();
 		List<XYLocation> locations = ChessFunctions.moveRule(this, pawnRules);
+		List<XYLocation> attackLocations = pawnRules.getAttackPositions();
 		if (newPositions == null)
 			newPositions = new HashMap();
+		if (attackPositions == null)
+			attackPositions = new HashMap();
 		for (XYLocation xloc:locations) {
 			int x = xloc.getXCoOrdinate();
 			int y = xloc.getYCoOrdinate();
@@ -201,7 +227,13 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			reachablepiecePosition[x][y] = "P";
 			createPosition(newPositions,xloc);
 		}
-
+		for (XYLocation xloc:attackLocations) {
+			int x = xloc.getXCoOrdinate();
+			int y = xloc.getYCoOrdinate();
+			reachablesqueres[x][y] = 1;
+			reachablepiecePosition[x][y] = "P";
+			createattackPosition(attackPositions,xloc);
+		}
 		
 	}
 	/**
@@ -216,7 +248,18 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		Position newPosxyp = new Position(newloc,false,null);
 		newPositions.put(newPosxyp.getPositionName(), newPosxyp);
 	}
-
+	/**
+	 * createattackPosition
+	 * This method creates a new chess position based on a XYLocation
+	 * @param newPositions
+	 * @param x
+	 * @param y
+	 */
+	private void createattackPosition(HashMap<String,Position> attackPositions,XYLocation newloc) {
+//		XYLocation newloc = new XYLocation(x,y);
+		Position newPosxyp = new Position(newloc,false,null);
+		attackPositions.put(newPosxyp.getPositionName(), newPosxyp);
+	}
 	public HashMap<String,Position> getNewPositions() {
 		return newPositions;
 	}
@@ -250,25 +293,27 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	public void produceLegalmoves(Position position) {
 		newPositions.clear();
 		myPosition = position;
+		attackPositions.clear();
 		getLegalmoves(position);
 		createontPosition(newPositions);
+		createontPosition(attackPositions);
 	}
 	/**
 	 * createontPosition
 	 * This method moves any ontologypositions to the list of positions reachable by this piece
 	 * It is called from the determinPieceType method of the AgamePiece object and the produceLegalmoves method
 	 * when the piece is moved to a new position.
-	 * @param newPositions a HashMap of positions calculated by the piecetype
+	 * @param xPositions a HashMap of positions calculated by the piecetype
 
 	 */
-	protected void createontPosition(HashMap<String,Position> newPositions) {
+	protected void createontPosition(HashMap<String,Position> xPositions) {
 //		XYLocation newloc = new XYLocation(x,y);
-		List<Position> tempPositions = new ArrayList(newPositions.values());
+		List<Position> tempPositions = new ArrayList(xPositions.values());
 		for (Position pos : tempPositions) {
 			String name = pos.getPositionName();
 			Position ontPosition = ontologyPositions.get(name);
 			if (ontPosition != null) {
-				newPositions.put(name, ontPosition);
+				xPositions.put(name, ontPosition);
 			}
 		}
 

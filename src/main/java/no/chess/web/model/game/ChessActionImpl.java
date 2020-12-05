@@ -38,7 +38,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private PreferredMoveProcessor myProcessor;
 	private Sentence sentence = null; // Contains a possible action sentence contained in the chess knowledge base
 	private boolean blocked = false;
-	
+	private Integer actionValue = null; // The action value for this action created from the chess agent and its knowledge bases
 	private List<Position> attackedPositions = null;
 	private List<Position> notAttackedPos = null;
 	private List<Position> notProtected = null;
@@ -64,6 +64,16 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			preferredPosition = possibleMove.getToPosition();
 //		preferredPosition = player.calculatePreferredPosition(chessPiece,this);      
 		player.getHeldPositions().add(pr.getHeldPosition()); // This is the position held by the piece under consideration
+	}
+
+
+	public Integer getActionValue() {
+		return actionValue;
+	}
+
+
+	public void setActionValue(Integer actionValue) {
+		this.actionValue = actionValue;
 	}
 
 

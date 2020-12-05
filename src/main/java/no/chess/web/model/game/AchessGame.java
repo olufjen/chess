@@ -238,6 +238,7 @@ public class AchessGame extends AbstractChessGame{
 			ChessPiece piece = position.getUsedBy();
 			AgamePiece gamePiece = new AgamePiece(position,piece);
 			piece.setMyPiece(gamePiece);
+			gamePiece.setPredicate(piece.getPredicate());
 			gamePiece.setOntologyPositions(positions);
 			
 			if(gamePiece.getColor().equals("w")) {

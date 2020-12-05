@@ -390,6 +390,7 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 	 */
 	public void mark(ChessAction action) {
 		boolean blocked = false;
+		boolean searchTree = false;
 		List<ApieceMove> playedMovements = game.getMovements();
 		ChessActionImpl localAction = (ChessActionImpl) action;
 		ApieceMove actionMove = localAction.getPossibleMove(); // The action Move object is the move suggested by the action
@@ -446,7 +447,8 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 /*
  * end added		
  */
-		if (pieceActive && available && !removed && !blocked && !occupied && actionMove != null) {
+		if (searchTree) { // This is done to solve problem described in issue: Check if a piece occupies two positions 
+//		if (pieceActive && available && !removed && !blocked && !occupied && actionMove != null) {
 
 /*
  * The piece is moved and a new set of used an not used positions are calculated:
