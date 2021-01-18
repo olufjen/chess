@@ -240,11 +240,12 @@ public class PlayGame {
 		AdversarialSearch<ChessState<GameBoard>, ChessAction<?, ?, ?,  GamePiece<?>, ?>> search; // FILL IN !!!!
 //		ChessSearch<ChessState,ChessAction> search;
 		search = ChessAlphaBetaSearch.createFor(game, 0.0, 1.0, 1); // Changed timer from 2 to 1.
-		
+		search = (ChessAlphaBetaSearch)search;
 //		search = ChessAlphaBetaSearch.createFor(game, 0.0, 1.0, 2);
 //		search = ChessSearchImpl.createFor(game, 0.0, 1.0, 5);
 //		search = MinimaxSearch.createFor(game);
-		search.setLogEnabled(true);
+// 		search.logEnabled(true);	
+
 /*
  * The makeDecision method returns either at timeout or when the state is terminal
  * (a lose or a win for the active player).	
