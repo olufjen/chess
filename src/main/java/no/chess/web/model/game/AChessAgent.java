@@ -90,19 +90,32 @@ public class AChessAgent extends KBAgent {
 	private List<Position> emptyPositions = null;
 	private List<Position> positionList = null; // The original HashMap of positions as a list
 	private List<String> opponentPieces = null;
+	private AChessProblemSolver solver = null;
 	private int noofMoves = 0;
 	
-	private String ACTION = "ACTION";
-	private String PROTECTED = "PROTECTEDBY";
-	private String simpleProtected = "PROTECTED";
-	private String ATTACKED = "ATTACKEDBY";
-	private String CAPTURE = "CAPTURE";
-	private String CONQUER = "CONQUER";
-	private String THREATEN = "THREATENEDBY";
-	private String OWNER = "OWNER";
-	private String MOVE = "MOVE";
-	private String REACHABLE = "REACHABLE";
+	private String ACTION;
+	private String PROTECTED;
+	private String simpleProtected;
+	private String ATTACKED;
+	private String CAPTURE;
+	private String CONQUER;
+	private String THREATEN;
+	private String OWNER;
+	private String MOVE;
+	private String REACHABLE;
+    private String CANMOVE;
+	private String SAFEMOVE;
+	private String STRIKE;
+	private String PIECETYPE;
+	private String PLAY;
+	private String PAWN;
+	private String KNIGHT;
+	private String BISHOP;
+	private String ROOK;
+	private String KING;
+	private String QUEEN;
 	private String playerName = "";
+    private String OCCUPIES = "";
 	
 	public AChessAgent(KnowledgeBase kb) {
 		super(kb);
@@ -125,7 +138,7 @@ public class AChessAgent extends KBAgent {
 		opponentPieces = new ArrayList<String>();
 		positionList = game.getPositionlist();
 		chessDomain = new FOLDomain();
-		 
+		setPredicatenames();
 	}
 
 
@@ -151,9 +164,32 @@ public class AChessAgent extends KBAgent {
 		opponentPieces = new ArrayList<String>();
 		positionList = game.getPositionlist();
 		chessDomain = new FOLDomain();
-		
+		setPredicatenames();
 	}
-
+	  public void setPredicatenames() {
+			ACTION = KnowledgeBuilder.getACTION();
+			ATTACKED = KnowledgeBuilder.getATTACKED();
+			CANMOVE = KnowledgeBuilder.getCANMOVE();
+			CAPTURE =  KnowledgeBuilder.getCAPTURE();
+			CONQUER = KnowledgeBuilder.getCONQUER();
+			MOVE =  KnowledgeBuilder.getMOVE();
+			OWNER = KnowledgeBuilder.getOWNER();
+			PROTECTED =  KnowledgeBuilder.getPROTECTED();
+			REACHABLE = KnowledgeBuilder.getREACHABLE();
+			SAFEMOVE = KnowledgeBuilder.getSAFEMOVE();
+			STRIKE = KnowledgeBuilder.getSTRIKE();
+			simpleProtected =  KnowledgeBuilder.getSimpleProtected();
+			THREATEN = KnowledgeBuilder.getTHREATEN();
+			PIECETYPE = KnowledgeBuilder.getPIECETYPE();
+			PLAY = 	KnowledgeBuilder.getPLAY();
+			PAWN = KnowledgeBuilder.getPAWN();
+			KNIGHT = KnowledgeBuilder.getKNIGHT();
+			BISHOP = KnowledgeBuilder.getBISHOP();
+			ROOK = KnowledgeBuilder.getROOK();
+			KING = KnowledgeBuilder.getKING();
+			QUEEN = KnowledgeBuilder.getQUEEN();
+			OCCUPIES = KnowledgeBuilder.getOCCUPIES();
+	  }
 
 	/* (non-Javadoc)
 	 * @see aima.core.logic.propositional.agent.KBAgent#execute(aima.core.agent.Percept)
@@ -247,8 +283,7 @@ public class AChessAgent extends KBAgent {
 //		result = folKb.ask(qSentence); 
 
 //		fcResult = forwardChain.ask(folKb, folPredicate);
-		writer.println("The first order knowledge base");
-		writer.println(folKb.toString());
+
 		Literal chessLiteral = new Literal(folPredicate);
 		List<Literal> allLiterals = new ArrayList<Literal>();
 		allLiterals.add(chessLiteral);
@@ -296,16 +331,23 @@ public class AChessAgent extends KBAgent {
 
 		makeOpponentsentences(stateImpl.getOpponent(),noofMoves);
 		makeSentences();
-
+		writer.println("The first order knowledge base");
+		writer.println(folKb.toString());
+		solver = new AChessProblemSolver(stateImpl, localAction, folKb, chessDomain, forwardChain, backwardChain, game, myPlayer, opponent);
+		
 /*
  * End move ?
  */
 /*
  * Here we must ask the knowledge base what is the best action to perform:		
  */
+		String movnr = Integer.toString(noofMoves);
 		for (ChessActionImpl action:actions) {
 //			double evaluation = game.getGame().analyzePieceandPosition(action);
 			if (action.getPossibleMove()!= null && !action.isBlocked()) {
+
+				String aName = action.getActionName()+"_"+movnr;
+				action.setActionName(aName);
 				kb.askPossibleAction(action, noofMoves);
 				askMove(myPlayer,action);
 			}
@@ -329,7 +371,7 @@ public class AChessAgent extends KBAgent {
 			}
 		}
 		StringBuilder builder = new StringBuilder();
-		builder.append("\nA CHESS Knowledge base\n");
+/*		builder.append("\nA CHESS Knowledge base\n");
 		writer.println(builder.toString());
 		List<Sentence> mySentences = kb.getSentences();
 		Set<Clause> myClauses = kb.asCNF();
@@ -341,7 +383,7 @@ public class AChessAgent extends KBAgent {
 			if (clause.isDefiniteClause())
 				def = "Definite";
 			writer.println(clause.toString()+" "+def );
-		}
+		}*/
 		writer.flush();
 //		Sentence sentence = makePerceptSentence(state, 0);
 //		KB.tell(sentence);
