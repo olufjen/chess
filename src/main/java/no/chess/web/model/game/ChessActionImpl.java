@@ -46,6 +46,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private List<AgamePiece> attacked = null;
 	private List<Position> otherattackedPositions = null;
 	private List<Position> otherprotectedPositions  = null;
+	private String actionName;
 
 	public ChessActionImpl(HashMap<String, Position> positions, AgamePiece chessPiece,APlayer player) {
 		super();
@@ -64,6 +65,17 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			preferredPosition = possibleMove.getToPosition();
 //		preferredPosition = player.calculatePreferredPosition(chessPiece,this);      
 		player.getHeldPositions().add(pr.getHeldPosition()); // This is the position held by the piece under consideration
+		actionName = this.chessPiece.getMyPiece().getOntlogyName();
+	}
+
+
+	public String getActionName() {
+		return actionName;
+	}
+
+
+	public void setActionName(String actionName) {
+		this.actionName = actionName;
 	}
 
 
