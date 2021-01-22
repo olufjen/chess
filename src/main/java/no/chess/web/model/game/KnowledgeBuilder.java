@@ -1,6 +1,8 @@
 
 package no.chess.web.model.game;
 
+import no.games.chess.AbstractGamePiece.pieceType;
+
 /**
  * KnowledgeBuilder
  * This class contains constants and buildingblocks to be used in knowledgebases.
@@ -259,4 +261,26 @@ public static String getPLAY()
 		STRIKE = sTRIKE;
   }
 
+  public static String getPieceType(AgamePiece piece) {
+	  pieceType type = piece.getPieceType();
+		if (type == type.PAWN) {
+			return PAWN;
+		}
+		if (type == type.BISHOP) {
+			return BISHOP;
+		}		
+		if (type == type.ROOK) {
+			return ROOK;
+		}			
+		if (type == type.KNIGHT) {
+			return KNIGHT;
+		}
+		if (type == type.QUEEN) {
+			return QUEEN;
+		}
+		if (type == type.KING) {
+			return KING;
+		}	
+	  return null;
+  }
 }

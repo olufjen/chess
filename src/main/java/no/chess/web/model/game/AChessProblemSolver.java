@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import aima.core.logic.fol.Connectors;
 import aima.core.logic.fol.domain.FOLDomain;
 import aima.core.logic.fol.inference.FOLFCAsk;
@@ -68,6 +70,7 @@ public class AChessProblemSolver {
   private String ROOK;
   private String KING;
   private String QUEEN;
+  private String PAWNMOVE;
   private String playerName =  "";
   private String OCCUPIES = "";
   private String playSide;
@@ -112,6 +115,9 @@ public class AChessProblemSolver {
   private State initialState =  null;
   private State goalState =  null;
   private GraphPlanAlgorithm graphPlan =  null;
+  private Map<String,ActionSchema> actionSchemas = null;
+  private Map<String,State>initStates = null;
+  private Map<String,State>goalStates = null;
 
   public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, FOLKnowledgeBase folKb, FOLDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
 		super();
@@ -136,6 +142,9 @@ public class AChessProblemSolver {
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));	
 	    setPredicatenames();
+	    actionSchemas = new HashMap<String,ActionSchema>();
+	    initStates = new HashMap<String,State>(); 
+	    goalStates = new HashMap<String,State>();
   }
 
   public void setPredicatenames() {
@@ -161,9 +170,34 @@ public class AChessProblemSolver {
 		KING = KnowledgeBuilder.getKING();
 		QUEEN = KnowledgeBuilder.getQUEEN();
 		OCCUPIES = KnowledgeBuilder.getOCCUPIES();
+		PAWNMOVE = KnowledgeBuilder.getPAWNMOVE();
   }
 
-  public ChessStateImpl getStateImpl() {
+  public Map<String, ActionSchema> getActionSchemas() {
+	return actionSchemas;
+}
+
+public void setActionSchemas(Map<String, ActionSchema> actionSchemas) {
+	this.actionSchemas = actionSchemas;
+}
+
+public Map<String, State> getInitStates() {
+	return initStates;
+}
+
+public void setInitStates(Map<String, State> initStates) {
+	this.initStates = initStates;
+}
+
+public Map<String, State> getGoalStates() {
+	return goalStates;
+}
+
+public void setGoalStates(Map<String, State> goalStates) {
+	this.goalStates = goalStates;
+}
+
+public ChessStateImpl getStateImpl() {
 		return stateImpl;
   }
 
@@ -235,16 +269,97 @@ public class AChessProblemSolver {
 		this.opponent = opponent;
   }
 
+  public String checkMovenumber() {
+	  String pieceName = "";
+	  switch(noofMoves) {
+	  case 0:
+		  pieceName = "WhitePawn4";
+		  break;
+	  case 2:
+		  pieceName = "WhitePawn3";
+		  break;
+	  case 4:
+		  pieceName = "WhiteKnight1";
+	  }
+	  return pieceName;
+  }
+  public Problem planProblem(ArrayList<ChessActionImpl> actions) {
+	  searchProblem(actions);
+	  String pieceName = checkMovenumber();
+	  ActionSchema movedAction = actionSchemas.get(pieceName);
+	  State initState = initStates.get(pieceName);
+	  State goal = goalStates.get(pieceName);
+	  Problem problem = new Problem(initState,goal,movedAction);
+	  
+	  return problem;
+  }
+  /**
+ * searchProblem
+ * For every available chessaction create an actionschema
+ * @param actions
+ * @return
+ */
   public List<ActionSchema> searchProblem(ArrayList<ChessActionImpl> actions) {
+	  List<ActionSchema> schemas = new ArrayList<ActionSchema>();
 	  for (ChessActionImpl action:actions) {
 			if (action.getPossibleMove()!= null && !action.isBlocked()) {
+				determineParameters(action);
+				String pieceName = action.getChessPiece().getMyPiece().getOntlogyName();
+				String actionName = action.getActionName();
+				State localinitialState = buildInitialstate(pieceName);
+				State localgoalState = buildGoalstate(action);
+				initStates.put(pieceName, localinitialState);
+				goalStates.put(pieceName, localgoalState);
+				Variable piece = new Variable("piece");
+				Variable pos = new Variable("pos");
+				Variable toPos = new Variable("topos");
+				Constant type = new Constant(typeofPiece);
+				Variable ownerVar = new Variable("owner");
+				List variables = new ArrayList<Variable>(Arrays.asList(piece,pos,toPos,ownerVar));
+				List<Term> terms = new ArrayList<Term>();
+				List<Term> ownerterms = new ArrayList<Term>();
+				List<Term> newterms = new ArrayList<Term>();
+				List<Term> typeTerms = new ArrayList<Term>();
+				ownerterms.add(ownerVar);
+				ownerterms.add(piece);
+				terms.add(piece);
+				terms.add(pos);
+				newterms.add(piece);
+				newterms.add(toPos);
+				typeTerms.add(piece);
+				typeTerms.add(type);
+				Predicate reachablePredicate = new Predicate(REACHABLE,newterms);
+				Predicate pospred = new Predicate(OCCUPIES,terms);
+				Predicate ownerPred = new Predicate(OWNER,ownerterms);
+				Predicate newPospred = new Predicate(OCCUPIES,newterms);
+				List<Literal> precondition = new ArrayList();
+				List<Literal> effects = new ArrayList();
+				precondition.add(new Literal((AtomicSentence) pospred));
+				precondition.add(new Literal((AtomicSentence) ownerPred));
+				Literal notAt = new Literal(pospred, true);
+				effects.add(notAt);
+				effects.add(new Literal( (AtomicSentence)newPospred));
+				effects.add(new Literal( (AtomicSentence)ownerPred));
+				ActionSchema movedAction = new ActionSchema(actionName,variables,precondition,effects);
+				actionSchemas.put(pieceName, movedAction);
+				schemas.add(movedAction);
 				
 			}
 	  }
-		return null;
+	  return schemas;
   }
 
-  public List<List<ActionSchema>> solveProblem(ChessActionImpl action) {
+  /**
+   * solveProblem
+   * This method solves a Problem for a given ChessAction
+ * @param action
+ * @return
+ */
+/**
+ * @param action
+ * @return
+ */
+public List<List<ActionSchema>> solveProblem(ChessActionImpl action) {
 		determineParameters(action);
 		Problem myProblem = buildProblem(action);
 		if (myProblem != null) {
