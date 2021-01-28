@@ -255,7 +255,7 @@ public class Position extends ParentModel {
 		    	}
 		    	usedBy.setOntlogyName(name);
 		    	usedBy.setFullName(irs);
-		    	usedBy.setPredicate(piecePred);
+//		    	usedBy.setPredicate(piecePred);
 		    	System.out.println("setPieces: Name of piece: "+name+" Name of chess piece: "+usedBy.getPieceName()+" "+usedBy.getName());
 
 			}
