@@ -631,7 +631,7 @@ public class AChessAgent extends KBAgent {
 	 * Which actions are available for the active player
 	 * Which positions are empty on the board
 	 * This method acts as the makePerceptSentence method:
-	 * It creates simple facts about the current state of the game  
+	 * It creates simple facts about the current state of the game  vbfdgvd
 	 */
 	public void makeSentences() {
 		APlayer player= stateImpl.getMyPlayer();
