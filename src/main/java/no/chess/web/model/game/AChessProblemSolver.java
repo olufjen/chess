@@ -73,6 +73,7 @@ public class AChessProblemSolver {
   private String PAWNMOVE;
   private String playerName =  "";
   private String OCCUPIES = "";
+  private String PAWNATTACK ="";
   private String playSide;
   /**
    *  The type of piece under consideration
@@ -89,7 +90,7 @@ public class AChessProblemSolver {
   private ChessActionImpl localAction =  null;
   private ChessKnowledgeBase kb =  null;
   private int noofMoves =  0;
-
+  private List<Position> positionList = null; // The original HashMap of positions as a list
   /**
    * 
    * A first order knowledge base
@@ -171,9 +172,19 @@ public class AChessProblemSolver {
 		QUEEN = KnowledgeBuilder.getQUEEN();
 		OCCUPIES = KnowledgeBuilder.getOCCUPIES();
 		PAWNMOVE = KnowledgeBuilder.getPAWNMOVE();
+		PAWNATTACK = KnowledgeBuilder.getPAWNATTACK();
   }
+  
 
-  public Map<String, ActionSchema> getActionSchemas() {
+ public List<Position> getPositionList() {
+	return positionList;
+}
+
+public void setPositionList(List<Position> positionList) {
+	this.positionList = positionList;
+}
+
+public Map<String, ActionSchema> getActionSchemas() {
 	return actionSchemas;
 }
 
@@ -269,7 +280,49 @@ public ChessStateImpl getStateImpl() {
 		this.opponent = opponent;
   }
 
-  public String checkMovenumber() {
+  public boolean checkThreats(String pieceName,String pos,String fact) {
+	  List<AgamePiece> pieces = opponent.getMygamePieces();
+	  AgamePiece piece = pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
+	  Constant pieceVariable = null;
+	  Variable pieceVar = null;
+	  List<Term> reachableTerms = new ArrayList<Term>();
+	  if (piece != null) {
+		  pieceVariable = new Constant(pieceName);
+		  reachableTerms.add(pieceVariable);
+	  }else {
+		  pieceVar = new Variable(pieceName);
+		  reachableTerms.add(pieceVar);
+	  }
+	  Constant posVariable = new Constant(pos);
+	  reachableTerms.add(posVariable);
+	  Predicate threatPredicate = new Predicate(fact,reachableTerms);
+		writer.println("Trying to prove\n"+threatPredicate.toString());
+	  InferenceResult backWardresult =  backwardChain.ask(folKb,threatPredicate);
+      writer.println(InferenceResultPrinter.printInferenceResult(backWardresult));
+	  return backWardresult.isTrue();
+	  
+  }
+  public void checkFacts(String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions) {
+		Constant pieceVariable= new Constant(pieceName);
+		Constant posVariable = new Constant(pos);
+		List<Term> reachableTerms = new ArrayList<Term>();
+		reachableTerms.add(pieceVariable);
+		reachableTerms.add(posVariable);
+		Predicate reachablePredicate = new Predicate(fact,reachableTerms);
+		InferenceResult backWardresult =  backwardChain.ask(folKb, reachablePredicate);
+	    ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
+	    Position position =  (Position) positionList.stream().filter(c -> c.getPositionName().contains(pos)).findAny().orElse(null);
+		if (backWardresult.isTrue()) {
+			naction.getPossibleMove().setToPosition(position);
+			naction.setPreferredPosition(position);
+		}
+  }
+  public void prepareAction( ChessActionImpl action) {
+	  ApieceMove move = action.getPossibleMove();
+	  AgamePiece piece = action.getChessPiece();
+	  
+  }
+  public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 	  String pieceName = "";
 	  switch(noofMoves) {
 	  case 0:
@@ -277,20 +330,47 @@ public ChessStateImpl getStateImpl() {
 		  break;
 	  case 2:
 		  pieceName = "WhitePawn3";
+		  String pos = "c4";
+		  checkFacts(pieceName, pos, REACHABLE, actions);
 		  break;
 	  case 4:
 		  pieceName = "WhiteKnight1";
+		  break;
+	  case 6:
+		  pieceName = "WhiteKnight2";
+		  String posx = "f3";
+		  checkFacts(pieceName, posx, REACHABLE, actions);
+		  break;
+	  default:
+		  String blackpieceName = "BlackBishop1";
+		  String blackpos = "g4";
+		  if (checkThreats(blackpieceName, blackpos, OCCUPIES)) {
+			  pieceName = "WhitePawn8";
+		  }else {
+			  String pname = "x";
+			  String bpos = "d5";
+			  pieceName = "WhitePawn3";
+			  if (checkThreats(pname, bpos, OCCUPIES)) {
+				  pieceName = "WhitePawn3";
+				  String wpos = "d5";
+				  checkFacts(pieceName, wpos, PAWNATTACK, actions);
+			  }
+		  }
 	  }
+
 	  return pieceName;
   }
   public Problem planProblem(ArrayList<ChessActionImpl> actions) {
 	  searchProblem(actions);
-	  String pieceName = checkMovenumber();
+	  String pieceName = checkMovenumber(actions);
+//      ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
 	  ActionSchema movedAction = actionSchemas.get(pieceName);
+	  writer.println(movedAction.toString());
+	  writer.flush();
 	  State initState = initStates.get(pieceName);
 	  State goal = goalStates.get(pieceName);
 	  Problem problem = new Problem(initState,goal,movedAction);
-	  
+
 	  return problem;
   }
   /**
