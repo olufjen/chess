@@ -122,7 +122,8 @@ public class AChessAgent extends KBAgent {
 	private String PAWNMOVE;
 	private String playerName = "";
     private String OCCUPIES = "";
-	
+    private String PAWNATTACK ="";
+    
 	public AChessAgent(KnowledgeBase kb) {
 		super(kb);
 		
@@ -196,6 +197,7 @@ public class AChessAgent extends KBAgent {
 			QUEEN = KnowledgeBuilder.getQUEEN();
 			OCCUPIES = KnowledgeBuilder.getOCCUPIES();
 			PAWNMOVE = KnowledgeBuilder.getPAWNMOVE();
+			PAWNATTACK = KnowledgeBuilder.getPAWNATTACK();
 			chessDomain.addPredicate(PROTECTED);
 			chessDomain.addPredicate(MOVE);
 			chessDomain.addPredicate(ACTION);
@@ -212,6 +214,7 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(simpleProtected);
 			chessDomain.addPredicate(PIECETYPE);
 			chessDomain.addPredicate(PLAY);
+			chessDomain.addPredicate(PAWNATTACK);
 	  }
 
 	/* (non-Javadoc)
@@ -283,6 +286,9 @@ public class AChessAgent extends KBAgent {
 		QuantifiedSentence qSentence = new QuantifiedSentence("FORALL",variables,folPredicate);
 //		folKb.tell(qSentence);
 		createConnected("player", "y", "x");
+		String s1 = "occupies(o,px)^occupies(pi,py)";
+		String s2 = "MOVE(pi,pz)";
+		KnowledgeBuilder.parseSentence(s1,s2,folKb);
 		
 /*		List<Term> ownerTerms = new ArrayList<Term>();
 		Variable ownerVariable = new Variable(playerName);
@@ -360,7 +366,7 @@ public class AChessAgent extends KBAgent {
 		writer.println("The first order knowledge base");
 		writer.println(folKb.toString());
 		solver = new AChessProblemSolver(stateImpl, localAction, folKb, chessDomain, forwardChain, backwardChain, game, myPlayer, opponent);
-
+		solver.setPositionList(positionList);
 /*
  * End move ?
  */
@@ -608,7 +614,9 @@ public class AChessAgent extends KBAgent {
 						protectedTerms.add(protectorVariable);
 						protectedTerms.add(protectedVariable);
 						Predicate protectorPredicate = new Predicate(PROTECTED,protectedTerms);
+						Predicate pawnAttack = new Predicate(PAWNATTACK,protectedTerms);
 						folKb.tell(protectorPredicate);
+						folKb.tell(pawnAttack);
 						chessDomain.addConstant(position);
 						kb.tellCaptureRules(t, position, name);
 					}
