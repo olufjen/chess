@@ -726,7 +726,7 @@ public class AChessAgent extends KBAgent {
 	 * setOpponentpieces
 	 * This method creates knowledge about the opponent and its pieces both to the propositional knowledge base
 	 * and the first order knowledge base and its domain
-	 * @since 29.01.21 Only active pieces are considered
+	 * @since 29.01.21 Only active pieces are consideredhnjgfhg
 	 * @param opponent
 	 */
 	public void setOpponentpieces(APlayer opponent) {
