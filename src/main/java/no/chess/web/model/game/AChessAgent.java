@@ -288,7 +288,7 @@ public class AChessAgent extends KBAgent {
 		createConnected("player", "y", "x");
 		String s1 = "occupies(o,px)^occupies(pi,py)";
 		String s2 = "MOVE(pi,pz)";
-		KnowledgeBuilder.parseSentence(s1,s2,folKb);
+	//	KnowledgeBuilder.parseSentence(s1,s2,folKb);
 		
 /*		List<Term> ownerTerms = new ArrayList<Term>();
 		Variable ownerVariable = new Variable(playerName);
@@ -529,6 +529,7 @@ public class AChessAgent extends KBAgent {
 	 * makeRules
 	 * This method tells the FOL knowledgebase rules about how to capture opponent pieces
 	 * It also tells the first order knowledge base and its domain fact about own pieces
+	 * @since 29.01.21 Only active pieces are considered
 	 * param t
 	 */
 	public void makeRules(int t) {
@@ -541,87 +542,91 @@ public class AChessAgent extends KBAgent {
 
 		List<AgamePiece> pieces = player.getMygamePieces();
 		for (AgamePiece piece:pieces) {
-			List<Term> ownerTerms = new ArrayList<Term>();
-			ownerTerms.add(ownerVariable);
-			String name = piece.getMyPiece().getOntlogyName(); 
-			String posName = piece.getmyPosition().getPositionName();
-			chessDomain.addConstant(posName);
-			chessDomain.addConstant(name);
-			chessDomain.addPredicate(piece.returnPredicate());
-			if (!predicate.equals(piece.returnPredicate())) {
-				predicate = piece.returnPredicate();
-			}
-//			predicate = predicate+"("+name+","+posName+")";
-			chessDomain.addPredicate(predicate);
-//			chessDomain.addConstant(predicate);
-			Constant pieceVariable = new Constant(name);
-			Constant posVariable = new Constant(posName);
-			List<Term> terms = new ArrayList<Term>();
-			terms.add(pieceVariable);
-			terms.add(posVariable);
-			ownerTerms.add(pieceVariable);
-			Predicate folPredicate = new Predicate(predicate,terms);
-			Predicate ownerPredicate = new Predicate(OWNER,ownerTerms);
-			folKb.tell(folPredicate);
-			folKb.tell(ownerPredicate);
-		
-			List<Term> typeTerms = new ArrayList<Term>();
-			typeTerms.add(pieceVariable);
-			String pieceType = KnowledgeBuilder.getPieceType(piece);
-			Constant typeConstant = new Constant(pieceType);
-			typeTerms.add(typeConstant);
-			chessDomain.addConstant(pieceType);
-			Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
-			folKb.tell(typePredicate);
-			HashMap<String,Position> attackMap = piece.getAttackPositions();
-			List<Position> attackPositions = null;
-			if (attackMap != null)
-				attackPositions = new ArrayList(attackMap.values());
-			List<Position> availablePositions = piece.getNewlistPositions();
-			boolean pawnattack = false;
-			if (attackPositions != null && !attackPositions.isEmpty())
-				pawnattack = true;
-			if (availablePositions != null && !availablePositions.isEmpty()) {
-//				chessDomain.addPredicate(REACHABLE);
-				for (Position pos:availablePositions){
-					if(!piece.checkRemoved(pos)) {
-						String position = pos.getPositionName();
-						Constant protectorVariable = new Constant(name);
-						Constant protectedVariable = new Constant(position);
-						List<Term> protectedTerms = new ArrayList<Term>();
-						protectedTerms.add(protectorVariable);
-						protectedTerms.add(protectedVariable);
+			if (piece.isActive()) {
+				List<Term> ownerTerms = new ArrayList<Term>();
+				ownerTerms.add(ownerVariable);
+				String name = piece.getMyPiece().getOntlogyName(); 
+				String posName = piece.getmyPosition().getPositionName();
+				chessDomain.addConstant(posName);
+				chessDomain.addConstant(name);
+				chessDomain.addPredicate(piece.returnPredicate());
+				if (!predicate.equals(piece.returnPredicate())) {
+					predicate = piece.returnPredicate();
+				}
+//				predicate = predicate+"("+name+","+posName+")";
+				chessDomain.addPredicate(predicate);
+//				chessDomain.addConstant(predicate);
+				Constant pieceVariable = new Constant(name);
+				Constant posVariable = new Constant(posName);
+				List<Term> terms = new ArrayList<Term>();
+				terms.add(pieceVariable);
+				terms.add(posVariable);
+				ownerTerms.add(pieceVariable);
+				Predicate folPredicate = new Predicate(predicate,terms);
+				Predicate ownerPredicate = new Predicate(OWNER,ownerTerms);
+				folKb.tell(folPredicate);
+				folKb.tell(ownerPredicate);
+			
+				List<Term> typeTerms = new ArrayList<Term>();
+				typeTerms.add(pieceVariable);
+				String pieceType = KnowledgeBuilder.getPieceType(piece);
+				Constant typeConstant = new Constant(pieceType);
+				typeTerms.add(typeConstant);
+				chessDomain.addConstant(pieceType);
+				Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
+				folKb.tell(typePredicate);
+				HashMap<String,Position> attackMap = piece.getAttackPositions();
+				List<Position> attackPositions = null;
+				if (attackMap != null)
+					attackPositions = new ArrayList(attackMap.values());
+				List<Position> availablePositions = piece.getNewlistPositions();
+				boolean pawnattack = false;
+				if (attackPositions != null && !attackPositions.isEmpty())
+					pawnattack = true;
+				if (availablePositions != null && !availablePositions.isEmpty()) {
+//					chessDomain.addPredicate(REACHABLE);
+					for (Position pos:availablePositions){
 						
-						Predicate protectorPredicate = new Predicate(PROTECTED,protectedTerms);
-						Predicate reachablePredicate = new Predicate(REACHABLE,protectedTerms);
-						if (!pawnattack) {
+						if(!piece.checkRemoved(pos)) {
+							String position = pos.getPositionName();
+							Constant protectorVariable = new Constant(name);
+							Constant protectedVariable = new Constant(position);
+							List<Term> protectedTerms = new ArrayList<Term>();
+							protectedTerms.add(protectorVariable);
+							protectedTerms.add(protectedVariable);
+							
+							Predicate protectorPredicate = new Predicate(PROTECTED,protectedTerms);
+							Predicate reachablePredicate = new Predicate(REACHABLE,protectedTerms);
+							if (!pawnattack) {
+								folKb.tell(protectorPredicate);
+								kb.tellCaptureRules(t, position, name);
+							}
+							folKb.tell(reachablePredicate);
+							chessDomain.addConstant(position);
+					
+						}
+					}
+				}
+				if (pawnattack) {
+					for (Position pos:attackPositions){
+						if(!piece.checkRemoved(pos)) {
+							String position = pos.getPositionName();
+							Constant protectorVariable = new Constant(name);
+							Constant protectedVariable = new Constant(position);
+							List<Term> protectedTerms = new ArrayList<Term>();
+							protectedTerms.add(protectorVariable);
+							protectedTerms.add(protectedVariable);
+							Predicate protectorPredicate = new Predicate(PROTECTED,protectedTerms);
+							Predicate pawnAttack = new Predicate(PAWNATTACK,protectedTerms);
 							folKb.tell(protectorPredicate);
+							folKb.tell(pawnAttack);
+							chessDomain.addConstant(position);
 							kb.tellCaptureRules(t, position, name);
 						}
-						folKb.tell(reachablePredicate);
-						chessDomain.addConstant(position);
-				
 					}
 				}
 			}
-			if (pawnattack) {
-				for (Position pos:attackPositions){
-					if(!piece.checkRemoved(pos)) {
-						String position = pos.getPositionName();
-						Constant protectorVariable = new Constant(name);
-						Constant protectedVariable = new Constant(position);
-						List<Term> protectedTerms = new ArrayList<Term>();
-						protectedTerms.add(protectorVariable);
-						protectedTerms.add(protectedVariable);
-						Predicate protectorPredicate = new Predicate(PROTECTED,protectedTerms);
-						Predicate pawnAttack = new Predicate(PAWNATTACK,protectedTerms);
-						folKb.tell(protectorPredicate);
-						folKb.tell(pawnAttack);
-						chessDomain.addConstant(position);
-						kb.tellCaptureRules(t, position, name);
-					}
-				}
-			}
+
 		}
 	}
 	/**
@@ -631,7 +636,7 @@ public class AChessAgent extends KBAgent {
 	 * Which actions are available for the active player
 	 * Which positions are empty on the board
 	 * This method acts as the makePerceptSentence method:
-	 * It creates simple facts about the current state of the game  vbfdgvd
+	 * It creates simple facts about the current state of the game
 	 */
 	public void makeSentences() {
 		APlayer player= stateImpl.getMyPlayer();
@@ -730,83 +735,86 @@ public class AChessAgent extends KBAgent {
 		String predicate = "";
 		chessDomain.addPredicate(THREATEN);
 		for (AgamePiece piece:pieces) {
-			List<Term> ownerTerms = new ArrayList<Term>();
-			ownerTerms.add(ownerVariable);
-			String name = piece.getMyPiece().getOntlogyName();
-			String posName = piece.getmyPosition().getPositionName();
-			chessDomain.addConstant(posName);
-			chessDomain.addConstant(name);
-			chessDomain.addPredicate(piece.returnPredicate());
-			if (!predicate.equals(piece.returnPredicate())) {
-				predicate = piece.returnPredicate();
-			}
-//			predicate = predicate+"("+name+","+posName+")";
-			chessDomain.addPredicate(predicate);
-//			chessDomain.addConstant(predicate);
-			Constant pieceVariable = new Constant(name);
-			Constant posVariable = new Constant(posName);
-			ownerTerms.add(pieceVariable);
-			Predicate ownerPredicate = new Predicate(OWNER,ownerTerms);
+			if (piece.isActive()) {
+				List<Term> ownerTerms = new ArrayList<Term>();
+				ownerTerms.add(ownerVariable);
+				String name = piece.getMyPiece().getOntlogyName();
+				String posName = piece.getmyPosition().getPositionName();
+				chessDomain.addConstant(posName);
+				chessDomain.addConstant(name);
+				chessDomain.addPredicate(piece.returnPredicate());
+				if (!predicate.equals(piece.returnPredicate())) {
+					predicate = piece.returnPredicate();
+				}
+//				predicate = predicate+"("+name+","+posName+")";
+				chessDomain.addPredicate(predicate);
+//				chessDomain.addConstant(predicate);
+				Constant pieceVariable = new Constant(name);
+				Constant posVariable = new Constant(posName);
+				ownerTerms.add(pieceVariable);
+				Predicate ownerPredicate = new Predicate(OWNER,ownerTerms);
 
-			List<Term> terms = new ArrayList<Term>();
-			terms.add(pieceVariable);
-			terms.add(posVariable);
-			Predicate folPredicate = new Predicate(predicate,terms);
-			folKb.tell(folPredicate);
-			folKb.tell(ownerPredicate);
-			
-			List<Term> typeTerms = new ArrayList<Term>();
-			typeTerms.add(pieceVariable);
-			String pieceType = KnowledgeBuilder.getPieceType(piece);
-			Constant typeConstant = new Constant(pieceType);
-			typeTerms.add(typeConstant);
-//			chessDomain.addConstant(pieceType);
-			Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
-			folKb.tell(typePredicate);
-			opponentPieces.add(name);
-			HashMap<String,Position> attackMap = piece.getAttackPositions();
-			List<Position> attackPositions = null;
-			if (attackMap != null)
-				attackPositions = new ArrayList(attackMap.values());
-			boolean pawnattack = false;
-			if (attackPositions != null && !attackPositions.isEmpty())
-				pawnattack = true;		
-			List<Position> availablePositions = piece.getNewlistPositions();
-			if (attackPositions != null && !attackPositions.isEmpty())
-				availablePositions = attackPositions;
-			if (availablePositions != null && !availablePositions.isEmpty()) {
-				for (Position pos:availablePositions){
-					if(!piece.checkRemoved(pos)) {
-						String position = pos.getPositionName();
-						Constant protectorVariable = new Constant(name);
-						Constant protectedVariable = new Constant(position);
-						List<Term> protectedTerms = new ArrayList<Term>();
-						protectedTerms.add(protectorVariable);
-						protectedTerms.add(protectedVariable);
-						Predicate protectorPredicate = new Predicate(THREATEN,protectedTerms);
-						if (!pawnattack)
-							folKb.tell(protectorPredicate);
-						chessDomain.addConstant(position);
+				List<Term> terms = new ArrayList<Term>();
+				terms.add(pieceVariable);
+				terms.add(posVariable);
+				Predicate folPredicate = new Predicate(predicate,terms);
+				folKb.tell(folPredicate);
+				folKb.tell(ownerPredicate);
+				
+				List<Term> typeTerms = new ArrayList<Term>();
+				typeTerms.add(pieceVariable);
+				String pieceType = KnowledgeBuilder.getPieceType(piece);
+				Constant typeConstant = new Constant(pieceType);
+				typeTerms.add(typeConstant);
+//				chessDomain.addConstant(pieceType);
+				Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
+				folKb.tell(typePredicate);
+				opponentPieces.add(name);
+				HashMap<String,Position> attackMap = piece.getAttackPositions();
+				List<Position> attackPositions = null;
+				if (attackMap != null)
+					attackPositions = new ArrayList(attackMap.values());
+				boolean pawnattack = false;
+				if (attackPositions != null && !attackPositions.isEmpty())
+					pawnattack = true;		
+				List<Position> availablePositions = piece.getNewlistPositions();
+				if (attackPositions != null && !attackPositions.isEmpty())
+					availablePositions = attackPositions;
+				if (availablePositions != null && !availablePositions.isEmpty()) {
+					for (Position pos:availablePositions ){
+						if(!piece.checkRemoved(pos)) {
+							String position = pos.getPositionName();
+							Constant protectorVariable = new Constant(name);
+							Constant protectedVariable = new Constant(position);
+							List<Term> protectedTerms = new ArrayList<Term>();
+							protectedTerms.add(protectorVariable);
+							protectedTerms.add(protectedVariable);
+							Predicate protectorPredicate = new Predicate(THREATEN,protectedTerms);
+							if (!pawnattack)
+								folKb.tell(protectorPredicate);
+							chessDomain.addConstant(position);
 
+						}
 					}
 				}
-			}
-			if (pawnattack) {
-				for (Position pos:attackPositions){
-					if(!piece.checkRemoved(pos)) {
-						String position = pos.getPositionName();
-						Constant protectorVariable = new Constant(name);
-						Constant protectedVariable = new Constant(position);
-						List<Term> protectedTerms = new ArrayList<Term>();
-						protectedTerms.add(protectorVariable);
-						protectedTerms.add(protectedVariable);
-						Predicate protectorPredicate = new Predicate(THREATEN,protectedTerms);
-						folKb.tell(protectorPredicate);
-						chessDomain.addConstant(position);
+				if (pawnattack) {
+					for (Position pos:attackPositions){
+						if(!piece.checkRemoved(pos) && piece.isActive()) {
+							String position = pos.getPositionName();
+							Constant protectorVariable = new Constant(name);
+							Constant protectedVariable = new Constant(position);
+							List<Term> protectedTerms = new ArrayList<Term>();
+							protectedTerms.add(protectorVariable);
+							protectedTerms.add(protectedVariable);
+							Predicate protectorPredicate = new Predicate(THREATEN,protectedTerms);
+							folKb.tell(protectorPredicate);
+							chessDomain.addConstant(position);
+						}
 					}
 				}
 			}
 		}
+
 	}
 
 	@Override

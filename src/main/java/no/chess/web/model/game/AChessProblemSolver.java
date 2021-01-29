@@ -280,7 +280,62 @@ public ChessStateImpl getStateImpl() {
 		this.opponent = opponent;
   }
 
-  public boolean checkThreats(String pieceName,String pos,String fact) {
+  /**
+   * checkFacts
+   * This method checks the FOL knowledge base for certain facts about the player's pieces.
+   * These facts can be any of the available predicates in the FOL Domain (see the domain object)
+ * @param pieceName THe name of the piece
+ * @param pos The position to move to
+ * @param fact The predicate fact
+ * @param actions All the actions available to the player
+ */
+public boolean checkpieceFacts(String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions) {
+		Constant pieceVariable= new Constant(pieceName);
+		Constant posVariable = new Constant(pos);
+		List<Term> reachableTerms = new ArrayList<Term>();
+		reachableTerms.add(pieceVariable);
+		reachableTerms.add(posVariable);
+		Predicate reachablePredicate = new Predicate(fact,reachableTerms);
+		InferenceResult backWardresult =  backwardChain.ask(folKb, reachablePredicate);
+	    ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
+	    Position position =  (Position) positionList.stream().filter(c -> c.getPositionName().contains(pos)).findAny().orElse(null);
+		if (backWardresult.isTrue() && naction != null) {
+			naction.getPossibleMove().setToPosition(position);
+			naction.setPreferredPosition(position);
+			return true;
+		}
+		return false;
+  }
+  public String checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
+	  List<AgamePiece> pieces = opponent.getMygamePieces();
+	  List<AgamePiece> myPieces = myPlayer.getMygamePieces();
+	  for (AgamePiece piece:pieces) {
+		  Position position = piece.getHeldPosition();
+		  String posName = position.getPositionName();
+		  for (AgamePiece mypiece:myPieces) {
+			  String name = mypiece.getMyPiece().getOntlogyName();
+			  boolean reachable = checkpieceFacts(name,posName,REACHABLE,actions);
+			  boolean pieceProtected = checkpieceFacts(name,posName,PROTECTED,actions);
+			  boolean pawn = checkpieceFacts(name, posName, PAWNATTACK, actions);
+			  if (reachable && pieceProtected) {
+				  return name;
+			  }
+			  if (pawn)
+				  return name;
+		  }
+	  }
+	  return null;
+  }
+  /**
+   * checkThreats
+   * This method checks the FOL knowledge base for certain facts about the opponent's pieces.
+   * These facts can be any of the available predicates in the FOL Domain (see the domain object)
+ * @param pieceName
+ * @param pos
+ * @param fact
+ * @return
+ */
+public boolean checkThreats(String pieceName,String pos,String fact) {
 	  List<AgamePiece> pieces = opponent.getMygamePieces();
 	  AgamePiece piece = pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
 	  Constant pieceVariable = null;
@@ -296,13 +351,22 @@ public ChessStateImpl getStateImpl() {
 	  Constant posVariable = new Constant(pos);
 	  reachableTerms.add(posVariable);
 	  Predicate threatPredicate = new Predicate(fact,reachableTerms);
-		writer.println("Trying to prove\n"+threatPredicate.toString());
+	  writer.println("Trying to prove\n"+threatPredicate.toString());
 	  InferenceResult backWardresult =  backwardChain.ask(folKb,threatPredicate);
-      writer.println(InferenceResultPrinter.printInferenceResult(backWardresult));
+	  writer.println(InferenceResultPrinter.printInferenceResult(backWardresult));
 	  return backWardresult.isTrue();
 	  
   }
-  public void checkFacts(String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions) {
+  /**
+   * checkFacts
+   * This method checks the FOL knowledge base for certain facts about the player's pieces.
+   * These facts can be any of the available predicates in the FOL Domain (see the domain object)
+ * @param pieceName THe name of the piece
+ * @param pos The position to move to
+ * @param fact The predicate fact
+ * @param actions All the actions available to the player
+ */
+public void checkFacts(String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions) {
 		Constant pieceVariable= new Constant(pieceName);
 		Constant posVariable = new Constant(pos);
 		List<Term> reachableTerms = new ArrayList<Term>();
@@ -312,7 +376,7 @@ public ChessStateImpl getStateImpl() {
 		InferenceResult backWardresult =  backwardChain.ask(folKb, reachablePredicate);
 	    ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
 	    Position position =  (Position) positionList.stream().filter(c -> c.getPositionName().contains(pos)).findAny().orElse(null);
-		if (backWardresult.isTrue()) {
+		if (backWardresult.isTrue() && naction != null) {
 			naction.getPossibleMove().setToPosition(position);
 			naction.setPreferredPosition(position);
 		}
@@ -322,7 +386,14 @@ public ChessStateImpl getStateImpl() {
 	  AgamePiece piece = action.getChessPiece();
 	  
   }
-  public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
+  /**
+   * checkMovenumber
+   * This method determine the first moves based on the queen gambit process
+   * After the first 4 moves, the default part of the case statement the determines the next move 
+ * @param actions
+ * @return
+ */
+public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 	  String pieceName = "";
 	  switch(noofMoves) {
 	  case 0:
@@ -349,12 +420,15 @@ public ChessStateImpl getStateImpl() {
 		  }else {
 			  String pname = "x";
 			  String bpos = "d5";
-			  pieceName = "WhitePawn3";
+//			  pieceName = "WhitePawn3";
 			  if (checkThreats(pname, bpos, OCCUPIES)) {
 				  pieceName = "WhitePawn3";
 				  String wpos = "d5";
 				  checkFacts(pieceName, wpos, PAWNATTACK, actions);
+			  }else {
+				  pieceName = checkOpponent("", actions);
 			  }
+			  
 		  }
 	  }
 
