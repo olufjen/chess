@@ -308,7 +308,7 @@ public boolean checkpieceFacts(String pieceName,String pos,String fact,ArrayList
   }
   /**
    * checkOpponent
-   * This method
+   * This methodgf
  * @param fact
  * @param actions
  * @return
