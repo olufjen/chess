@@ -306,7 +306,14 @@ public boolean checkpieceFacts(String pieceName,String pos,String fact,ArrayList
 		}
 		return false;
   }
-  public String checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
+  /**
+   * checkOpponent
+   * This method
+ * @param fact
+ * @param actions
+ * @return
+ */
+public String checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
 	  List<AgamePiece> pieces = opponent.getMygamePieces();
 	  List<AgamePiece> myPieces = myPlayer.getMygamePieces();
 	  for (AgamePiece piece:pieces) {
