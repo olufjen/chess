@@ -119,6 +119,9 @@ public class AChessProblemSolver {
   private Map<String,ActionSchema> actionSchemas = null;
   private Map<String,State>initStates = null;
   private Map<String,State>goalStates = null;
+  private Map<String,AgamePiece>possiblePieces = null; // Contains opponent pieces that can be taken
+  private Map<String,Position>possiblePositions = null; // Contains the positions of these opponent pieces.
+  
 
   public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, FOLKnowledgeBase folKb, FOLDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
 		super();
@@ -146,6 +149,9 @@ public class AChessProblemSolver {
 	    actionSchemas = new HashMap<String,ActionSchema>();
 	    initStates = new HashMap<String,State>(); 
 	    goalStates = new HashMap<String,State>();
+	    possiblePieces = new HashMap<String,AgamePiece>();
+	    possiblePositions = new HashMap<String,Position>();
+	    
   }
 
   public void setPredicatenames() {
@@ -308,7 +314,7 @@ public boolean checkpieceFacts(String pieceName,String pos,String fact,ArrayList
   }
   /**
    * checkOpponent
-   * This methodgf
+   * This method
  * @param fact
  * @param actions
  * @return
@@ -317,18 +323,31 @@ public String checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
 	  List<AgamePiece> pieces = opponent.getMygamePieces();
 	  List<AgamePiece> myPieces = myPlayer.getMygamePieces();
 	  for (AgamePiece piece:pieces) {
+		  String posName = "";
 		  Position position = piece.getHeldPosition();
-		  String posName = position.getPositionName();
+		  if (position == null) {
+			  writer.println("Position from myposition\n"+piece.toString());
+			  position = piece.getmyPosition();
+			  posName = position.getPositionName();
+		  }else {
+			  posName = position.getPositionName();
+			  writer.println("Position from heldposition\n"+piece.toString());
+		  }
 		  for (AgamePiece mypiece:myPieces) {
 			  String name = mypiece.getMyPiece().getOntlogyName();
 			  boolean reachable = checkpieceFacts(name,posName,REACHABLE,actions);
 			  boolean pieceProtected = checkpieceFacts(name,posName,PROTECTED,actions);
 			  boolean pawn = checkpieceFacts(name, posName, PAWNATTACK, actions);
 			  if (reachable && pieceProtected) {
-				  return name;
+				  possiblePieces.put(name, piece);
+				  possiblePositions.put(name, position);
+				  return name; // This return prevents further search
 			  }
-			  if (pawn)
-				  return name;
+			  if (pawn) {
+				  possiblePieces.put(name, piece);
+				  possiblePositions.put(name, position);
+				  return name; // This return prevents further search
+			  }
 		  }
 	  }
 	  return null;
@@ -396,7 +415,7 @@ public void checkFacts(String pieceName,String pos,String fact,ArrayList<ChessAc
   /**
    * checkMovenumber
    * This method determine the first moves based on the queen gambit process
-   * After the first 4 moves, the default part of the case statement the determines the next move 
+   * After the first 4 moves, the default part of the case statement then determines the next move 
  * @param actions
  * @return
  */
@@ -412,14 +431,17 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  checkFacts(pieceName, pos, REACHABLE, actions);
 		  break;
 	  case 4:
+		  checkOpponent("", actions);
 		  pieceName = "WhiteKnight1";
 		  break;
 	  case 6:
+		  checkOpponent("", actions);
 		  pieceName = "WhiteKnight2";
 		  String posx = "f3";
 		  checkFacts(pieceName, posx, REACHABLE, actions);
 		  break;
 	  default:
+		  checkOpponent("", actions);
 		  String blackpieceName = "BlackBishop1";
 		  String blackpos = "g4";
 		  if (checkThreats(blackpieceName, blackpos, OCCUPIES)) {
