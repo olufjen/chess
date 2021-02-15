@@ -43,6 +43,7 @@ import no.games.chess.ChessPieceType;
 import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
+import no.games.chess.planning.ChessProblem;
 import no.games.chess.planning.ChessSearchAlgorithm;
 
 /**
@@ -123,6 +124,8 @@ public class AChessAgent extends KBAgent {
 	private String playerName = "";
     private String OCCUPIES = "";
     private String PAWNATTACK ="";
+    private String BOARD;
+    private String PLAYER;
     
 	public AChessAgent(KnowledgeBase kb) {
 		super(kb);
@@ -198,6 +201,8 @@ public class AChessAgent extends KBAgent {
 			OCCUPIES = KnowledgeBuilder.getOCCUPIES();
 			PAWNMOVE = KnowledgeBuilder.getPAWNMOVE();
 			PAWNATTACK = KnowledgeBuilder.getPAWNATTACK();
+			BOARD = KnowledgeBuilder.getBOARD();
+			PLAYER = KnowledgeBuilder.getPLAYER();
 			chessDomain.addPredicate(PROTECTED);
 			chessDomain.addPredicate(MOVE);
 			chessDomain.addPredicate(ACTION);
@@ -215,6 +220,8 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(PIECETYPE);
 			chessDomain.addPredicate(PLAY);
 			chessDomain.addPredicate(PAWNATTACK);
+			chessDomain.addPredicate(PLAYER);
+			chessDomain.addPredicate(BOARD);
 	  }
 
 	/* (non-Javadoc)
@@ -385,11 +392,12 @@ public class AChessAgent extends KBAgent {
 			}
 
 		}
-		Problem problem = solver.planProblem((ArrayList<ChessActionImpl>) actions);
+		ChessProblem problem = solver.planProblem((ArrayList<ChessActionImpl>) actions);
 		chessSearch = new ChessSearchAlgorithm(fw,writer);
 //		List<List<ActionSchema>> solution = solver.solveProblem(localAction);
 		List<ActionSchema> actionSchemas = chessSearch.heirarchicalSearch(problem);
 		ActionSchema actionSchema = actionSchemas.get(0);
+
 		String nactionName = actionSchema.getName();
 		ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(nactionName)).findAny().orElse(null);
 		for (ChessActionImpl action:actions) {
@@ -544,6 +552,9 @@ public class AChessAgent extends KBAgent {
 		for (AgamePiece piece:pieces) {
 			if (piece.isActive()) {
 				List<Term> ownerTerms = new ArrayList<Term>();
+				List<Term> boardTerms = new ArrayList<Term>();
+				List<Term> playerTerms = new ArrayList<Term>();
+				
 				ownerTerms.add(ownerVariable);
 				String name = piece.getMyPiece().getOntlogyName(); 
 				String posName = piece.getmyPosition().getPositionName();
@@ -561,11 +572,17 @@ public class AChessAgent extends KBAgent {
 				List<Term> terms = new ArrayList<Term>();
 				terms.add(pieceVariable);
 				terms.add(posVariable);
+				boardTerms.add(posVariable);
+				playerTerms.add(ownerVariable);
 				ownerTerms.add(pieceVariable);
 				Predicate folPredicate = new Predicate(predicate,terms);
 				Predicate ownerPredicate = new Predicate(OWNER,ownerTerms);
+				Predicate playerPredicate = new Predicate(PLAYER,playerTerms);
+				Predicate boardPredicate = new Predicate(BOARD,boardTerms);
 				folKb.tell(folPredicate);
 				folKb.tell(ownerPredicate);
+				folKb.tell(boardPredicate);
+				folKb.tell(playerPredicate);
 			
 				List<Term> typeTerms = new ArrayList<Term>();
 				typeTerms.add(pieceVariable);

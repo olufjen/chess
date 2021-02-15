@@ -43,9 +43,23 @@ public class KnowledgeBuilder {
   private static String QUEEN =  "QUEEN";
   private static String OCCUPIES = "occupies";
   private static String PAWNATTACK = "PAWNATTACK";
+  private static String BOARD = "BOARD";
+  private static String PLAYER = "PLAYER";
   
   
-  public static String getPAWNATTACK() {
+  public static String getBOARD() {
+	return BOARD;
+}
+public static void setBOARD(String bOARD) {
+	BOARD = bOARD;
+}
+public static String getPLAYER() {
+	return PLAYER;
+}
+public static void setPLAYER(String pLAYER) {
+	PLAYER = pLAYER;
+}
+public static String getPAWNATTACK() {
 	return PAWNATTACK;
 }
 public static void setPAWNATTACK(String pAWNATTACK) {
