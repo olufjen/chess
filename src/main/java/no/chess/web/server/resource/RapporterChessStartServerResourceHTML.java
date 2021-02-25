@@ -258,10 +258,12 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	     ChessBoard chessBoard = new ChessBoard(fileName);
 	     String[] legalMoves = {"a3","a4"};
 	     String fen = chessBoard.createFen();
+	     String popup = "nopopup";
 //	     System.out.println(fen);
 /*	     moves = chessBoard.getMoves();
 	     blackMoves = chessBoard.getBlackMoves();*/
 	     dataModel.put(fenPosid,fen);
+	     dataModel.put(popupId, popup);
 	     establishRules(chessBoard);
 	     chessMoves = chessBoard.getChessMoves();
 	     sessionAdmin.setSessionObject(request,chessBoard, chessBoardsession);
@@ -313,13 +315,15 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	TemplateRepresentation  templateRep = null;
  	    Map<String, Object> dataModel = new HashMap<String, Object>();
  	    Request request = getRequest();
-	    
+ 	   boolean noMove = false;
     	if(form == null){
     		invalidateSessionobjects();
     	}
 /*	     String[] legalMoves = {"a3","a4"};
 	     ChessPiece whitePawn1 = new ChessPiece(newPos,"w","wP",legalMoves);
 	     whitePawn1.setValue(1);*/
+		  String popup = "nopopup";
+	      	dataModel.put(popupId, popup);
     	String[] legalMoves = {"",""};
     	ChessPiece chessPiece = null;
     	ChessBoard chessBoard = (ChessBoard)sessionAdmin.getSessionObject(request, chessBoardsession);
@@ -356,7 +360,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-    		
+
          	String fen = chessBoard.createFen();
          	System.out.println(fen);
          	dataModel.put(fenPosid,fen);
@@ -365,6 +369,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
          	SimpleScalar chessPosition = new SimpleScalar(position);
          	dataModel.put(displayKey, chessPosition);
          	dataModel.put(pieceId,pieceMoved );
+   
          	establishRules(chessBoard);
          	//		dataModel.put(pieceId,simple );
          	dataModel.put(rulesKey,chessRules);
@@ -681,28 +686,40 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	if (newPos == null || newPos.equals("")){
     		newPos = "a2";
     	}
+    	
+    	String moveText = "Proper move";
+    	if (oldPos.equals(newPos)) { // A no move
+    		noMove = true;
+    		moveText = "No move";
+    	}
 //    	chessPiece.setName(piece);
 /*
  * The position and piece entered by user
  * corresponds to position.positionName and piece.name !!! 
  */
-    	chessPiece = chessBoard.findPiece(oldPos,piece);
+
+   	    String fen = chessBoard.createFen();
+   	    chessPiece = chessBoard.findPiece(oldPos,piece);
+   	   	AgamePiece movedPiece = chessPiece.getMyPiece();
+   	    System.out.println("Piece name "+chessPiece.getOntlogyName());
+   	    System.out.println(fen);
+   	    if (noMove) {
+   	    	System.out.println(movedPiece.toString());
+   	    }
+   	    
+   	    if (game != null && !noMove) {
+
 //       	chessPiece.setPosition(newPos);
        	Position oldPosition = chessBoard.findPostion(oldPos);
        	Position newPosition = chessBoard.findPostion(newPos);
        	chessBoard.determineMove(oldPos, newPos, piece); // Determine if move is legal
-    	AgamePiece movedPiece = chessPiece.getMyPiece();
+ 
 /*
  * Keeps track of move numbers and the number of moves		
  */
  		movedPiece.setNofMoves(0);
 
     	chessPiece.getMyPiece().setMyPosition(newPosition);
-   	    String fen = chessBoard.createFen();
-   	    System.out.println("Piece name "+chessPiece.getOntlogyName());
-   	    System.out.println(fen);
-
-   	    if (game != null) {
  /*
   *  New 16.04.20 similar to proposemove
   */
@@ -784,8 +801,10 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
         Representation pasientkomplikasjonFtl = clres2.get();
         templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
                 MediaType.TEXT_HTML);	
-
-
+        String page = "../chess/test.html";
+/*         if (noMove) {
+        	redirectTemporary(page);
+        }*/
 
     	return templateRep;
     }

@@ -98,12 +98,12 @@ public class RapporterGameServerResourceHTML extends ChessServerResource {
 	     Request request = getRequest();
 	     Map<String, Object> dataModel = new HashMap<String, Object>();
 	     String meldingsText = " ";
-	     SimpleScalar simple = new SimpleScalar(piece);
+	/*     SimpleScalar simple = new SimpleScalar(piece);
 	     SimpleScalar movedTo = new SimpleScalar(newPos);
 	     SimpleScalar chessPosition = new SimpleScalar(position);
 		 dataModel.put(pieceId,simple );
 
-		 dataModel.put(displayKey, chessPosition);
+		 dataModel.put(displayKey, chessPosition);*/
 //		 SimpleScalar pwd = new SimpleScalar(passordCheck);
 //		 dataModel.put(displayPassord,pwd);
 	     LocalReference pakke = LocalReference.createClapReference(LocalReference.CLAP_CLASS,
@@ -112,7 +112,7 @@ public class RapporterGameServerResourceHTML extends ChessServerResource {
 	     LocalReference localUri = new LocalReference(reference);
 	
 // Denne client resource forholder seg til src/main/resource katalogen !!!	
-	     ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/game.html"));
+	     ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/test.html"));
 
 	        Representation pasientkomplikasjonFtl = clres2.get();
 
@@ -139,7 +139,7 @@ public class RapporterGameServerResourceHTML extends ChessServerResource {
     	TemplateRepresentation  templateRep = null;
  	    Map<String, Object> dataModel = new HashMap<String, Object>();
  	    Request request = getRequest();
-	    
+/*	    
     	if(form == null){
     		invalidateSessionobjects();
     	}
@@ -161,8 +161,8 @@ public class RapporterGameServerResourceHTML extends ChessServerResource {
 		 dataModel.put(displayKey, chessPosition);
    	 	dataModel.put(pieceId,pieceMoved );
 
-		Parameter formValue = form.getFirst("formValue"); // Bruker oppgir epost og passord
-	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/game.html"));
+		Parameter formValue = form.getFirst("formValue"); // 
+*/	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/test.html"));
         Representation pasientkomplikasjonFtl = clres2.get();
         templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
                 MediaType.TEXT_HTML);	

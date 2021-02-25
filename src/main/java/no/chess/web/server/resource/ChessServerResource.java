@@ -32,6 +32,7 @@ public class ChessServerResource extends SessionServerResource {
 	protected String oldPos = "xy";
 	protected String pawnId = "whitepawn1";
 	protected String fenPosid = "fenpos";
+	protected String popupId ="popup";
 	protected String chessBoardsession = "chessboard";
 	protected String gameboardSession = "gameboard";
 	
