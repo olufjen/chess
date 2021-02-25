@@ -11,16 +11,16 @@
     <link href="/chess_web/resources/css/main.css" rel="stylesheet">
     <link href="/chess_web/resources/css/chessboard.css" rel="stylesheet">
     <link href="/chess_web/resources/css/foundation-3.2.5.min.css" rel="stylesheet">
-   <link href="/chess_web/resources/css/normalize-2.1.2.min.css" rel="stylesheet">    
-   <link href="/chess_web/resources/css/site.css" rel="stylesheet">   
-   <link href="/chess_web/resources/css/site2.css" rel="stylesheet">   
+   <link href="/chess_web/resources/css/normalize-2.1.2.min.css" rel="stylesheet">
+   <link href="/chess_web/resources/css/site.css" rel="stylesheet">
+   <link href="/chess_web/resources/css/site2.css" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
   <link href="/chess_web/resources/css/biovigilans.css" rel="stylesheet">
-  
- 
+
+
   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" /><!-- Viktig for dato !! -->
-    
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script> <!-- Viktig for dato !! -->
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.14.0/jquery.validate.min.js"></script>
     <script src="https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.0.6-development-only.js"></script>
@@ -61,13 +61,13 @@
 <body>
  <header>
     <div class="container">
-      <figure title="Version 1.2 May 2019 " class="main-logo">        
-        <img alt="Logo Basis" src="/chess_web/resources/css/firmalogo.jpg">    
-   
+      <figure title="Version 1.2 May 2019 " class="main-logo">
+        <img alt="Logo Basis" src="/chess_web/resources/css/firmalogo.jpg">
+
        </figure>
-    </div>    
+    </div>
   </header>
-<div class="container">  
+<div class="container">
 <nav id="nav">
     <ul id="navigation">
         <li><a href="javascript:void(0);" onclick="formSubmit('startBtnx');" title="Creates the chess start position" class="first">Home</a></li>
@@ -78,7 +78,7 @@
                   <li><a href="javascript:void(0);" onclick="formSubmit('printgame');" title="Prints the game shown in algebraic notation">Print game</a></li>
                   <li><a href="javascript:void(0);" onclick="formSubmit('eightqueen');" title="Solves the Eight queen problem">The Eight queen problem start position</a></li>
                   <li><a href="javascript:void(0);" onclick="formSubmit('playgame');" title="Start a game of chess from given startposition">Play a game of chess</a></li>
-   
+
             </ul>
         </li>
         <li><a href="#">Ontology &raquo;</a>
@@ -123,9 +123,9 @@
 	var clickbutton = "#"+button;
 	console.log( "Form submit "+clickbutton );
  $(clickbutton).click();
-}; 
+};
 //--------------------
-//Egne variable 
+//Egne variable
 //-------------------
 var  MOVE_MADE = false;
 
@@ -139,8 +139,14 @@ function isTouchDevice() {
 	};
 
 	$(document).ready(function() {
-
+/* 	 var framesrc = 'test.html';
+	 document.getElementById('testframe').setAttribute('src', framesrc); */
+     console.log( "start ready!" );
+/*      console.log("popup value "+"${popup}"); */
+/*      console.log("frame "+framesrc); */
+	 console.log( document.getElementById("posisjon").value );
 	 if (document.getElementById("posisjon").value !== 'pos'){
+     console.log( "Starter board 2 formsubmit!" );
 		 MOVE_MADE = true;
 	 }
 
@@ -149,10 +155,10 @@ function isTouchDevice() {
 			    dropOffBoard: 'trash',
 				position:
 					"${fenpos}"
-				 
-			};	
 
-// board2 is a window object named Chessboard
+			};
+
+// board2 is a window object named Chessboard - må innehold en onload
 	  var board2 = ChessBoard('board2', cfg);
 /* 	  var board2 = ChessBoard('board2', {
 	    draggable: true,
@@ -178,7 +184,7 @@ function isTouchDevice() {
 	    $('#start').removeClass('hover-effect');
 	  }
 	  console.log(board2);
-	  console.log( "end ready!" );
+	  console.log( "end ready!!!" );
  	});
 </script>
 <div class="body-width">
@@ -191,10 +197,10 @@ function isTouchDevice() {
  <button type="submit" id="qBtnx" name="qBtnx" class="btn btn-primary" value="query">Query ontology</button>
 </div> -->
 <div class="row" style="background-color:lightgray;">
- 
+
 <div class="col-sm-8">
 <!-- <div id="board" style="width: 400px"></div> -->
- 
+
   <div id="board2" style="width: 400px"></div>
 <!-- <input type="button" id="startBtn" value="Start" /> -->
   <button type="submit" id="startBtnx" name="startBtnx" class="btn btn-primary" value="Startx" style="display: none">Restart initial position</button>
@@ -216,25 +222,27 @@ function isTouchDevice() {
   		<tr><th>Rule label</th><th>Rule description</th></tr>
  		<#list rules as rule>
   			<tr id="labels"><td>"${rule.exeLabels}"</td><td>"${rule.exeRules}"</td></tr>
-		</#list>		
-  		
- 	</table>  
+		</#list>
+
+ 	</table>
 </div>
 </div>
 
  <div class="col-sm-4" style="background-color:Aquamarine;">
+ <br>
 	<h4>Game File</h4><!-- This only reads local client files !! -->
  	<input type="file" id="fileinput" name="fileinput"><br><!--  onchange="formSubmit('fileselect');" This must change to files available on server -->
  	<h4>Ontlogy File</h4><!-- This only reads local client files !! -->
 	<input type="file" id="ontologyinput" name="ontologyinput" onchange="formSubmit('ontselect');"><br><!--  onchange="formSubmit('fileselect');" This must change to files available on server -->
- 
+
        <table class="table table-hover">
   		<tr><th>Moves</th></tr>
  		<#list moves as move>
   			<tr id="moves"><td>"${move.moveNr}"<td>"${move.whiteMove}"</td><td>"${move.blackMove}"</td></tr>
-		</#list>		
+		</#list>
  	</table>
  </div>
+<!--  <iframe src="test.html" name="iframe_a" title="Iframe Example" id="testframe"></iframe> -->
 </div>
 
 </div>
@@ -247,5 +255,6 @@ function isTouchDevice() {
 <!--<script src="js/bootstrap.min.js"></script>-->
 </form>
 </div> <!--slutt container-->
+
 </body>
 </html>
