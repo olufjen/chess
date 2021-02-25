@@ -119,4 +119,8 @@
     <bean name="/chess/game.html" id="rapportergameServerResource" autowire="byName" scope="prototype"
              class="no.chess.web.server.resource.RapporterGameServerResourceHTML"> 
   </bean>
+ <!--   <bean name="/chess/test.html" id="rapportertestServerResource" autowire="byName" scope="prototype"
+             class="no.chess.web.server.resource.RapporterGameServerResourceHTML"> 
+             <property name="sessionAdmin" ref="sessionAdmin"></property>
+  </bean> -->
 </beans>
