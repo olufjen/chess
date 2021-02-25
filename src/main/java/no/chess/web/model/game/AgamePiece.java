@@ -41,6 +41,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
 	private HashMap<String,Position> reacablePositions;
 	private HashMap<String,Position> attackPositions; // Are only valid for type pawn
+	private HashMap<String,Position> castlePositions; // Are only valid for king and rook
 	private ArrayList<Position> newlistPositions; // Refactored from newPositions olj 09.11.20 IUt contains all reachable positions
 	private List<Position> removedPositions = null;
 	private List<Position> preferredPositions;
@@ -96,6 +97,14 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 
 	public HashMap<String, Position> getOntologyPositions() {
 		return ontologyPositions;
+	}
+
+	public HashMap<String, Position> getCastlePositions() {
+		return castlePositions;
+	}
+
+	public void setCastlePositions(HashMap<String, Position> castlePositions) {
+		this.castlePositions = castlePositions;
 	}
 
 	/**
@@ -282,11 +291,16 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				myType = pieceType.KING;
 				chessType = new Aking(myPosition,myPiece);
 				gamePiece = (GamePiece) chessType;
+				Aking king = (Aking) chessType;
 				reacablePositions = gamePiece.getNewPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
 //				reacablePositions = chessType.getNewPositions();
 				newlistPositions = new ArrayList(reacablePositions.values());
+				if (nofMoves == 0) {
+					king.makeCastlemove();
+					castlePositions = king.getCastlePositions();
+				}
 /*				for (Position pos:newlistPositions) {
 					System.out.println("King positions: "+pos.getPositionName() + " " + pos.getPositionColor());
 				}*/
@@ -296,9 +310,14 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				chessType = new ARook(myPosition,myPiece);
 				String pieceColorR = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
+				ARook rook = (ARook) chessType;
 				reacablePositions = gamePiece.getNewPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
+				if (nofMoves == 0) {
+					rook.makeCastlemove();
+					castlePositions = rook.getCastlePositions();
+				}				
 //				reacablePositions = chessType.getNewPositions();
 				newlistPositions = new ArrayList(reacablePositions.values());
 /*				for (Position pos:newlistPositions) {
@@ -476,7 +495,15 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		for (Position pos:newlistPositions) {
 			result.append("Position: "+pos.getPositionName() + " " + pos.getPositionColor() + " X, Y "+pos.getXyloc().toString() + "\n");
 
-		}			
+		}
+		result.append("Removed positions\n");
+		if (removedPositions != null && !removedPositions.isEmpty()) {
+			for (Position pos:removedPositions) {
+				result.append("Position: "+pos.getPositionName() + " " + pos.getPositionColor() + " X, Y "+pos.getXyloc().toString() + "\n");
+
+			}	
+		}
+
 		return result.toString();
 	}
 

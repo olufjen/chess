@@ -8,6 +8,7 @@ import aima.core.logic.propositional.parsing.ast.Sentence;
 import no.chess.web.model.Position;
 import no.games.chess.ChessAction;
 import no.games.chess.ChessFunctions;
+import no.games.chess.ChessPieceType;
 
 /**
  * ChessActionImpl
@@ -297,6 +298,18 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		}
 		availablePositions = new ArrayList(positions.values());
 		positionRemoved = new ArrayList();
+		List<Position> castlePositions = null;
+		Position castlePosition = null;
+		ChessPieceType pieceType = chessPiece.getChessType();
+		if (pieceType instanceof Aking) {
+			castlePositions = new ArrayList(chessPiece.getCastlePositions().values());
+			castlePosition = castlePositions.get(0);
+		}
+		if (pieceType instanceof ARook) {
+			castlePositions = new ArrayList(chessPiece.getCastlePositions().values());
+			castlePosition = castlePositions.get(0);
+		}
+
 		List<AgamePiece> pieces = player.getMygamePieces(); 
 		for (Position position:availablePositions) {
 			for (AgamePiece otherPiece:pieces) {
@@ -306,11 +319,16 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 					if (pos != null) {
 						if (pos.isInUse()) { // OBS: Added 14.05.20 Are never active !! ??
 							if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
-								positionRemoved.add(position);
+								String name = otherPiece.getMyPosition().getPositionName();
+								Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
+								if (posinTable == null)
+									positionRemoved.add(position);
 							}
 						}else {
 							 System.out.println("??????? piece has position that is not in use ?????????????? "+otherPiece.toString()+"\n Posisjon: "+pos.toString()+"\n"+this.toString());
 						}
+						if (castlePosition != null)
+							checkCastling(pos, castlePositions);
 					}
 				}
 			}
@@ -319,6 +337,17 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		}
 		return availablePositions;
 		
+	}
+	private void checkCastling(Position otherPos,List<Position> castlePositions) {
+		for (Position castlePos:castlePositions) {
+			if (otherPos.getPositionName().equals(castlePos.getPositionName())) {
+				String name = otherPos.getPositionName();
+				Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
+				if (posinTable == null)
+					positionRemoved.add(castlePos);
+			}
+		}
+
 	}
 	/**
 	 * getActions

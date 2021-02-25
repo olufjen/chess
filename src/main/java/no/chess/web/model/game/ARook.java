@@ -28,15 +28,23 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	private String[][] reachablepiecePosition;
 	HashMap<String,Position> newPositions;
 	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
+	private int[][] castlesqueres;
+	private String[][] castlepositions;
+	private HashMap<String,Position> castlePositions;
 	private int size = 8;
 	private String color;
 	private ChessPiece myPiece;
 	private Position myPosition;
+	private int castlex = 3;
+	private int castley = 0;
+	private int castlexx = 5;
 	
 	public ARook() {
 		super();
 		reachablesqueres = new int[size][size];
 		reachablepiecePosition = new String[size][size];
+		castlesqueres = new int[size][size];
+		castlepositions = new String[size][size];
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
 				reachablesqueres[i][j] = 0;
@@ -45,6 +53,16 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
 				reachablepiecePosition[i][j] = null;
+			}
+		}
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				castlesqueres[i][j] = 0;
+			}
+		}
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				castlepositions[i][j] = null;
 			}
 		}
 	}
@@ -52,14 +70,19 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	public ARook(Position myPosition, ChessPiece myPiece) {
 		super();
 		color = myPiece.getColor();
-		if (color.equals("w"))
+		if (color.equals("w")) {
 			localColor = pieceColor.WHITE;
-		else
+		}
+		else {
 			localColor = pieceColor.BLACK;
+			castley = 7;
+		}
 		this.myPiece = myPiece;
 		this.myPosition = myPosition;
 		reachablesqueres = new int[size][size];
 		reachablepiecePosition = new String[size][size];
+		castlesqueres = new int[size][size];
+		castlepositions = new String[size][size];
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
 				reachablesqueres[i][j] = 0;
@@ -70,6 +93,18 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				castlesqueres[i][j] = 0;
+			}
+		}
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				castlepositions[i][j] = null;
+			}
+		}
+		if (castlePositions == null)
+			castlePositions = new HashMap();
 		getLegalmoves(myPosition);
 	}
 
@@ -77,6 +112,8 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		super();
 		reachablesqueres = new int[size][size];
 		reachablepiecePosition = new String[size][size];
+		castlesqueres = new int[size][size];
+		castlepositions = new String[size][size];
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
 				reachablesqueres[i][j] = 0;
@@ -87,6 +124,18 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				castlesqueres[i][j] = 0;
+			}
+		}
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				castlepositions[i][j] = null;
+			}
+		}
+		if (castlePositions == null)
+			castlePositions = new HashMap();
 		getLegalmoves(myPosition);
 	}
 
@@ -164,7 +213,29 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		this.reachablepiecePosition = reachablepiecePosition;
 	}
 
+	public HashMap<String, Position> getCastlePositions() {
+		return castlePositions;
+	}
 
+	public void setCastlePositions(HashMap<String, Position> castlePositions) {
+		this.castlePositions = castlePositions;
+	}
+
+	/**
+	 * makeCastlemove
+	 * This method creates positions for the castle move for the King
+	 */
+	public void makeCastlemove() {
+		castlesqueres[castlex][castley] = 1;
+		castlepositions[castlex][castley] = "K";
+		XYLocation newloc = new XYLocation(castlex,castley);
+		createPosition(castlePositions, newloc);
+		castlesqueres[castlexx][castley] = 1;
+		castlepositions[castlexx][castley] = "K";
+		XYLocation newlocx = new XYLocation(castlexx,castley);
+		createPosition(castlePositions, newlocx);
+		createontPosition(castlePositions);
+	}
 
 	/**
 	 * getLegalmoves

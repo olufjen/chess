@@ -23,7 +23,7 @@ import no.games.chess.ChessProcessor;
  * It is created and called when the chess action is created and from The active player's calculatepreferredPosition method.
  * It is also created and used when an action is analyzed and found not to contain any preferred position (the action.getpreferredPosition() method).
  * Then The active player's calculatepreferredPosition method is called, to determine a preferred position.
- * This processor also removes positions from available positions of
+ * This processor also removes additional positions from available positions of
  * bishop,rook, and queen when positions are occupied by friendly pieces.
  * 
  * @author oluf
@@ -194,12 +194,17 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			for (Position temp:tempList) {
 				String posName = temp.getPositionName();
 //				logText.append(posName+"\n");
-				writer.println("Added removed position "+temp.toString()+" For "+pName);
-				removedPositions.add(temp);
+				Position posinTable =  (Position) removedPositions.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null); // Do not put position in removed table if it is there already
+				if (posinTable == null) {
+					writer.println("Added removed position "+temp.toString()+" For "+name);
+					removedPositions.add(temp);
+				}
+	
 			}
 //			tempList = null;
-			p.setRemovedPositions(removedPositions);
+//			p.setRemovedPositions(removedPositions); Must always set the removed positions for all pieces. olj 24.02.21
 		}
+		p.setRemovedPositions(removedPositions);
 /*		if (kn != null) {
 			
 		}*/
@@ -208,7 +213,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			for (Position removedPos:removedPositions) {
 				if (removedPos.getPositionName().equals(availablePos.getPositionName())) {
 					available = false;
-					writer.println("Removed position "+removedPos.toString());
+//					writer.println("Removed position "+removedPos.toString());
 					break;
 				}
 

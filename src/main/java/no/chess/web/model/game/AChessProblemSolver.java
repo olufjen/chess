@@ -503,6 +503,9 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  }
 			  break;
 		  }
+		  writer.println("No pieces and positions ");
+		  pieceName = "WhitePawn1";
+		  break;
 	  }
 	  return pieceName;
   }

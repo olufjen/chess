@@ -122,7 +122,7 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 		else if (blackPlayer.isActive())
 			playerTomove = blackPlayer;
 		movements = new ArrayList();
-		actions = getActions();
+		actions = getActions();// Returns a list of available actions for this state
 		PlayGame gamer = game.getGamePlayer();
 		utilityStack = new Stack();
 		int pn = 0;

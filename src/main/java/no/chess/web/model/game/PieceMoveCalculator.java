@@ -19,10 +19,12 @@ import no.games.chess.MoveRule;
 /**
  * PieceMoveCalculator
  * This is an implementation of the functional interface MoveCalculator
- * The PieceMoveCalculator returns all possible positions avaiable to the piece.
+ * The PieceMoveCalculator returns all possible positions available to the piece.
  * Restrictions are given by positions occupied by other friendly pieces.
  * It is created and called from the PreferredMove calculator.
  * Based on piece type this class calculates available positions for the piece
+ * @since ??
+ * This class is not in use.
  * @author oluf
  *
  */
