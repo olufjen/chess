@@ -89,7 +89,8 @@ public class PlayGame {
 		availablePositions = new HashMap();
 		availablePositionlist = new ArrayList();
 		game = new AchessGame(8,positions,myFrontBoard);
-		game.setGamePlayer(this);
+		game.setGamePlayer(this); // Creates the initial state. This is the only place where the ChessState object is created
+// The ChessState object also implements the Percept interface		
 		currentState = game.getInitialState();
 		movements = new ArrayList<ApieceMove>();
 		game.setMovements(movements);
@@ -254,11 +255,15 @@ public class PlayGame {
  * All the moves that are made is a result of the getResult method of the game object.
  * 13.11.2019 : makeDecision must not return an action that has an inactive piece. 
  */
-		ChessAction newAction = search.makeDecision(currentState);
-		ChessActionImpl localAction = (ChessActionImpl) newAction;
+		
+/*		ChessAction newAction = search.makeDecision(currentState);
+		ChessActionImpl localAction = (ChessActionImpl) newAction;*/// Call to makeDecision removed 04.03.21 
+		
+		
 /*
  * For every move a new knowledge base and agent must be created		
  */
+		ChessActionImpl localAction = null;
 		kb = null;
 		kb = new ChessKnowledgeBase();
 		kb.setStateImpl(stateImpl); // The knowledge base receives the percepts of the the game which is the state of the game
@@ -267,8 +272,10 @@ public class PlayGame {
 //		chessAgent.execute(currentState); // Creates new knowledge for the knowledge base
 		localAction = (ChessActionImpl) chessAgent.execute(currentState); // Creates new knowledge for the knowledge base and determines the next move.
 // The next move is in the returned action.		
-		if (localAction != newAction)
-			newAction = localAction;
+		
+/*		if (localAction != newAction)
+			newAction = localAction;*/
+		
 		ApieceMove chosenMove = localAction.getPossibleMove();
 
 		Position movPos = chosenMove.getToPosition();
@@ -278,8 +285,9 @@ public class PlayGame {
 		if (playerTomove.getPlayerName() == playerTomove.getBlackPlayer()) {
 			writer.println("Wrong player "+playerTomove.getPlayerName());
 		}
-		currentState.setAction(newAction); // Set state action to action to be performed
-
+		currentState.setAction(localAction);
+/*		currentState.setAction(newAction); // Set state action to action to be performed
+*/
 //		String a = newAction.toString();
 /*		List<ChessAction> actions = currentState.getActions();
 		ChessAction action = actions.get(0);*/
@@ -311,7 +319,8 @@ public class PlayGame {
 		}*/
 		stateImpl.setChosenMove(chosenMove);
 	
-		AgamePiece piece = (AgamePiece) newAction.getChessPiece();
+//		AgamePiece piece = (AgamePiece) newAction.getChessPiece();
+		AgamePiece piece = (AgamePiece) localAction.getChessPiece();
 /*
  * Keeps track of move numbers and the number of moves		
  */
@@ -324,7 +333,8 @@ public class PlayGame {
 		if (piece.isActive()) {
 			writer.println("Passive piece set active"+ piece.toString() );
 		}		
-		Position position = (Position) newAction.getPreferredPosition();
+//		Position position = (Position) newAction.getPreferredPosition();
+		Position position = (Position) localAction.getPreferredPosition();
 		if (position != movPos) {
 			writer.println("Preferred position different from move position "+ position.toString()+" Move Position: "+movPos.toString() );
 			
@@ -345,7 +355,7 @@ public class PlayGame {
 /*
  * At this call the holds the correct from position !!!!		
  */
-		writer.println("Proposemove\n"+piece.toString()+"Action\n"+newAction.toString());
+		writer.println("Proposemove\n"+piece.toString()+"Action\n"+localAction.toString());
 /*
  * The chosen action must be verified. OLJ 28.02.20:
  * This must be done as follows:
@@ -420,7 +430,7 @@ public class PlayGame {
 	    writer.println("After call to board.determineMove \n"+game.getBoardPic()); // OK
 
 //		piece.setHeldPosition(position); // New position to the position to restore to removed olj 10.07.20 !!!
-		position.setUsedandRemoved(piece.getMyPiece()); // Sets chesspiece to new position and also sets in the removed list
+		position.setUsedandRemoved(piece.getMyPiece()); // THe preferred position: Sets chesspiece to new position and also sets it in the removed list
 //		myFrontBoard.determineMove(oldPos, newPos, pieceName); // New fen is created based on this
 //		Position newPosition = myFrontBoard.findPostion(newPos);
 	

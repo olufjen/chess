@@ -327,7 +327,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	String[] legalMoves = {"",""};
     	ChessPiece chessPiece = null;
     	ChessBoard chessBoard = (ChessBoard)sessionAdmin.getSessionObject(request, chessBoardsession);
-    	PlayGame game = (PlayGame)sessionAdmin.getSessionObject(request, gameboardSession);
+    	PlayGame game = (PlayGame)sessionAdmin.getSessionObject(request, gameboardSession); // If the game object is null, then the user has not chosen to play a game yet.
 	    moves = chessBoard.getMoves();
 	    blackMoves = chessBoard.getBlackMoves();
 	    chessMoves = chessBoard.getChessMoves();
@@ -775,7 +775,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    	game.getGame().createNewboard();
    	    	System.out.println(game.getGame().getBoardPic());
 //   	    	game.getGame().setChosenPlayer(); // This method is only used at startup OLJ 20.04.20
-   	    	game.proposeMove();
+   	    	game.proposeMove(); //The game object proposes a move
      	    fen = chessBoard.createFen();
 //   	    System.out.println("Piece name "+chessPiece.getOntlogyName());
      	    System.out.println(fen);

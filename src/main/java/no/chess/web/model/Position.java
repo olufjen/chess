@@ -505,7 +505,7 @@ public class Position extends ParentModel {
 		String gp = "Gamenone";
 		if (usedBy != null) {
 			p = usedBy.toString();
-			gp = usedBy.getMyPiece().toString();
+			gp = usedBy.getMyPiece().getName();
 		}
 		
 		builder.append(positionName+ " Color "+positionColor+" Piece  "+p+" "+inUse+" gamepiece "+gp+"\n");
