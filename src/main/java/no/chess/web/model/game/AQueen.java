@@ -26,7 +26,8 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 	private pieceColor localColor;
 	private int[][] reachablesqueres;
 	private String[][] reachablepiecePosition;
-	HashMap<String,Position> newPositions;
+	private HashMap<String,Position> newPositions;
+	private HashMap<String,Position> bishopPositions;
 	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
 	private int size = 8;
 	private String color;
@@ -140,6 +141,18 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 		}
 	}
 	
+	public HashMap<String, Position> getBishopPositions() {
+		return bishopPositions;
+	}
+
+	public void setBishopPositions(HashMap<String, Position> bishopPositions) {
+		this.bishopPositions = bishopPositions;
+	}
+
+	public void setNewPositions(HashMap<String, Position> newPositions) {
+		this.newPositions = newPositions;
+	}
+
 	public pieceType getLocalType() {
 		return localType;
 	}
@@ -182,6 +195,8 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 		
 		if (newPositions == null)
 			newPositions = new HashMap();
+		if (bishopPositions == null)
+			bishopPositions = new HashMap();
 		for (XYLocation xloc:locations) {
 			int x = xloc.getXCoOrdinate();
 			int y = xloc.getYCoOrdinate();
@@ -194,7 +209,7 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 			int y = xloc.getYCoOrdinate();
 			reachablesqueres[x][y] = 1;
 			reachablepiecePosition[x][y] = "P";
-			createPosition(newPositions,xloc);
+			createPosition(bishopPositions,xloc);
 		}		
 		
 /*		
@@ -309,12 +324,14 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 	@Override
 	public void produceLegalmoves(Position position) {
 		newPositions.clear();
+		bishopPositions.clear();
 		myPosition = position;
 		getLegalmoves(position);
 		createontPosition(newPositions);
+		createontPosition(bishopPositions);
 	}
 	/**
-	 * createPosition
+	 * createontPosition
 	 * This method moves any ontologypositions to the list of positions reachable by this piece
 	 * It is called from the determinPieceType method and the produceLegalmove method
 	 * @param newPositions a HashMap of positions calculated by the piecetype

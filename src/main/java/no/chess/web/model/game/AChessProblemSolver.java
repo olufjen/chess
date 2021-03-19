@@ -38,6 +38,7 @@ import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
 import no.games.chess.ChessPieceType;
 import no.games.chess.AbstractGamePiece.pieceType;
+import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
 import no.games.chess.planning.ChessProblem;
@@ -124,6 +125,8 @@ public class AChessProblemSolver {
   private Map<String,State>goalStates = null;
   private Map<String,AgamePiece>possiblePieces = null; // Contains opponent pieces that can be taken
   private Map<String,Position>possiblePositions = null; // Contains the positions of these opponent pieces.
+  private AgamePiece opponentCatch = null;
+  private Position opponentcatchPosition = null;
   
 
   public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, FOLKnowledgeBase folKb, FOLDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
@@ -291,7 +294,16 @@ public ChessStateImpl getStateImpl() {
 		this.opponent = opponent;
   }
 
-  public String checkPossiblePieces() {
+  /**
+   * checkPossiblePieces
+   * This method checks the two Maps possiblePieces and possiblePositions
+   * to see if there are opponent pieces that can be taken
+   * The two Maps are filled by the call to the checkOpponent method
+ * @return
+ * The name of the piece that can take this opponent piece
+ * It only returns a name if the opponent piece has a value greater or equal to the value of the active piece
+ */
+public String checkPossiblePieces() {
 	  if (!possiblePieces.isEmpty() && !possiblePositions.isEmpty()) {
 		  List<AgamePiece> myPieces = myPlayer.getMygamePieces();
 		  for (AgamePiece piece:myPieces) {
@@ -299,12 +311,16 @@ public ChessStateImpl getStateImpl() {
 			  int value = piece.getMyPiece().getValue();
 			  AgamePiece opponentPiece = possiblePieces.get(name);
 			  if (opponentPiece != null) {
+				  writer.println("Checking possible pieces "+" Found by "+name+"\n"+opponentPiece.toString());
 				  int oppValue = opponentPiece.getMyPiece().getValue();
 				  Position opponentPos = opponentPiece.getHeldPosition();
+				  opponentCatch = opponentPiece;
 				  if (opponentPos == null) {
 					  opponentPos = opponentPiece.getMyPosition();
 				  }
+				  opponentcatchPosition = opponentPos;
 				  if (oppValue >= value) {
+					  writer.println("Returns with piece "+name);
 					 return name; 
 				  }
 			  }
@@ -323,27 +339,61 @@ public ChessStateImpl getStateImpl() {
  * @param fact The predicate fact
  * @param actions All the actions available to the player
  */
-public boolean checkpieceFacts(String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions) {
+public boolean checkpieceFacts(String pieceVar,String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions) {
+		Variable pieceVarx = null;
+		if (pieceVar.equals("x"))
+			pieceVarx = new Variable(pieceVar);
 		Constant pieceVariable= new Constant(pieceName);
 		Constant posVariable = new Constant(pos);
 		List<Term> reachableTerms = new ArrayList<Term>();
-		reachableTerms.add(pieceVariable);
+		if (pieceVarx != null) {
+			reachableTerms.add(pieceVarx);
+		}else
+			reachableTerms.add(pieceVariable);
 		reachableTerms.add(posVariable);
 		Predicate reachablePredicate = new Predicate(fact,reachableTerms);
+		writer.println("PieceFacts Trying to prove\n"+reachablePredicate.toString());
 		InferenceResult backWardresult =  backwardChain.ask(folKb, reachablePredicate);
+		BCGamesAskHandler handler = (BCGamesAskHandler)backWardresult;
+		HashMap vars = null;
+		Term usedTerm = null;
+		String termName = null;
+		boolean properProtection = false;
+		List<HashMap<Variable, Term>> finals = handler.getFinalList();
+		if (finals != null && !finals.isEmpty() && pieceVarx != null) {
+			vars = finals.get(0);
+			usedTerm = (Term) vars.get(pieceVarx);
+			termName = usedTerm.getSymbolicName(); // Finds which piece is protecting this position
+			properProtection = !termName.equals(pieceName);
+			writer.println("PieceFacts: position "+pos+" protected by "+termName+" and reachable by "+pieceName);
+			return properProtection;
+		}
+		return backWardresult.isTrue();
+		
+		
+/*		
+		
 	    ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
 	    Position position =  (Position) positionList.stream().filter(c -> c.getPositionName().contains(pos)).findAny().orElse(null);
-		if (backWardresult.isTrue() && naction != null) {
+		if (backWardresult.isTrue() && termName != null && termName.equals(pieceName) && naction != null && naction.getPossibleMove() != null) {
 			naction.getPossibleMove().setToPosition(position);
 			naction.setPreferredPosition(position);
+		 	writer.println("Checking piecefacts for \n"+fact + " piece "+pieceName + " and position "+pos);
+//			writer.println("True");
 			return true;
 		}
-		return false;
+		if (backWardresult.isTrue() && naction.getPossibleMove() == null) {
+			writer.println(" NO MOVE !!! Checking piecefacts for \n"+fact + " piece "+pieceName + " and action "+naction.toString());
+			return true;
+		}
+//		writer.println("False");
+		return false;*/
   }
   /**
    * checkOpponent
    * This method finds which opponent pieces the active player can safely take.
-   * The pieces found are placed in a Map called possible Pieces.
+   * The pieces found are placed in a Map called possiblePieces, and its position is placed in a Map called possiblePositions
+   * @since 15.03.21 Only pieces that are active are considered
  * @param fact
  * @param actions
  * @return
@@ -355,29 +405,48 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
 		  String posName = "";
 		  Position position = piece.getHeldPosition();
 		  if (position == null) {
-			  writer.println("Position from myposition\n"+piece.toString());
+			  writer.println("\nPosition from myposition\n"+piece.toString());
 			  position = piece.getmyPosition();
 			  posName = position.getPositionName();
 		  }else {
 			  posName = position.getPositionName();
-			  writer.println("Position from heldposition\n"+piece.toString());
+			  writer.println("\nPosition from heldposition\n"+piece.toString());
 		  }
-		  for (AgamePiece mypiece:myPieces) {
-			  String name = mypiece.getMyPiece().getOntlogyName();
-			  boolean reachable = checkpieceFacts(name,posName,REACHABLE,actions);
-			  boolean pieceProtected = checkpieceFacts(name,posName,PROTECTED,actions);
-			  boolean pawn = checkpieceFacts(name, posName, PAWNATTACK, actions);
-			  if (reachable && pieceProtected) {
-				  possiblePieces.put(name, piece);
-				  possiblePositions.put(name, position);
-//				  return name; // This return prevents further search
-			  }
-			  if (pawn) {
-				  possiblePieces.put(name, piece);
-				  possiblePositions.put(name, position);
-//				  return name; // This return prevents further search
+		  if (piece.isActive()) {
+			  for (AgamePiece mypiece:myPieces) { // For all my pieces: Can this piece reach the opponent's position?
+				  String name = mypiece.getMyPiece().getOntlogyName();
+				  pieceType type = mypiece.getPieceType();
+				  boolean reachable = false;
+				  boolean pawn = false;
+				  boolean pieceProtected = false;
+				  if (type  == type.PAWN) {
+					  pawn = checkpieceFacts("y",name, posName, PAWNATTACK, actions);
+					  if (pawn) {
+						  possiblePieces.put(name, piece);
+						  possiblePositions.put(name, position);
+					  }
+				  }
+				  if (type  != type.PAWN) {
+					  reachable = checkpieceFacts("y",name,posName,REACHABLE,actions);
+					  if (reachable) {
+						 pieceProtected = checkpieceFacts("x",name,posName,PROTECTED,actions);
+						  if (pieceProtected) {
+							  possiblePieces.put(name, piece);
+							  possiblePositions.put(name, position);
+							  writer.println("Piece is protected and safe to take with : "+name+"\n"+piece.getMyPiece().getOntlogyName());
+						  }
+					  }
+				  }
+				  boolean threat = checkThreats("x", posName, THREATEN);
+				  if (!threat && reachable && !pieceProtected) {
+					  possiblePieces.put(name, piece);
+					  possiblePositions.put(name, position);
+					  writer.println("Piece is safe to take with : "+name+"\n"+piece.getMyPiece().getOntlogyName());
+				  }
+
 			  }
 		  }
+
 	  }
 	
   }
@@ -418,7 +487,7 @@ public boolean checkThreats(String pieceName,String pos,String fact) {
    * This method checks the FOL knowledge base for certain facts about a player's pieces.
    * These facts can be any of the available predicates in the FOL Domain (see the domain object)
    * The parameter pos is used to give the chosen action a new position to move to.
- * @param pieceName THe name of the piece
+ * @param pieceName The name of the piece
  * @param pos The position to move to
  * @param fact The predicate fact
  * @param actions All the actions available to the player
@@ -438,9 +507,23 @@ public void checkFacts(String pieceName,String pos,String fact,ArrayList<ChessAc
 			naction.setPreferredPosition(position);
 		}
   }
-  public void prepareAction( ChessActionImpl action) {
-	  ApieceMove move = action.getPossibleMove();
-	  AgamePiece piece = action.getChessPiece();
+
+  public String prepareAction( ArrayList<ChessActionImpl> actions) {
+	  for (ChessActionImpl action:actions){
+		  ApieceMove move = action.getPossibleMove();
+		  AgamePiece piece = action.getChessPiece();
+		  String name = piece.getMyPiece().getOntlogyName();
+		  String posName = null;
+		  pieceType type =piece.getPieceType();
+		  if (move != null && type != type.PAWN) {
+			  Position pos = move.getToPosition();
+			  posName = pos.getPositionName();
+			  if (!checkThreats(name, posName, THREATEN))
+				  return name;
+		  }
+	  }
+	  return null;
+
 	  
   }
   /**
@@ -472,7 +555,7 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  checkFacts(pieceName, posx, REACHABLE, actions);
 		  break;
 	  default:
-		  checkOpponent("", actions);
+		  checkOpponent("", actions); // Result: A list of opponent pieces that can be taken
 		  String blackpieceName = "BlackBishop1";
 		  String blackpos = "g4";
 		  if (checkThreats(blackpieceName, blackpos, OCCUPIES)) {
@@ -488,13 +571,13 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  checkFacts(pieceName, wpos, PAWNATTACK, actions);
 			  break;
 		  }
-		  pieceName = checkPossiblePieces();
+		  pieceName = checkPossiblePieces(); // Checks which opponent pieces that be safely taken
 		  if (pieceName != null) {
 			  Position opponentPos = possiblePositions.get(pieceName);
 			  if (opponentPos != null) {
 				  String name = pieceName;
 				  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(name)).findAny().orElse(null);
-				  if (naction != null) {
+				  if (naction != null && naction.getPossibleMove() != null) {
 					  naction.getPossibleMove().setToPosition(opponentPos);
 					  naction.setPreferredPosition(opponentPos);
 				  }else {
@@ -504,7 +587,12 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  break;
 		  }
 		  writer.println("No pieces and positions ");
-		  pieceName = "WhitePawn1";
+/*
+ * Here we must find a safe move		  
+ */
+		  pieceName = prepareAction(actions);
+		  if (pieceName == null)
+			  pieceName = "WhitePawn1";
 		  break;
 	  }
 	  return pieceName;
@@ -523,35 +611,41 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
  */
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  searchProblem(actions);
+	  ChessProblem problem = null;
 	  String pieceName = checkMovenumber(actions);
-//      ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
 	  ActionSchema movedAction = actionSchemas.get(pieceName);
-	  writer.println("Chosen action Schema\n"+movedAction.toString());
-	  State initState = initStates.get(pieceName);
-	  State goal = goalStates.get(pieceName);
-	  ChessProblem problem = new ChessProblem(initState,goal,movedAction);
-	  writer.println("The fluents of the init state");
-      for (Literal literal :
-    	  initState.getFluents()) {
-    	 writer.println(literal.toString());
-      }
-      writer.println("The fluents of the goal state");
-      for (Literal literal :
-    	  goal.getFluents()) {
-    	 writer.println(literal.toString());
-      }      
-	  List<Constant> problemConstants = problem.getProblemConstants();
-	  writer.println("Problem constants - no of constants "+problemConstants.size());
-	  for (Constant c:problemConstants) {
-		  writer.println(c.toString());
+	  if (movedAction != null) {
+		  String nactionName = movedAction.getName();
+		  writer.println("Chosen action Schema\n"+movedAction.toString());
+		  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(nactionName)).findAny().orElse(null);
+		  State initState = initStates.get(pieceName);
+		  State goal = goalStates.get(pieceName);
+		  problem = new ChessProblem(initState,goal,movedAction);
+		  writer.println("The fluents of the init state");
+	      for (Literal literal :
+	    	  initState.getFluents()) {
+	    	 writer.println(literal.toString());
+	      }
+	      writer.println("The fluents of the goal state");
+	      for (Literal literal :
+	    	  goal.getFluents()) {
+	    	 writer.println(literal.toString());
+	      }      
+		  List<Constant> problemConstants = problem.getProblemConstants();
+		  writer.println("Problem constants - no of constants "+problemConstants.size());
+		  for (Constant c:problemConstants) {
+			  writer.println(c.toString());
+		  }
+		   List<ActionSchema> schemas =  problem.getGroundActions();
+		   int s = schemas.size();
+		   writer.println("No of permuted primitive actions from problem "+s);
+		   for (ActionSchema primitiveAction :
+			   schemas) {
+			   writer.println(primitiveAction.toString());
+		   }
+		  writer.println("Chosen action\n"+naction.toString());
 	  }
-	   List<ActionSchema> schemas =  problem.getGroundActions();
-	   int s = schemas.size();
-	   writer.println("No of permuted primitive actions from problem "+s);
-	   for (ActionSchema primitiveAction :
-		   schemas) {
-		   writer.println(primitiveAction.toString());
-	   }
+
 	  writer.flush();
 	  return problem;
   }
@@ -811,13 +905,13 @@ public List<List<ActionSchema>> solveProblem(ChessActionImpl action) {
 				break;
 		}
 		
-		String position = piece.getmyPosition().getPositionName();
+/*		String position = piece.getmyPosition().getPositionName();
 		List<Position> removedList = localAction.getPositionRemoved();
 		List<Position> availableList = localAction.getAvailablePositions();
 		ApieceMove move = localAction.getPossibleMove();
 		List<Position> preferredPositions = move.getPreferredPositions();
 		String toPos = move.getToPosition().getPositionName();
-		Position toPosition = move.getToPosition();
+		Position toPosition = move.getToPosition();*/
 		if (type == type.PAWN) {
 			typeofPiece = PAWN;
 			moveName = "pawnmove";

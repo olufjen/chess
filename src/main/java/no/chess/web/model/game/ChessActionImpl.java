@@ -9,6 +9,7 @@ import no.chess.web.model.Position;
 import no.games.chess.ChessAction;
 import no.games.chess.ChessFunctions;
 import no.games.chess.ChessPieceType;
+import no.games.chess.AbstractGamePiece.pieceType;
 
 /**
  * ChessActionImpl
@@ -27,12 +28,16 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 
 	private HashMap<String, Position> positions; // All the reachable positions
 	private AgamePiece chessPiece; //  The chesspiece involved in this action
+	private ChessPieceType pieceType;
+	private pieceType type;
 	private List<Position> availablePositions;
 	private List<Position> positionRemoved;
+	private List<Position> bishopRemoved; // This list contains removed positions for the queen in bishop movements
 	private Position preferredPosition = null; // Each action has a preferred position that the piece should move to
 	private Position strikePosition = null; // This position is set if it is occupied by an opponent piece
 	private boolean strike = false; // This flag is set by the actionprocessor
-	private APlayer player;
+	private APlayer player; // The player for this action
+	private APlayer opponent; // The opponent player
 	private ApieceMove possibleMove;
 	private int pn = 0;
 	private int pny = 0;
@@ -48,12 +53,16 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private List<Position> otherattackedPositions = null;
 	private List<Position> otherprotectedPositions  = null;
 	private String actionName;
-
-	public ChessActionImpl(HashMap<String, Position> positions, AgamePiece chessPiece,APlayer player) {
+	private Double evaluationValue = null; // An evaluation value for the action. It is produced by the ActionProcessor
+	
+	public ChessActionImpl(HashMap<String, Position> positions, AgamePiece chessPiece,APlayer player, APlayer opponent) {
 		super();
 		this.positions = positions;
 		this.chessPiece = chessPiece;
 		this.player = player;
+		this.opponent = opponent;
+		pieceType = chessPiece.getChessType();
+		type = chessPiece.getPieceType();
 		this.availablePositions = getActions(); // The positionRemoved are also created and filled. They are positions occupied by other pieces owned by the player
 		String name = this.chessPiece.getMyPiece().getPieceName();
 		pn = this.chessPiece.getMyPosition().getIntRow()*10;
@@ -67,6 +76,26 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 //		preferredPosition = player.calculatePreferredPosition(chessPiece,this);      
 		player.getHeldPositions().add(pr.getHeldPosition()); // This is the position held by the piece under consideration
 		actionName = this.chessPiece.getMyPiece().getOntlogyName();
+	}
+
+
+	public APlayer getOpponent() {
+		return opponent;
+	}
+
+
+	public void setOpponent(APlayer opponent) {
+		this.opponent = opponent;
+	}
+
+
+	public Double getEvaluationValue() {
+		return evaluationValue;
+	}
+
+
+	public void setEvaluationValue(Double evaluationValue) {
+		this.evaluationValue = evaluationValue;
 	}
 
 
@@ -134,6 +163,16 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 
 	public void setProtectedPositions(List<Position> protectedPositions) {
 		this.protectedPositions = protectedPositions;
+	}
+
+
+	public List<Position> getBishopRemoved() {
+		return bishopRemoved;
+	}
+
+
+	public void setBishopRemoved(List<Position> bishopRemoved) {
+		this.bishopRemoved = bishopRemoved;
 	}
 
 
@@ -285,6 +324,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * If a position is occupied by another piece for this action's player, this position is placed in the removed list
 	 * This method is called when the ChessAction is created.
 	 * A ChessAction is created by the call to the ChesState getActions() method
+	 * @since 25.02.21 Adapted for castling
 	 * @return
 	 */
 	public List<Position> getActions(){
@@ -296,11 +336,22 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			positionRemoved.clear();
 			positionRemoved = null;
 		}
+		if (bishopRemoved != null) {
+			bishopRemoved.clear();
+			bishopRemoved = null;
+		}
+		ChessPieceType pieceType = chessPiece.getChessType();
 		availablePositions = new ArrayList(positions.values());
+		if (pieceType instanceof AQueen) {
+			List<Position> bishopPositions = new ArrayList(chessPiece.getBishopPositions().values());
+			availablePositions.addAll(bishopPositions);
+		}
+		
 		positionRemoved = new ArrayList();
+		bishopRemoved = new ArrayList();
 		List<Position> castlePositions = null;
 		Position castlePosition = null;
-		ChessPieceType pieceType = chessPiece.getChessType();
+		
 		if (pieceType instanceof Aking) {
 			castlePositions = new ArrayList(chessPiece.getCastlePositions().values());
 			castlePosition = castlePositions.get(0);
@@ -320,8 +371,11 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 						if (pos.isInUse()) { // OBS: Added 14.05.20 Are never active !! ??
 							if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
 								String name = otherPiece.getMyPosition().getPositionName();
+								String pName = otherPiece.getMyPiece().getOntlogyName();
+/*								if (pieceType instanceof AQueen)
+									System.out.println("!!!!!! piece and position "+pName+" "+name);*/
 								Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
-								if (posinTable == null)
+								if (posinTable == null && !checkQueen(pos))
 									positionRemoved.add(position);
 							}
 						}else {
@@ -335,27 +389,86 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 
 		
 		}
+		checkOpponent();
 		return availablePositions;
 		
 	}
+	/**
+	 * checkOpponent
+	 * This method check for opponent pieces and their positions.
+	 * If opponent pieces blocks movements for the active player,
+	 * then these positions must be placed in the removed list
+	 * 
+	 */
+	private void checkOpponent() {
+		List<AgamePiece> pieces = opponent.getMygamePieces(); 
+		for (Position position:availablePositions) {
+			for (AgamePiece otherPiece:pieces) {
+				boolean inuse = otherPiece.getMyPiece().isUse();// inuse is false if a piece is removed permanently olj 1.08.20
+				if (inuse) {
+					Position pos = otherPiece.getMyPosition();
+					if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
+						if (!checkQueen(pos) && type != type.KNIGHT)
+							positionRemoved.add(position);
+					}
+				}
+			}
+		}
+	}
+	/**
+	 * checkQueen
+	 * This method checks for removed positions for the queen and its bishop movements
+	 * @param pos
+	 * @return
+	 */
+	private boolean checkQueen(Position pos) {
+		boolean queen = false;
+		if (pieceType instanceof AQueen) {
+			List<Position>bishopPositions = new ArrayList(chessPiece.getBishopPositions().values());
+			String name = pos.getPositionName();
+/*			if (name.equals("c2") || name.equals("e2")) {
+				System.out.println("Pos !!! "+name);
+			}*/
+			Position posinTable =  (Position)bishopPositions.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null);
+			if (posinTable != null) { // If position is a bishopPosition remove it
+				bishopRemoved.add(pos);
+				queen = true;
+			}
+		
+		}
+		return queen;
+	}
+	/**
+	 * checkCastling
+	 * This method moves the castling positions in the removed list if necessary
+	 * @param otherPos
+	 * @param castlePositions
+	 */
 	private void checkCastling(Position otherPos,List<Position> castlePositions) {
+	
 		for (Position castlePos:castlePositions) {
 			if (otherPos.getPositionName().equals(castlePos.getPositionName())) {
 				String name = otherPos.getPositionName();
 				Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
-				if (posinTable == null)
+				if (posinTable != null) {
 					positionRemoved.add(castlePos);
+	//				System.out.println("Castle position: "+castlePos.toString());
+				}
 			}
 		}
+/*	
+		for (Position removed:positionRemoved) {
+			System.out.println(removed.toString());
+		}*/
 
 	}
 	/**
 	 * getActions
 	 * This method returns all possible position reachable by the piece belonging to this action
 	 * If a position is occupied by another piece for this action's player, this position is placed in the removed list
-	 * This method is called from the ChessState mark method, when a move has been made during the search process.
-	 * 
-	 * This is only done if the chosen player is the same as the action's player
+	 * This method is called from the ChessState mark method, when a move has been made during the search process. - At present: turned off OLJ 25.02.21
+	 * It is also called from the ActionProcessor which is used to give the action an evaluation value
+	 * @since 25.02.21 Adapted for castling
 	 * @return
 	 */
 	public List<Position> getActions(APlayer theplayer){
@@ -372,6 +485,19 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			}
 			availablePositions = new ArrayList(positions.values());
 			positionRemoved = new ArrayList();
+			
+			List<Position> castlePositions = null;
+			Position castlePosition = null;
+			ChessPieceType pieceType = chessPiece.getChessType();
+			if (pieceType instanceof Aking) {
+				castlePositions = new ArrayList(chessPiece.getCastlePositions().values());
+				castlePosition = castlePositions.get(0);
+			}
+			if (pieceType instanceof ARook) {
+				castlePositions = new ArrayList(chessPiece.getCastlePositions().values());
+				castlePosition = castlePositions.get(0);
+			}
+			
 			for (Position position:availablePositions) {
 				for (AgamePiece otherPiece:pieces) {
 					if (otherPiece != chessPiece) {
@@ -380,7 +506,8 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 							if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
 								positionRemoved.add(position);
 							}
-
+							if (castlePosition != null)
+								checkCastling(pos, castlePositions);
 						}
 					}
 				}

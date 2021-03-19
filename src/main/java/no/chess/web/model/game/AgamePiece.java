@@ -40,6 +40,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private ChessPieceType chessType = null;
 	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
 	private HashMap<String,Position> reacablePositions;
+	private HashMap<String,Position> bishopPositions; // Are only valid for queen
 	private HashMap<String,Position> attackPositions; // Are only valid for type pawn
 	private HashMap<String,Position> castlePositions; // Are only valid for king and rook
 	private ArrayList<Position> newlistPositions; // Refactored from newPositions olj 09.11.20 IUt contains all reachable positions
@@ -107,6 +108,14 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		this.castlePositions = castlePositions;
 	}
 
+	public HashMap<String, Position> getBishopPositions() {
+		return bishopPositions;
+	}
+
+	public void setBishopPositions(HashMap<String, Position> bishopPositions) {
+		this.bishopPositions = bishopPositions;
+	}
+
 	/**
 	 * setOntologyPositions
 	 * This method is called from AchessGame so that ontologypositions are available
@@ -149,14 +158,22 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	/**
 	 * checkRemoved
 	 * This method checks if a particular position is removed from the available positions
+	 * @since 02.03.21
+	 * Checks also position name
 	 * @param pos
 	 * @return true if removed
 	 */
 	public boolean checkRemoved(Position pos) {
 		boolean removed = false;
+		String posName = pos.getPositionName();
 		if (removedPositions != null) {
 			for (Position position:removedPositions) {
+				String pName = position.getPositionName();
 				if (pos == position) {
+					removed = true;
+					break;
+				}
+				if (posName.equals(pName)) {
 					removed = true;
 					break;
 				}
@@ -329,11 +346,15 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				chessType = new AQueen(myPosition,myPiece);
 				String pieceColorQ = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
+				AQueen queen = (AQueen) chessType;
 				reacablePositions = gamePiece.getNewPositions();
+				bishopPositions = queen.getBishopPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
+				createPosition(bishopPositions);
 				gamePiece.setOntologyPositions(ontologyPositions);
 //				reacablePositions = chessType.getNewPositions();
 				newlistPositions = new ArrayList(reacablePositions.values());
+				newlistPositions.addAll(bishopPositions.values());
 /*				for (Position pos:newlistPositions) {
 					System.out.println(pieceColorQ+" Queens positions: "+pos.getPositionName() + " " + pos.getPositionColor());
 				}*/				
@@ -482,24 +503,35 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		StringBuilder result = new StringBuilder();
 		String posName = "Removed!!!";
 		XYLocation localXY = new XYLocation(0,0);
-		
+		String pActive = " Active";
+		if (!active)
+			pActive = " Taken!!!";
 		if (myPosition != null) {
 			posName = myPosition.getPositionName();
 			localXY = myPosition.getXyloc();
 		}
 		
-		result.append("Piece position"+posName + " X, Y "+localXY.toString()  + " "+myPiece.getName()+ " "+myPiece.getPosition().toString()+ myType);
+		result.append("Piece position "+posName + " X, Y "+localXY.toString()  + " "+myPiece.getName()+ " "+myPiece.getPosition().toString()+" "+ myType+pActive);
 	
 		String na = myPiece.getPieceName();
 		result.append("Name " + na + "\n" + "Available positions\n");
 		for (Position pos:newlistPositions) {
-			result.append("Position: "+pos.getPositionName() + " " + pos.getPositionColor() + " X, Y "+pos.getXyloc().toString() + "\n");
-
+			result.append("Position: "+pos.getPositionName() + " " + pos.getPositionColor() + " X, Y "+pos.getXyloc().toString() );
+			if (pos.isInUse()) {
+				result.append(" Occupied by: "+pos.getUsedBy().getOntlogyName() + "\n");
+			}else {
+				result.append("\n");
+			}
 		}
 		result.append("Removed positions\n");
 		if (removedPositions != null && !removedPositions.isEmpty()) {
 			for (Position pos:removedPositions) {
-				result.append("Position: "+pos.getPositionName() + " " + pos.getPositionColor() + " X, Y "+pos.getXyloc().toString() + "\n");
+				result.append("Position: "+pos.getPositionName() + " " + pos.getPositionColor() + " X, Y "+pos.getXyloc().toString());
+				if (pos.isInUse()) {
+					result.append(" Occupied by: "+pos.getUsedBy().getOntlogyName() + "\n");
+				}else {
+					result.append("\n");
+				}
 
 			}	
 		}

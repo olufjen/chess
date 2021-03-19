@@ -123,7 +123,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		}
 		if (pieceType instanceof AQueen) {
 			qt = (AQueen) pieceType;
-			writer.println("the piece is a queen ");
+//			writer.println("the piece is a queen ");
 			bishopRemoved = action.getBishopRemoved();
 			bishopPositions = p.getBishopPositions();
 			reacablePositions = p.getReacablePositions();
@@ -136,9 +136,9 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 				int row = removedPos.getIntRow();
 				int col = removedPos.getIntColumn();
 				String pName = removedPos.getPositionName();
-				if (pName.equals("c2") || pName.equals("e2")) {
+/*				if (pName.equals("c2") || pName.equals("e2")) {
 					System.out.println("Pos !!! "+pName);
-				}
+				}*/
 				for (Position availablePos:queenbishopPositions) {
 					int arow = availablePos.getIntRow();
 					int acol = availablePos.getIntColumn();

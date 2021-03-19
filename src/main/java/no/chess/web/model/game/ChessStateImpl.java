@@ -657,13 +657,14 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 		if (actions != null)
 			actions.clear();
 		actions = null; // When actions are removed, the movements list is also cleared !!
-		List<ChessAction> actions = new ArrayList<ChessAction>();
+//		List<ChessAction> actions = new ArrayList<ChessAction>(); OLJ Removed 03.03.21
+		actions = new ArrayList<ChessAction>();
 		playerTomove.emptyPositions(); //empties the positions held by the player's pieces
 		ArrayList<AgamePiece> pieces = playerTomove.getMygamePieces();
 		for (AgamePiece piece : pieces) {
 			if (piece.isActive()) {
 				HashMap<String,Position> reachablePositions = piece.getReacablePositions();
-				ChessAction action = new ChessActionImpl(reachablePositions,piece,playerTomove);
+				ChessAction action = new ChessActionImpl(reachablePositions,piece,playerTomove,opponent);
 				actions.add(action);
 			}
 		}

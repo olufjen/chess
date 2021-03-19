@@ -368,8 +368,8 @@ public class AChessAgent extends KBAgent {
 //		kb.tell("AFACT");
 		emptyPositions = game.getNotusedPositionlist();
 
-		makeOpponentsentences(stateImpl.getOpponent(),noofMoves); //knowledge about the opponent and its pieces to the first order knowledge base and its domain
-		makeSentences();
+		makeOpponentsentences(stateImpl.getOpponent(),noofMoves); //knowledge about the opponent and its pieces to the proportional knowledge base knowledge base
+		makeSentences(); // Evaluates all actions using the actionprocessor using the makeActionSentence method
 		writer.println("The first order knowledge base");
 		writer.println(folKb.toString());
 		solver = new AChessProblemSolver(stateImpl, localAction, folKb, chessDomain, forwardChain, backwardChain, game, myPlayer, opponent);
@@ -392,14 +392,19 @@ public class AChessAgent extends KBAgent {
 			}
 
 		}
+		ChessActionImpl naction = null;
 		ChessProblem problem = solver.planProblem((ArrayList<ChessActionImpl>) actions);
-		chessSearch = new ChessSearchAlgorithm(fw,writer);
-//		List<List<ActionSchema>> solution = solver.solveProblem(localAction);
-		List<ActionSchema> actionSchemas = chessSearch.heirarchicalSearch(problem);
-		ActionSchema actionSchema = actionSchemas.get(0);
+		if (problem != null) {
+			chessSearch = new ChessSearchAlgorithm(fw,writer);
+//			List<List<ActionSchema>> solution = solver.solveProblem(localAction);
+			List<ActionSchema> actionSchemas = chessSearch.heirarchicalSearch(problem);
+			writer.println("No of action schemas: "+actionSchemas.size());
+			ActionSchema actionSchema = actionSchemas.get(0);
 
-		String nactionName = actionSchema.getName();
-		ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(nactionName)).findAny().orElse(null);
+			String nactionName = actionSchema.getName();
+			naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(nactionName)).findAny().orElse(null);
+		}
+
 		for (ChessActionImpl action:actions) {
 			if (action.getActionValue() == null) {
 				action.setActionValue(new Integer(0));
@@ -440,7 +445,7 @@ public class AChessAgent extends KBAgent {
 	
 	/**
 	 * createConnected
-	 * This method creates a goal sentence 
+	 * This method creates rules to the fol knowledge base 
 	 * @param name
 	 * @param pos
 	 * @param piece
@@ -494,6 +499,7 @@ public class AChessAgent extends KBAgent {
 	/**
 	 * askMove
 	 * This method asks the inference procedure which moves are available
+	 * Given a ChessAction it tries to prove that the action has a move available in the FOL knowledge base
 	 * @since 01.12.20:
 	 * Reworked this method takes the piece from the current action
 	 * @param player
@@ -653,7 +659,8 @@ public class AChessAgent extends KBAgent {
 	 * Which actions are available for the active player
 	 * Which positions are empty on the board
 	 * This method acts as the makePerceptSentence method:
-	 * It creates simple facts about the current state of the game
+	 * It creates simple facts about the current state of the game to the propositional knowledge base
+	 * It also calls the makeActionSentence for all available actions to produce an evaluation value for the actions (the ActionProcessor)
 	 */
 	public void makeSentences() {
 		APlayer player= stateImpl.getMyPlayer();
@@ -741,9 +748,8 @@ public class AChessAgent extends KBAgent {
 	}
 	/**
 	 * setOpponentpieces
-	 * This method creates knowledge about the opponent and its pieces both to the propositional knowledge base
-	 * and the first order knowledge base and its domain
-	 * @since 29.01.21 Only active pieces are consideredhnjgfhg
+	 * This method creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
+	 * @since 29.01.21 Only active pieces are considered
 	 * @param opponent
 	 */
 	public void setOpponentpieces(APlayer opponent) {
@@ -851,6 +857,8 @@ public class AChessAgent extends KBAgent {
 	public Sentence makeActionSentence(Action action, int t) {
 		ChessActionImpl thisAction = (ChessActionImpl) action;
 		double evaluation = game.getGame().analyzePieceandPosition(thisAction);
+		Double value = new Double(evaluation);
+		thisAction.setEvaluationValue(value);
 		String active = "NOMOV";
 		List<AgamePiece> attackedPieces = thisAction.getAttacked();
 		List<Position> protectedPositions = thisAction.getProtectedPositions();

@@ -97,9 +97,10 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		if (movements != null && !movements.isEmpty()) {
 			noofMoves = movements.size();
 			movefactor = noofMoves -1;
+			writer.println("===== Previous moves ====== ");
 			for (ApieceMove move:movements) {
 				lastPiece = move.getPiece();
-				writer.println("===== Previous moves ====== \n"+move.toString());
+				writer.println(move.toString());
 			}
 //			move = movements.get(movefactor);
 		}
