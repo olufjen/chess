@@ -550,7 +550,7 @@ public class PlayGame {
 	}
 	/**
 	 * createMove
-	 * This method creates a move based on a move carried out in the proposeMove method
+	 * This method creates a move based on a move carried out in the proposeMove method or by the opponent
 	 * The game piece to be moved calculates new available positions from the new position it is moved to.
 	 * This method is called from the proposemove method
 	 * The method is also called when the opponent player makes a move (from RapporterChessStartServerResource)

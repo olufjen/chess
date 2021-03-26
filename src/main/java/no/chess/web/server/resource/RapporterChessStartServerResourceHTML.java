@@ -698,44 +698,70 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  * corresponds to position.positionName and piece.name !!! 
  */
 
-   	    String fen = chessBoard.createFen();
+
    	    chessPiece = chessBoard.findPiece(oldPos,piece);
    	   	AgamePiece movedPiece = chessPiece.getMyPiece();
+   	    String fen = chessBoard.createFen();
    	    System.out.println("Piece name "+chessPiece.getOntlogyName());
    	    System.out.println(fen);
    	    if (noMove) {
    	    	System.out.println(movedPiece.toString());
    	    }
    	    
-   	    if (game != null && !noMove) {
+   	    if (game != null && !noMove) { // Performs the opponent's move
 
 //       	chessPiece.setPosition(newPos);
-       	Position oldPosition = chessBoard.findPostion(oldPos);
-       	Position newPosition = chessBoard.findPostion(newPos);
-       	chessBoard.determineMove(oldPos, newPos, piece); // Determine if move is legal
- 
-/*
- * Keeps track of move numbers and the number of moves		
- */
- 		movedPiece.setNofMoves(0);
+   	    	APlayer opponent = game.getActiveState().getOpponent();
+   	    	Position oldPosition = chessBoard.findPostion(oldPos);
+   	    	Position newPosition = chessBoard.findPostion(newPos);
+   	    	AgamePiece castle = opponent.checkCastling(movedPiece, newPosition);
+   	    	boolean castleCheck = false;
+   	    	Position castlePos = null;
+   	    	if (castle != null) {
+   	    		castle.setCastlingMove(true);
+   	    		movedPiece.setCastlingMove(true);
+   	    		Position castlePosfrom = castle.getHeldPosition();
+   	    		if (castlePosfrom == null)
+   	    			castlePosfrom = castle.getMyPosition();
+   	    		String fromPos = castlePosfrom.getPositionName();
+   	    		castlePos = castleMove(castle, newPosition,opponent,chessBoard);
+   	    		String toPos = "";
+   	    		String castleName = castle.getName();
+   	    		if (castlePos != null) {
+   	    			castleCheck = true;
+   	    			toPos = castlePos.getPositionName();
+  	    			chessBoard.determineMove(fromPos, toPos, castleName); // Determine if move is legal
+   	    			castle.setNofMoves(0);
+   	    			castle.setMyPosition(castlePos);
+   	    			castle.produceLegalmoves(newPosition);
+   	    		}
+   	    		
+   	    	}
 
-    	chessPiece.getMyPiece().setMyPosition(newPosition);
- /*
-  *  New 16.04.20 similar to proposemove
-  */
+   	    	chessBoard.determineMove(oldPos, newPos, piece); // Determine if move is legal
 
-/*
- * Is this correct ??? OLJ 10.07.20 ???? 	    	
- */
-// 	    	chessPiece.getMyPiece().setHeldPosition(newPosition); // All pieces are now set in correct positions: Should this line be removed ??? OLJ 10.07.20
- 	    	newPosition.setUsedandRemoved(chessPiece); // When this call is removed, a piece is removed from the board!!!
+   	    	/*
+   	    	 * Keeps track of move numbers and the number of moves		
+   	    	 */
+   	    	movedPiece.setNofMoves(0);
+
+   	    	chessPiece.getMyPiece().setMyPosition(newPosition);
+   	    	/*
+   	    	 *  New 16.04.20 similar to proposemove
+   	    	 */
+
+   	    	/*
+   	    	 * Is this correct ??? OLJ 10.07.20 ???? 	    	
+   	    	 */
+   	    	// 	    	chessPiece.getMyPiece().setHeldPosition(newPosition); // All pieces are now set in correct positions: Should this line be removed ??? OLJ 10.07.20
+   	    	newPosition.setUsedandRemoved(chessPiece); // When this call is removed, a piece is removed from the board!!!
  /*
   * end new	    	
   */
- 	    	  System.out.println("Old position "+oldPosition.toString()+ " New position "+newPosition.toString());
+ 	    	System.out.println("Old position "+oldPosition.toString()+ " New position "+newPosition.toString());
  	    // setHeldPosition(oldPosition); in this position removes the black pawn in move nr. 3 
  	    	List<ApieceMove>  movesofar = game.getMovements();
-
+ 	    	 System.out.println("Moves so far ");
  	    	for (ApieceMove  piecemove:movesofar) {
  	    		System.out.println(piecemove.toString());
  	    		Position topos = piecemove.getToPosition();
@@ -762,7 +788,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    	int index = game.getMovements().size();
    	    	ApieceMove lastMove = game.getMovements().get(index-1);
    	    	String moveNot = lastMove.getMoveNotation(); // OBS move notation is not set !!!
-   	    	APlayer opponent = game.getActiveState().getOpponent();
+ 
    	    	lastMove.setMoveNotation(moveNot);
    	    	myMoves.put(moveNot, lastMove);
  	    	Integer noofMoves = new Integer(lastMove.getMoveNumber());
@@ -775,7 +801,8 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    	game.getGame().createNewboard();
    	    	System.out.println(game.getGame().getBoardPic());
 //   	    	game.getGame().setChosenPlayer(); // This method is only used at startup OLJ 20.04.20
-   	    	game.proposeMove(); //The game object proposes a move
+   	    	
+   	    	game.proposeMove(); //The game object proposes the next move
      	    fen = chessBoard.createFen();
 //   	    System.out.println("Piece name "+chessPiece.getOntlogyName());
      	    System.out.println(fen);
@@ -807,5 +834,38 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
         }*/
 
     	return templateRep;
+    }
+    private Position castleMove(AgamePiece castle,Position newPosition,APlayer opponent,ChessBoard chessBoard) {
+    	String posName = newPosition.getPositionName();
+    	Position castlePos =null;
+      	String pieceName = castle.getMyPiece().getOntlogyName();
+      	boolean castleCheck = false;
+       	System.out.println("Checking castling");
+    	if (opponent.getPlayerName() == opponent.getBlackPlayer()) {
+        	if (posName.equals("c8") && pieceName.equals("BlackRook1")) {
+        		System.out.println("Correct piece "+castle.toString());
+        		castlePos = chessBoard.findPostion("d8");
+        		castleCheck = true;
+        	}
+        	if (posName.equals("g8") && pieceName.equals("BlackRook2")) {
+        		System.out.println("Correct piece "+castle.toString());
+        		castlePos = chessBoard.findPostion("f8");
+        		castleCheck = true;
+        	}
+    	}
+       	if (opponent.getPlayerName() == opponent.getWhitePlayer()) {
+        	if (posName.equals("c1") && pieceName.equals("WhiteRook1")) {
+        		System.out.println("Correct piece "+castle.toString());
+        		castlePos = chessBoard.findPostion("d1");
+        		castleCheck = true;
+        	}
+        	if (posName.equals("g1") && pieceName.equals("WhiteRook2")) {
+        		System.out.println("Correct piece "+castle.toString());
+        		castlePos = chessBoard.findPostion("f1");
+        		castleCheck = true;
+        	}
+       	}
+       	return castlePos;
+    	
     }
 }
