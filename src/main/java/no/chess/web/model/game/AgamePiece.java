@@ -52,6 +52,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private boolean active = true; // Set if piece is active participating, set to false when removed from board
 	private String predicate = "none"; //The predicate used by this object
 	private List<String> predicates; 
+	private boolean castlingMove = false;
 	
 	public AgamePiece(Position myPosition) {
 		super();
@@ -74,6 +75,14 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		
 	}
 	
+	public boolean isCastlingMove() {
+		return castlingMove;
+	}
+
+	public void setCastlingMove(boolean castlingMove) {
+		this.castlingMove = castlingMove;
+	}
+
 	public String getPredicate() {
 		return predicate;
 	}
@@ -499,6 +508,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		return newlistPositions;
 	}
 
+
 	public String toString() {
 		StringBuilder result = new StringBuilder();
 		String posName = "Removed!!!";
@@ -535,7 +545,18 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 
 			}	
 		}
-
+		if(castlePositions != null && !castlePositions.isEmpty() && (myType == myType.KING || myType == myType.ROOK) && nofMoves == 0) {
+			List<Position> castle = new ArrayList(castlePositions.values());
+			result.append("castle positions\n");
+			for (Position pos:castle) {
+				result.append("Position: "+pos.getPositionName() + " " + pos.getPositionColor() + " X, Y "+pos.getXyloc().toString());
+				if (pos.isInUse()) {
+					result.append(" Occupied by: "+pos.getUsedBy().getOntlogyName() + "\n");
+				}else {
+					result.append("\n");
+				}
+			}
+		}
 		return result.toString();
 	}
 

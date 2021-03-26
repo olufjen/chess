@@ -363,7 +363,7 @@ public boolean checkpieceFacts(String pieceVar,String pieceName,String pos,Strin
 		if (finals != null && !finals.isEmpty() && pieceVarx != null) {
 			vars = finals.get(0);
 			usedTerm = (Term) vars.get(pieceVarx);
-			termName = usedTerm.getSymbolicName(); // Finds which piece is protecting this position
+			termName = usedTerm.getSymbolicName(); // Finds which piece is protecting this position. This is only true if fact is PROTECTEDBY
 			properProtection = !termName.equals(pieceName);
 			writer.println("PieceFacts: position "+pos+" protected by "+termName+" and reachable by "+pieceName);
 			return properProtection;
@@ -492,7 +492,7 @@ public boolean checkThreats(String pieceName,String pos,String fact) {
  * @param fact The predicate fact
  * @param actions All the actions available to the player
  */
-public void checkFacts(String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions) {
+public boolean checkFacts(String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions) {
 		Constant pieceVariable= new Constant(pieceName);
 		Constant posVariable = new Constant(pos);
 		List<Term> reachableTerms = new ArrayList<Term>();
@@ -505,7 +505,9 @@ public void checkFacts(String pieceName,String pos,String fact,ArrayList<ChessAc
 		if (backWardresult.isTrue() && naction != null) {
 			naction.getPossibleMove().setToPosition(position);
 			naction.setPreferredPosition(position);
+			return true;
 		}
+		return false;
   }
 
   public String prepareAction( ArrayList<ChessActionImpl> actions) {
@@ -568,8 +570,8 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  if (checkThreats(pname, bpos, OCCUPIES)) {
 			  pieceName = "WhitePawn3";
 			  String wpos = "d5";
-			  checkFacts(pieceName, wpos, PAWNATTACK, actions);
-			  break;
+			  if (checkFacts(pieceName, wpos, PAWNATTACK, actions))
+				  break;
 		  }
 		  pieceName = checkPossiblePieces(); // Checks which opponent pieces that be safely taken
 		  if (pieceName != null) {
@@ -580,11 +582,11 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 				  if (naction != null && naction.getPossibleMove() != null) {
 					  naction.getPossibleMove().setToPosition(opponentPos);
 					  naction.setPreferredPosition(opponentPos);
+					  break;
 				  }else {
 					  writer.println("No action for "+pieceName);
 				  }
 			  }
-			  break;
 		  }
 		  writer.println("No pieces and positions ");
 /*
@@ -651,7 +653,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
   }
   /**
  * searchProblem
- * For every available chessaction create an actionschema
+ * For every available chessaction that contains a possible move and that is not blocked
+ * create an actionschema
  * @param actions
  * @return
  */
@@ -830,7 +833,16 @@ public List<List<ActionSchema>> solveProblem(ChessActionImpl action) {
 
   public State buildGoalstate(ChessActionImpl action) {
 		String pieceName = action.getChessPiece().getMyPiece().getOntlogyName();
-		String toPos = action.getPossibleMove().getToPosition().getPositionName();
+		String toPos = "";
+		if (action.getPossibleMove() == null) {
+			writer.println("No to position in move "+action.toString());
+			List<Position> available  = action.getChessPiece().getNewlistPositions();
+			toPos = available.get(0).getPositionName();
+			writer.println("Using position "+available.get(0).toString());
+		}else {
+			toPos = action.getPossibleMove().getToPosition().getPositionName();
+		}
+		
 		List<Term> terms = new ArrayList<Term>();
 		List<Term> typeTerms = new ArrayList<Term>();
 		List<Term> boardTerms = new ArrayList<Term>();

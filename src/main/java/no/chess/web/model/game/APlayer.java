@@ -229,6 +229,57 @@ public void checkPreferredPosition(ChessAction action) {
 	}
 
 	/**
+	 * checkCastling
+	 * This method checks if a castling has taken place
+	 * If that is the case it returns the castle piece that is involved
+	 * @param piece
+	 * @param newPosition
+	 * @return
+	 */
+	public AgamePiece checkCastling(AgamePiece piece,Position newPosition) {
+		
+		String posName = newPosition.getPositionName();
+		String name = "";
+		AgamePiece cPiece = null;
+		HashMap<String,Position> castlePositions = piece.getCastlePositions();
+		pieceType myType = piece.getMyType();
+		int noofMoves = piece.getNofMoves();
+		if (playerName == player.BLACK) {
+			if(posName.equals("c8") && castlePositions != null && !castlePositions.isEmpty() && myType == myType.KING && noofMoves == 0) {
+				name = "BlackRook1";
+
+
+			}
+			if(posName.equals("g8") && castlePositions != null && !castlePositions.isEmpty() && myType == myType.KING && noofMoves == 0) {
+				name = "BlackRook2";
+			}
+			String cName = name;
+			if (!cName.equals(""))
+				cPiece =  (AgamePiece) mygamePieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(cName)).findAny().orElse(null);
+			if (cPiece != null)
+				return cPiece;
+			else
+				return null;
+		}
+		if (playerName == player.WHITE) {
+			if(posName.equals("c1") && castlePositions != null && !castlePositions.isEmpty() && myType == myType.KING && noofMoves == 0) {
+				name = "WhiteRook1";
+			}
+			if(posName.equals("g1") && castlePositions != null && !castlePositions.isEmpty() && myType == myType.KING && noofMoves == 0) {
+				name = "WhiteRook2";
+			}
+			String cName = name;
+			if (!cName.equals(""))
+				cPiece =  (AgamePiece) mygamePieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(cName)).findAny().orElse(null);
+			if (cPiece != null)
+				return cPiece;
+			else
+				return null;			
+		}
+
+		return null;
+	}
+	/**
 	 * calculatePreferredPosition
 	 * This method is called when the chessAction is requested to return a preferred position.
 	 * If the action does not contain a preferred position then this method is called.

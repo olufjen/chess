@@ -124,7 +124,14 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * This method recalculates removed positions for this action.
 	 */
 	public void processPositions() {
-		possibleMove = ChessFunctions.processChessgame(this,chessPiece, myProcessor);
+		ApieceMove newMove = ChessFunctions.processChessgame(this,chessPiece, myProcessor);
+		if (possibleMove != null && newMove != null) {
+			possibleMove = newMove;
+		}
+		if (newMove == null) {
+			System.out.println("Action.processPosition new move is null "+possibleMove.toString());
+		}
+			
 	}
 	public List<Position> getAttackedPositions() {
 		return attackedPositions;

@@ -116,6 +116,7 @@ public class ChessBoard extends ParentModel {
 	private String ontologyKey = "ontologyfile";
 	
 	private boolean opposingOccupied = false; // True when a  piece move to an occupied position
+	private boolean castling = false; // true when castling takes place
 	/**
 	 * positions contains all available board positions and information on whether they are occupied
 	 */
@@ -288,6 +289,7 @@ public class ChessBoard extends ParentModel {
 	/**
 	 * establishMoves
 	 * This method creates a new move in the list of moves, it is stored in algebraic notation
+	 * @since 26.03.21 enabled for castling
 	 * @param chessBoard
 	 * @param position The new position
 	 */
@@ -295,6 +297,11 @@ public class ChessBoard extends ParentModel {
 		String move = position.getPositionName();
 		String stroke = "";
 		String startPos = "";
+		if (castling) {
+			algebraicNotation = "xx∞";
+			castling = false;
+			return;
+		}
 		if (opposingOccupied) {
 			stroke = "x";
 			startPos = oldName;
@@ -1061,8 +1068,10 @@ public class ChessBoard extends ParentModel {
 		opposingOccupied = false;
 		String oldName = oldPos.substring(0, 1);
     	ChessPiece chessPiece = findPiece(oldPos,piece);
-    	if (chessPiece != null)
+    	if (chessPiece != null) {
     		chessPiece.setPosition(newPos);
+    		castling = chessPiece.getMyPiece().isCastlingMove();
+    	}
     	if (chessPiece == null) {
     		System.out.println("!!Chessboard nullpointer!!"+oldPos+" ny Posisjon "+newPos);
     	}
