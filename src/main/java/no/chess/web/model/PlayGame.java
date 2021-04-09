@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import aima.core.environment.nqueens.NQueensBoard;
+import aima.core.logic.planning.State;
 import aima.core.search.adversarial.AdversarialSearch;
 import aima.core.search.adversarial.IterativeDeepeningAlphaBetaSearch;
 import aima.core.search.adversarial.MinimaxSearch;
@@ -80,6 +81,9 @@ public class PlayGame {
 	private ChessStateImpl activeState; // Is the active state of the game; a node in the game tree
 	private AChessAgent chessAgent = null;
 	private ChessKnowledgeBase kb = null;
+	private State deferredInitial = null;
+	private State deferredGoal = null;
+	private Map<String,State>deferredGoalstates = null;
 	public PlayGame(HashMap<String, Position> positions,ChessBoard frontBoard)   {
 		super();
 		this.myFrontBoard = frontBoard;
@@ -95,6 +99,30 @@ public class PlayGame {
 		movements = new ArrayList<ApieceMove>();
 		game.setMovements(movements);
 //		kb = new ChessKnowledgeBase();
+	}
+
+	public Map<String, State> getDeferredGoalstates() {
+		return deferredGoalstates;
+	}
+
+	public void setDeferredGoalstates(Map<String, State> deferredGoalstates) {
+		this.deferredGoalstates = deferredGoalstates;
+	}
+
+	public State getDeferredInitial() {
+		return deferredInitial;
+	}
+
+	public void setDeferredInitial(State deferredInitial) {
+		this.deferredInitial = deferredInitial;
+	}
+
+	public State getDeferredGoal() {
+		return deferredGoal;
+	}
+
+	public void setDeferredGoal(State deferredGoal) {
+		this.deferredGoal = deferredGoal;
 	}
 
 	public List<ApieceMove> getMovements() {
@@ -417,7 +445,7 @@ public class PlayGame {
 		}
 
 		// This call must be carried out before check of activegamepiece !!!
-		 writer.println("Positionlist before determinemove removed \n");
+//		 writer.println("Positionlist before determinemove removed \n");
 /*		 for ( Position pos : positionlist) {
 			 writer.println(pos.toString());
 		 }*/
@@ -427,7 +455,7 @@ public class PlayGame {
 //	    piece.setHeldPosition(null); // Then there are no previous positions to restore from 
 	    
 //		currentState.emptyMovements(); // empty all movements before the chosen action and move.
-	    writer.println("After call to board.determineMove \n"+game.getBoardPic()); // OK
+	    writer.println("After call to board.determineMove \n"+game.getBoardPic()); // OK 
 
 //		piece.setHeldPosition(position); // New position to the position to restore to removed olj 10.07.20 !!!
 		position.setUsedandRemoved(piece.getMyPiece()); // THe preferred position: Sets chesspiece to new position and also sets it in the removed list
@@ -457,15 +485,40 @@ public class PlayGame {
 		myMoves.put(moveNot, lastMove);
 		Integer moveNumber = new Integer(lastMove.getMoveNumber());
 		piece.getMoveNumbers().add(moveNumber);
+		checkCastling(stateImpl.getMyPlayer());
 		stateImpl.switchActivePlayer(); // 16.04.20 After a move, must switch active player
 //		localAction.getActions(playerTomove); // Added 24.02.20 When a move has been made then the pieces belonging to the same player must get new
 //available positions calculated		
 		game.createNewboard(); // A new set of usedunused lists are created.
 		 writer.println("After call to game.createnewboard \n"+game.getBoardPic()+"\n");
-		 for ( Position pos : positionlist) {
+/*		 for ( Position pos : positionlist) {
 			 writer.println(pos.toString());
-		 }
+		 }*/
 		 writer.close();
+	}
+	private void checkCastling(APlayer player) {
+		ChessActionImpl localAction = (ChessActionImpl) chessAgent.getCastleAction();
+		if (localAction != null) {
+			AgamePiece castle = localAction.getChessPiece();
+			Position castlePos = localAction.getPreferredPosition();
+   	    	if (castle != null) {
+   	    		Position castlePosfrom = castle.getHeldPosition();
+   	    		if (castlePosfrom == null)
+   	    			castlePosfrom = castle.getMyPosition();
+   	    		String fromPos = castlePosfrom.getPositionName();
+   	    		String toPos = "";
+   	    		String castleName = castle.getName();
+   	    		if (castlePos != null) {
+   	    			toPos = castlePos.getPositionName();
+   	    			myFrontBoard.determineMove(fromPos, toPos, castleName); // Determine if move is legal
+   	    			castle.setNofMoves(0);
+   	    			castle.setMyPosition(castlePos);
+   	    			castle.produceLegalmoves(castlePos);
+   	    			player.calculatePreferredPosition(castle, localAction);
+   	    		}
+   	    		
+   	    	}
+		}
 	}
 	/**
 	 * verifyAction

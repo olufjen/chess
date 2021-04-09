@@ -733,7 +733,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
   	    			chessBoard.determineMove(fromPos, toPos, castleName); // Determine if move is legal
    	    			castle.setNofMoves(0);
    	    			castle.setMyPosition(castlePos);
-   	    			castle.produceLegalmoves(newPosition);
+   	    			castle.produceLegalmoves(castlePos);
    	    		}
    	    		
    	    	}

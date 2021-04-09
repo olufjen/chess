@@ -66,6 +66,7 @@ import no.chess.ontology.WhiteBoardPosition;
 import no.chess.ontology.WhitePiece;
 //import uk.ac.manchester.cs.owlapi.dlsyntax.DLSyntaxObjectRenderer;
 import no.chess.ontology.impl.DefaultChessPiece;
+import no.games.chess.AbstractGamePiece.pieceType;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.hp.hpl.jena.ontology.Individual;
@@ -297,21 +298,41 @@ public class ChessBoard extends ParentModel {
 		String move = position.getPositionName();
 		String stroke = "";
 		String startPos = "";
+		String pieceName = position.getUsedBy().getName();
 		if (castling) {
-			algebraicNotation = "xx∞";
+			algebraicNotation = "∞";
+			move = algebraicNotation;
 			castling = false;
+			chessMoveAdm(pieceName,move);
 			return;
 		}
 		if (opposingOccupied) {
 			stroke = "x";
 			startPos = oldName;
 		}
-		String pieceName = position.getUsedBy().getName();
+
 		String pieceType = position.getUsedBy().getPieceName();
 		if (!pieceType.equals("P"))
 			move = pieceType+stroke+move;
 		else
 			move = startPos+stroke+move;
+		chessMoveAdm(pieceName,move);
+		
+/*		chessMoves = getChessMoves();
+		int last = chessMoves.size() ;
+		chessMove = chessMoves.get(last-1);
+		int moveNr = chessMove.getMoveNr();
+		if (pieceName.contains("w")) {
+			chessMove = new ChessMoves();
+			chessMove.setWhiteMove(move);
+			chessMove.setMoveNr(moveNr+1);
+			chessMoves.add(chessMove);
+		}else {
+			chessMove.setBlackMove(move);
+		}*/
+		algebraicNotation = move; // contains the algebraic notation of the latest move
+	}
+	private void chessMoveAdm(String pieceName,String move) {
 		chessMoves = getChessMoves();
 		int last = chessMoves.size() ;
 		chessMove = chessMoves.get(last-1);
@@ -324,9 +345,7 @@ public class ChessBoard extends ParentModel {
 		}else {
 			chessMove.setBlackMove(move);
 		}
-		algebraicNotation = move; // contains the algebraic notation of the latest move
 	}
-
 	
 	/**
 	 * findMoves
@@ -1068,9 +1087,11 @@ public class ChessBoard extends ParentModel {
 		opposingOccupied = false;
 		String oldName = oldPos.substring(0, 1);
     	ChessPiece chessPiece = findPiece(oldPos,piece);
+  		pieceType type = chessPiece.getMyPiece().getPieceType();
     	if (chessPiece != null) {
     		chessPiece.setPosition(newPos);
     		castling = chessPiece.getMyPiece().isCastlingMove();
+  
     	}
     	if (chessPiece == null) {
     		System.out.println("!!Chessboard nullpointer!!"+oldPos+" ny Posisjon "+newPos);
@@ -1105,8 +1126,10 @@ public class ChessBoard extends ParentModel {
         	}else {
         		chessPiece.setBlackBoardPosition((BlackBoardPosition) newPosition);
         	}*/
-        	establishMoves(newPosition,oldName);
-        	
+        	if(!castling)
+        		establishMoves(newPosition,oldName);
+        	if(castling && type == type.KING) 
+        		establishMoves(newPosition,oldName);
        	}
 		
 	}

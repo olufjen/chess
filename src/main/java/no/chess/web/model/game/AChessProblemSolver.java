@@ -79,6 +79,7 @@ public class AChessProblemSolver {
   private String playSide;
   private String BOARD;
   private String PLAYER;
+  private String CASTLE;
   /**
    *  The type of piece under consideration
    */
@@ -119,6 +120,10 @@ public class AChessProblemSolver {
   private APlayer opponent =  null;
   private State initialState =  null;
   private State goalState =  null;
+  private State deferredInitial = null;
+  private State deferredGoal = null;
+  private Map<String,State>deferredGoalstates = null;
+  private String deferredKey = null;
   private GraphPlanAlgorithm graphPlan =  null;
   private Map<String,ActionSchema> actionSchemas = null;
   private Map<String,State>initStates = null;
@@ -128,6 +133,7 @@ public class AChessProblemSolver {
   private AgamePiece opponentCatch = null;
   private Position opponentcatchPosition = null;
   
+  private ChessActionImpl castleAction = null;
 
   public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, FOLKnowledgeBase folKb, FOLDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
 		super();
@@ -157,7 +163,16 @@ public class AChessProblemSolver {
 	    goalStates = new HashMap<String,State>();
 	    possiblePieces = new HashMap<String,AgamePiece>();
 	    possiblePositions = new HashMap<String,Position>();
-	    
+	    deferredGoalstates = new HashMap<String,State>();
+	    deferredGoal = game.getDeferredGoal();
+	    if (deferredGoal == null) {
+	    	  deferredGoalstates = new HashMap<String,State>();
+	    }else {
+	    	deferredGoalstates = game.getDeferredGoalstates();
+	    	for (String key :deferredGoalstates.keySet()) {
+	    		deferredKey = key;
+	    	}
+	    }
   }
 
   public void setPredicatenames() {
@@ -187,10 +202,35 @@ public class AChessProblemSolver {
 		PAWNATTACK = KnowledgeBuilder.getPAWNATTACK();
 		BOARD = KnowledgeBuilder.getBOARD();
 		PLAYER = KnowledgeBuilder.getPLAYER();
+		CASTLE = KnowledgeBuilder.getCASTLE();
   }
   
 
- public List<Position> getPositionList() {
+ public ChessActionImpl getCastleAction() {
+	return castleAction;
+}
+
+public void setCastleAction(ChessActionImpl castleAction) {
+	this.castleAction = castleAction;
+}
+
+public State getDeferredInitial() {
+	return deferredInitial;
+}
+
+public void setDeferredInitial(State deferredInitial) {
+	this.deferredInitial = deferredInitial;
+}
+
+public State getDeferredGoal() {
+	return deferredGoal;
+}
+
+public void setDeferredGoal(State deferredGoal) {
+	this.deferredGoal = deferredGoal;
+}
+
+public List<Position> getPositionList() {
 	return positionList;
 }
 
@@ -510,22 +550,181 @@ public boolean checkFacts(String pieceName,String pos,String fact,ArrayList<Ches
 		return false;
   }
 
-  public String prepareAction( ArrayList<ChessActionImpl> actions) {
-	  for (ChessActionImpl action:actions){
-		  ApieceMove move = action.getPossibleMove();
-		  AgamePiece piece = action.getChessPiece();
-		  String name = piece.getMyPiece().getOntlogyName();
-		  String posName = null;
-		  pieceType type =piece.getPieceType();
-		  if (move != null && type != type.PAWN) {
-			  Position pos = move.getToPosition();
-			  posName = pos.getPositionName();
-			  if (!checkThreats(name, posName, THREATEN))
-				  return name;
-		  }
-	  }
-	  return null;
-
+  /**
+   * prepareAction
+   * This method attempts to analyze the chess state and prepare for next move.
+   * It is called from the checkMovenumber method when the opening moves have been made.
+ * @param actions
+ * @return
+ */
+public String prepareAction( ArrayList<ChessActionImpl> actions) {
+	String pieceName = "WhiteBishop2";
+	String fpos = "f1";
+	String toPos = "d3";
+	boolean bishop = checkpieceFacts("y",pieceName,fpos,OCCUPIES,actions);
+	State goal = null;
+	State initstate = null;
+	if (bishop) {
+		String name = pieceName;
+		ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(name)).findAny().orElse(null);
+		if (naction != null) {
+			AgamePiece piece = naction.getChessPiece();
+			pieceType type = piece.getPieceType();
+			determineType(type);
+			goal = buildGoalstate(pieceName,toPos);
+			List<Position> removed = piece.getRemovedPositions();
+			Position pos =  (Position) removed.stream().filter(c -> c.getPositionName().contains(toPos)).findAny().orElse(null);
+			if (pos != null) {
+				String pawnName = "WhitePawn5";
+				String pawnPos = "e2";
+				boolean pawn = checkpieceFacts("y",pawnName,pawnPos,OCCUPIES,actions);
+				if (pawn) {
+					typeofPiece = PAWN;
+					moveName = "pawnmove";
+					initstate = buildInitialstate(pawnName, pawnPos);
+					deferredInitial = initstate;
+					deferredGoal = goal;
+					deferredGoalstates.put(pieceName, goal);
+					game.setDeferredGoal(deferredGoal);
+					game.setDeferredInitial(deferredInitial);
+					game.setDeferredGoalstates(deferredGoalstates);
+					return pawnName;
+				}
+			}else {
+				checkCastling(actions);
+				return pieceName;
+			}
+		}
+	}
+	for (ChessActionImpl action:actions){
+		ApieceMove move = action.getPossibleMove();
+		AgamePiece piece = action.getChessPiece();
+		String name = piece.getMyPiece().getOntlogyName();
+		String posName = null;
+		pieceType type =piece.getPieceType();
+		if (move != null && type != type.PAWN) {
+			Position pos = move.getToPosition();
+			posName = pos.getPositionName();
+			if (!checkThreats(name, posName, THREATEN))
+				return name;
+		}
+	}
+	return null;
+}
+/**
+ * determineType
+ * This method determines and sets the ChessProblem piecetype
+ * It is used when the initial and goal states are created
+ * @param type
+ */
+public void determineType(pieceType type) {	 
+	if (type == type.PAWN) {
+		typeofPiece = PAWN;
+		moveName = "pawnmove";
+	}
+	if (type == type.BISHOP) {
+		typeofPiece = BISHOP;
+		moveName = "bishopmove";
+	}		
+	if (type == type.ROOK) {
+		typeofPiece = ROOK;
+		moveName = "rookmove";
+	}			
+	if (type == type.KNIGHT) {
+		typeofPiece = KNIGHT;
+		moveName = "knoghtmove";
+	}
+	if (type == type.QUEEN) {
+		typeofPiece = QUEEN;
+		moveName = "queenmove";
+	}
+	if (type == type.KING) {
+		typeofPiece = KING;
+		moveName = "kingmove";
+	}	
+	
+  }
+public void checkCastling(ArrayList<ChessActionImpl> actions) {
+	String pieceName = "WhiteKing";
+	String kingPos = "e1";
+	State goal = null;
+	State initstate = null;
+	ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
+	if (naction != null) {
+		AgamePiece king = naction.getChessPiece();
+		List<Position> removed = king.getRemovedPositions();
+		String posName = "f1";
+		Position pos =  (Position) removed.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
+		if (pos != null) {
+			String bishopName = "WhiteBishop2";
+			String fpos = "f1";
+			String toPos = "d3";
+			boolean bishop = checkpieceFacts("y",bishopName,fpos,OCCUPIES,actions);
+			if (bishop) {
+				String castlePos = "g1";
+				typeofPiece = KING;
+				moveName = "kingmove";
+				goal = buildGoalstate(pieceName,castlePos);
+				typeofPiece = BISHOP;
+				moveName = "bishopmove";
+				initstate = buildInitialstate(bishopName, toPos);
+				deferredInitial = initstate;
+				deferredGoal = goal;
+				deferredGoalstates.put(pieceName, goal);
+				game.setDeferredGoalstates(deferredGoalstates);
+				game.setDeferredGoal(deferredGoal);
+				game.setDeferredInitial(deferredInitial);		
+			}
+		}
+		
+	}
+}
+  /**
+   * buildGoalstate
+   * This method builds a goal state based on a chosen piece name and a chosen position name
+ * @param pieceName
+ * @param toPos
+ * @return
+ */
+public State buildGoalstate(String pieceName,String toPos) {
+		List<Term> terms = new ArrayList<Term>();
+		List<Term> typeTerms = new ArrayList<Term>();
+		List<Term> boardTerms = new ArrayList<Term>();
+		List<Term> playerTerms = new ArrayList<Term>();
+		
+		Constant pieceVar = new Constant(pieceName);
+		Constant posVar = new Constant(toPos);
+		Constant type = new Constant(typeofPiece);
+		Constant ownerVar = new Constant(playerName);
+		playerTerms.add(ownerVar);
+		boardTerms.add(posVar);
+		terms.add(pieceVar);
+		terms.add(posVar);
+		typeTerms.add(pieceVar);
+		typeTerms.add(type);
+		Predicate playerPredicate = new Predicate(PLAYER,playerTerms);
+		Predicate boardPredicate = new Predicate(BOARD,boardTerms);
+		Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
+		Predicate posSentence = new Predicate(OCCUPIES,terms);
+		List<Term> ownerterms = new ArrayList<Term>();
+	
+		ownerterms.add(ownerVar);
+		ownerterms.add(pieceVar);
+		Predicate ownerSentence = new Predicate(OWNER,ownerterms);
+		List<Literal> literals = new ArrayList();
+		Literal pos = new Literal((AtomicSentence) posSentence);
+		Literal own = new Literal((AtomicSentence) ownerSentence);
+		Literal types = new Literal((AtomicSentence)typePredicate);
+		Literal boards = new Literal((AtomicSentence)boardPredicate);
+		Literal player = new Literal((AtomicSentence)playerPredicate);
+		
+		literals.add(pos);
+		literals.add(own);
+		literals.add(types);
+//		literals.add(player);
+		literals.add(boards);
+		State gState = new State(literals);
+		return gState;
 	  
   }
   /**
@@ -599,6 +798,42 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 	  }
 	  return pieceName;
   }
+
+public String deferredMove(ArrayList<ChessActionImpl> actions) {
+	if (deferredKey == null) {
+		return null;
+	}
+	String key = deferredKey;
+	switch (key) {
+	case "WhiteKing":
+		String posx = "g1";
+		checkFacts(key, posx, CASTLE, actions);
+		List<AgamePiece> pieces = myPlayer.getMygamePieces();
+		AgamePiece movedPiece = (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(key)).findAny().orElse(null);
+		HashMap<String,Position> castlePos = movedPiece.getCastlePositions();
+		Position toCastle = castlePos.get(posx);
+		if (movedPiece != null && toCastle != null) {	
+			AgamePiece castle = myPlayer.checkCastling(movedPiece, toCastle);
+			String castleName = castle.getMyPiece().getOntlogyName();
+			ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(castleName)).findAny().orElse(null);
+			Position toCastlePos = castle.getCastlePositions().get("f1");
+			if (toCastlePos != null && naction != null) {
+				  naction.getPossibleMove().setToPosition(toCastlePos);
+				  naction.setPreferredPosition(toCastlePos);
+				  castleAction = naction;
+			}
+ 	    	if (castle != null) {
+   	    		castle.setCastlingMove(true);
+   	    		movedPiece.setCastlingMove(true);
+   	    		Position castlePosfrom = castle.getHeldPosition();
+   	    		if (castlePosfrom == null)
+   	    			castlePosfrom = castle.getMyPosition();
+ 	    	}
+		}
+		return deferredKey;
+	}
+	return null;
+}
   /**
  * planProblem
  * This method creates and returns a High Level Action Problem given the available actions
@@ -614,10 +849,25 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  searchProblem(actions);
 	  ChessProblem problem = null;
+	  String actionName = deferredMove(actions);
 	  String pieceName = checkMovenumber(actions);
+	  if (actionName != null)
+		  pieceName = actionName;
 	  ActionSchema movedAction = actionSchemas.get(pieceName);
 	  if (movedAction != null) {
 		  String nactionName = movedAction.getName();
+		  if (deferredInitial != null && deferredGoal != null) {
+			  writer.println("Deferred initial and goal states\n");
+		      for (Literal literal :
+		    	  deferredInitial.getFluents()) {
+		    	 writer.println(literal.toString());
+		      }
+		      writer.println("Deferred goal state\n");
+		      for (Literal literal :
+		    	  deferredGoal.getFluents()) {
+		    	 writer.println(literal.toString());
+		      }		      
+		  }
 		  writer.println("Chosen action Schema\n"+movedAction.toString());
 		  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(nactionName)).findAny().orElse(null);
 		  State initState = initStates.get(pieceName);

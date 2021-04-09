@@ -40,6 +40,7 @@ import aima.core.util.datastructure.Pair;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
 import no.games.chess.ChessPieceType;
+import no.games.chess.AbstractGamePiece.pieceType;
 import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
@@ -126,6 +127,9 @@ public class AChessAgent extends KBAgent {
     private String PAWNATTACK ="";
     private String BOARD;
     private String PLAYER;
+    private String CASTLE;
+    
+    private ChessActionImpl castleAction = null;
     
 	public AChessAgent(KnowledgeBase kb) {
 		super(kb);
@@ -203,6 +207,7 @@ public class AChessAgent extends KBAgent {
 			PAWNATTACK = KnowledgeBuilder.getPAWNATTACK();
 			BOARD = KnowledgeBuilder.getBOARD();
 			PLAYER = KnowledgeBuilder.getPLAYER();
+			CASTLE = KnowledgeBuilder.getCASTLE();
 			chessDomain.addPredicate(PROTECTED);
 			chessDomain.addPredicate(MOVE);
 			chessDomain.addPredicate(ACTION);
@@ -222,7 +227,19 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(PAWNATTACK);
 			chessDomain.addPredicate(PLAYER);
 			chessDomain.addPredicate(BOARD);
+			chessDomain.addPredicate(CASTLE);
 	  }
+	  
+
+	public ChessActionImpl getCastleAction() {
+		return castleAction;
+	}
+
+
+	public void setCastleAction(ChessActionImpl castleAction) {
+		this.castleAction = castleAction;
+	}
+
 
 	/* (non-Javadoc)
 	 * @see aima.core.logic.propositional.agent.KBAgent#execute(aima.core.agent.Percept)
@@ -398,7 +415,11 @@ public class AChessAgent extends KBAgent {
 			chessSearch = new ChessSearchAlgorithm(fw,writer);
 //			List<List<ActionSchema>> solution = solver.solveProblem(localAction);
 			List<ActionSchema> actionSchemas = chessSearch.heirarchicalSearch(problem);
-			writer.println("No of action schemas: "+actionSchemas.size());
+			writer.println("No of action schemas: "+actionSchemas.size()+"\n");
+/*
+ * If the hiearchical search returns a list of seperate actions then perform these actions in steps?
+ * Must wait for the opponent move, first !! See section 11.2.2 p. 408			
+ */
 			ActionSchema actionSchema = actionSchemas.get(0);
 
 			String nactionName = actionSchema.getName();
@@ -437,6 +458,7 @@ public class AChessAgent extends KBAgent {
 		writer.flush();
 //		Sentence sentence = makePerceptSentence(state, 0);
 //		KB.tell(sentence);
+		castleAction = solver.getCastleAction();
 		if (naction != null)
 			localAction = naction;
 		return localAction;
@@ -544,6 +566,7 @@ public class AChessAgent extends KBAgent {
 	 * This method tells the FOL knowledgebase rules about how to capture opponent pieces
 	 * It also tells the first order knowledge base and its domain fact about own pieces
 	 * @since 29.01.21 Only active pieces are considered
+	 * @since 07.04.21 Castling rules are added
 	 * param t
 	 */
 	public void makeRules(int t) {
@@ -593,6 +616,7 @@ public class AChessAgent extends KBAgent {
 				List<Term> typeTerms = new ArrayList<Term>();
 				typeTerms.add(pieceVariable);
 				String pieceType = KnowledgeBuilder.getPieceType(piece);
+				pieceType type = piece.getPieceType();
 				Constant typeConstant = new Constant(pieceType);
 				typeTerms.add(typeConstant);
 				chessDomain.addConstant(pieceType);
@@ -603,6 +627,11 @@ public class AChessAgent extends KBAgent {
 				if (attackMap != null)
 					attackPositions = new ArrayList(attackMap.values());
 				List<Position> availablePositions = piece.getNewlistPositions();
+				List<Position> castlePositions = null;
+				if (type == type.KING) {
+					HashMap<String,Position> castler = piece.getCastlePositions();
+					castlePositions = new ArrayList<Position>(castler.values());
+				}
 				boolean pawnattack = false;
 				if (attackPositions != null && !attackPositions.isEmpty())
 					pawnattack = true;
@@ -617,7 +646,6 @@ public class AChessAgent extends KBAgent {
 							List<Term> protectedTerms = new ArrayList<Term>();
 							protectedTerms.add(protectorVariable);
 							protectedTerms.add(protectedVariable);
-							
 							Predicate protectorPredicate = new Predicate(PROTECTED,protectedTerms);
 							Predicate reachablePredicate = new Predicate(REACHABLE,protectedTerms);
 							if (!pawnattack) {
@@ -626,7 +654,30 @@ public class AChessAgent extends KBAgent {
 							}
 							folKb.tell(reachablePredicate);
 							chessDomain.addConstant(position);
-					
+							if (type == type.KING && castlePositions != null) {
+								List<Position> removedKing = piece.getRemovedPositions();
+								for (Position cpos: castlePositions) {
+									String cPosname = cpos.getPositionName();
+									String xposname = "";
+									if (cPosname.equals("g1")) {
+										xposname = "f1";
+									}
+									if (cPosname.equals("c1")) {
+										xposname = "d1";
+									}
+									String xxpos = xposname;
+									Position xposn =  (Position) removedKing.stream().filter(c -> c.getPositionName().contains(xxpos)).findAny().orElse(null);
+									if (!cpos.isInUse() && xposn == null) {
+										List<Term> castleTerms = new ArrayList<Term>();
+										Constant castleConstant = new Constant(cPosname);
+										Constant castleKing = new Constant(name);
+										castleTerms.add(castleKing);
+										castleTerms.add(castleConstant);
+										Predicate castlePredicate = new Predicate(CASTLE,castleTerms);
+										folKb.tell(castlePredicate);
+									}
+								}
+							}
 						}
 					}
 				}

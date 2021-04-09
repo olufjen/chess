@@ -45,9 +45,16 @@ public class KnowledgeBuilder {
   private static String PAWNATTACK = "PAWNATTACK";
   private static String BOARD = "BOARD";
   private static String PLAYER = "PLAYER";
+  private static String CASTLE = "CASTLE";
   
   
-  public static String getBOARD() {
+  public static String getCASTLE() {
+	return CASTLE;
+}
+public static void setCASTLE(String cASTLE) {
+	CASTLE = cASTLE;
+}
+public static String getBOARD() {
 	return BOARD;
 }
 public static void setBOARD(String bOARD) {
