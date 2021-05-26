@@ -427,7 +427,7 @@ public class PlayGame {
 			}
 		}
 			
-		writer.println("After call to emptymovements \n"+game.getBoardPic());
+//		writer.println("After call to emptymovements \n"+game.getBoardPic());
 /*
  * These two statements executed before call to emptyMovements	
  * OBS!!! oldpos and newpos are the same. the .emptymovewments clears this !!!	
@@ -455,7 +455,7 @@ public class PlayGame {
 //	    piece.setHeldPosition(null); // Then there are no previous positions to restore from 
 	    
 //		currentState.emptyMovements(); // empty all movements before the chosen action and move.
-	    writer.println("After call to board.determineMove \n"+game.getBoardPic()); // OK 
+//	    writer.println("After call to board.determineMove \n"+game.getBoardPic()); // OK 
 
 //		piece.setHeldPosition(position); // New position to the position to restore to removed olj 10.07.20 !!!
 		position.setUsedandRemoved(piece.getMyPiece()); // THe preferred position: Sets chesspiece to new position and also sets it in the removed list
@@ -466,7 +466,7 @@ public class PlayGame {
 //		clearMoves();
 //	    writer.println(game.getBoardPic());
 	    clearChessboard();
-		 writer.println("After call to clearchessboard \n"+game.getBoardPic());
+//		 writer.println("After call to clearchessboard \n"+game.getBoardPic());
 /*
  * OBS: Move from old to new position	!!! OJN 3.12.19    
  */
@@ -474,7 +474,7 @@ public class PlayGame {
 
 //		game.movePiece(piece.getMyPosition().getXyloc(),position.getXyloc()); // The piece is moved to the new location on the chessboard held by the AbstractChessGame
 		
-	    writer.println("After call to game.movepiece \n"+game.getBoardPic());
+//	    writer.println("After call to game.movepiece \n"+game.getBoardPic());
 		
 		createMove(piece,oldPosition, position);
 
@@ -496,6 +496,12 @@ public class PlayGame {
 		 }*/
 		 writer.close();
 	}
+	/**
+	 * checkCastling
+	 * This method checks if the chess agent contains a castling action
+	 * If that is the case, the method ensures that the rook is moved to the correct castling position
+	 * @param player
+	 */
 	private void checkCastling(APlayer player) {
 		ChessActionImpl localAction = (ChessActionImpl) chessAgent.getCastleAction();
 		if (localAction != null) {

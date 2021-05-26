@@ -300,7 +300,7 @@ public class ChessBoard extends ParentModel {
 		String startPos = "";
 		String pieceName = position.getUsedBy().getName();
 		if (castling) {
-			algebraicNotation = "∞";
+			algebraicNotation = "o-o";
 			move = algebraicNotation;
 			castling = false;
 			chessMoveAdm(pieceName,move);
@@ -1081,6 +1081,7 @@ public class ChessBoard extends ParentModel {
 	 * 
 	 * The chess piece that is moved receives the new position if it is accepted
 	 * It uses the establishMoves method to create a move in algebraic notation
+	 * And it uses the chesspiece acceptMove method to set the opposing piece passive
 	 * 
 	 */
 	public void determineMove(String oldPos,String newPos,String piece) {
@@ -1100,7 +1101,7 @@ public class ChessBoard extends ParentModel {
        	Position newPosition = findPostion(newPos);
        	if (checkPosition(newPos)) { // If position is occupied find which piece it is occupied by and determine if move is legal
        		
-       		boolean accept = chessPiece.acceptMove(newPos, oldPosition,newPosition);
+       		boolean accept = chessPiece.acceptMove(newPos, oldPosition,newPosition); // This method sets the opposing piece passive
        		opposingOccupied = accept;
        		if(!accept)
        			chessPiece.setPosition(oldPos);
