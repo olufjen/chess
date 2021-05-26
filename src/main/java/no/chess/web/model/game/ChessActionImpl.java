@@ -14,7 +14,7 @@ import no.games.chess.AbstractGamePiece.pieceType;
 /**
  * ChessActionImpl
  * This class implements the ChessAction interface.
- * A ChessAction is created by the call to the ChesState getActions() method
+ * A ChessAction is created by the call to the ChessState getActions() method
  * It contains an AgamePiece and its available (reachable) positions
  * Revised: From this a preferred position for this piece is calculated by the player
  * From this a possible move is created and a preferred position is calculated
@@ -31,7 +31,8 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private ChessPieceType pieceType;
 	private pieceType type;
 	private List<Position> availablePositions;
-	private List<Position> positionRemoved;
+	private List<Position> positionRemoved; // THese are the positions blocked by other friendly pieces.
+	private List<Position> opponentRemoved; // THese are the positions blocked by opponent pieces.
 	private List<Position> bishopRemoved; // This list contains removed positions for the queen in bishop movements
 	private Position preferredPosition = null; // Each action has a preferred position that the piece should move to
 	private Position strikePosition = null; // This position is set if it is occupied by an opponent piece
@@ -268,6 +269,16 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	}
 
 
+	public List<Position> getOpponentRemoved() {
+		return opponentRemoved;
+	}
+
+
+	public void setOpponentRemoved(List<Position> opponentRemoved) {
+		this.opponentRemoved = opponentRemoved;
+	}
+
+
 	public void setPositionRemoved(List<Position> positionRemoved) {
 		this.positionRemoved = positionRemoved;
 	}
@@ -347,6 +358,10 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			bishopRemoved.clear();
 			bishopRemoved = null;
 		}
+		if (opponentRemoved != null) {
+			opponentRemoved.clear();
+			opponentRemoved = null;
+		}
 		ChessPieceType pieceType = chessPiece.getChessType();
 		availablePositions = new ArrayList(positions.values());
 		if (pieceType instanceof AQueen) {
@@ -355,6 +370,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		}
 		
 		positionRemoved = new ArrayList();
+		opponentRemoved = new ArrayList();
 		bishopRemoved = new ArrayList();
 		List<Position> castlePositions = null;
 		Position castlePosition = null;
@@ -405,6 +421,9 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * This method check for opponent pieces and their positions.
 	 * If opponent pieces blocks movements for the active player,
 	 * then these positions must be placed in the removed list
+	 * @since 20.05.21 Opponent pieces that block movements for the active player
+	 * must be put in a separate removed list.
+	 * This is so because the opponent piece can be taken.
 	 * 
 	 */
 	private void checkOpponent() {
@@ -416,6 +435,8 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 					Position pos = otherPiece.getMyPosition();
 					if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
 						if (!checkQueen(pos) && type != type.KNIGHT)
+							opponentRemoved.add(position);
+						if (type == type.PAWN)
 							positionRemoved.add(position);
 					}
 				}
@@ -525,6 +546,10 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 
 		return availablePositions;
 		
+	}
+	public  List<Position> getOpponentPositions(){
+		
+		return null;
 	}
 	public String toString() {
 		String posName = "Unknown";

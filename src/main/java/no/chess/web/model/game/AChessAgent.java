@@ -49,6 +49,7 @@ import no.games.chess.planning.ChessSearchAlgorithm;
 
 /**
  * This is a Knowledgebase agent derived from the generic knowledgebase agent of AIMA chapter 7.
+ * It is further adapted for the FOL knowledge base as described in chapter 10 and 11.
  * It is created every time the PlayGame object makes a move.
  * The state of the chess game implements the Percept interface.
  * The ChessAction interface extends the AIMA Action interface.
@@ -264,9 +265,8 @@ public class AChessAgent extends KBAgent {
 //		folKb = new FOLKnowledgeBase(chessDomain);
 		folKb = new FOLKnowledgeBase(chessDomain, forwardChain);
 //		folKb.tell(mKing);
-		setOpponentpieces(opponent);
-		kb.setOpponentPieces(opponentPieces); // creates knowledge about the opponent both to the knowledge base
-//	and the first order knowledge base and its domain
+		setOpponentpieces(opponent);//creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
+		kb.setOpponentPieces(opponentPieces);
 		noofMoves = game.getMovements().size();
 		String playerName = stateImpl.getMyPlayer().getNameOfplayer();
 		Sentence playSentence = kb.newSymbol(kb.TOPLAY+playerName, noofMoves);
@@ -386,7 +386,7 @@ public class AChessAgent extends KBAgent {
 		emptyPositions = game.getNotusedPositionlist();
 
 		makeOpponentsentences(stateImpl.getOpponent(),noofMoves); //knowledge about the opponent and its pieces to the proportional knowledge base knowledge base
-		makeSentences(); // Evaluates all actions using the actionprocessor using the makeActionSentence method
+//		makeSentences(); // Evaluates all actions using the actionprocessor using the makeActionSentence method OLJ 14.05.21 This is not used 
 		writer.println("The first order knowledge base");
 		writer.println(folKb.toString());
 		solver = new AChessProblemSolver(stateImpl, localAction, folKb, chessDomain, forwardChain, backwardChain, game, myPlayer, opponent);
@@ -398,7 +398,7 @@ public class AChessAgent extends KBAgent {
  * Here we must ask the knowledge base what is the best action to perform:		
  */
 		String movnr = Integer.toString(noofMoves);
-		for (ChessActionImpl action:actions) {
+/*		for (ChessActionImpl action:actions) {
 //			double evaluation = game.getGame().analyzePieceandPosition(action);
 			if (action.getPossibleMove()!= null && !action.isBlocked()) {
 
@@ -408,7 +408,8 @@ public class AChessAgent extends KBAgent {
 				askMove(myPlayer,action);
 			}
 
-		}
+		} This has been turned off OLJ 25.5.21*/
+		
 		ChessActionImpl naction = null;
 		ChessProblem problem = solver.planProblem((ArrayList<ChessActionImpl>) actions);
 		if (problem != null) {
@@ -417,8 +418,10 @@ public class AChessAgent extends KBAgent {
 			List<ActionSchema> actionSchemas = chessSearch.heirarchicalSearch(problem);
 			writer.println("No of action schemas: "+actionSchemas.size()+"\n");
 /*
+ * The hiearchical search returns three actionschemas.
+ * The two first are identical, the third one is the original HLA
  * If the hiearchical search returns a list of seperate actions then perform these actions in steps?
- * Must wait for the opponent move, first !! See section 11.2.2 p. 408			
+ * Must wait for the opponent move, first !! See section 11.2.2 p. 408	 		
  */
 			ActionSchema actionSchema = actionSchemas.get(0);
 
@@ -468,6 +471,7 @@ public class AChessAgent extends KBAgent {
 	/**
 	 * createConnected
 	 * This method creates rules to the fol knowledge base 
+	 * @since 18.05.21 The Owner predicate is removed from the rules.
 	 * @param name
 	 * @param pos
 	 * @param piece
@@ -496,24 +500,24 @@ public class AChessAgent extends KBAgent {
 		moveTerms.add(posVariable);
 		Predicate movePredicate = new Predicate(CANMOVE,moveTerms);
 		Predicate move = new Predicate(MOVE,moveTerms);
-		ConnectedSentence reachableSentence = new ConnectedSentence(Connectors.AND,ownerPredicate,reachablePredicate);
-		ConnectedSentence protectedSentence = new ConnectedSentence(Connectors.AND,ownerPredicate,protectedPredicate);
+//		ConnectedSentence reachableSentence = new ConnectedSentence(Connectors.AND,ownerPredicate,reachablePredicate);
+		ConnectedSentence reachableandprotectedSentence = new ConnectedSentence(Connectors.AND,reachablePredicate,protectedPredicate);
 		Predicate safemovePredicate = new Predicate(SAFEMOVE,moveTerms);
-		ConnectedSentence goal = new ConnectedSentence(Connectors.IMPLIES,reachableSentence,movePredicate);
-		ConnectedSentence protectedGoal = new ConnectedSentence(Connectors.IMPLIES,protectedSentence,safemovePredicate);
+		ConnectedSentence goal = new ConnectedSentence(Connectors.IMPLIES,reachableandprotectedSentence,move);
+/*		ConnectedSentence protectedGoal = new ConnectedSentence(Connectors.IMPLIES,goal,safemovePredicate);
 		ConnectedSentence canAndSafe = new ConnectedSentence(Connectors.AND,movePredicate,safemovePredicate);
-		ConnectedSentence safeTomove = new ConnectedSentence(Connectors.IMPLIES,canAndSafe,move);
+		ConnectedSentence safeTomove = new ConnectedSentence(Connectors.IMPLIES,canAndSafe,move);*/
 		folKb.tell(goal);
-		folKb.tell(protectedGoal);
-		folKb.tell(safeTomove);
+//		folKb.tell(protectedGoal);
+//		folKb.tell(safeTomove);
 		List<Term> typeTerms = new ArrayList<Term>();
 		Constant pieceType = new Constant(PAWN);
 		typeTerms.add(pieceVariable);
 		typeTerms.add(pieceType);
 		Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
 		Predicate pawnMove = new Predicate(PAWNMOVE,reachableTerms);
-		ConnectedSentence pawnSentence = new ConnectedSentence(Connectors.AND,ownerPredicate,typePredicate);
-		ConnectedSentence pawnReachable = new ConnectedSentence(Connectors.AND,pawnSentence,reachablePredicate);
+//		ConnectedSentence pawnSentence = new ConnectedSentence(Connectors.AND,ownerPredicate,typePredicate);
+		ConnectedSentence pawnReachable = new ConnectedSentence(Connectors.AND,typePredicate,reachablePredicate);
 		ConnectedSentence pawnmove = new ConnectedSentence(Connectors.IMPLIES,pawnReachable,pawnMove);
 		folKb.tell(pawnmove);
 
@@ -532,13 +536,16 @@ public class AChessAgent extends KBAgent {
 		String playername = player.getNameOfplayer();
 		AgamePiece piece = action.getChessPiece();
 		String name = action.getChessPiece().getMyPiece().getOntlogyName(); 
-
+		Constant ownerVariable = new Constant(playername);
 		List<Position> availablePositions = piece.getNewlistPositions();
 		if (availablePositions != null && !availablePositions.isEmpty()) {
 			for (Position pos:availablePositions){
 				if(!piece.checkRemoved(pos)) {
+					List<Term> ownerTerms = new ArrayList<Term>();
 					String position = pos.getPositionName();
 					Constant pieceVariable = new Constant(name);
+					ownerTerms.add(ownerVariable);
+					ownerTerms.add(pieceVariable);
 					Constant posVariable = new Constant(position);
 					List<Term> moveTerms = new ArrayList<Term>();
 					moveTerms.add(pieceVariable);
@@ -907,9 +914,9 @@ public class AChessAgent extends KBAgent {
 	@Override
 	public Sentence makeActionSentence(Action action, int t) {
 		ChessActionImpl thisAction = (ChessActionImpl) action;
-		double evaluation = game.getGame().analyzePieceandPosition(thisAction);
+/*		double evaluation = game.getGame().analyzePieceandPosition(thisAction);
 		Double value = new Double(evaluation);
-		thisAction.setEvaluationValue(value);
+		thisAction.setEvaluationValue(value);*/
 		String active = "NOMOV";
 		List<AgamePiece> attackedPieces = thisAction.getAttacked();
 		List<Position> protectedPositions = thisAction.getProtectedPositions();

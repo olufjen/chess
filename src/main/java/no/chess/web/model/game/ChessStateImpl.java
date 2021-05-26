@@ -26,8 +26,9 @@ import no.games.chess.GamePiece;
  * A final state is either a loss, a win or a draw.
  * A ChessState is characterized by a AgameBoard and positions held in a HashMap.
  * The positions tell which positions are vacant or occupied by a chessPiece. 
- * There exists only one ChessState object, and the values of the state changes only when the .mark method is called.
- * The current state represent the current node in the search tree. Alle the available actions to the state 
+ * There exists only one ChessState object, and the values of the state changes when the .mark method is called
+ * and when the .getActions() method is called. This method creates a new set of actions for the chess state.
+ * The current state represent the current node in a search tree. All the available actions to the state 
  * represent leaves in the search tree.
  * @since 25.08.20
  * The Chessstate interface extends the AIMA Percept interface
@@ -38,7 +39,7 @@ import no.games.chess.GamePiece;
 public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 
 	private AgameBoard gameBoard;
-	private HashMap<String, Position> positions;
+	private HashMap<String, Position> positions;// The HashMap of Positions from the ontology
 	private List<Position> allPositions;
 	private int[][] squares;
 	private String[][] piecePosition;
@@ -135,12 +136,12 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 //			localAction.set
 			AgamePiece piece = (AgamePiece) localAction.getChessPiece();
 			String name = piece.getMyPiece().getPieceName();
-			ActionProcessor actionProcessor = new ActionProcessor(pNumber,name);
-			Double d  = ChessFunctions.processChessgame(localAction, gamer,actionProcessor);
+/*			ActionProcessor actionProcessor = new ActionProcessor(pNumber,name);
+			Double d  = ChessFunctions.processChessgame(localAction, gamer,actionProcessor);The action Processor is turned off */ 
 			pn++;
 			
 		}
-		analyzeutility();
+		analyzeutility(); //Determines a preferred action within the state
 		orginalUtility = utility;
 		playerTomove.setActions(actions);
 
@@ -636,6 +637,31 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 
 	public void setChessAction(ChessActionImpl chessAction) {
 		this.chessAction = chessAction;
+	}
+	/**
+	 * getActions
+	 * This method creates a set of actions belonging to theplayer 
+	 * If theplayer is the chess state's player to move, the method returns null
+	 * Otherwise this method creates a list of actions that belong to the opponent
+	 * @param theplayer
+	 * @return
+	 */
+	public List<ChessAction> getActions(APlayer theplayer){
+		APlayer localPlayer = theplayer;
+		List<ChessAction> opponentActions = new ArrayList<ChessAction>();
+		if (theplayer == playerTomove) {
+			return null;
+		}
+		APlayer localOpponent = playerTomove;
+		ArrayList<AgamePiece> pieces = theplayer.getMygamePieces();
+		for (AgamePiece piece : pieces) {
+			if (piece.isActive()) {
+				HashMap<String,Position> reachablePositions = piece.getReacablePositions();
+				ChessAction action = new ChessActionImpl(reachablePositions,piece,localPlayer,localOpponent);
+				opponentActions.add(action);
+			}
+		}
+		return opponentActions;
 	}
 	
 	/**

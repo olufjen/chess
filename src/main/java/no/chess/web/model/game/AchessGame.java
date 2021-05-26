@@ -352,6 +352,7 @@ public class AchessGame extends AbstractChessGame{
 	 * This method is called from the PlayGame object to perform a move.
 	 * It is called after a call to the chessboard .determineMove method
 	 * The chessboard .determineMove method uses the position .setUsedBy method
+	 * The determineMove method also uses the chesspiece acceptmove method to set the opposing piece passive
 	 * @param piece
 	 * @param to
 	 * @param source
@@ -448,6 +449,8 @@ public class AchessGame extends AbstractChessGame{
 		APlayer whitePlayer = getLocalwhitePlayer();
 		boolean whiteTurn = whitePlayer.isActive();
 		boolean blackTurn = blackPlayer.isActive();
+		if (opponentPositions == null)
+			opponentPositions = new ArrayList<Position>();
 		opponentPositions.clear();
 		if (whiteTurn)
 			opponent = blackPlayer;
@@ -456,6 +459,8 @@ public class AchessGame extends AbstractChessGame{
 		List<AgamePiece> pieces = opponent.getMygamePieces();
 		for (AgamePiece piece:pieces) {
 			Position position = piece.getMyPosition();
+			if (position == null)
+				position = piece.getHeldPosition();
 			if (position != null && piece.isActive()) {
 				opponentPositions.add(position);
 				XYLocation xyloc = position.getXyloc();
@@ -463,7 +468,9 @@ public class AchessGame extends AbstractChessGame{
 				int y = xyloc.getYCoOrdinate();
 				int tx = to.getXCoOrdinate();
 				int ty = to.getYCoOrdinate();
-				if (x == tx && y == ty && piece.isActive()) {
+				if (whiteTurn)
+					writer.println("*** Opponent piece at **** "+piece.isActive()+"\n"+piece.toString());
+				if (x == tx && y == ty && piece.isActive()) { // The chesspiece acceptMove method sets the opposing piece passive
 					writer.println("*** Opponent piece Taken **** "+piece.toString()+" "+piece.getMyPiece().toString()+"\n");
 					removed = true;
 					position.setUsedBy(activePiece.getMyPiece());
@@ -475,7 +482,7 @@ public class AchessGame extends AbstractChessGame{
 				}
 			}
 		}
-		return removed;
+		return removed; // This flag is never true! Piece removed by other methods??
 	}
 
 	public ChessBoard getMyFrontBoard() {

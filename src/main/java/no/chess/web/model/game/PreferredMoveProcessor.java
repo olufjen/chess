@@ -67,7 +67,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		HashMap<String,Position> bishopPositions = null;
 		List<Position> queenscastlePositions = null;
 		List<Position> queenbishopPositions = null;
-		
+		List<Position>opponentRemoved = action.getOpponentRemoved();
 		removedPositions =  (List<Position>) action.getPositionRemoved(); // Removed positions are positions occupied by friendly pieces
 		List<Position> availablePositions = (List<Position>) action.getAvailablePositions();
 		List<Position> preferredPositions = new ArrayList<>();
@@ -231,6 +231,45 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 						tempList.add(availablePos);
 					}
 					if (r != null && pcol> col && prow == row && acol <= col && arow == row) { //Horizontal to left
+						tempList.add(availablePos);
+					}
+/*
+ * Check for bishop	OBS OBS Check again The queen option removed !!!!			
+ */
+					if ((b != null ) && col < pcol && arow > row && acol < col) {
+						tempList.add(availablePos);
+					}
+					if ((b != null ) && col < pcol && arow < row && acol < col) {
+						tempList.add(availablePos);
+					}
+					if ((b != null ) && col > pcol && arow < row && acol > col) {
+						tempList.add(availablePos);
+					}
+					if ((b != null ) && col > pcol && arow > row && acol > col) { // OBS !!!
+						tempList.add(availablePos);
+					}
+/*					if (b != null && arow < row && acol >= col) {
+						tempList.add(availablePos);
+					}
+*/
+				}
+			}
+			for (Position removedPos:opponentRemoved) {
+				int row = removedPos.getIntRow();
+				int col = removedPos.getIntColumn();
+				for (Position availablePos:availablePositions) {
+					int arow = availablePos.getIntRow();
+					int acol = availablePos.getIntColumn();
+					if ((r != null || pn != null ) && prow < row && pcol == col && arow > row && acol == col) { // not applicable when from row > row
+						tempList.add(availablePos);
+					}
+					if ((r != null || pn != null ) && prow > row && pcol == col && arow < row && acol == col) { // Not applicable when the from row < row
+						tempList.add(availablePos);
+					}
+					if (r != null && pcol< col && prow == row && acol < col && arow == row) { //Horizontal to right
+						tempList.add(availablePos);
+					}
+					if (r != null && pcol> col && prow == row && acol < col && arow == row) { //Horizontal to left
 						tempList.add(availablePos);
 					}
 /*

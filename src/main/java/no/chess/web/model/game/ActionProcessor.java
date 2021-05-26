@@ -35,6 +35,7 @@ import no.games.chess.AbstractGamePiece.pieceType;
  * The results of the evaluations are shown in the file ontpositions(p).txt where (p) is the piece name
  * @since 11.09.20
  * Calculates attacked and protected positions.
+ * @since 14.05.21 The Action processor is in effect not used !!!
  * @author oluf
  *
  */
@@ -49,9 +50,9 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 	private FileWriter fw = null;
 	private Integer processNumber;
 	
-	private List<Position> attackedPositions = null;
-	private List<Position> notAttackedPos = null;
-	private List<Position> notProtected = null;
+	private List<Position> attackedPositions = null;// Positions attacked by opponent
+	private List<Position> notAttackedPos = null; // Positions not attacked by opponent
+	private List<Position> notProtected = null; // Positions not protected
 	private List<Position> protectedPositions = null;
 	private List<AgamePiece> attacked = null;
 	private List<Position> otherattackedPositions = null;
@@ -129,6 +130,7 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 			writer.println("Piece is inactive ======================:\n"+piece.toString());
 			Double evaluation = new Double(0);
 		    writer.close();
+		    p.setEvaluationValue(evaluation);
 			return evaluation;
 		}
 		ApieceMove actionMove = p.getPossibleMove();
@@ -136,12 +138,14 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 			writer.println("Action has no move  ======================:\n"+p.toString());
 			Double evaluation = new Double(0);
 		    writer.close();
+		    p.setEvaluationValue(evaluation);
 			return evaluation;
 		}
 		if (position == null) {
 			writer.println("No preferred position  ======================:\n"+p.toString());
 			Double evaluation = new Double(0);
 		    writer.close();
+		    p.setEvaluationValue(evaluation);
 			return evaluation;
 		}
 		boolean checkMoves = false;
@@ -151,6 +155,7 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 				writer.println("Moveconflict !!!! ======================:\n"+p.toString());
 				Double evaluation = new Double(0);
 			    writer.close();
+			    p.setEvaluationValue(evaluation);
 				return evaluation;
 			}
 		}
@@ -173,7 +178,7 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 			opponent = whitePlayer;
 			playerTomove = blackPlayer;
 		}
-		List<Position> opponentPos = p.getActions(opponent);
+		List<Position> opponentPos = p.getActions(opponent); // This does not work !! The chessAction belong to the active player !!
 		List<Position> opponentRemoved = p.getPositionRemoved();
 		List<Position> playerTomovePositions = p.getActions(playerTomove);
 		List<Position> playerRemoved = p.getPositionRemoved();
@@ -312,28 +317,28 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 
 
 		for (Position pos:otherattackedPositions) {
-			writer.println("Other attacked positions "+pos.toString()+"\n");
+			writer.println("Other attacked positions "+pos.toString()+"");
 		}
 		for (Position pos:otherprotectedPositions) {
-			writer.println("Other protected positions "+pos.toString()+"\n");
+			writer.println("Other protected positions "+pos.toString()+"");
 		}	
 		for (Position pos:notProtected) {
-			writer.println("Not protected positions "+pos.toString()+"\n");
+			writer.println("Not protected positions "+pos.toString()+"");
 		}
 		if (protectedPositions != null && !protectedPositions.isEmpty() ) {
 			for (Position pos:protectedPositions) {
-				writer.println("Protected positions "+pos.toString()+"\n");
+				writer.println("Protected positions "+pos.toString()+"");
 			}
 		}
 
 		if (attackedPositions != null && !attackedPositions.isEmpty()) {
 			for (Position pos:attackedPositions) {
-				writer.println("Attacked positions "+pos.toString()+"\n");
+				writer.println("Attacked positions "+pos.toString()+"");
 			}
 		}
 
 		for (Position pos:notAttackedPos) {
-			writer.println("Not attacked positions "+pos.toString()+"\n");
+			writer.println("Not attacked positions "+pos.toString()+"");
 		}
 		p.setAttacked(attacked);
 		p.setAttackedPositions(attackedPositions);
@@ -380,6 +385,7 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 		writer.println("Evaluation value:\n");
 		writer.println(evaluation.toString());
         writer.close();
+	    p.setEvaluationValue(evaluation);
 		return evaluation;
 	}
 	
