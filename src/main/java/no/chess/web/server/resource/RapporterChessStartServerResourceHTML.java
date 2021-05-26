@@ -739,7 +739,10 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    	}
 
    	    	chessBoard.determineMove(oldPos, newPos, piece); // Determine if move is legal
-
+   	    	if (castle != null) {
+   	    		castle.setCastlingMove(false);
+   	    		movedPiece.setCastlingMove(false);
+   	    	}
    	    	/*
    	    	 * Keeps track of move numbers and the number of moves		
    	    	 */
