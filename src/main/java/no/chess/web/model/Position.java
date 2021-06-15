@@ -63,6 +63,14 @@ public class Position extends ParentModel {
 	private WhiteBoardPosition whiteBoardPosition = null;
 	private HashSet<Piece> pieces;
 	private XYLocation xyloc = null; // Represents the XYLocation of a aima board
+/*
+ * These booleans indicates which direction this position belongs to
+ * It is used when calculating removed positions for bishops olj 14.06.21	
+ */
+	private boolean nw = false;
+	private boolean ne = false;
+	private boolean sw = false;
+	private boolean se = false;
 	
 	public Position(String positionName, boolean inUse, ChessPiece usedBy) {
 		super();
@@ -114,6 +122,30 @@ public class Position extends ParentModel {
 		predicates = new ArrayList<String>();
 	}
 	
+	public boolean isNw() {
+		return nw;
+	}
+	public void setNw(boolean nw) {
+		this.nw = nw;
+	}
+	public boolean isNe() {
+		return ne;
+	}
+	public void setNe(boolean ne) {
+		this.ne = ne;
+	}
+	public boolean isSw() {
+		return sw;
+	}
+	public void setSw(boolean sw) {
+		this.sw = sw;
+	}
+	public boolean isSe() {
+		return se;
+	}
+	public void setSe(boolean se) {
+		this.se = se;
+	}
 	public String getPiecePred() {
 		return piecePred;
 	}

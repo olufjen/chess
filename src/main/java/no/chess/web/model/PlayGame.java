@@ -96,6 +96,7 @@ public class PlayGame {
 		game.setGamePlayer(this); // Creates the initial state. This is the only place where the ChessState object is created
 // The ChessState object also implements the Percept interface		
 		currentState = game.getInitialState();
+		activeState = (ChessStateImpl) currentState;
 		movements = new ArrayList<ApieceMove>();
 		game.setMovements(movements);
 //		kb = new ChessKnowledgeBase();
@@ -477,7 +478,7 @@ public class PlayGame {
 //	    writer.println("After call to game.movepiece \n"+game.getBoardPic());
 		
 		createMove(piece,oldPosition, position);
-
+	    piece.giveNewdirections(); // Calculates nw,ne,sw,se for bishop and queen Added 03.06.21
 		HashMap<String,ApieceMove> myMoves = stateImpl.getMyPlayer().getMyMoves();
 		int index = movements.size();
 		ApieceMove lastMove = movements.get(index-1);
