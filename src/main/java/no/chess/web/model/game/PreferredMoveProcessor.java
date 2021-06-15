@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import aima.core.util.datastructure.XYLocation;
 import no.chess.web.model.Position;
 import no.games.chess.ChessFunctions;
 import no.games.chess.ChessPieceType;
@@ -62,6 +63,9 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 	}
 
 
+	/* (non-Javadoc)
+	 * @see no.games.chess.ChessProcessor#processChessObject(java.lang.Object, java.lang.Object)
+	 */
 	public ApieceMove processChessObject(ChessActionImpl action, AgamePiece p) {
 		HashMap<String,Position> reacablePositions = null;
 		HashMap<String,Position> bishopPositions = null;
@@ -117,6 +121,8 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		}
 		if (pieceType instanceof ABishop) {
 			b = (ABishop) pieceType;
+			setDirection(p, availablePositions);
+			setDirection(p, removedPositions);
 		}
 		if (pieceType instanceof ARook) {
 			r = (ARook) pieceType;
@@ -236,7 +242,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 /*
  * Check for bishop	OBS OBS Check again The queen option removed !!!!			
  */
-					if ((b != null ) && col < pcol && arow > row && acol < col) {
+/*					if ((b != null ) && col < pcol && arow > row && acol < col) {
 						tempList.add(availablePos);
 					}
 					if ((b != null ) && col < pcol && arow < row && acol < col) {
@@ -247,12 +253,19 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 					}
 					if ((b != null ) && col > pcol && arow > row && acol > col) { // OBS !!!
 						tempList.add(availablePos);
-					}
+					}*/
 /*					if (b != null && arow < row && acol >= col) {
 						tempList.add(availablePos);
 					}
 */
 				}
+				if (b != null) {
+					checkBishopnwest(availablePositions, tempList, removedPos, p);
+					checkBishopneast(availablePositions, tempList, removedPos, p);
+					checkBishopseast(availablePositions, tempList, removedPos, p);
+					checkBishopswest(availablePositions, tempList, removedPos, p);
+				}
+
 			}
 			for (Position removedPos:opponentRemoved) {
 				int row = removedPos.getIntRow();
@@ -275,7 +288,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 /*
  * Check for bishop	OBS OBS Check again The queen option removed !!!!			
  */
-					if ((b != null ) && col < pcol && arow > row && acol < col) {
+/*					if ((b != null ) && col < pcol && arow > row && acol < col) {
 						tempList.add(availablePos);
 					}
 					if ((b != null ) && col < pcol && arow < row && acol < col) {
@@ -286,12 +299,19 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 					}
 					if ((b != null ) && col > pcol && arow > row && acol > col) { // OBS !!!
 						tempList.add(availablePos);
-					}
+					}*/
 /*					if (b != null && arow < row && acol >= col) {
 						tempList.add(availablePos);
 					}
 */
 				}
+				if (b != null) {
+					checkBishopnwest(availablePositions, tempList, removedPos, p);
+					checkBishopneast(availablePositions, tempList, removedPos, p);
+					checkBishopseast(availablePositions, tempList, removedPos, p);
+					checkBishopswest(availablePositions, tempList, removedPos, p);
+				}
+
 			}
 			for (Position temp:tempList) {
 				String posName = temp.getPositionName();
@@ -358,6 +378,8 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		}
 		ApieceMove move = new ApieceMove(preferredPosition,p);	
 		move.setPreferredPositions(preferredPositions);
+		resetDirections(availablePositions);
+		resetDirections(removedPositions);
 		writer.println("Move: "+move.toString()+"\n"+"piece: "+p.toString());
 		writer.close();
 	return move;
@@ -367,7 +389,125 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 	public Position getHeldPosition() {
 		return heldPosition;
 	}
-
-
-
+	/**
+	 * checkBishopnwest
+	 * @param availablePositions
+	 * @param tempList
+	 * @param removedPos
+	 * @param piece
+	 */
+	private void checkBishopnwest(List<Position> availablePositions,List<Position> tempList,Position removedPos,AgamePiece piece) {
+		List<XYLocation> nw = piece.getNorthWest();
+		XYLocation loc = removedPos.getXyloc();
+		int x = loc.getXCoOrdinate();
+		int y = loc.getYCoOrdinate();
+		for (XYLocation nwloc:nw) {
+			int nwx = nwloc.getXCoOrdinate();
+			int nwy = nwloc.getYCoOrdinate();
+			if (nwx < x && nwy > y && removedPos.isNw()) { // If both x and y are less, then this position must be removed
+				for (Position pos:availablePositions) {
+					int ax = pos.getXyloc().getXCoOrdinate();
+					int ay = pos.getXyloc().getYCoOrdinate();
+					if (ax == nwx && ay == nwy && pos.isNw()) {
+						tempList.add(pos);
+					}
+				}
+			}
+		}
+	}
+	private void checkBishopneast(List<Position> availablePositions,List<Position> tempList,Position removedPos,AgamePiece piece) {
+		List<XYLocation> nw = piece.getNorthEast();
+		XYLocation loc = removedPos.getXyloc();
+		int x = loc.getXCoOrdinate();
+		int y = loc.getYCoOrdinate();
+		for (XYLocation nwloc:nw) { // All available xylocations north west
+			int nwx = nwloc.getXCoOrdinate();
+			int nwy = nwloc.getYCoOrdinate();
+			if (nwx > x && nwy > y && removedPos.isNe()) { // If both x and y are greater, then this position must be removed
+				for (Position pos:availablePositions) { // Search all available positions
+					int ax = pos.getXyloc().getXCoOrdinate();
+					int ay = pos.getXyloc().getYCoOrdinate();
+					if (ax == nwx && ay == nwy && pos.isNe()) { // If this position contains the current xylocation then
+						tempList.add(pos); // remove it
+					}
+				}
+			}
+		}
+	}
+	private void checkBishopseast(List<Position> availablePositions,List<Position> tempList,Position removedPos,AgamePiece piece) {
+		List<XYLocation> nw = piece.getSouthEast();
+		XYLocation loc = removedPos.getXyloc(); // The removed position must belong to the same direction.
+		int x = loc.getXCoOrdinate();
+		int y = loc.getYCoOrdinate();
+		for (XYLocation nwloc:nw) {
+			int nwx = nwloc.getXCoOrdinate();
+			int nwy = nwloc.getYCoOrdinate();
+			if (nwx > x && nwy < y && removedPos.isSe()) { // If x is greater and y is less, then this position must be removed
+				for (Position pos:availablePositions) {
+					int ax = pos.getXyloc().getXCoOrdinate();
+					int ay = pos.getXyloc().getYCoOrdinate();
+					if (ax == nwx && ay == nwy && pos.isSe()) {
+						tempList.add(pos);
+					}
+				}
+			}
+		}
+	}
+	private void checkBishopswest(List<Position> availablePositions,List<Position> tempList,Position removedPos,AgamePiece piece) {
+		List<XYLocation> nw = piece.getSouthWest();
+		XYLocation loc = removedPos.getXyloc();
+		int x = loc.getXCoOrdinate();
+		int y = loc.getYCoOrdinate();
+		for (XYLocation nwloc:nw) {
+			int nwx = nwloc.getXCoOrdinate();
+			int nwy = nwloc.getYCoOrdinate();
+			if (nwx < x && nwy < y && removedPos.isSw()) { // If both x and y are less, then this position must be removed
+				for (Position pos:availablePositions) {
+					int ax = pos.getXyloc().getXCoOrdinate();
+					int ay = pos.getXyloc().getYCoOrdinate();
+					if (ax == nwx && ay == nwy && pos.isSw()) {
+						tempList.add(pos);
+					}
+				}
+			}
+		}
+	}
+	public void setDirection(AgamePiece piece, List<Position> positions) {
+		List<XYLocation> nw = piece.getNorthWest();
+//		Position pos =  (Position) removedPositions.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
+		calculateDirections(nw,0,positions);
+		List<XYLocation> ne = piece.getNorthEast();
+		calculateDirections(ne,1,positions);
+		List<XYLocation> sw = piece.getSouthWest();
+		calculateDirections(sw,2,positions);
+		List<XYLocation> se = piece.getSouthEast();
+		calculateDirections(sw,3,positions);
+	}
+	private void calculateDirections(List<XYLocation> nw, int dr,List<Position> positions) {
+		for (Position pos:positions) {
+			XYLocation loc = pos.getXyloc();
+			int x = loc.getXCoOrdinate();
+			int y = loc.getYCoOrdinate();
+			for (XYLocation nwloc:nw) {
+				int nwx = nwloc.getXCoOrdinate();
+				int nwy = nwloc.getYCoOrdinate();
+				if (x == nwx && y == nwy && dr == 0)
+					pos.setNw(true);
+				if (x == nwx && y == nwy && dr == 1)
+					pos.setNe(true);
+				if (x == nwx && y == nwy && dr == 2)
+					pos.setSw(true);
+				if (x == nwx && y == nwy && dr == 3)
+					pos.setSe(true);
+			}
+		}
+	}
+	private void resetDirections(List<Position> positions) {
+		for (Position pos:positions) {
+			pos.setNe(false);
+			pos.setNw(false);
+			pos.setSe(false);
+			pos.setSw(false);
+		}
+	}
 }

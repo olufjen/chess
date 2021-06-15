@@ -1,10 +1,14 @@
 package no.chess.web.model.game;
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
+import aima.core.logic.fol.kb.FOLKnowledgeBase;
 import no.chess.web.model.PlayGame;
+import no.games.chess.ChessAction;
 
 /**
  * The opponent agent object,
@@ -18,20 +22,31 @@ public class OpponentAgent {
 
 	private ChessStateImpl stateImpl = null;
 	private ChessActionImpl localAction = null;
-	private List <ChessActionImpl> actions = null;
+	private List <ChessAction> actions = null; // All actions available to the opponent
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\opponent.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
 	private PlayGame game = null;
 	private APlayer myPlayer = null;
 	private APlayer opponent = null;
-	public OpponentAgent(ChessStateImpl stateImpl, PlayGame game, APlayer myPlayer, APlayer opponent) {
+	private FOLKnowledgeBase folKb = null;
+	
+	public OpponentAgent(ChessStateImpl stateImpl, PlayGame game, APlayer myPlayer, APlayer opponent,FOLKnowledgeBase folKb) {
 		super();
 		this.stateImpl = stateImpl;
 		this.game = game;
 		this.myPlayer = myPlayer;
 		this.opponent = opponent;
-		actions = stateImpl.getActions(myPlayer);
+		this.folKb = folKb;
+		actions = this.stateImpl.getActions(myPlayer);
+		this.myPlayer.setActions(actions);
+		try {
+			fw = new FileWriter(outputFileName, true);
+		} catch (IOException e1) {
+
+			e1.printStackTrace();
+		}
+	    writer = new PrintWriter(new BufferedWriter(fw));	
 	}
 	public ChessStateImpl getStateImpl() {
 		return stateImpl;
@@ -45,10 +60,10 @@ public class OpponentAgent {
 	public void setLocalAction(ChessActionImpl localAction) {
 		this.localAction = localAction;
 	}
-	public List<ChessActionImpl> getActions() {
+	public List<ChessAction> getActions() {
 		return actions;
 	}
-	public void setActions(List<ChessActionImpl> actions) {
+	public void setActions(List<ChessAction> actions) {
 		this.actions = actions;
 	}
 	public PlayGame getGame() {
@@ -70,5 +85,17 @@ public class OpponentAgent {
 		this.opponent = opponent;
 	}
 	
-	
+	/**
+	 * probeConsequences
+	 * This action examines consequences a player's action may have.                                                                                    
+	 * @param playerAction
+	 */
+	public void probeConsequences(ChessActionImpl playerAction) {
+		writer.println("Chosen action\n"+playerAction);
+		writer.println("Opponent actions:");
+		for (ChessAction action:actions) {
+			ChessActionImpl localAction = (ChessActionImpl) action;
+			writer.println(localAction);
+		}
+	}
 }

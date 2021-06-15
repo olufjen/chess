@@ -643,6 +643,9 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 	 * This method creates a set of actions belonging to theplayer 
 	 * If theplayer is the chess state's player to move, the method returns null
 	 * Otherwise this method creates a list of actions that belong to the opponent
+	 * It is called from the OpponentAgent when it is created, and
+	 * from the Aplayer calculateOpponentActions method.
+	 * The calculateOpponentActions method is called whenever the opponent has made a move.
 	 * @param theplayer
 	 * @return
 	 */

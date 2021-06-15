@@ -137,6 +137,8 @@ public class AChessProblemSolver {
   
   private ChessActionImpl castleAction = null;
 
+  private OpponentAgent opponentAgent = null;
+  
   public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, FOLKnowledgeBase folKb, FOLDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
 		super();
 		this.stateImpl = stateImpl;
@@ -148,6 +150,7 @@ public class AChessProblemSolver {
 		this.game = game;
 		this.myPlayer = myPlayer;
 		this.opponent = opponent;
+		opponentAgent = new OpponentAgent(this.stateImpl,this.game,this.opponent,this.myPlayer,this.folKb);
 		playerName = this.myPlayer.getNameOfplayer();
 		playSide = playerName.substring(0,5);
 		noofMoves = game.getMovements().size();
@@ -683,7 +686,8 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 				}
 			}else {
 				checkCastling(actions);
-				boolean threat = checkThreats("x", "c4", THREATEN);
+//				boolean threat = checkThreats("x", "c4", THREATEN);
+				boolean threat = true;
 				if (threat) {
 					  checkFacts(pieceName, "d3", REACHABLE, actions);
 				}
@@ -702,8 +706,10 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 			String toPosname = tonewPos.getPositionName();
 			boolean protectedpiece = false;
 			protectedpiece = checkmyProtection(name,toPosname); // Is the new position protected then move the piece
-			if (protectedpiece)
+			if (protectedpiece) {
+				opponentAgent.probeConsequences(naction);
 				return pname;
+			}
 			else {
 				List<Position> reachable = piece.getNewlistPositions();
 				for (Position pos:reachable) {
@@ -714,12 +720,14 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 						if (protectedpiece && !threat) {
 							naction.getPossibleMove().setToPosition(pos);
 							naction.setPreferredPosition(pos);
+							opponentAgent.probeConsequences(naction);
 							return pname;
 						}
 					}
 				}
 			}
 		}
+		opponentAgent.probeConsequences(naction);
 		return pname; // The name of the piece that is threatened. Or the name of the piece that can protect it
 	}
 	// Find the best move and a protected position to move to.
@@ -781,6 +789,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 						writer.println("\n"+InferenceResultPrinter.printInferenceResult(ownerresult));
 						action.getPossibleMove().setToPosition(pos);
 						action.setPreferredPosition(pos);
+						opponentAgent.probeConsequences(action);
 						return name;
 					}
 				}

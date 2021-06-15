@@ -462,8 +462,9 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 				bishopRemoved.add(pos);
 				queen = true;
 			}
-		
+	
 		}
+		chessPiece.setBishopRemoved(bishopRemoved);
 		return queen;
 	}
 	/**
@@ -528,7 +529,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			
 			for (Position position:availablePositions) {
 				for (AgamePiece otherPiece:pieces) {
-					if (otherPiece != chessPiece) {
+					if (otherPiece != chessPiece && otherPiece.isActive()) {
 						Position pos = otherPiece.getMyPosition();
 						if (pos != null) {
 							if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {

@@ -305,8 +305,19 @@ public void checkPreferredPosition(ChessAction action) {
 	}
 
 	/**
+	 * calculateOpponentActions
+	 * This method calculates the players actions
+	 * It is used for the opponent player.
+	 * This method replaces the calculateOpponentPositions method
+	 * @param state
+	 */
+	public void calculateOpponentActions(ChessStateImpl state) {
+		actions = state.getActions(this);
+	}
+	/**
 	 * calculateOpponentPositions
 	 * This method calculates all removed positions for opponent
+	 * @deprecated 31.05.21
 	 */
 	public void calculateOpponentPositions() {
 		for (AgamePiece piece:mygamePieces ) {
