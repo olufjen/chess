@@ -641,7 +641,8 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     			sessionAdmin.setSessionObject(request,game, gameboardSession);
     		}
   	    	APlayer opponent = game.getGame().getLocalblackPlayer(); //OBS !! Gameplayer is always white!!!
-  	    	opponent.calculateOpponentPositions();
+  	    	opponent.calculateOpponentActions(game.getActiveState());   
+ // 	    	opponent.calculateOpponentPositions();This call is replaced by the call to calculateOpponentActions
        	    System.out.println("Start positions\n"+game.getGame().getBoardPic());
     		SimpleScalar pieceMoved = new SimpleScalar(piece);
     		SimpleScalar movedTo = new SimpleScalar(newPos);
@@ -797,8 +798,9 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  	    	Integer noofMoves = new Integer(lastMove.getMoveNumber());
  			movedPiece.getMoveNumbers().add(noofMoves);
   	    	movedPiece.produceLegalmoves(newPosition); // Added 23.06.20 produces new available positions for the moved piece
-  	    	
-  	    	opponent.calculateOpponentPositions();
+  	    	movedPiece.giveNewdirections();// Calculates nw,ne,sw,se for bishop and queen Added 03.06.21
+ 	    	opponent.calculateOpponentActions( game.getActiveState());   
+ // 	    	opponent.calculateOpponentPositions(); This call is replaced by the call to calculateOpponentActions
 //   	    	game.getActiveState().switchActivePlayer(); // OBS 11.08.20: Must ensure that player now switches to the game player (white) New 16.04.20 After a move, must switch active player
    	    	game.getActiveState().returnMyplayer();
    	    	game.getGame().createNewboard();
@@ -813,7 +815,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    	for (ChessMoves move:chessMoves) {
    	    		System.out.println(move.toString());
    	    	}
-   	    }
+   	    } // End opponent move
    	    dataModel.put(fenPosid,fen);
     	SimpleScalar pieceMoved = new SimpleScalar(piece);
     	SimpleScalar movedTo = new SimpleScalar(newPos);
