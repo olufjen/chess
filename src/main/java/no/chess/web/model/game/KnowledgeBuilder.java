@@ -46,9 +46,24 @@ public class KnowledgeBuilder {
   private static String BOARD = "BOARD";
   private static String PLAYER = "PLAYER";
   private static String CASTLE = "CASTLE";
+  private static String OPPONENTTO = "OPPONENTTO";
+  private static String POSSIBLETHREAT = "POSSIBLETHREAT";
   
   
-  public static String getCASTLE() {
+  
+  public static String getOPPONENTTO() {
+	return OPPONENTTO;
+}
+public static void setOPPONENTTO(String oPPONENTTO) {
+	OPPONENTTO = oPPONENTTO;
+}
+public static String getPOSSIBLETHREAT() {
+	return POSSIBLETHREAT;
+}
+public static void setPOSSIBLETHREAT(String pOSSIBLETHREAT) {
+	POSSIBLETHREAT = pOSSIBLETHREAT;
+}
+public static String getCASTLE() {
 	return CASTLE;
 }
 public static void setCASTLE(String cASTLE) {

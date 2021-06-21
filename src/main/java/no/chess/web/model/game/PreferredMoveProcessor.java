@@ -27,6 +27,7 @@ import no.games.chess.ChessProcessor;
  * This processor also removes additional positions from available positions of
  * bishop,rook, and queen when positions are occupied by friendly pieces.
  * @since 08.03.21 The queen has its own procedure for removed positions
+ * @since 14.06.21 The method for removing positions from bishops has been reworked.
  * @author oluf
  *
  */
@@ -415,6 +416,12 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			}
 		}
 	}
+	/**
+	 * @param availablePositions
+	 * @param tempList
+	 * @param removedPos
+	 * @param piece
+	 */
 	private void checkBishopneast(List<Position> availablePositions,List<Position> tempList,Position removedPos,AgamePiece piece) {
 		List<XYLocation> nw = piece.getNorthEast();
 		XYLocation loc = removedPos.getXyloc();
@@ -434,6 +441,12 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			}
 		}
 	}
+	/**
+	 * @param availablePositions
+	 * @param tempList
+	 * @param removedPos
+	 * @param piece
+	 */
 	private void checkBishopseast(List<Position> availablePositions,List<Position> tempList,Position removedPos,AgamePiece piece) {
 		List<XYLocation> nw = piece.getSouthEast();
 		XYLocation loc = removedPos.getXyloc(); // The removed position must belong to the same direction.
@@ -453,6 +466,12 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			}
 		}
 	}
+	/**
+	 * @param availablePositions
+	 * @param tempList
+	 * @param removedPos
+	 * @param piece
+	 */
 	private void checkBishopswest(List<Position> availablePositions,List<Position> tempList,Position removedPos,AgamePiece piece) {
 		List<XYLocation> nw = piece.getSouthWest();
 		XYLocation loc = removedPos.getXyloc();
@@ -472,6 +491,18 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			}
 		}
 	}
+	/**
+	 * setDirection
+	 * This method calculates the directions (nw,ne,sw,se)
+	 * for a set of positions and its piece
+	 * It is called when the piece is a bishop
+	 * @param piece
+	 * @param positions
+	 */
+	/**
+	 * @param piece
+	 * @param positions
+	 */
 	public void setDirection(AgamePiece piece, List<Position> positions) {
 		List<XYLocation> nw = piece.getNorthWest();
 //		Position pos =  (Position) removedPositions.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
@@ -481,8 +512,15 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		List<XYLocation> sw = piece.getSouthWest();
 		calculateDirections(sw,2,positions);
 		List<XYLocation> se = piece.getSouthEast();
-		calculateDirections(sw,3,positions);
+		calculateDirections(se,3,positions);
 	}
+	/**
+	 * calculateDirections
+	 * This is a private method for setDirection
+	 * @param nw
+	 * @param dr
+	 * @param positions
+	 */
 	private void calculateDirections(List<XYLocation> nw, int dr,List<Position> positions) {
 		for (Position pos:positions) {
 			XYLocation loc = pos.getXyloc();
@@ -502,6 +540,11 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			}
 		}
 	}
+	/**
+	 * resetDirections
+	 * This method resets all directions for a position
+	 * @param positions
+	 */
 	private void resetDirections(List<Position> positions) {
 		for (Position pos:positions) {
 			pos.setNe(false);

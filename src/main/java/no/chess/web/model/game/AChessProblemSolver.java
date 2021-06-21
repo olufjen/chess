@@ -80,6 +80,8 @@ public class AChessProblemSolver {
   private String BOARD;
   private String PLAYER;
   private String CASTLE;
+  private String OPPONENTTO;
+  private String POSSIBLETHREAT;
   /**
    *  The type of piece under consideration
    */
@@ -210,6 +212,8 @@ public class AChessProblemSolver {
 		BOARD = KnowledgeBuilder.getBOARD();
 		PLAYER = KnowledgeBuilder.getPLAYER();
 		CASTLE = KnowledgeBuilder.getCASTLE();
+		OPPONENTTO = KnowledgeBuilder.getOPPONENTTO();
+		POSSIBLETHREAT = KnowledgeBuilder.getPOSSIBLETHREAT();
   }
   
 
@@ -686,8 +690,8 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 				}
 			}else {
 				checkCastling(actions);
-//				boolean threat = checkThreats("x", "c4", THREATEN);
-				boolean threat = true;
+				boolean threat = checkThreats("x", "c4", THREATEN);
+//				boolean threat = true;
 				if (threat) {
 					  checkFacts(pieceName, "d3", REACHABLE, actions);
 				}

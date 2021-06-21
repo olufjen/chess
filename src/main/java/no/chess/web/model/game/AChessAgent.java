@@ -129,6 +129,8 @@ public class AChessAgent extends KBAgent {
     private String BOARD;
     private String PLAYER;
     private String CASTLE;
+    private String OPPONENTTO;
+    private String POSSIBLETHREAT;
     
     private ChessActionImpl castleAction = null;
     
@@ -209,6 +211,10 @@ public class AChessAgent extends KBAgent {
 			BOARD = KnowledgeBuilder.getBOARD();
 			PLAYER = KnowledgeBuilder.getPLAYER();
 			CASTLE = KnowledgeBuilder.getCASTLE();
+			OPPONENTTO = KnowledgeBuilder.getOPPONENTTO();
+			POSSIBLETHREAT = KnowledgeBuilder.getPOSSIBLETHREAT();
+			chessDomain.addPredicate(OPPONENTTO);
+			chessDomain.addPredicate(POSSIBLETHREAT);
 			chessDomain.addPredicate(PROTECTED);
 			chessDomain.addPredicate(MOVE);
 			chessDomain.addPredicate(ACTION);
@@ -387,8 +393,6 @@ public class AChessAgent extends KBAgent {
 
 		makeOpponentsentences(stateImpl.getOpponent(),noofMoves); //knowledge about the opponent and its pieces to the proportional knowledge base knowledge base
 //		makeSentences(); // Evaluates all actions using the actionprocessor using the makeActionSentence method OLJ 14.05.21 This is not used 
-		writer.println("The first order knowledge base");
-		writer.println(folKb.toString());
 		solver = new AChessProblemSolver(stateImpl, localAction, folKb, chessDomain, forwardChain, backwardChain, game, myPlayer, opponent);
 		solver.setPositionList(positionList);
 /*
@@ -458,10 +462,13 @@ public class AChessAgent extends KBAgent {
 				def = "Definite";
 			writer.println(clause.toString()+" "+def );
 		}*/
-		writer.flush();
+	
 //		Sentence sentence = makePerceptSentence(state, 0);
 //		KB.tell(sentence);
 		castleAction = solver.getCastleAction();
+		writer.println("The first order knowledge base");
+		writer.println(folKb.toString());
+		writer.flush();
 		if (naction != null)
 			localAction = naction;
 		return localAction;
