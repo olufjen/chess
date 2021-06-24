@@ -620,7 +620,7 @@ public boolean checkFacts(String pieceName,String pos,String fact,ArrayList<Ches
   }
 /**
  * checkmyProtection
- * This method checks if a piece is protected by other pieces then by itself
+ * This method checks if a piece is protected by other pieces than by itself
  * @param pieceName
  * @param pos
  * @return true if it is protected
@@ -775,7 +775,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 					moveTerms.add(posVariable);
 					Predicate movePredicate = new Predicate(MOVE,moveTerms);
 					Predicate safemovePredicate = new Predicate(SAFEMOVE,moveTerms);
-					writer.println("Trying to prove backward chaining new\n"+movePredicate.toString());
+					writer.println("THE BEST MOVE Trying to prove backward chaining safemove\n"+movePredicate.toString());
 					InferenceResult backWardresult =  backwardChain.ask(folKb, movePredicate);
 					boolean movePossible = backWardresult.isTrue();
 					boolean protectedpiece = false;
@@ -784,13 +784,13 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 						BCGamesAskHandler bcHandler = (BCGamesAskHandler) backWardresult;
 						writer.println(InferenceResultPrinter.printInferenceResult(backWardresult));
 					}
-					writer.println("Trying to prove backward chaining\n"+ownerPredicate.toString());
+					writer.println("THE BEST MOVE Trying to prove backward chaining owner\n"+ownerPredicate.toString());
 					InferenceResult ownerresult =  backwardChain.ask(folKb, ownerPredicate);	// OBS can only prove atomic sentences			
 //					bcHandler.clearLists();
 //					writer.println(bcHandler.toString());
 //					writer.println(InferenceResultPrinter.printInferenceResult(backWardresult));
 					if(movePossible && protectedpiece && ownerresult.isTrue()) {
-						writer.println("\n"+InferenceResultPrinter.printInferenceResult(ownerresult));
+//						writer.println("\n"+InferenceResultPrinter.printInferenceResult(ownerresult));
 						action.getPossibleMove().setToPosition(pos);
 						action.setPreferredPosition(pos);
 						opponentAgent.probeConsequences(action);

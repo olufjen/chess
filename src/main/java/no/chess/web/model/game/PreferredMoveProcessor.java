@@ -130,23 +130,38 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		}
 		if (pieceType instanceof AQueen) {
 			qt = (AQueen) pieceType;
+			if (p.checkBlack()) {
+				writer.println("The black queen");
+			}
+		
+			setDirection(p, availablePositions);
+			setDirection(p, removedPositions);
 //			writer.println("the piece is a queen ");
 			bishopRemoved = action.getBishopRemoved();
 			bishopPositions = p.getBishopPositions();
 			reacablePositions = p.getReacablePositions();
-			queenscastlePositions = new ArrayList(reacablePositions.values());
-			queenbishopPositions = new ArrayList(bishopPositions.values());
+			List<Position> queenAvailablepositions = p.getNewlistPositions();
+			queenscastlePositions = new ArrayList(reacablePositions.values()); // The queen castle movements
+			queenbishopPositions = new ArrayList(bishopPositions.values());		// The queen bishop movements
+			setDirection(p, queenbishopPositions);
+			setDirection(p,bishopRemoved);
 			tempList = new ArrayList<>();
 			int pcol = from.getIntColumn();
 			int prow = from.getIntRow();
-			for (Position removedPos:bishopRemoved) { // OBS: The removed positions must be separated: bishop positions and rook positions
+			for (Position removedPos:bishopRemoved) {
+//			for (Position removedPos:bishopRemoved) { // OBS: The removed positions must be separated: bishop positions and rook positions
 				int row = removedPos.getIntRow();
 				int col = removedPos.getIntColumn();
 				String pName = removedPos.getPositionName();
 /*				if (pName.equals("c2") || pName.equals("e2")) {
 					System.out.println("Pos !!! "+pName);
 				}*/
-				for (Position availablePos:queenbishopPositions) {
+				checkBishopnwest(queenbishopPositions, tempList, removedPos, p);
+				checkBishopneast(queenbishopPositions, tempList, removedPos, p);
+				checkBishopseast(queenbishopPositions, tempList, removedPos, p);
+				checkBishopswest(queenbishopPositions, tempList, removedPos, p);
+				
+/*				for (Position availablePos:queenbishopPositions) {
 					int arow = availablePos.getIntRow();
 					int acol = availablePos.getIntColumn();
 					if (col < pcol && arow >= row && acol <= col) { // <= OBS !! OLJ 10.03.21
@@ -159,7 +174,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 					if (col > pcol && arow >= row && acol >= col) { // >= OBS !! OLJ 10.03.21
 						tempList.add(availablePos);
 					}
-				}
+				}*/
 			}
 			for (Position removedPos:removedPositions) {
 				int row = removedPos.getIntRow();
@@ -405,11 +420,11 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		for (XYLocation nwloc:nw) {
 			int nwx = nwloc.getXCoOrdinate();
 			int nwy = nwloc.getYCoOrdinate();
-			if (nwx < x && nwy > y && removedPos.isNw()) { // If both x and y are less, then this position must be removed
+			if (nwx <= x && nwy >= y && removedPos.isNw()) { // If both x and y are less, then this position must be removed
 				for (Position pos:availablePositions) {
 					int ax = pos.getXyloc().getXCoOrdinate();
 					int ay = pos.getXyloc().getYCoOrdinate();
-					if (ax == nwx && ay == nwy && pos.isNw()) {
+					if (ax == nwx && ay == nwy && pos.isNw() && !pos.isOpponentRemove()) {
 						tempList.add(pos);
 					}
 				}
@@ -430,11 +445,11 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		for (XYLocation nwloc:nw) { // All available xylocations north west
 			int nwx = nwloc.getXCoOrdinate();
 			int nwy = nwloc.getYCoOrdinate();
-			if (nwx > x && nwy > y && removedPos.isNe()) { // If both x and y are greater, then this position must be removed
+			if (nwx >= x && nwy >= y && removedPos.isNe()) { // If both x and y are greater, then this position must be removed
 				for (Position pos:availablePositions) { // Search all available positions
 					int ax = pos.getXyloc().getXCoOrdinate();
 					int ay = pos.getXyloc().getYCoOrdinate();
-					if (ax == nwx && ay == nwy && pos.isNe()) { // If this position contains the current xylocation then
+					if (ax == nwx && ay == nwy && pos.isNe() && !pos.isOpponentRemove()) { // If this position contains the current xylocation then
 						tempList.add(pos); // remove it
 					}
 				}
@@ -455,11 +470,11 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		for (XYLocation nwloc:nw) {
 			int nwx = nwloc.getXCoOrdinate();
 			int nwy = nwloc.getYCoOrdinate();
-			if (nwx > x && nwy < y && removedPos.isSe()) { // If x is greater and y is less, then this position must be removed
+			if (nwx >= x && nwy <= y && removedPos.isSe()) { // If x is greater and y is less, then this position must be removed
 				for (Position pos:availablePositions) {
 					int ax = pos.getXyloc().getXCoOrdinate();
 					int ay = pos.getXyloc().getYCoOrdinate();
-					if (ax == nwx && ay == nwy && pos.isSe()) {
+					if (ax == nwx && ay == nwy && pos.isSe() && !pos.isOpponentRemove()) {
 						tempList.add(pos);
 					}
 				}
@@ -480,11 +495,11 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		for (XYLocation nwloc:nw) {
 			int nwx = nwloc.getXCoOrdinate();
 			int nwy = nwloc.getYCoOrdinate();
-			if (nwx < x && nwy < y && removedPos.isSw()) { // If both x and y are less, then this position must be removed
+			if (nwx <= x && nwy <= y && removedPos.isSw()) { // If both x and y are less, then this position must be removed
 				for (Position pos:availablePositions) {
 					int ax = pos.getXyloc().getXCoOrdinate();
 					int ay = pos.getXyloc().getYCoOrdinate();
-					if (ax == nwx && ay == nwy && pos.isSw()) {
+					if (ax == nwx && ay == nwy && pos.isSw() && !pos.isOpponentRemove()) {
 						tempList.add(pos);
 					}
 				}

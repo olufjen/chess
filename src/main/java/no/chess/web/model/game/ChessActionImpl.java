@@ -11,6 +11,7 @@ import no.games.chess.ChessFunctions;
 import no.games.chess.ChessPieceType;
 import no.games.chess.AbstractGamePiece.pieceType;
 
+
 /**
  * ChessActionImpl
  * This class implements the ChessAction interface.
@@ -39,6 +40,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private boolean strike = false; // This flag is set by the actionprocessor
 	private APlayer player; // The player for this action
 	private APlayer opponent; // The opponent player
+	
 	private ApieceMove possibleMove;
 	private int pn = 0;
 	private int pny = 0;
@@ -429,13 +431,20 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private void checkOpponent() {
 		List<AgamePiece> pieces = opponent.getMygamePieces(); 
 		for (Position position:availablePositions) {
+			position.setOpponentRemove(false);
 			for (AgamePiece otherPiece:pieces) {
 				boolean inuse = otherPiece.getMyPiece().isUse();// inuse is false if a piece is removed permanently olj 1.08.20
 				if (inuse) {
 					Position pos = otherPiece.getMyPosition();
 					if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
-						if (!checkQueen(pos) && type != type.KNIGHT)
+						if (!checkQueen(pos) && type != type.KNIGHT) {
 							opponentRemoved.add(position);
+							position.setOpponentRemove(true);
+							String playerId = opponent.getPlayerId();
+							if (type == type.BISHOP && playerId.equals("WHITE")) {
+								System.out.println("=== Opponent removed === "+position.toString());
+							}
+						}
 						if (type == type.PAWN)
 							positionRemoved.add(position);
 					}
@@ -548,10 +557,10 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		return availablePositions;
 		
 	}
-	public  List<Position> getOpponentPositions(){
+/*	public  List<Position> getOpponentPositions(){
 		
 		return null;
-	}
+	}*/
 	public String toString() {
 		String posName = "Unknown";
 		String pMove = " === No move ===";
