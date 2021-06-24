@@ -71,6 +71,7 @@ public class Position extends ParentModel {
 	private boolean ne = false;
 	private boolean sw = false;
 	private boolean se = false;
+	private boolean opponentRemove = false; // True if this position is blocked by opponent
 	
 	public Position(String positionName, boolean inUse, ChessPiece usedBy) {
 		super();
@@ -122,6 +123,12 @@ public class Position extends ParentModel {
 		predicates = new ArrayList<String>();
 	}
 	
+	public boolean isOpponentRemove() {
+		return opponentRemove;
+	}
+	public void setOpponentRemove(boolean opponentRemove) {
+		this.opponentRemove = opponentRemove;
+	}
 	public boolean isNw() {
 		return nw;
 	}
