@@ -99,6 +99,15 @@ public class PlayGame {
 		activeState = (ChessStateImpl) currentState;
 		movements = new ArrayList<ApieceMove>();
 		game.setMovements(movements);
+		fw = null;
+		writer = null;
+		try {
+			fw = new FileWriter(outputFileName, true);
+		} catch (IOException e1) {
+
+			e1.printStackTrace();
+		}
+	    writer = new PrintWriter(new BufferedWriter(fw));
 //		kb = new ChessKnowledgeBase();
 	}
 
@@ -254,15 +263,7 @@ public class PlayGame {
 	 * After each move a new search object is created to make a new search on the current state.
 	 */
 	public void proposeMove() {
-		fw = null;
-		writer = null;
-		try {
-			fw = new FileWriter(outputFileName, true);
-		} catch (IOException e1) {
 
-			e1.printStackTrace();
-		}
-	      writer = new PrintWriter(new BufferedWriter(fw));
 
 		currentState = game.getInitialState();
 		ChessStateImpl stateImpl = (ChessStateImpl) currentState;
@@ -495,7 +496,7 @@ public class PlayGame {
 /*		 for ( Position pos : positionlist) {
 			 writer.println(pos.toString());
 		 }*/
-		 writer.close();
+		 writer.flush();
 	}
 	/**
 	 * checkCastling
