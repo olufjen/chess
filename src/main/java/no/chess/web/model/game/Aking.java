@@ -256,7 +256,7 @@ public class Aking extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			reachablepiecePosition[x-1][y-1] = "K";
 			createPosition(newPositions, x-1, y-1);
 		}
-		if (y != 0 && x == 0) {
+		if (y != 0 && x == 0 && y < 7) { //  && y < 7 added 29.06.21			
 			reachablesqueres[x][y+1] = 1;
 			reachablepiecePosition[x][y+1] = "K";
 			createPosition(newPositions, x, y+1);
@@ -273,7 +273,7 @@ public class Aking extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			reachablepiecePosition[x+1][y-1] = "K";
 			createPosition(newPositions, x+1, y-1);
 		}	
-		if (y == 0 && x != 0) {
+		if (y == 0 && x != 0 && x < 7) { // && x < 7 added 29.06.21
 			reachablesqueres[x][y+1] = 1;
 			reachablepiecePosition[x][y+1] = "K";
 			createPosition(newPositions, x, y+1);

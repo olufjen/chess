@@ -20,6 +20,7 @@ import no.games.chess.ChessProcessor;
 /**
  * PreferredMoveProcessor
  * This class calculates a preferred move (ApieceMove) for a given chessaction and its piece.
+ * It is an implementation of the ChessProcessor
  * This ApieceMove contains a Preferred Position for a given piece and action.
  * It is created and called when the chess action is created and from The active player's calculatepreferredPosition method.
  * It is also created and used when an action is analyzed and found not to contain any preferred position (the action.getpreferredPosition() method).

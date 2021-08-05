@@ -136,7 +136,7 @@ public class AChessProblemSolver {
   private Map<String,Position>threadenedPositions = null; // Contains the positions of these pieces.
   private AgamePiece opponentCatch = null;
   private Position opponentcatchPosition = null;
-  
+  private List <ChessActionImpl> actions = null;
   private ChessActionImpl castleAction = null;
 
   private OpponentAgent opponentAgent = null;
@@ -152,7 +152,7 @@ public class AChessProblemSolver {
 		this.game = game;
 		this.myPlayer = myPlayer;
 		this.opponent = opponent;
-		opponentAgent = new OpponentAgent(this.stateImpl,this.game,this.opponent,this.myPlayer,this.folKb);
+		opponentAgent = new OpponentAgent(this.stateImpl,this.game,this.opponent,this.myPlayer,this.folKb,chessDomain);
 		playerName = this.myPlayer.getNameOfplayer();
 		playSide = playerName.substring(0,5);
 		noofMoves = game.getMovements().size();
@@ -672,7 +672,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 			goal = buildGoalstate(pieceName,toPos);
 			List<Position> removed = piece.getRemovedPositions();
 			Position pos =  (Position) removed.stream().filter(c -> c.getPositionName().contains(toPos)).findAny().orElse(null);
-			if (pos != null) {
+			if (pos != null) { // The bishop cannot be moved
 				String pawnName = "WhitePawn5";
 				String pawnPos = "e2";
 				boolean pawn = checkpieceFacts("y",pawnName,pawnPos,OCCUPIES,actions);
@@ -688,7 +688,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 					game.setDeferredGoalstates(deferredGoalstates);
 					return pawnName;
 				}
-			}else {
+			}else { // The bishop can be moved
 				checkCastling(actions);
 				boolean threat = checkThreats("x", "c4", THREATEN);
 //				boolean threat = true;
@@ -711,10 +711,13 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 			boolean protectedpiece = false;
 			protectedpiece = checkmyProtection(name,toPosname); // Is the new position protected then move the piece
 			if (protectedpiece) {
-				opponentAgent.probeConsequences(naction);
+//				opponentAgent.probeConsequences(naction);
+				opponentAgent.probepossibilities(actions, myPlayer);
+				opponentAgent.chooseStrategy(actions);
+//				opponentAgent.writeFacts();
 				return pname;
 			}
-			else {
+			else { // Never reaches this !!!
 				List<Position> reachable = piece.getNewlistPositions();
 				for (Position pos:reachable) {
 					if (!piece.checkRemoved(pos)) {
@@ -724,82 +727,24 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 						if (protectedpiece && !threat) {
 							naction.getPossibleMove().setToPosition(pos);
 							naction.setPreferredPosition(pos);
-							opponentAgent.probeConsequences(naction);
+//							opponentAgent.probeConsequences(naction);
+							opponentAgent.probepossibilities(actions, myPlayer);
+							opponentAgent.chooseStrategy(actions);
 							return pname;
 						}
 					}
 				}
 			}
-		}
-		opponentAgent.probeConsequences(naction);
+		} // Never reaches this !!!
+//		opponentAgent.probeConsequences(naction);
+		opponentAgent.probepossibilities(actions, myPlayer);
+		opponentAgent.chooseStrategy(actions);
 		return pname; // The name of the piece that is threatened. Or the name of the piece that can protect it
 	}
 	// Find the best move and a protected position to move to.
-	// For a possible strategy, see notes in compendium
-	for (ChessActionImpl action:actions){
-		AgamePiece piece = action.getChessPiece();
-		String playername = myPlayer.getNameOfplayer();
-		Constant ownerVariable = new Constant(playername);
-		String name = action.getChessPiece().getMyPiece().getOntlogyName(); 
-		ApieceMove move = action.getPossibleMove();
-/*		String toPosition = "";
-		if (action.getPreferredPosition() != null)
-			toPosition = action.getPreferredPosition().getPositionName();*/
-		List<Position> availablePositions = piece.getNewlistPositions();
-		if (move != null && availablePositions != null && !availablePositions.isEmpty()) {
-			for (Position pos:availablePositions){
-				if(!piece.checkRemoved(pos)) {
-					List<Term> ownerTerms = new ArrayList<Term>();
-					String position = pos.getPositionName();
-					Constant pieceVariable = new Constant(name);
-					
-					Variable otherPiece = new Variable("x");
-					ownerTerms.add(ownerVariable);
-					ownerTerms.add(pieceVariable);
-					Predicate ownerPredicate = new Predicate(OWNER,ownerTerms);
-					Constant posVariable = new Constant(position);
-			        List<Term> reachableTerms = new ArrayList<Term>();
-					reachableTerms.add(pieceVariable);
-					reachableTerms.add(posVariable);
-					List<Term> protectedTerms = new ArrayList<Term>();
-					protectedTerms.add(otherPiece);
-					protectedTerms.add(posVariable);
-					Predicate reachablePredicate = new Predicate(REACHABLE,reachableTerms);
-					Predicate protectedPredicate = new Predicate(PROTECTED,protectedTerms);
-					ConnectedSentence reachableSentence = new ConnectedSentence(Connectors.AND,ownerPredicate,reachablePredicate);
-					ConnectedSentence protectedSentence = new ConnectedSentence(Connectors.AND,ownerPredicate,protectedPredicate);
-//					ConnectedSentence reachablegoal = new ConnectedSentence(Connectors.IMPLIES,reachableSentence,movePredicate);
-//					ConnectedSentence protectedGoal = new ConnectedSentence(Connectors.IMPLIES,protectedSentence,safemovePredicate);
-					List<Term> moveTerms = new ArrayList<Term>();
-					moveTerms.add(pieceVariable);
-					moveTerms.add(posVariable);
-					Predicate movePredicate = new Predicate(MOVE,moveTerms);
-					Predicate safemovePredicate = new Predicate(SAFEMOVE,moveTerms);
-					writer.println("THE BEST MOVE Trying to prove backward chaining safemove\n"+movePredicate.toString());
-					InferenceResult backWardresult =  backwardChain.ask(folKb, movePredicate);
-					boolean movePossible = backWardresult.isTrue();
-					boolean protectedpiece = false;
-					protectedpiece = checkmyProtection(name,position);
-					if (movePossible && protectedpiece) {
-						BCGamesAskHandler bcHandler = (BCGamesAskHandler) backWardresult;
-						writer.println(InferenceResultPrinter.printInferenceResult(backWardresult));
-					}
-					writer.println("THE BEST MOVE Trying to prove backward chaining owner\n"+ownerPredicate.toString());
-					InferenceResult ownerresult =  backwardChain.ask(folKb, ownerPredicate);	// OBS can only prove atomic sentences			
-//					bcHandler.clearLists();
-//					writer.println(bcHandler.toString());
-//					writer.println(InferenceResultPrinter.printInferenceResult(backWardresult));
-					if(movePossible && protectedpiece && ownerresult.isTrue()) {
-//						writer.println("\n"+InferenceResultPrinter.printInferenceResult(ownerresult));
-						action.getPossibleMove().setToPosition(pos);
-						action.setPreferredPosition(pos);
-						opponentAgent.probeConsequences(action);
-						return name;
-					}
-				}
-			}
-		}
-	}
+	// For a possible strategy, see notes in compendium and notes on zenhub
+	opponentAgent.probepossibilities(actions, myPlayer);
+	opponentAgent.chooseStrategy(actions);
 	return null;
 }
 /**
@@ -1016,7 +961,7 @@ public String deferredMove(ArrayList<ChessActionImpl> actions) {
 		HashMap<String,Position> castlePos = movedPiece.getCastlePositions();
 		Position toCastle = castlePos.get(posx);
 		if (movedPiece != null && toCastle != null) {	
-			AgamePiece castle = myPlayer.checkCastling(movedPiece, toCastle);
+			AgamePiece castle = myPlayer.checkCastling(movedPiece, toCastle); // Returns the castle piece to do castling with
 			String castleName = castle.getMyPiece().getOntlogyName();
 			ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(castleName)).findAny().orElse(null);
 			Position toCastlePos = castle.getCastlePositions().get("f1");
