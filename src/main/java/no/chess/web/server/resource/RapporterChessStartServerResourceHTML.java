@@ -782,7 +782,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  // 	    	chessPiece.getMyPiece().setHeldPosition(oldPosition); // Then there are no previous positions to restore from
 // setHeldPosition(oldPosition); in this position removes the black pawn in move nr. 2
 //   	    	game.getGame().movePiece(oldPosition.getXyloc(),newPosition.getXyloc());
-   	    	game.createMove(movedPiece, oldPosition, newPosition);
+   	    	game.createMove(movedPiece, oldPosition, newPosition); // Creates a new move for the opponent
 /*
  * Put the last move to the list of movements for the player  
  * 
