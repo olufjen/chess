@@ -31,9 +31,13 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private AgamePiece chessPiece; //  The chesspiece involved in this action
 	private ChessPieceType pieceType;
 	private pieceType type;
+	/*
+	 * These four lists are recreated when the action is created and when the 
+	 * action's getAction method is called
+	 */
 	private List<Position> availablePositions;
-	private List<Position> positionRemoved; // THese are the positions blocked by other friendly pieces.
-	private List<Position> opponentRemoved; // THese are the positions blocked by opponent pieces.
+	private List<Position> positionRemoved; // These are the positions blocked by other friendly pieces.
+	private List<Position> opponentRemoved; // These are the positions blocked by opponent pieces.
 	private List<Position> bishopRemoved; // This list contains removed positions for the queen in bishop movements
 	private Position preferredPosition = null; // Each action has a preferred position that the piece should move to
 	private Position strikePosition = null; // This position is set if it is occupied by an opponent piece

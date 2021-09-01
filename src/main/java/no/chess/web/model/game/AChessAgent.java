@@ -53,10 +53,11 @@ import no.games.chess.planning.ChessSearchAlgorithm;
  * It is created every time the PlayGame object makes a move.
  * The state of the chess game implements the Percept interface.
  * The ChessAction interface extends the AIMA Action interface.
- * KBAgent is an abstract class extending the AbstracAgent class 
+ * KBAgent is an abstract class extending the AbstractAgent class 
  * 
  * The agent main purpose is to choose the best action from the list of available actions.
  * The available actions are held in the ChessState object (the Percept)
+ * So the agent program performs a mapping from the Percept to an action.
  * For this purpose the agent must find:
  * If the chosen action has a movement
  * The number of moves so far
@@ -76,7 +77,7 @@ public class AChessAgent extends KBAgent {
 /**
  * A first order knowledge base
  */
-	private FOLKnowledgeBase folKb;
+	private ChessFolKnowledgeBase folKb;
 	
 /**
  * ChessDomain:
@@ -88,6 +89,7 @@ public class AChessAgent extends KBAgent {
 	private FOLGamesBCAsk backwardChain;
 	private InferenceProcedure infp;
 	private List <ChessActionImpl> actions = null;
+	private String knowledgeFilename = "knowledgebase.txt";
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\knowledgebase.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
@@ -96,6 +98,7 @@ public class AChessAgent extends KBAgent {
 	private APlayer opponent = null;
 	private List<Position> emptyPositions = null;
 	private List<Position> positionList = null; // The original HashMap of positions as a list
+	private HashMap<String,Position> positions; // The original HashMap of positions
 	private List<String> opponentPieces = null;
 	private AChessProblemSolver solver = null;
 	private ChessSearchAlgorithm chessSearch = null;
@@ -180,6 +183,7 @@ public class AChessAgent extends KBAgent {
 		actions = new ArrayList<ChessActionImpl>();
 		opponentPieces = new ArrayList<String>();
 		positionList = game.getPositionlist();
+		positions = game.getPositions();
 		chessDomain = new FOLDomain();
 		setPredicatenames();
 	}
@@ -235,6 +239,12 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(PLAYER);
 			chessDomain.addPredicate(BOARD);
 			chessDomain.addPredicate(CASTLE);
+			chessDomain.addPredicate(KING);
+			chessDomain.addPredicate(QUEEN);
+			chessDomain.addPredicate(ROOK);
+			chessDomain.addPredicate(PAWN);
+			chessDomain.addPredicate(BISHOP);
+			chessDomain.addPredicate(KNIGHT);
 	  }
 	  
 
@@ -269,7 +279,8 @@ public class AChessAgent extends KBAgent {
 		forwardChain = new FOLGamesFCAsk(); // A Forward Chain inference procedure see p. 332
 		backwardChain = new FOLGamesBCAsk(); // A backward Chain inference procedure see p. 337
 //		folKb = new FOLKnowledgeBase(chessDomain);
-		folKb = new FOLKnowledgeBase(chessDomain, forwardChain);
+		folKb = new ChessFolKnowledgeBase(chessDomain, forwardChain,knowledgeFilename);
+		folKb.setBackWardChain(backwardChain);
 //		folKb.tell(mKing);
 		setOpponentpieces(opponent);//creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
 		kb.setOpponentPieces(opponentPieces);
@@ -391,8 +402,9 @@ public class AChessAgent extends KBAgent {
 //		kb.tell("AFACT");
 		emptyPositions = game.getNotusedPositionlist();
 
-		makeOpponentsentences(stateImpl.getOpponent(),noofMoves); //knowledge about the opponent and its pieces to the proportional knowledge base knowledge base
-//		makeSentences(); // Evaluates all actions using the actionprocessor using the makeActionSentence method OLJ 14.05.21 This is not used 
+//		makeOpponentsentences(stateImpl.getOpponent(),noofMoves); //knowledge about the opponent and its pieces to the proportional knowledge base knowledge base
+		makeSentences(stateImpl.getMyPlayer()); // 
+		makeSentences(stateImpl.getOpponent()); // 
 		solver = new AChessProblemSolver(stateImpl, localAction, folKb, chessDomain, forwardChain, backwardChain, game, myPlayer, opponent);
 		solver.setPositionList(positionList);
 /*
@@ -581,6 +593,7 @@ public class AChessAgent extends KBAgent {
 	 * It also tells the first order knowledge base and its domain fact about own pieces
 	 * @since 29.01.21 Only active pieces are considered
 	 * @since 07.04.21 Castling rules are added
+	 * @since 14.08.21 The chesstypes KING,QUEEN,ROOK, etc are unary relations
 	 * param t
 	 */
 	public void makeRules(int t) {
@@ -633,7 +646,7 @@ public class AChessAgent extends KBAgent {
 				pieceType type = piece.getPieceType();
 				Constant typeConstant = new Constant(pieceType);
 				typeTerms.add(typeConstant);
-				chessDomain.addConstant(pieceType);
+//				chessDomain.addConstant(pieceType);
 				Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
 				folKb.tell(typePredicate);
 				HashMap<String,Position> attackMap = piece.getAttackPositions();
@@ -711,7 +724,7 @@ public class AChessAgent extends KBAgent {
 							chessDomain.addConstant(position);
 							kb.tellCaptureRules(t, position, name);
 						}
-					}
+				 	}
 				}
 			}
 
@@ -719,61 +732,62 @@ public class AChessAgent extends KBAgent {
 	}
 	/**
 	 * makeSentences
-	 * This method creates simple facts about the current state of the game to the propositional knowledge base:
-	 * Which pieces are available for the active player and their position and possible moves
-	 * Which actions are available for the active player
-	 * Which positions are empty on the board
-	 * This method acts as the makePerceptSentence method:
-	 * It creates simple facts about the current state of the game to the propositional knowledge base
-	 * It also calls the makeActionSentence for all available actions to produce an evaluation value for the actions (the ActionProcessor)
+	 * This method creates simple facts about the player's pieces to the FOL knowledge base:
+	 * It creates the unary relation of type BISHOP(piecename) etc. for all the player's pieces
 	 */
-	public void makeSentences() {
-		APlayer player= stateImpl.getMyPlayer();
+	public void makeSentences(APlayer player) {
 		List<AgamePiece> pieces = player.getMygamePieces();
 		ABishop b = null;
 		ARook r = null;
 		AQueen qt = null;
 		AKnight kn = null;
 		Aking king = null;
+		List<Term> typeTerms = new ArrayList<Term>();
+	
 		for (AgamePiece piece:pieces) {
 			String name = piece.getMyPiece().getOntlogyName();
+			Constant nameVariable = new Constant(name);
+			typeTerms.clear();
+			typeTerms.add(nameVariable);
 			piece.setPredicate(piece.getMyPiece().getPredicate());
 			ChessPieceType pieceType = piece.getChessType();
+			if (pieceType instanceof APawn) {
+				Predicate typePredicate = new Predicate(PAWN,typeTerms);
+				folKb.tell(typePredicate);
+			}
 			if (pieceType instanceof ABishop) {
 				b = (ABishop) pieceType;
-				kb.setOwnBishop(name);
+				Predicate typePredicate = new Predicate(BISHOP,typeTerms);
+				folKb.tell(typePredicate);
+//				kb.setOwnBishop(name);
 			}
 			if (pieceType instanceof ARook) {
 				r = (ARook) pieceType;
-				kb.setOwnRook(name);
+				Predicate typePredicate = new Predicate(ROOK,typeTerms);
+				folKb.tell(typePredicate);
+//				kb.setOwnRook(name);
 			}
 			if (pieceType instanceof AQueen) {
 				qt = (AQueen) pieceType;
-				kb.setOwnQueen(name);
+				Predicate typePredicate = new Predicate(QUEEN,typeTerms);
+				folKb.tell(typePredicate);
+//				kb.setOwnQueen(name);
 			}
 			if (pieceType instanceof AKnight) {
 				kn = (AKnight) pieceType;
-				kb.setOwnKnight(name);
+				Predicate typePredicate = new Predicate(KNIGHT,typeTerms);
+				folKb.tell(typePredicate);
+//				kb.setOwnKnight(name);
 			}
 			if (pieceType instanceof Aking) {
 				king = (Aking) pieceType;
-				kb.setOwnKing(name);
+				Predicate typePredicate = new Predicate(KING,typeTerms);
+				folKb.tell(typePredicate);
+//				kb.setOwnKing(name);
 			}			
 
-			String position = piece.getmyPosition().getPositionName();
-			Sentence sentence = kb.newSymbol(name+"_"+"AT"+position, noofMoves);
-			kb.tell(sentence);
 		}		
-		for (ChessActionImpl action:actions) {
-			Sentence sentence = makeActionSentence(action,noofMoves);
-			if (sentence != null)
-				kb.tell(sentence);
-		}
-		for (Position position:emptyPositions) {
-			String name = position.getPositionName();
-			Sentence sentence =  kb.newSymbol(name+"_",noofMoves);
-			kb.tell(sentence);
-		}
+
 	}
 	/**
 	 * makeOpponentsentences

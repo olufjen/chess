@@ -22,9 +22,12 @@ import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
 
 /**
- * The opponent agent object,
+ * The opponent agent object, is a Knowledge based agent and it
  * contains all opponent available actions, and their action schemas.
- * It is created whenever the chessproblemsolver is created
+ * It is created whenever the chessproblemsolver is created.
+ * It also contains a FOL strategy Knowledge base, that contains
+ * knowledge of possible moves one ply ahead.
+ * Based on the knowledge from the strategy knowledge base, the agent maintains a Performace measure.
  * The opponent agent object must be able to return with a best strategy for moves 
  * @author olj
  *
@@ -40,12 +43,14 @@ public class OpponentAgent {
 	private PlayGame game = null;
 	private APlayer myPlayer = null; // This is the opponent of the game
 	private APlayer opponent = null; // This is the chess player of the game
-	private FOLKnowledgeBase folKb = null; // The full knowledge base
+	private ChessFolKnowledgeBase folKb = null; // The parent knowledge base
 	private FOLDomain chessDomain;
 	private FOLGamesFCAsk forwardChain;
 	private FOLGamesBCAsk backwardChain;
-	private ChessFolKnowledgeBase localKb; // The local temporary knowledge base
+	private ChessFolKnowledgeBase localKb; // The local strategy knowledge base
+	private APerformance performanceMeasure;
 	private Map<String,Position>possiblePositions = null; // Contains the positions of possible positions
+	private HashMap<String,Position> positions; // The original HashMap of positions
 	private List<String>positionKeys = null;
 	private List<String>myPieceNames = null;
 	
@@ -80,7 +85,7 @@ public class OpponentAgent {
     private String OPPONENTTO;
     private String POSSIBLETHREAT;
     
-	public OpponentAgent(ChessStateImpl stateImpl, PlayGame game, APlayer myPlayer, APlayer opponent,FOLKnowledgeBase folKb,FOLDomain chessDomain) {
+	public OpponentAgent(ChessStateImpl stateImpl, PlayGame game, APlayer myPlayer, APlayer opponent,ChessFolKnowledgeBase folKb,FOLDomain chessDomain) {
 		super();
 		this.stateImpl = stateImpl;
 		this.game = game;
@@ -105,7 +110,7 @@ public class OpponentAgent {
 	    writer = new PrintWriter(new BufferedWriter(fw));	
 	    setPredicatenames();
 	    defineFacts();
-	    
+	    performanceMeasure = new APerformance(positions,myPlayer,opponent,folKb,localKb,chessDomain,forwardChain,backwardChain);
 	    writer.flush();
 	}
 	  public void setPredicatenames() {
@@ -141,6 +146,12 @@ public class OpponentAgent {
 
 	  }
 
+	public HashMap<String, Position> getPositions() {
+		return positions;
+	}
+	public void setPositions(HashMap<String, Position> positions) {
+		this.positions = positions;
+	}
 	public ChessStateImpl getStateImpl() {
 		return stateImpl;
 	}
@@ -292,7 +303,10 @@ public class OpponentAgent {
 	 */
 	public void chooseStrategy(List<ChessActionImpl>actions) {
 		writer.println("Choose strategy");
-
+		performanceMeasure.setPositions(positions);
+		performanceMeasure.setPositionKeys(positionKeys);
+		performanceMeasure.occupiedPositions();
+		performanceMeasure.findReachable();
 		for (ChessAction action:actions) {
 			ChessActionImpl localAction = (ChessActionImpl) action;
 			ApieceMove move = localAction.getPossibleMove();
@@ -354,12 +368,22 @@ public class OpponentAgent {
 			String posnameNow = heldPosition.getPositionName();
 			localKb.createfacts(occupiesNow, posnameNow, piecenameNow); //Must also set current occupied position
 			List<Position> availablePositions = piece.getNewlistPositions();
-			for (Position pos:availablePositions) {
-				if (!piece.checkRemoved(pos)) {
+			List<Position> actionAvailablePositions = new ArrayList();
+			actionAvailablePositions.addAll(availablePositions);
+			List<Position> actionRemoved = new ArrayList();
+			actionRemoved.addAll(piece.getRemovedPositions());
+			for (Position pos:actionAvailablePositions) {
+				String posName = pos.getPositionName();
+				Position rpos =  (Position) actionRemoved.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
+				if (rpos == null) {
+//					piece.setMyPosition(pos);// This causes the moved piece to appear in two places !!!
+					piece.settempMyposition(pos);
 					piece.produceLegalmoves(pos); // Produces new reachable positions
+					piece.giveNewdirections(); // In case of bishop
 					HashMap<String,Position> reachablePositions = piece.getReacablePositions();
-					ChessActionImpl tempaction = new ChessActionImpl(reachablePositions,piece,player,myPlayer);
+					ChessActionImpl tempaction = new ChessActionImpl(reachablePositions,piece,player,myPlayer); // Creates new removed positions
 //					player.calculatePreferredPosition(piece, tempaction); // MUst use a new action
+
 					String occupies = piece.returnPredicate();
 					String piecename = piece.getMyPiece().getOntlogyName();
 					String posname = pos.getPositionName();
@@ -368,8 +392,12 @@ public class OpponentAgent {
 					tellnewFacts(piece,piecename);
 				}
 			}
+//			piece.setMyPosition(heldPosition);
+			piece.settempMyposition(heldPosition);
 			piece.produceLegalmoves(heldPosition);
+			piece.giveNewdirections();
 			player.calculatePreferredPosition(piece, localAction);
+	
 		}
 		localKb.writeKnowledgebase();
 	}
@@ -384,7 +412,8 @@ public class OpponentAgent {
 		List<Position> availablePositions = piece.getNewlistPositions();
 		String piecename = piece.getMyPiece().getOntlogyName();
 		if (piecename.equals("WhiteRook2")) {
-			System.out.println(piece.toString());
+			writer.println("TellnewFacts from position "+name);
+			writer.println(piece.toString());
 		}
 		for (Position pos:availablePositions) {
 			if (!piece.checkRemoved(pos)) {

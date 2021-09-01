@@ -63,6 +63,7 @@ public class Position extends ParentModel {
 	private WhiteBoardPosition whiteBoardPosition = null;
 	private HashSet<Piece> pieces;
 	private XYLocation xyloc = null; // Represents the XYLocation of a aima board
+	private Integer sumDif = null; // A distance indicator in a set of removed positions (See the PreferredMove processor)
 /*
  * These booleans indicates which direction this position belongs to
  * It is used when calculating removed positions for bishops olj 14.06.21	
@@ -71,6 +72,15 @@ public class Position extends ParentModel {
 	private boolean ne = false;
 	private boolean sw = false;
 	private boolean se = false;
+	private static enum direction{
+		NW,
+		NE,
+		SW,
+		SE,
+		NONE;
+	}
+	private direction mydirection;
+	
 	private boolean opponentRemove = false; // True if this position is blocked by opponent
 	
 	public Position(String positionName, boolean inUse, ChessPiece usedBy) {
@@ -96,6 +106,7 @@ public class Position extends ParentModel {
 		centerrighthigh = ycol == 4 && xrow == 4;
 		removedPieces = new Stack();
 		predicates = new ArrayList<String>();
+		mydirection = direction.NONE;
 	}
 	public Position(XYLocation loc, boolean inUse, ChessPiece usedBy) {
 		this.xyloc = loc;
@@ -121,8 +132,25 @@ public class Position extends ParentModel {
 		centerrighthigh = ycol == 4 && xrow == 4;
 		removedPieces = new Stack();
 		predicates = new ArrayList<String>();
+		mydirection = direction.NONE;
 	}
 	
+	
+	public direction getMydirection() {
+		return mydirection;
+	}
+	public void setMydirection(direction mydirection) {
+		this.mydirection = mydirection;
+	}
+	public void setDefaultdirection() {
+		this.mydirection = direction.NONE;
+	}
+	public Integer getSumDif() {
+		return sumDif;
+	}
+	public void setSumDif(Integer sumDif) {
+		this.sumDif = sumDif;
+	}
 	public boolean isOpponentRemove() {
 		return opponentRemove;
 	}
@@ -134,24 +162,28 @@ public class Position extends ParentModel {
 	}
 	public void setNw(boolean nw) {
 		this.nw = nw;
+		mydirection = direction.NW;
 	}
 	public boolean isNe() {
 		return ne;
 	}
 	public void setNe(boolean ne) {
 		this.ne = ne;
+		mydirection = direction.NE;
 	}
 	public boolean isSw() {
 		return sw;
 	}
 	public void setSw(boolean sw) {
 		this.sw = sw;
+		mydirection = direction.SW;
 	}
 	public boolean isSe() {
 		return se;
 	}
 	public void setSe(boolean se) {
 		this.se = se;
+		mydirection = direction.SE;
 	}
 	public String getPiecePred() {
 		return piecePred;
@@ -547,7 +579,7 @@ public class Position extends ParentModel {
 			gp = usedBy.getMyPiece().getName();
 		}
 		
-		builder.append(positionName+ " Color "+positionColor+" Piece  "+p+" "+inUse+" gamepiece "+gp+"\n");
+		builder.append(positionName+ " Color "+positionColor+" Direction "+mydirection+" Piece  "+p+" "+inUse+" gamepiece "+gp+"\n");
 		return builder.toString();
 	}
 }

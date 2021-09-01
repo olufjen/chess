@@ -307,6 +307,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	 * giveNewdirections
 	 * This method calculates new directions if 
 	 * the piece is of type bishop or queen
+	 * It is called whenever a piece is moved
 	 * 
 	 */
 	public void giveNewdirections() {
@@ -517,6 +518,9 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 			heldPositions.push(this.myPosition);
 			this.heldPosition = myPosition;
 		}
+		this.myPosition = newPosition;
+	}
+	public void settempMyposition(Position newPosition) {
 		this.myPosition = newPosition;
 	}
 

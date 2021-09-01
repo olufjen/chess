@@ -45,8 +45,10 @@ import no.games.chess.planning.ChessProblem;
 /**
  * AChessProblemSolver
  * This class is used to find best moves in the chess game through planning as described in chapter 10 and 11 of 
- * the aima book
- * 
+ * the aima book.
+ * The ProblemSolver is created in the ChessAgent's execute method.
+ * The problem solver creates a ChessProblem object for the ChessSearchAlgorithm to solve.
+ * The ChessProblem object contains one or more ActionSchemas. There is one ActionSchema for every ChessAction available for the player
  * @author oluf
  * 
  */
@@ -103,7 +105,7 @@ public class AChessProblemSolver {
    * A first order knowledge base
    * 
    */
-  private FOLKnowledgeBase folKb;
+  private ChessFolKnowledgeBase folKb;
 
   /**
    * 
@@ -112,9 +114,10 @@ public class AChessProblemSolver {
    *  all positions are constants
    * 
    */
-  private FOLDomain chessDomain;
   private FOLGamesFCAsk forwardChain;
-  private FOLGamesBCAsk backwardChain;
+  private FOLDomain chessDomain;
+  
+  private FOLGamesBCAsk backwardChain; // The backward chain inference procedure
   private PrintWriter writer =  null;
   private FileWriter fw =  null;
   private PlayGame game =  null;
@@ -134,6 +137,7 @@ public class AChessProblemSolver {
   private Map<String,Position>possiblePositions = null; // Contains the positions of these opponent pieces.
   private Map<String,AgamePiece>threatenedPieces = null; // Contains pieces that are threatened by the opponent
   private Map<String,Position>threadenedPositions = null; // Contains the positions of these pieces.
+  private HashMap<String,Position> positions; // The original HashMap of positions
   private AgamePiece opponentCatch = null;
   private Position opponentcatchPosition = null;
   private List <ChessActionImpl> actions = null;
@@ -141,7 +145,7 @@ public class AChessProblemSolver {
 
   private OpponentAgent opponentAgent = null;
   
-  public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, FOLKnowledgeBase folKb, FOLDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
+  public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, ChessFolKnowledgeBase folKb, FOLDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
 		super();
 		this.stateImpl = stateImpl;
 		this.localAction = localAction;
@@ -152,7 +156,9 @@ public class AChessProblemSolver {
 		this.game = game;
 		this.myPlayer = myPlayer;
 		this.opponent = opponent;
+		positions = this.game.getPositions();
 		opponentAgent = new OpponentAgent(this.stateImpl,this.game,this.opponent,this.myPlayer,this.folKb,chessDomain);
+		opponentAgent.setPositions(positions);
 		playerName = this.myPlayer.getNameOfplayer();
 		playSide = playerName.substring(0,5);
 		noofMoves = game.getMovements().size();
@@ -217,7 +223,15 @@ public class AChessProblemSolver {
   }
   
 
- public ChessActionImpl getCastleAction() {
+ public HashMap<String, Position> getPositions() {
+	return positions;
+}
+
+public void setPositions(HashMap<String, Position> positions) {
+	this.positions = positions;
+}
+
+public ChessActionImpl getCastleAction() {
 	return castleAction;
 }
 
@@ -289,11 +303,11 @@ public ChessStateImpl getStateImpl() {
 		this.localAction = localAction;
   }
 
-  public FOLKnowledgeBase getFolKb() {
+  public ChessFolKnowledgeBase getFolKb() {
 		return folKb;
   }
 
-  public void setFolKb(FOLKnowledgeBase folKb) {
+  public void setFolKb(ChessFolKnowledgeBase folKb) {
 		this.folKb = folKb;
   }
 
@@ -380,66 +394,7 @@ public String checkPossiblePieces() {
 	  }
 	  return null;
   }
-  /**
-   * checkpieceFacts
-   * This method checks the FOL knowledge base for certain facts about the player's pieces.
-   * These facts can be any of the available predicates in the FOL Domain (see the domain object)
-   * If an action is found belonging to the given piece, then this action is given the new position to move to
- * @param pieceName The name of the piece
- * @param pos The position to move to
- * @param fact The predicate fact
- * @param actions All the actions available to the player
- */
-public boolean checkpieceFacts(String pieceVar,String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions) {
-		Variable pieceVarx = null;
-		if (pieceVar.equals("x"))
-			pieceVarx = new Variable(pieceVar);
-		Constant pieceVariable= new Constant(pieceName);
-		Constant posVariable = new Constant(pos);
-		List<Term> reachableTerms = new ArrayList<Term>();
-		if (pieceVarx != null) {
-			reachableTerms.add(pieceVarx);
-		}else
-			reachableTerms.add(pieceVariable);
-		reachableTerms.add(posVariable);
-		Predicate reachablePredicate = new Predicate(fact,reachableTerms);
-		writer.println("PieceFacts Trying to prove\n"+reachablePredicate.toString());
-		InferenceResult backWardresult =  backwardChain.ask(folKb, reachablePredicate);
-		BCGamesAskHandler handler = (BCGamesAskHandler)backWardresult;
-		HashMap vars = null;
-		Term usedTerm = null;
-		String termName = null;
-		boolean properProtection = false;
-		List<HashMap<Variable, Term>> finals = handler.getFinalList();
-		if (finals != null && !finals.isEmpty() && pieceVarx != null) {
-			vars = finals.get(0);
-			usedTerm = (Term) vars.get(pieceVarx);
-			termName = usedTerm.getSymbolicName(); // Finds which piece is protecting this position. This is only true if fact is PROTECTEDBY
-			properProtection = !termName.equals(pieceName);
-			writer.println("PieceFacts: position "+pos+" protected by "+termName+" and reachable by "+pieceName);
-			return properProtection;
-		}
-		return backWardresult.isTrue();
-		
-		
-/*		
-		
-	    ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
-	    Position position =  (Position) positionList.stream().filter(c -> c.getPositionName().contains(pos)).findAny().orElse(null);
-		if (backWardresult.isTrue() && termName != null && termName.equals(pieceName) && naction != null && naction.getPossibleMove() != null) {
-			naction.getPossibleMove().setToPosition(position);
-			naction.setPreferredPosition(position);
-		 	writer.println("Checking piecefacts for \n"+fact + " piece "+pieceName + " and position "+pos);
-//			writer.println("True");
-			return true;
-		}
-		if (backWardresult.isTrue() && naction.getPossibleMove() == null) {
-			writer.println(" NO MOVE !!! Checking piecefacts for \n"+fact + " piece "+pieceName + " and action "+naction.toString());
-			return true;
-		}
-//		writer.println("False");
-		return false;*/
-  }
+  
 /**
  * checkoppoentThreat
  * This method checks if any of my pieces are threatened by the opponent player
@@ -467,7 +422,7 @@ public String checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions)
 				  myposName = myposition.getPositionName();
 			  }
 			  String myPieceName = mypiece.getMyPiece().getOntlogyName();
-			  boolean threat = checkThreats("x", myposName, fact);
+			  boolean threat = folKb.checkThreats("x", myposName, fact,opponent);
 			  if(threat) {
 				  threatenedPieces.put(myPieceName, mypiece);
 				  threadenedPositions.put(myPieceName, myposition);
@@ -487,7 +442,7 @@ public String checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions)
 						if (type != type.PAWN) {
 							Position threatPos = threadenedPositions.get(name);
 							String posName = threatPos.getPositionName();
-							boolean toProtect = checkFacts(name, posName, REACHABLE, actions);
+							boolean toProtect = folKb.checkFacts(name, posName, REACHABLE, actions,positionList);
 							if (toProtect) {
 								return name;
 							}
@@ -529,16 +484,16 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
 				  boolean pawn = false;
 				  boolean pieceProtected = false;
 				  if (type  == type.PAWN) {
-					  pawn = checkpieceFacts("y",name, posName, PAWNATTACK, actions);
+					  pawn = folKb.checkpieceFacts("y",name, posName, PAWNATTACK, actions);
 					  if (pawn) {
 						  possiblePieces.put(name, piece);
 						  possiblePositions.put(name, position);
 					  }
 				  }
 				  if (type  != type.PAWN) {
-					  reachable = checkpieceFacts("y",name,posName,REACHABLE,actions);
+					  reachable = folKb.checkpieceFacts("y",name,posName,REACHABLE,actions);
 					  if (reachable) {
-						 pieceProtected = checkpieceFacts("x",name,posName,PROTECTED,actions);
+						 pieceProtected = folKb.checkpieceFacts("x",name,posName,PROTECTED,actions);
 						  if (pieceProtected) {
 							  possiblePieces.put(name, piece);
 							  possiblePositions.put(name, position);
@@ -546,7 +501,7 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
 						  }
 					  }
 				  }
-				  boolean threat = checkThreats("x", posName, THREATEN);
+				  boolean threat = folKb.checkThreats("x", posName, THREATEN,opponent);
 				  if (!threat && reachable && !pieceProtected) {
 					  possiblePieces.put(name, piece);
 					  possiblePositions.put(name, position);
@@ -559,92 +514,6 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
 	  }
 	
   }
-  /**
-   * checkThreats
-   * This method checks the FOL knowledge base for certain facts about the opponent's pieces.
-   * These facts can be any of the available predicates in the FOL Domain (see the domain object)
- * @param pieceName
- * @param pos
- * @param fact
- * @return
- */
-public boolean checkThreats(String pieceName,String pos,String fact) {
-	  List<AgamePiece> pieces = opponent.getMygamePieces();
-	  AgamePiece piece = pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
-	  Constant pieceVariable = null;
-	  Variable pieceVar = null;
-	  List<Term> reachableTerms = new ArrayList<Term>();
-	  if (piece != null && piece.isActive()) {
-		  pieceVariable = new Constant(pieceName);
-		  reachableTerms.add(pieceVariable);
-	  }else if(piece == null) {
-		  pieceVar = new Variable(pieceName);
-		  reachableTerms.add(pieceVar);
-	  }
-	  Constant posVariable = new Constant(pos);
-	  reachableTerms.add(posVariable);
-	  Predicate threatPredicate = new Predicate(fact,reachableTerms);
-	  writer.println("Trying to prove\n"+threatPredicate.toString());
-	  InferenceResult backWardresult =  backwardChain.ask(folKb,threatPredicate);
-//	  writer.println(InferenceResultPrinter.printInferenceResult(backWardresult));
-
-	  return backWardresult.isTrue();
-	  
-  }
-  /**
-   * checkFacts
-   * This method checks the FOL knowledge base for certain facts about a player's pieces.
-   * These facts can be any of the available predicates in the FOL Domain (see the domain object)
-   * The parameter pos is used to give the chosen action a new position to move to.
- * @param pieceName The name of the piece
- * @param pos The position to move to
- * @param fact The predicate fact
- * @param actions All the actions available to the player
- */
-public boolean checkFacts(String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions) {
-		Constant pieceVariable= new Constant(pieceName);
-		Constant posVariable = new Constant(pos);
-		List<Term> reachableTerms = new ArrayList<Term>();
-		reachableTerms.add(pieceVariable);
-		reachableTerms.add(posVariable);
-		Predicate reachablePredicate = new Predicate(fact,reachableTerms);
-		InferenceResult backWardresult =  backwardChain.ask(folKb, reachablePredicate);
-	    ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
-	    Position position =  (Position) positionList.stream().filter(c -> c.getPositionName().contains(pos)).findAny().orElse(null);
-		if (backWardresult.isTrue() && naction != null) {
-			naction.getPossibleMove().setToPosition(position);
-			naction.setPreferredPosition(position);
-			return true;
-		}
-		return false;
-  }
-/**
- * checkmyProtection
- * This method checks if a piece is protected by other pieces than by itself
- * @param pieceName
- * @param pos
- * @return true if it is protected
- */
-public boolean checkmyProtection(String pieceName,String pos) {
-	  List<AgamePiece> myPieces = myPlayer.getMygamePieces();
-	  boolean protectedpiece = false;
-	  for (AgamePiece piece:myPieces) {
-		  String name = piece.getMyPiece().getOntlogyName();
-		  if (!name.equals(pieceName)) {
-				Constant pieceVariable= new Constant(name);
-				Constant posVariable = new Constant(pos);
-				List<Term> reachableTerms = new ArrayList<Term>();
-				reachableTerms.add(pieceVariable);
-				reachableTerms.add(posVariable);
-				Predicate reachablePredicate = new Predicate(PROTECTED,reachableTerms);
-				InferenceResult backWardresult =  backwardChain.ask(folKb, reachablePredicate);
-				protectedpiece = backWardresult.isTrue();
-				if (protectedpiece)
-					return protectedpiece;
-		  }
-	  }
-	return protectedpiece;
-}
 
   /**
    * prepareAction
@@ -659,11 +528,11 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 	String pieceName = "WhiteBishop2";
 	String fpos = "f1";
 	String toPos = "d3";
-	boolean bishop = checkpieceFacts("y",pieceName,fpos,OCCUPIES,actions); // Rook occupies f1 !!??
+	boolean bishop = folKb.checkpieceFacts("y",pieceName,fpos,OCCUPIES,actions); // Rook occupies f1 !!??
 	State goal = null;
 	State initstate = null;
 	if (bishop) {
-		String name = pieceName;
+		String name = pieceName; // Check to see if piecename has an action
 		ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(name)).findAny().orElse(null);
 		if (naction != null) {
 			AgamePiece piece = naction.getChessPiece();
@@ -675,7 +544,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 			if (pos != null) { // The bishop cannot be moved
 				String pawnName = "WhitePawn5";
 				String pawnPos = "e2";
-				boolean pawn = checkpieceFacts("y",pawnName,pawnPos,OCCUPIES,actions);
+				boolean pawn = folKb.checkpieceFacts("y",pawnName,pawnPos,OCCUPIES,actions);
 				if (pawn) {
 					typeofPiece = PAWN;
 					moveName = "pawnmove";
@@ -690,10 +559,10 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 				}
 			}else { // The bishop can be moved
 				checkCastling(actions);
-				boolean threat = checkThreats("x", "c4", THREATEN);
+				boolean threat = folKb.checkThreats("x", "c4", THREATEN,opponent);
 //				boolean threat = true;
 				if (threat) {
-					  checkFacts(pieceName, "d3", REACHABLE, actions);
+					  folKb.checkFacts(pieceName, "d3", REACHABLE, actions,positionList);
 				}
 				return pieceName;
 			}
@@ -709,7 +578,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 			Position tonewPos = move.getToPosition();
 			String toPosname = tonewPos.getPositionName();
 			boolean protectedpiece = false;
-			protectedpiece = checkmyProtection(name,toPosname); // Is the new position protected then move the piece
+			protectedpiece = folKb.checkmyProtection(name,toPosname,PROTECTED,myPlayer); // Is the new position protected then move the piece
 			if (protectedpiece) {
 //				opponentAgent.probeConsequences(naction);
 				opponentAgent.probepossibilities(actions, myPlayer);
@@ -722,8 +591,8 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 				for (Position pos:reachable) {
 					if (!piece.checkRemoved(pos)) {
 						String posName = pos.getPositionName();
-						protectedpiece = checkmyProtection(name,posName); // must also set the new to position !!
-						boolean threat = checkThreats(pname, posName, THREATEN);
+						protectedpiece = folKb.checkmyProtection(name,posName,PROTECTED,myPlayer); // must also set the new to position !!
+						boolean threat = folKb.checkThreats(pname, posName, THREATEN,opponent);
 						if (protectedpiece && !threat) {
 							naction.getPossibleMove().setToPosition(pos);
 							naction.setPreferredPosition(pos);
@@ -800,7 +669,7 @@ public void checkCastling(ArrayList<ChessActionImpl> actions) {
 			String bishopName = "WhiteBishop2";
 			String fpos = "f1";
 			String toPos = "d3";
-			boolean bishop = checkpieceFacts("y",bishopName,fpos,OCCUPIES,actions);
+			boolean bishop = folKb.checkpieceFacts("y",bishopName,fpos,OCCUPIES,actions);
 			if (bishop) {
 				String castlePos = "g1";
 				typeofPiece = KING;
@@ -884,7 +753,7 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 	  case 2:
 		  pieceName = "WhitePawn3";
 		  String pos = "c4";
-		  checkFacts(pieceName, pos, REACHABLE, actions);
+		  folKb.checkFacts(pieceName, pos, REACHABLE, actions,positionList);
 		  break;
 	  case 4:
 		  checkOpponent("", actions);
@@ -894,23 +763,23 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  checkOpponent("", actions);
 		  pieceName = "WhiteKnight2";
 		  String posx = "f3";
-		  checkFacts(pieceName, posx, REACHABLE, actions);
+		  folKb.checkFacts(pieceName, posx, REACHABLE, actions,positionList);
 		  break;
 	  default:
 		  checkOpponent("", actions); // Result: A list of opponent pieces that can be taken
 		  String blackpieceName = "BlackBishop1";
 		  String blackpos = "g4";
-		  if (checkThreats(blackpieceName, blackpos, OCCUPIES)) {
+		  if (folKb.checkThreats(blackpieceName, blackpos, OCCUPIES,opponent)) {
 			  pieceName = "WhitePawn8";
 			  break;
 		  }
 		  String pname = "x";
 		  String bpos = "d5";
 		  //			  pieceName = "WhitePawn3";
-		  if (checkThreats(pname, bpos, OCCUPIES)) {  // OBS What happens if a friendly piece occupies this position !!!???
+		  if (folKb.checkThreats(pname, bpos, OCCUPIES,opponent)) {  // OBS What happens if a friendly piece occupies this position !!!???
 			  pieceName = "WhitePawn3";
 			  String wpos = "d5";
-			  if (checkFacts(pieceName, wpos, PAWNATTACK, actions))
+			  if (folKb.checkFacts(pieceName, wpos, PAWNATTACK, actions,positionList))
 				  break;
 		  }
 		  pieceName = checkPossiblePieces(); // Checks which opponent pieces that be safely taken from the list of opponent pieces
@@ -955,7 +824,7 @@ public String deferredMove(ArrayList<ChessActionImpl> actions) {
 	String key = deferredKey;
 	if (key.equals("WhiteKing")) {
 		String posx = "g1";
-		checkFacts(key, posx, CASTLE, actions);
+		folKb.checkFacts(key, posx, CASTLE, actions,positionList);
 		List<AgamePiece> pieces = myPlayer.getMygamePieces();
 		AgamePiece movedPiece = (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(key)).findAny().orElse(null);
 		HashMap<String,Position> castlePos = movedPiece.getCastlePositions();
