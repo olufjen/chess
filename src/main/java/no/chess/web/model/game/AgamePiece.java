@@ -48,7 +48,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private HashMap<String,Position> attackPositions; // Are only valid for type pawn
 	private HashMap<String,Position> castlePositions; // Are only valid for king and rook
 	private List<Position> bishopRemoved; // This list contains removed positions for the queen in bishop movements
-	private ArrayList<Position> newlistPositions; // Refactored from newPositions olj 09.11.20 IUt contains all reachable positions
+	private ArrayList<Position> newlistPositions; // Refactored from newPositions olj 09.11.20 It contains all reachable positions
 	private List<Position> removedPositions = null;
 	private List<Position> preferredPositions;
 	private Stack<Position> heldPositions;
@@ -213,6 +213,37 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		this.removedPositions = removedPositions;
 	}
 
+	
+	/**
+	 * checkFriend
+	 * This method checks if a particular position is removed from the available positions
+	 * If the piece is a friendly piece the method returns false
+	 * This method is used by the opponent
+	 * @param pos
+	 * @return true if removed
+	 */
+	public boolean checkFriend(Position pos) {
+		boolean removed = false;
+		String posName = pos.getPositionName();
+		if (removedPositions != null) {
+			for (Position position:removedPositions) {
+				if (pos == position) {
+					if(pos.isInUse()) {
+						AgamePiece piece = pos.getUsedBy().getMyPiece();
+						if(piece.getPieceColor() == this.getPieceColor()){
+							removed = false;
+							break;
+						}
+					}
+					removed = true;
+					break;
+				}
+
+			}
+		}
+
+		return removed;
+	}	
 	/**
 	 * checkRemoved
 	 * This method checks if a particular position is removed from the available positions

@@ -27,7 +27,7 @@ import no.games.chess.fol.FOLGamesFCAsk;
  * It is created whenever the chessproblemsolver is created.
  * It also contains a FOL strategy Knowledge base, that contains
  * knowledge of possible moves one ply ahead.
- * Based on the knowledge from the strategy knowledge base, the agent maintains a Performace measure.
+ * Based on the knowledge from the strategy knowledge base, the agent maintains a Performance measure.
  * The opponent agent object must be able to return with a best strategy for moves 
  * @author olj
  *
@@ -344,6 +344,7 @@ public class OpponentAgent {
 			}
 			
 		}
+	    writer.flush();
 	}
 	/**
 	 * probepossibilities

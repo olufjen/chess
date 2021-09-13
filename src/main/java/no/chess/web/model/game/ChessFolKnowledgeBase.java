@@ -45,7 +45,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	
 	public ChessFolKnowledgeBase(FOLDomain domain, InferenceProcedure inferenceProcedure) {
 		super(domain, inferenceProcedure);
-		fileName = "tempknowledgebase";
+		fileName = "tempknowledgebase.txt";
 		outputFileName = outputFileName+this.fileName;
 		
 		try {

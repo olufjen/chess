@@ -257,9 +257,11 @@ public class AChessAgent extends KBAgent {
 		this.castleAction = castleAction;
 	}
 
-
-	/* (non-Javadoc)
-	 * @see aima.core.logic.propositional.agent.KBAgent#execute(aima.core.agent.Percept)
+	/**
+	 * execute
+	 * The execute function creates the necessary inference procedures and the parent knowledge base based on the current percept: The ChessState object.
+	 * Once the knowledge base is in place, a Problemsolver is created.
+	 * (See the chess problem solver).  
 	 */
 	/* (non-Javadoc)
 	 * @see aima.core.logic.propositional.agent.KBAgent#execute(aima.core.agent.Percept)
@@ -289,7 +291,8 @@ public class AChessAgent extends KBAgent {
 		Sentence playSentence = kb.newSymbol(kb.TOPLAY+playerName, noofMoves);
 		kb.tell(playSentence);
 		
-		makeRules(noofMoves); // tells the FOL knowledgebase rules about how to capture opponent pieces
+		makeRules(myPlayer,"g1","c1"); // tells the FOL knowledgebase rules about how to capture opponent pieces
+		makeRules(opponent,"g8","c8"); // tells the FOL knowledgebase rules about how to capture opponent pieces
 		HashSet<String> chessConstants = (HashSet<String>) chessDomain.getConstants();
 		HashSet<String> chessPredicates = (HashSet<String>) chessDomain.getPredicates();
 		String sample = "WhitePawn1";
@@ -596,8 +599,8 @@ public class AChessAgent extends KBAgent {
 	 * @since 14.08.21 The chesstypes KING,QUEEN,ROOK, etc are unary relations
 	 * param t
 	 */
-	public void makeRules(int t) {
-		APlayer player= stateImpl.getMyPlayer();
+	public void makeRules(APlayer player,String castleone,String castle2) {
+//		APlayer player= stateImpl.getMyPlayer();
 		chessDomain.addConstant(player.getNameOfplayer());
 //		chessDomain.addPredicate(OWNER);
 		Constant ownerVariable = new Constant(player.getNameOfplayer());
@@ -665,7 +668,8 @@ public class AChessAgent extends KBAgent {
 				if (availablePositions != null && !availablePositions.isEmpty()) {
 //					chessDomain.addPredicate(REACHABLE);
 					for (Position pos:availablePositions){
-						
+						//if(!piece.checkRemoved(pos)) 
+						//if(!piece.checkFriend(pos))
 						if(!piece.checkRemoved(pos)) {
 							String position = pos.getPositionName();
 							Constant protectorVariable = new Constant(name);
@@ -677,7 +681,7 @@ public class AChessAgent extends KBAgent {
 							Predicate reachablePredicate = new Predicate(REACHABLE,protectedTerms);
 							if (!pawnattack) {
 								folKb.tell(protectorPredicate);
-								kb.tellCaptureRules(t, position, name);
+//								kb.tellCaptureRules(t, position, name);
 							}
 							folKb.tell(reachablePredicate);
 							chessDomain.addConstant(position);
@@ -691,6 +695,12 @@ public class AChessAgent extends KBAgent {
 									}
 									if (cPosname.equals("c1")) {
 										xposname = "d1";
+									}
+									if (cPosname.equals("g8")) {
+										xposname = "f8";
+									}
+									if (cPosname.equals("c8")) {
+										xposname = "d8";
 									}
 									String xxpos = xposname;
 									Position xposn =  (Position) removedKing.stream().filter(c -> c.getPositionName().contains(xxpos)).findAny().orElse(null);
@@ -722,7 +732,7 @@ public class AChessAgent extends KBAgent {
 							folKb.tell(protectorPredicate);
 							folKb.tell(pawnAttack);
 							chessDomain.addConstant(position);
-							kb.tellCaptureRules(t, position, name);
+//							kb.tellCaptureRules(t, position, name);
 						}
 				 	}
 				}
@@ -885,6 +895,7 @@ public class AChessAgent extends KBAgent {
 					availablePositions = attackPositions;
 				if (availablePositions != null && !availablePositions.isEmpty()) {
 					for (Position pos:availablePositions ){
+						// if(!piece.checkRemoved(pos)) 
 						if(!piece.checkRemoved(pos)) {
 							String position = pos.getPositionName();
 							Constant protectorVariable = new Constant(name);

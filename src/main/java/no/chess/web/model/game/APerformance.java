@@ -26,7 +26,11 @@ import no.games.chess.fol.FOLGamesFCAsk;
  * What makes a position valuable? So the it becomes important to control?
  * What material gain do I achieve by controlling this position?
  * What strategic advantage do I have from controlling this position?
- * I have a control over a position if I have more pieces reaching it that my opponent.
+ * I have a control over a position if I have more pieces reaching it than my opponent.
+ * So:
+ * I have a map of positions occupied by my opponent
+ * From the strategy rule base I know which positions these pieces can reach (OPPONENTTO)
+ * From the strategy rule base I know which of my pieces can reach these positions one ply down 
  * @author oluf
  *
  */
@@ -42,7 +46,7 @@ public class APerformance {
 	private FOLDomain chessDomain;
 	private FOLGamesFCAsk forwardChain;
 	private FOLGamesBCAsk backwardChain;
-	private List<String>positionKeys = null;
+	private List<String>positionKeys = null;// The key for positions that are reachable
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\performance.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
@@ -152,7 +156,7 @@ public class APerformance {
 	public void findReachable() {
 //		List<Position> occupied = (List<Position>) occupiedPositions.values();
 		String foundKey = null;
-		for (String key:positionKeys) {
+		for (String key:positionKeys) { //Reachable positions: piecename_frompostopos
 			int l = key.length();
 			int index = l-2;
 			String toPosname = key.substring(index);
@@ -161,12 +165,16 @@ public class APerformance {
 				if (occupiedPositions.containsValue(toPos)) {
 					writer.println("An occupied position: "+toPos.toString());
 					for (Map.Entry<String,Position> entry:occupiedPositions.entrySet()) {
-						writer.println("Key of entry set: "+entry.getKey()+ " value of entry set: "+entry.getValue().toString());
+//						writer.println("Key of entry set: "+entry.getKey()+ " value of entry set: "+entry.getValue().toString());
 						Position entryPos = entry.getValue();
 						if (entryPos == toPos) {
 							foundKey = entry.getKey();
+							writer.println("A found key "+foundKey); // The key is the name of the piece
 							break;
 						}
+					}
+					if (foundKey != null) {
+						writer.println("Must find which piece can reach this position "+foundKey);
 					}
 				}
 			}
@@ -177,6 +185,7 @@ public class APerformance {
 				
 			}
 		}
+	    writer.flush();
 	}
 	
 }

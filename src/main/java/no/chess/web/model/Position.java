@@ -63,7 +63,7 @@ public class Position extends ParentModel {
 	private WhiteBoardPosition whiteBoardPosition = null;
 	private HashSet<Piece> pieces;
 	private XYLocation xyloc = null; // Represents the XYLocation of a aima board
-	private Integer sumDif = null; // A distance indicator in a set of removed positions (See the PreferredMove processor)
+	private Integer sumDif = new Integer(0); // A distance indicator in a set of removed positions (See the PreferredMove processor)
 /*
  * These booleans indicates which direction this position belongs to
  * It is used when calculating removed positions for bishops olj 14.06.21	
@@ -72,7 +72,7 @@ public class Position extends ParentModel {
 	private boolean ne = false;
 	private boolean sw = false;
 	private boolean se = false;
-	private static enum direction{
+	public static enum direction{
 		NW,
 		NE,
 		SW,
@@ -80,9 +80,14 @@ public class Position extends ParentModel {
 		NONE;
 	}
 	private direction mydirection;
+	private direction lastDirection;
+	private direction neDirection = direction.NE;
+	private direction nWDirection = direction.NW;
+	private direction seDirection = direction.SE;
+	private direction swDirection = direction.SW;
 	
 	private boolean opponentRemove = false; // True if this position is blocked by opponent
-	
+
 	public Position(String positionName, boolean inUse, ChessPiece usedBy) {
 		super();
 		this.positionName = positionName;
@@ -136,6 +141,36 @@ public class Position extends ParentModel {
 	}
 	
 	
+	public direction getNeDirection() {
+		return neDirection;
+	}
+	public void setNeDirection(direction neDirection) {
+		this.neDirection = neDirection;
+	}
+	public direction getnWDirection() {
+		return nWDirection;
+	}
+	public void setnWDirection(direction nWDirection) {
+		this.nWDirection = nWDirection;
+	}
+	public direction getSeDirection() {
+		return seDirection;
+	}
+	public void setSeDirection(direction seDirection) {
+		this.seDirection = seDirection;
+	}
+	public direction getSwDirection() {
+		return swDirection;
+	}
+	public void setSwDirection(direction swDirection) {
+		this.swDirection = swDirection;
+	}
+	public direction getLastDirection() {
+		return lastDirection;
+	}
+	public void setLastDirection(direction lastDirection) {
+		this.lastDirection = lastDirection;
+	}
 	public direction getMydirection() {
 		return mydirection;
 	}
@@ -579,7 +614,7 @@ public class Position extends ParentModel {
 			gp = usedBy.getMyPiece().getName();
 		}
 		
-		builder.append(positionName+ " Color "+positionColor+" Direction "+mydirection+" Piece  "+p+" "+inUse+" gamepiece "+gp+"\n");
+		builder.append(positionName+ " Color "+positionColor+" Direction "+mydirection+" sumdif "+ sumDif+" Piece  "+p+" "+inUse+" gamepiece "+gp+"\n");
 		return builder.toString();
 	}
 }

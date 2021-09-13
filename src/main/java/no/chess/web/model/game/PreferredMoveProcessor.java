@@ -113,6 +113,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		AQueen qt = null;
 		AKnight kn = null;
 		Aking king = null;
+		tempList = new ArrayList<>();
 		ChessPieceType pieceType = p.getChessType();
 		if (pieceType instanceof APawn) {
 			pn = (APawn) pieceType;
@@ -121,6 +122,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			b = (ABishop) pieceType;
 			setDirection(p, availablePositions);
 			setDirection(p, removedPositions);
+			b.checkRemovals(availablePositions, removedPositions);
 		}
 		if (pieceType instanceof ARook) {
 			r = (ARook) pieceType;
@@ -142,7 +144,6 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			queenbishopPositions = new ArrayList(bishopPositions.values());		// The queen bishop movements
 			setDirection(p, queenbishopPositions);
 			setDirection(p,bishopRemoved);
-			tempList = new ArrayList<>();
 			int pcol = from.getIntColumn();
 			int prow = from.getIntRow();
 			for (Position removedPos:bishopRemoved) {

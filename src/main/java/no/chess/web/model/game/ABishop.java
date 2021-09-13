@@ -1,8 +1,12 @@
 package no.chess.web.model.game;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import aima.core.util.datastructure.XYLocation;
 import no.chess.web.model.ChessPiece;
@@ -22,6 +26,7 @@ import no.games.chess.AbstractGamePiece.pieceColor;
  */
 public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceType {
 
+
 	private pieceType localType = pieceType.BISHOP;
 	private pieceColor localColor;
 	private int[][] reachablesqueres;
@@ -32,7 +37,14 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 	private String color;
 	private ChessPiece myPiece;
 	private Position myPosition;
-	
+	private enum direction{
+		NW,
+		NE,
+		SW,
+		SE,
+		NONE;
+	}
+	private direction thisDirection;
 	public ABishop() {
 		super();
 		reachablesqueres = new int[size][size];
@@ -88,6 +100,14 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 			}
 		}
 		getLegalmoves(myPosition);
+	}
+
+	public direction getThisDirection() {
+		return thisDirection;
+	}
+
+	public void setThisDirection(direction thisDirection) {
+		this.thisDirection = thisDirection;
 	}
 
 	public String getColor() {
@@ -186,59 +206,7 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 			reachablepiecePosition[x][y] = "P";
 			createPosition(newPositions, xloc);
 		}		
-/*		int x = loc.getXCoOrdinate();
-		int y = loc.getYCoOrdinate();
-		int j = x + 1;
-		if (j<7) {
-			for (int i = y+1;i<7;i++) {
-				reachablesqueres[j][i] = 1;
-				reachablepiecePosition[j][i] = "B";
-				createPosition(newPositions, j,i);
-				if (j<7)
-					j++;
-				else
-					break;
-			} 
-		}
-		j = x -1;
-		if (j>0) {
-			for (int i = y+1;i<7;i++) {
-				reachablesqueres[j][i] = 1;
-				reachablepiecePosition[j][i] = "B";
-				createPosition(newPositions, j,i);
-				if (j>0)
-					j--;
-				else
-					break;
-			} 
-		}
-		j = x + 1;
-		if (j <7 && y>0) {
-			for (int i = y-1;i>0;i--) {
-				reachablesqueres[j][i] = 1;
-				reachablepiecePosition[j][i] = "B";
-				createPosition(newPositions, j,i);
-				if (j<7)
-					j++;
-				else
-					break;
-			}
-		}	
-		j = x -1;
-		if (j > 0 && y>0) {
-			for (int i = y-1;i>0;i--) {
-				reachablesqueres[j][i] = 1;
-				reachablepiecePosition[j][i] = "B";
-				createPosition(newPositions, j,i);
-				if (j>0)
-					j--;
-				else
-					break;
-			}
-		}
 
-
-		*/
 	}
 	/**
 	 * createPosition
@@ -255,7 +223,143 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 	public HashMap<String,Position> getNewPositions() {
 		return newPositions;
 	}
-
+	/**
+	 * checkRemovals
+	 * This method returns a list of removed positions based on all available and
+	 * calculated removed positions
+	 * @param availablePositions
+	 * @param removedPositions
+	 * @return
+	 */
+	public List<Position> checkRemovals(List<Position>availablePositions,List<Position>removedPositions){
+		List<Position>tempList = new ArrayList<Position>();
+		List<Position>tempAvail = new ArrayList<Position>();
+		List<Integer>remlocs = new ArrayList();
+		Map<Enum,List<Position>> remDirections = new HashMap();
+		Map<Enum,List<Position>> availDirection = new HashMap();
+		Map<Enum,Integer>remlocMaps = new HashMap();
+		XYLocation heldLoc = myPosition.getXyloc();
+		int x = heldLoc.getXCoOrdinate();
+		int y = heldLoc.getYCoOrdinate();
+		int dx = 0;
+		int dy = 0;
+		for (Position removed:removedPositions) {
+			XYLocation remloc = removed.getXyloc();
+			int tx = dx;int ty = dy;
+			int rx = remloc.getXCoOrdinate();
+			int ry = remloc.getYCoOrdinate();
+			int diffx = Math.abs(x-rx);
+			int diffy = Math.abs(y-ry);
+			Integer sumDif = new Integer(diffx+diffy);
+			removed.setSumDif(sumDif);
+			remlocs.add(sumDif);
+			remlocMaps.put(removed.getMydirection(), sumDif);
+			removed.setLastDirection(removed.getNeDirection());
+		}
+		for (Position avail:availablePositions) {
+			XYLocation remloc = avail.getXyloc();
+			int tx = dx;int ty = dy;
+			int rx = remloc.getXCoOrdinate();
+			int ry = remloc.getYCoOrdinate();
+			int diffx = Math.abs(x-rx);
+			int diffy = Math.abs(y-ry);
+			Integer sumDif = new Integer(diffx+diffy);
+			avail.setSumDif(sumDif);
+			remlocs.add(sumDif);
+			remlocMaps.put(avail.getMydirection(), sumDif);
+//			avail.setLastDirection(avail.getNeDirection());
+		}		
+		List<Position>northesRemoved = removedPositions.stream().filter(p -> p.getMydirection() == p.getLastDirection()).collect(Collectors.toList());
+		tempList.addAll(addPositions(availablePositions,northesRemoved));
+		for (Position removed:removedPositions) {
+			removed.setLastDirection(removed.getnWDirection());
+		}
+		List<Position>northweRemoved = removedPositions.stream().filter(p -> p.getMydirection() == p.getLastDirection()).collect(Collectors.toList());
+		tempList.addAll(addPositions(availablePositions,northweRemoved));
+		for (Position removed:removedPositions) {
+			removed.setLastDirection(removed.getSeDirection());
+		}
+		List<Position>southseRemoved = removedPositions.stream().filter(p -> p.getMydirection() == p.getLastDirection()).collect(Collectors.toList());
+		tempList.addAll(addPositions(availablePositions,southseRemoved));
+		for (Position removed:removedPositions) {
+			removed.setLastDirection(removed.getSwDirection());
+		}
+		List<Position>southswRemoved = removedPositions.stream().filter(p -> p.getMydirection() == p.getLastDirection()).collect(Collectors.toList());
+		tempList.addAll(addPositions(availablePositions,southswRemoved));
+/*		List<Position>tempRemoved = new ArrayList();
+		List<Position>tempAvail2 = new ArrayList();
+		Optional<Position> minposne = Optional.empty();
+		if (northesRemoved != null && !northesRemoved.isEmpty()) {
+			tempRemoved.addAll(northesRemoved);
+			minposne = tempRemoved.stream().reduce((p1,p2) -> p1.getSumDif() < p2.getSumDif() ? p1 : p2);
+		}
+		tempRemoved.clear();
+		Optional<Position> minposnw = Optional.empty();
+		if (northweRemoved != null && !northweRemoved.isEmpty()) {
+			tempRemoved.addAll(northweRemoved);
+			minposnw = tempRemoved.stream().reduce((p1,p2) -> p1.getSumDif() < p2.getSumDif() ? p1 : p2);
+		}
+		tempRemoved.clear();		
+		//Finds the position with minimum overall sumDif
+//		Optional<Position> minpos = removedPositions.stream().reduce((p1,p2) -> p1.getSumDif() < p2.getSumDif() ? p1 : p2);
+		if (minposne.isPresent()) {
+			Position minx = minposne.get();
+			if (localColor == pieceColor.WHITE) {
+				System.out.println("CheckRemovals The min position: "+minx.toString());
+			}
+			tempList = northesRemoved.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
+			tempAvail = availablePositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
+			if (tempAvail != null && !tempAvail.isEmpty()) {
+				tempAvail2 = tempAvail.stream().filter(p -> minx.getSumDif() < p.getSumDif()).collect(Collectors.toList());
+			}
+			tempList.addAll(tempAvail2);
+			// must do the same with available positions !!!!
+		}
+		if (minposnw.isPresent()) {
+			Position minx = minposnw.get();
+			if (localColor == pieceColor.WHITE) {
+				System.out.println("CheckRemovals The min position: "+minx.toString());
+			}
+			tempList = northweRemoved.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
+			tempAvail = availablePositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
+			if (tempAvail != null && !tempAvail.isEmpty()) {
+				tempAvail2 = tempAvail.stream().filter(p -> minx.getSumDif() < p.getSumDif()).collect(Collectors.toList());
+			}
+			tempList.addAll(tempAvail2);
+			// must do the same with available positions !!!!
+		}	*/	
+		return tempList;
+	}
+	/**
+	 * addPositions
+	 * This is a support method for the checkRemovals method
+	 * @param availablePositions
+	 * @param removedPositions
+	 * @return
+	 */
+	public List<Position>addPositions(List<Position>availablePositions,List<Position>removedPositions){
+		Optional<Position> minpos = Optional.empty();
+		List<Position>tempAvail2 = new ArrayList();
+		List<Position>tempAvail = new ArrayList<Position>();
+		List<Position>tempList = new ArrayList<Position>();
+		if (removedPositions != null && !removedPositions.isEmpty()) {
+			minpos = removedPositions.stream().reduce((p1,p2) -> p1.getSumDif() < p2.getSumDif() ? p1 : p2);
+		}
+		if (minpos.isPresent()) {
+			Position minx = minpos.get();
+			if (localColor == pieceColor.WHITE) {
+				System.out.println("CheckRemovals The min position: "+minx.toString());
+			}
+			tempList = removedPositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
+			tempAvail = availablePositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
+			if (tempAvail != null && !tempAvail.isEmpty()) {
+				tempAvail2 = tempAvail.stream().filter(p -> minx.getSumDif() < p.getSumDif()).collect(Collectors.toList());
+			}
+			tempList.addAll(tempAvail2);
+			// must do the same with available positions !!!!
+		}
+		return tempList;
+	}
 	@Override
 	public HashMap getLegalmoves() {
 		return newPositions;
