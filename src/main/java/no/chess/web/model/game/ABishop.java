@@ -226,7 +226,7 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 	/**
 	 * checkRemovals
 	 * This method returns a list of removed positions based on all available and
-	 * calculated removed positions
+	 * calculated removed positions. It is used for the diagonal directions
 	 * @param availablePositions
 	 * @param removedPositions
 	 * @return
@@ -286,48 +286,6 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 		}
 		List<Position>southswRemoved = removedPositions.stream().filter(p -> p.getMydirection() == p.getLastDirection()).collect(Collectors.toList());
 		tempList.addAll(addPositions(availablePositions,southswRemoved));
-/*		List<Position>tempRemoved = new ArrayList();
-		List<Position>tempAvail2 = new ArrayList();
-		Optional<Position> minposne = Optional.empty();
-		if (northesRemoved != null && !northesRemoved.isEmpty()) {
-			tempRemoved.addAll(northesRemoved);
-			minposne = tempRemoved.stream().reduce((p1,p2) -> p1.getSumDif() < p2.getSumDif() ? p1 : p2);
-		}
-		tempRemoved.clear();
-		Optional<Position> minposnw = Optional.empty();
-		if (northweRemoved != null && !northweRemoved.isEmpty()) {
-			tempRemoved.addAll(northweRemoved);
-			minposnw = tempRemoved.stream().reduce((p1,p2) -> p1.getSumDif() < p2.getSumDif() ? p1 : p2);
-		}
-		tempRemoved.clear();		
-		//Finds the position with minimum overall sumDif
-//		Optional<Position> minpos = removedPositions.stream().reduce((p1,p2) -> p1.getSumDif() < p2.getSumDif() ? p1 : p2);
-		if (minposne.isPresent()) {
-			Position minx = minposne.get();
-			if (localColor == pieceColor.WHITE) {
-				System.out.println("CheckRemovals The min position: "+minx.toString());
-			}
-			tempList = northesRemoved.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
-			tempAvail = availablePositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
-			if (tempAvail != null && !tempAvail.isEmpty()) {
-				tempAvail2 = tempAvail.stream().filter(p -> minx.getSumDif() < p.getSumDif()).collect(Collectors.toList());
-			}
-			tempList.addAll(tempAvail2);
-			// must do the same with available positions !!!!
-		}
-		if (minposnw.isPresent()) {
-			Position minx = minposnw.get();
-			if (localColor == pieceColor.WHITE) {
-				System.out.println("CheckRemovals The min position: "+minx.toString());
-			}
-			tempList = northweRemoved.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
-			tempAvail = availablePositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
-			if (tempAvail != null && !tempAvail.isEmpty()) {
-				tempAvail2 = tempAvail.stream().filter(p -> minx.getSumDif() < p.getSumDif()).collect(Collectors.toList());
-			}
-			tempList.addAll(tempAvail2);
-			// must do the same with available positions !!!!
-		}	*/	
 		return tempList;
 	}
 	/**

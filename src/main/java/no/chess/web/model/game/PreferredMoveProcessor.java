@@ -32,6 +32,8 @@ import no.games.chess.ChessProcessor;
  * bishop,rook, and queen when positions are occupied by friendly pieces.
  * @since 08.03.21 The queen has its own procedure for removed positions
  * @since 14.06.21 The method for removing positions from bishops has been reworked.
+ * @since 14.09.21 The method for removing positions from bishops has been moved to the ABishop type piece.
+ * @since 29.09.21 The Processor has been reworked. The process of finding the additional removals are moved to each specific piece type.
  * @author oluf
  *
  */
@@ -47,7 +49,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 	public PreferredMoveProcessor(Integer processNumber,String pname) {
 		super();
 		this.processNumber = processNumber;
-		this.processNumber = processNumber;
+//		this.processNumber = processNumber;
 		String pNumber = processNumber.toString();
 		outputFileName = outputFileName + "preferredmove"+pname + pNumber+".txt";
 		try {
@@ -78,6 +80,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		
 		String name =action.getChessPiece().getMyPiece().getOntlogyName();
 		String otherName = p.getMyPiece().getOntlogyName();
+		
 		if (name.equals(otherName) && name.contains("WhitePawn")){
 			writer.println(name);
 			HashMap<String,Position> attackPositions = p.getAttackPositions();
@@ -117,20 +120,37 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		ChessPieceType pieceType = p.getChessType();
 		if (pieceType instanceof APawn) {
 			pn = (APawn) pieceType;
+			tempList = pn.checkPawnremovals(availablePositions, removedPositions);
+			String rName = p.getMyPiece().getOntlogyName();
+			if (rName.equals("WhitePawn4")) {
+				writer.println("The white pawn");
+				writer.println("Piece "+p.toString());
+			}
 		}
 		if (pieceType instanceof ABishop) {
 			b = (ABishop) pieceType;
-			setDirection(p, availablePositions);
+			setDirection(p, availablePositions); // Sets directions for all directions east,west south north, se,sw,ne,nw
 			setDirection(p, removedPositions);
-			b.checkRemovals(availablePositions, removedPositions);
+			tempList = b.checkRemovals(availablePositions, removedPositions);
 		}
 		if (pieceType instanceof ARook) {
 			r = (ARook) pieceType;
+			setDirection(p, availablePositions);
+			setDirection(p, removedPositions);
+			setNSDirection(p, availablePositions);
+			setNSDirection(p, removedPositions);
+			List<Position>rooknorthsouthList = r.checkNorthSouthremovals(availablePositions, removedPositions);
+			tempList.addAll(rooknorthsouthList);
+			String rName = p.getMyPiece().getOntlogyName();
+			if (rName.equals("WhiteRook2")) {
+				writer.println("The white rook "+processNumber);
+				writer.println("Piece "+p.toString());
+			}
 		}
 		if (pieceType instanceof AQueen) {
 			qt = (AQueen) pieceType;
-			if (p.checkBlack()) {
-				writer.println("The black queen");
+			if (p.checkWhite()) {
+				writer.println("The white queen");
 			}
 		
 			setDirection(p, availablePositions);
@@ -144,22 +164,30 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			queenbishopPositions = new ArrayList(bishopPositions.values());		// The queen bishop movements
 			setDirection(p, queenbishopPositions);
 			setDirection(p,bishopRemoved);
+			setNSDirection(p, queenscastlePositions);
+			setNSDirection(p, removedPositions);
+//			setDirection(p,queenscastlePositions);
+			List<Position>queensTempList = qt.checkRemovals(queenbishopPositions, bishopRemoved);
+			List<Position>queensnorthsouthList = qt.checkNorthSouthremovals(queenscastlePositions, removedPositions);
+			tempList.addAll(queensTempList);
+			tempList.addAll(queensnorthsouthList);
 			int pcol = from.getIntColumn();
 			int prow = from.getIntRow();
-			for (Position removedPos:bishopRemoved) {
+// THis is to be removed:			
+/*			for (Position removedPos:bishopRemoved) {
 //			for (Position removedPos:bishopRemoved) { // OBS: The removed positions must be separated: bishop positions and rook positions
 				int row = removedPos.getIntRow();
 				int col = removedPos.getIntColumn();
 				String pName = removedPos.getPositionName();
-/*				if (pName.equals("c2") || pName.equals("e2")) {
+				if (pName.equals("c2") || pName.equals("e2")) {
 					System.out.println("Pos !!! "+pName);
-				}*/
+				}
 				checkBishopnwest(queenbishopPositions, tempList, removedPos, p);
 				checkBishopneast(queenbishopPositions, tempList, removedPos, p);
 				checkBishopseast(queenbishopPositions, tempList, removedPos, p);
 				checkBishopswest(queenbishopPositions, tempList, removedPos, p);
 				
-/*				for (Position availablePos:queenbishopPositions) {
+				for (Position availablePos:queenbishopPositions) {
 					int arow = availablePos.getIntRow();
 					int acol = availablePos.getIntColumn();
 					if (col < pcol && arow >= row && acol <= col) { // <= OBS !! OLJ 10.03.21
@@ -172,7 +200,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 					if (col > pcol && arow >= row && acol >= col) { // >= OBS !! OLJ 10.03.21
 						tempList.add(availablePos);
 					}
-				}*/
+				}
 			}
 			for (Position removedPos:removedPositions) {
 				int row = removedPos.getIntRow();
@@ -193,8 +221,9 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 						tempList.add(availablePos);
 					}
 				}
-			}
+			}*/
 		}
+		
 		if (pieceType instanceof AKnight) {
 			kn = (AKnight) pieceType;
 		}
@@ -205,7 +234,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
  * OLJ 09.09.20: This is only correct for rook
  * 
  */
-		if (b != null || r != null || qt != null || pn != null) {
+/*		if (b != null || r != null || qt != null || pn != null) {
 			String pName = p.getMyPiece().getOntlogyName();
 			writer.println("Checking additional removals For "+pName);
 			if (tempList == null)
@@ -235,10 +264,10 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 						}
 					}
 
-/*
+
  * Check for bishop	OBS OBS Check again The queen option removed !!!!			
- */
-/*					if ((b != null ) && col < pcol && arow > row && acol < col) {
+ 
+					if ((b != null ) && col < pcol && arow > row && acol < col) {
 						tempList.add(availablePos);
 					}
 					if ((b != null ) && col < pcol && arow < row && acol < col) {
@@ -249,11 +278,11 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 					}
 					if ((b != null ) && col > pcol && arow > row && acol > col) { // OBS !!!
 						tempList.add(availablePos);
-					}*/
-/*					if (b != null && arow < row && acol >= col) {
+					}
+					if (b != null && arow < row && acol >= col) {
 						tempList.add(availablePos);
 					}
-*/
+
 				}
 				if (b != null) {
 					checkBishopnwest(availablePositions, tempList, removedPos, p);
@@ -289,10 +318,10 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 						}
 					}
 
-/*
+
  * Check for bishop	OBS OBS Check again The queen option removed !!!!			
- */
-/*					if ((b != null ) && col < pcol && arow > row && acol < col) {
+ 
+					if ((b != null ) && col < pcol && arow > row && acol < col) {
 						tempList.add(availablePos);
 					}
 					if ((b != null ) && col < pcol && arow < row && acol < col) {
@@ -303,11 +332,11 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 					}
 					if ((b != null ) && col > pcol && arow > row && acol > col) { // OBS !!!
 						tempList.add(availablePos);
-					}*/
-/*					if (b != null && arow < row && acol >= col) {
+					}
+					if (b != null && arow < row && acol >= col) {
 						tempList.add(availablePos);
 					}
-*/
+
 				}
 				if (b != null) {
 					writer.println("Checking opponent removals For "+pName+" "+removedPos.toString());
@@ -332,7 +361,20 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			}
 //			tempList = null;
 //			p.setRemovedPositions(removedPositions); Must always set the removed positions for all pieces. olj 24.02.21
-		}
+		}*/
+/*
+ * End of removals !!!		
+ */
+		for (Position temp:tempList) {
+			String posName = temp.getPositionName();
+//			logText.append(posName+"\n");
+			Position posinTable =  (Position) removedPositions.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null); // Do not put position in removed table if it is there already
+			if (posinTable == null) {
+				writer.println("Added removed position "+temp.toString()+" For "+name);
+				removedPositions.add(temp);
+			}
+
+		}		
 		p.setRemovedPositions(removedPositions);
 /*		if (kn != null) {
 			
@@ -542,11 +584,17 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		}
 		
 	}
+	public void setNorthSouth(AgamePiece piece, List<Position> positions) {
+		List<XYLocation> north = piece.getNorth();
+		List<XYLocation> south = piece.getSouth();
+		List<XYLocation> east = piece.getEast();
+		List<XYLocation> west = piece.getWest();
+	}
 	/**
 	 * setDirection
 	 * This method calculates the directions (nw,ne,sw,se)
 	 * for a set of positions and its piece
-	 * It is called when the piece is a bishop
+	 * It is called when the piece is a bishop and queen
 	 * @param piece
 	 * @param positions
 	 */
@@ -564,6 +612,51 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		calculateDirections(sw,2,positions);
 		List<XYLocation> se = piece.getSouthEast();
 		calculateDirections(se,3,positions);
+
+		
+	}
+	public void setNSDirection(AgamePiece piece, List<Position> positions) {
+		List<XYLocation> north = piece.getNorth();
+		calculateNorthSouth(north, 0, positions);
+		List<XYLocation> south = piece.getSouth();
+		calculateNorthSouth(south, 1, positions);	
+		List<XYLocation> east = piece.getEast();
+		calculateNorthSouth(east, 2, positions);
+		List<XYLocation> west = piece.getWest();
+		calculateNorthSouth(west, 3, positions);
+	}
+	private void calculateNorthSouth(List<XYLocation> nw, int dr,List<Position> positions) {
+		for (Position pos:positions) {
+			XYLocation loc = pos.getXyloc();
+			int x = loc.getXCoOrdinate();
+			int y = loc.getYCoOrdinate();
+			for (XYLocation nwloc:nw) {
+				int nwx = nwloc.getXCoOrdinate();
+				int nwy = nwloc.getYCoOrdinate();
+				switch(dr) {
+				case 0: //North
+					if (y == nwy) {
+						pos.setNorth(true);
+					}
+					break;
+				case 1: //South
+					if (y == nwy) {
+						pos.setSouth(true);
+					}
+					break;
+				case 2: //East
+					if (x == nwx) {
+						pos.setEast(true);
+					}
+					break;
+				case 3: //West
+					if (x == nwx) {
+						pos.setWest(true);
+					}
+					break;					
+				}
+			}
+		}
 	}
 	/**
 	 * calculateDirections
@@ -603,6 +696,10 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			pos.setNw(false);
 			pos.setSe(false);
 			pos.setSw(false);
+			pos.setNorth(false);
+			pos.setSouth(false);
+			pos.setWest(false);
+			pos.setEast(false);
 			pos.setDefaultdirection();
 		}
 	}

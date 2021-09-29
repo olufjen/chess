@@ -228,6 +228,10 @@ public void checkPreferredPosition(ChessAction action) {
 		this.heldPositions = heldPositions;
 	}
 
+	public AgamePiece getChosenPiece(String name) {
+		AgamePiece cPiece =  (AgamePiece) mygamePieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(name)).findAny().orElse(null);
+		return cPiece;
+	}
 	/**
 	 * checkCastling
 	 * This method checks if a castling has taken place

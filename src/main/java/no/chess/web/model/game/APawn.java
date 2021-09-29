@@ -249,6 +249,18 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		newPositions.put(newPosxyp.getPositionName(), newPosxyp);
 	}
 	/**
+	 * checkPawnremovals
+	 * This method moves the removed list to the processor's removed list
+	 * @param availablePositions
+	 * @param removedPositions
+	 * @return
+	 */
+	public List<Position> checkPawnremovals(List<Position>availablePositions,List<Position>removedPositions){
+		List<Position> removedList = new ArrayList();
+		removedList.addAll(removedPositions);
+		return removedList;
+	}
+	/**
 	 * createattackPosition
 	 * This method creates a new chess position based on a XYLocation
 	 * @param newPositions

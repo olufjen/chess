@@ -64,19 +64,32 @@ public class Position extends ParentModel {
 	private HashSet<Piece> pieces;
 	private XYLocation xyloc = null; // Represents the XYLocation of a aima board
 	private Integer sumDif = new Integer(0); // A distance indicator in a set of removed positions (See the PreferredMove processor)
+	private int sumNorth = 0; //Is greater than 0 if position is north of current position
+	private int sumSouth = 0;//Is greater than 0 if position is south of current position
+	private int sumEast = 0; //Is greater than 0 if position is east of current position
+	private int sumWest = 0; //Is greater than 0 if position is west of current position
 /*
  * These booleans indicates which direction this position belongs to
- * It is used when calculating removed positions for bishops olj 14.06.21	
+ * It is used when calculating removed positions for bishops queens and rooks olj 14.06.21	
  */
 	private boolean nw = false;
 	private boolean ne = false;
 	private boolean sw = false;
 	private boolean se = false;
+	private boolean north = false;
+	private boolean south = false;
+	private boolean east = false;
+	private boolean west = false;
+	
 	public static enum direction{
 		NW,
 		NE,
 		SW,
 		SE,
+		NORTH,
+		SOUTH,
+		EAST,
+		WEST,
 		NONE;
 	}
 	private direction mydirection;
@@ -85,6 +98,10 @@ public class Position extends ParentModel {
 	private direction nWDirection = direction.NW;
 	private direction seDirection = direction.SE;
 	private direction swDirection = direction.SW;
+	private direction northDirection = direction.NORTH;
+	private direction southDirection = direction.SOUTH;
+	private direction westDirection = direction.WEST;
+	private direction eastDirection = direction.EAST;
 	
 	private boolean opponentRemove = false; // True if this position is blocked by opponent
 
@@ -141,6 +158,82 @@ public class Position extends ParentModel {
 	}
 	
 	
+	public int getSumNorth() {
+		return sumNorth;
+	}
+	public void setSumNorth(int sumNorth) {
+		this.sumNorth = sumNorth;
+	}
+	public int getSumSouth() {
+		return sumSouth;
+	}
+	public void setSumSouth(int sumSouth) {
+		this.sumSouth = sumSouth;
+	}
+	public int getSumEast() {
+		return sumEast;
+	}
+	public void setSumEast(int sumEast) {
+		this.sumEast = sumEast;
+	}
+	public int getSumWest() {
+		return sumWest;
+	}
+	public void setSumWest(int sumWest) {
+		this.sumWest = sumWest;
+	}
+	public boolean isNorth() {
+		return north;
+	}
+	public void setNorth(boolean north) {
+		this.north = north;
+		mydirection = direction.NORTH;
+	}
+	public boolean isSouth() {
+		return south;
+	}
+	public void setSouth(boolean south) {
+		this.south = south;
+		mydirection = direction.SOUTH;
+	}
+	public boolean isEast() {
+		return east;
+	}
+	public void setEast(boolean east) {
+		this.east = east;
+		mydirection = direction.EAST;
+	}
+	public boolean isWest() {
+		return west;
+	}
+	public void setWest(boolean west) {
+		this.west = west;
+		mydirection = direction.WEST;
+	}
+	public direction getNorthDirection() {
+		return northDirection;
+	}
+	public void setNorthDirection(direction northDirection) {
+		this.northDirection = northDirection;
+	}
+	public direction getSouthDirection() {
+		return southDirection;
+	}
+	public void setSouthDirection(direction southDirection) {
+		this.southDirection = southDirection;
+	}
+	public direction getWestDirection() {
+		return westDirection;
+	}
+	public void setWestDirection(direction westDirection) {
+		this.westDirection = westDirection;
+	}
+	public direction getEastDirection() {
+		return eastDirection;
+	}
+	public void setEastDirection(direction eastDirection) {
+		this.eastDirection = eastDirection;
+	}
 	public direction getNeDirection() {
 		return neDirection;
 	}
@@ -179,6 +272,10 @@ public class Position extends ParentModel {
 	}
 	public void setDefaultdirection() {
 		this.mydirection = direction.NONE;
+		sumNorth = 0;
+		sumSouth = 0;
+		sumEast = 0;
+		sumWest = 0;
 	}
 	public Integer getSumDif() {
 		return sumDif;

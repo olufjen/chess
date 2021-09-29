@@ -36,6 +36,10 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private List<XYLocation> northEast;
 	private List<XYLocation> southWest;
 	private List<XYLocation> southEast;
+	private List<XYLocation> south;
+	private List<XYLocation> north;
+	private List<XYLocation> east;
+	private List<XYLocation> west;
 	private Position heldPosition = null; // This position is used to hold former position if piece is removed from board       
 	private ChessPiece myPiece; // Represent the ontology chesspiece
 	private String color;
@@ -76,6 +80,10 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		northWest = new ArrayList<XYLocation>();
 		southEast = new ArrayList<XYLocation>();
 		southWest = new ArrayList<XYLocation>();
+		north = new ArrayList<XYLocation>();
+		south = new ArrayList<XYLocation>();
+		east = new ArrayList<XYLocation>();
+		west = new ArrayList<XYLocation>();
 //		determinePieceType(); Moved to setOntologyPositions: Then new available positions are replaced by ontology positions
 	}
 
@@ -84,6 +92,38 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		
 	}
 	
+	public List<XYLocation> getSouth() {
+		return south;
+	}
+
+	public void setSouth(List<XYLocation> south) {
+		this.south = south;
+	}
+
+	public List<XYLocation> getNorth() {
+		return north;
+	}
+
+	public void setNorth(List<XYLocation> north) {
+		this.north = north;
+	}
+
+	public List<XYLocation> getEast() {
+		return east;
+	}
+
+	public void setEast(List<XYLocation> east) {
+		this.east = east;
+	}
+
+	public List<XYLocation> getWest() {
+		return west;
+	}
+
+	public void setWest(List<XYLocation> west) {
+		this.west = west;
+	}
+
 	public List<XYLocation> getNorthWest() {
 		return northWest;
 	}
@@ -345,10 +385,13 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		if (myType == myType.BISHOP || myType == myType.QUEEN) {
 			calculateDirections();
 		}
+		if (myType == myType.ROOK || myType == myType.QUEEN) {
+			calculatenorthSouth();
+		}
 	}
 	/**
 	 * calculateDirections
-	 * This method calculates the bishop directions given the current position of the bishop
+	 * This method calculates the bishop (and queen) directions given the current position of the bishop
 	 * The XYLocations are stored in four different lists NW,NE,SW,SE
 	 * 
 	 */
@@ -393,6 +436,52 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 			se = col < 7 && row > 0;
 		}
 		
+	}
+	/**
+	 * calculatenorthSouth()
+	 * This method calculates the rook (and queen) directions given the current position of the rook
+	 * The XYLocations are stored in four different lists NORTH,SOUTH,EAST,WEST 
+	 */
+	public void calculatenorthSouth() {
+		XYLocation myLocation = myPosition.getXyloc();
+		north.clear();
+		east.clear();
+		west.clear();
+		south.clear();
+		int ocol = myLocation.getXCoOrdinate();
+		int orow = myLocation.getYCoOrdinate();
+		int col = ocol; int row = orow;
+		boolean wwest = col > 0;
+		while (wwest) {
+			col--;
+			XYLocation wxwest = new XYLocation(col,row);
+			west.add(wxwest);
+			wwest = col > 0;
+		}
+		col = ocol;row = orow;
+		boolean eest = col < 7;
+		while (eest) {
+			col++;
+			XYLocation wxwest = new XYLocation(col,row);
+			east.add(wxwest);
+			eest = col < 7;
+		}
+		col = ocol;row = orow;
+		boolean nnorth = row < 7;
+		while (nnorth) {
+			row++;
+			XYLocation nxnorth = new XYLocation(col,row);
+			north.add(nxnorth);
+			nnorth = row < 7;
+		}
+		col = ocol;row = orow;
+		boolean ssouth = row > 0;
+		while (ssouth) {
+			row--;
+			XYLocation sxsouth = new XYLocation(col,row);
+			south.add(sxsouth);
+			ssouth = row > 0;
+		}		
 	}
 	/**
 	 * determinePieceType
@@ -487,6 +576,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				}				
 //				reacablePositions = chessType.getNewPositions();
 				newlistPositions = new ArrayList(reacablePositions.values());
+				calculatenorthSouth();
 /*				for (Position pos:newlistPositions) {
 					System.out.println(pieceColorR+" Rook positions: "+pos.getPositionName() + " " + pos.getPositionColor());
 				}*/
@@ -506,6 +596,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				newlistPositions = new ArrayList(reacablePositions.values());
 				newlistPositions.addAll(bishopPositions.values());
 				calculateDirections();
+				calculatenorthSouth();
 /*				for (Position pos:newlistPositions) {
 					System.out.println(pieceColorQ+" Queens positions: "+pos.getPositionName() + " " + pos.getPositionColor());
 				}*/				
@@ -718,9 +809,37 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				}
 
 		}	
+		result.append("\nSouth positions\n");
+		if (south != null && !south.isEmpty()) {
+			for (XYLocation pos:south) {
+				result.append(" X, Y "+pos.toString());
+				}
+
+		}
+		result.append("\nNorth positions\n");
+		if (north != null && !north.isEmpty()) {
+			for (XYLocation pos:north) {
+				result.append(" X, Y "+pos.toString());
+				}
+
+		}
+		result.append("\nWest positions\n");
+		if (west != null && !west.isEmpty()) {
+			for (XYLocation pos:west) {
+				result.append(" X, Y "+pos.toString());
+				}
+
+		}
+		result.append("\nEast positions\n");
+		if (east != null && !east.isEmpty()) {
+			for (XYLocation pos:east) {
+				result.append(" X, Y "+pos.toString());
+				}
+
+		}
 		if(castlePositions != null && !castlePositions.isEmpty() && (myType == myType.KING || myType == myType.ROOK) && nofMoves == 0) {
 			List<Position> castle = new ArrayList(castlePositions.values());
-			result.append("castle positions\n");
+			result.append("\ncastle positions\n");
 			for (Position pos:castle) {
 				result.append("Position: "+pos.getPositionName() + " " + pos.getPositionColor() + " X, Y "+pos.getXyloc().toString());
 				if (pos.isInUse()) {

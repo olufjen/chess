@@ -507,6 +507,9 @@ public class PlayGame {
 	private void checkCastling(APlayer player) {
 		ChessActionImpl localAction = (ChessActionImpl) chessAgent.getCastleAction();
 		if (localAction != null) {
+			AgamePiece king = player.getChosenPiece("WhiteKing");
+			if (king != null)
+				writer.println("King castling: "+king.toString());
 			AgamePiece castle = localAction.getChessPiece();
 			Position castlePos = localAction.getPreferredPosition();
    	    	if (castle != null) {

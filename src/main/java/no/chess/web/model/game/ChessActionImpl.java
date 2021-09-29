@@ -407,17 +407,19 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 								if (posinTable == null && !checkQueen(pos))
 									positionRemoved.add(position);
 							}
+							if (castlePosition != null) // OBS castle positions are removedeveral times !!!
+								checkCastling(pos, castlePositions);
 						}else {
 							 System.out.println("??????? piece has position that is not in use ?????????????? "+otherPiece.toString()+"\n Posisjon: "+pos.toString()+"\n"+this.toString());
 						}
-						if (castlePosition != null)
-							checkCastling(pos, castlePositions);
+
 					}
 				}
 			}
 
 		
 		}
+;
 		checkOpponent();
 		return availablePositions;
 		
@@ -482,7 +484,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	}
 	/**
 	 * checkCastling
-	 * This method moves the castling positions in the removed list if necessary
+	 * This method moves the castling positions to the removed list if necessary
 	 * @param otherPos
 	 * @param castlePositions
 	 */
@@ -492,7 +494,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			if (otherPos.getPositionName().equals(castlePos.getPositionName())) {
 				String name = otherPos.getPositionName();
 				Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
-				if (posinTable != null) {
+				if (posinTable == null) {
 					positionRemoved.add(castlePos);
 	//				System.out.println("Castle position: "+castlePos.toString());
 				}
