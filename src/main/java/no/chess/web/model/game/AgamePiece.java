@@ -587,7 +587,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				String pieceColorQ = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
 				AQueen queen = (AQueen) chessType;
-				reacablePositions = gamePiece.getNewPositions();
+				reacablePositions = gamePiece.getNewPositions(); // Creates two sets of reachable positions: reacablePositions,bishopPositions
 				bishopPositions = queen.getBishopPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				createPosition(bishopPositions);
@@ -928,7 +928,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 //		reacablePositions =  chessType.getNewPositions();
 		newlistPositions = null;
 		newlistPositions = new ArrayList(reacablePositions.values());
-		
+		if (bishopPositions != null)
+			newlistPositions.addAll(bishopPositions.values()); // In case of queen olj 05.10.21
 	}
 
 	public boolean checkPositions() {

@@ -18,6 +18,7 @@ import aima.core.logic.fol.parsing.ast.Term;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
 import no.games.chess.ChessAction;
+import no.games.chess.ChessPieceType;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
 
@@ -49,9 +50,13 @@ public class OpponentAgent {
 	private FOLGamesBCAsk backwardChain;
 	private ChessFolKnowledgeBase localKb; // The local strategy knowledge base
 	private APerformance performanceMeasure;
-	private Map<String,Position>possiblePositions = null; // Contains the positions of possible positions
+	private Map<String,Position>possiblePositions = null; // Contains the set of possible positions
+	// The key for this map is of the form: WhiteBishop2_c4d5
 	private HashMap<String,Position> positions; // The original HashMap of positions
-	private List<String>positionKeys = null;
+	private List<String>positionKeys = null; // contains position keys of the form: WhiteBishop2_c4d5:
+/*
+ * From position c4 the white bishop can reach d5	
+ */
 	private List<String>myPieceNames = null;
 	
 	private String ACTION;
@@ -281,6 +286,14 @@ public class OpponentAgent {
 		result = backWardresult.isTrue();
 		return result;
 	}
+	/**
+	 * checkReachable
+	 * This method checks if a certain piece can reach a certain position
+	 * @param pieceName
+	 * @param posName
+	 * @param key
+	 * @return
+	 */
 	private boolean checkReachable(String pieceName,String posName,String key) {
 		boolean result = false;
 		String lastPos = null;
@@ -304,7 +317,7 @@ public class OpponentAgent {
 	public void chooseStrategy(List<ChessActionImpl>actions) {
 		writer.println("Choose strategy");
 		performanceMeasure.setPositions(positions);
-		performanceMeasure.setPositionKeys(positionKeys);
+		performanceMeasure.setPositionKeys(positionKeys); // contains position keys of the form: WhiteBishop2_c4d5:
 		performanceMeasure.occupiedPositions();
 		performanceMeasure.findReachable();
 		for (ChessAction action:actions) {
@@ -349,7 +362,11 @@ public class OpponentAgent {
 	/**
 	 * probepossibilities
 	 * This method probes possible reachable positions given a
-	 * possible occupied position from the available actions
+	 * possible occupied position from the available actions for the player of the game.
+	 * Facts of the form
+	 * occupies(WhiteBishop2,c4)
+	 * REACHABLE(WhiteBishop2_c4,d5)
+	 * are created. - From position c4, the bishop can reach d5
 	 * @param actions - The actions available to player
 	 * @param player - The player of the game
 	 */
@@ -360,6 +377,7 @@ public class OpponentAgent {
 		for (ChessAction action:actions) {
 			ChessActionImpl localAction = (ChessActionImpl) action;
 			AgamePiece piece = localAction.getChessPiece();
+			ChessPieceType pieceType = piece.getChessType();
 			heldPosition = piece.getMyPosition();
 			if (heldPosition == null) {
 				heldPosition = piece.getHeldPosition();
@@ -377,11 +395,15 @@ public class OpponentAgent {
 				String posName = pos.getPositionName();
 				Position rpos =  (Position) actionRemoved.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
 				if (rpos == null) {
+	
 //					piece.setMyPosition(pos);// This causes the moved piece to appear in two places !!!
 					piece.settempMyposition(pos);
 					piece.produceLegalmoves(pos); // Produces new reachable positions
-					piece.giveNewdirections(); // In case of bishop
+					piece.giveNewdirections(); // In case of bishop or queen or rook
 					HashMap<String,Position> reachablePositions = piece.getReacablePositions();
+					if (pieceType instanceof AQueen && piece.checkWhite() ) {
+						writer.println("Checking reachable for white queen\n"+piece.toString());
+					}
 					ChessActionImpl tempaction = new ChessActionImpl(reachablePositions,piece,player,myPlayer); // Creates new removed positions
 //					player.calculatePreferredPosition(piece, tempaction); // MUst use a new action
 
@@ -391,6 +413,14 @@ public class OpponentAgent {
 					localKb.createfacts(occupies, posname, piecename);
 					piecename = piecename+"_"+posname; //OBS: Separate piece and position !!!
 					tellnewFacts(piece,piecename);
+					if (pieceType instanceof APawn) {
+						HashMap<String,Position> attackPositions = piece.getAttackPositions();
+						List<Position> attackedPositions = new ArrayList(attackPositions.values());
+						for (Position attackpos:attackedPositions) {
+							String aposName = attackpos.getPositionName();
+							localKb.createfacts(PAWNATTACK, aposName, piecename);
+						}
+					}
 				}
 			}
 //			piece.setMyPosition(heldPosition);
@@ -404,7 +434,7 @@ public class OpponentAgent {
 	}
 	/**
 	 * tellnewFacts
-	 * This method creates new REACHABLE facts to the temporary knowledge base
+	 * This method creates new REACHABLE facts to the strategy knowledge base
 	 * It is called from the probepossiblities method
 	 * @param piece
 	 * @param name
@@ -412,10 +442,10 @@ public class OpponentAgent {
 	public void tellnewFacts(AgamePiece piece,String name) {
 		List<Position> availablePositions = piece.getNewlistPositions();
 		String piecename = piece.getMyPiece().getOntlogyName();
-		if (piecename.equals("WhiteRook2")) {
+/*		if (piecename.equals("WhiteRook2")) {
 			writer.println("TellnewFacts from position "+name);
 			writer.println(piece.toString());
-		}
+		}*/
 		for (Position pos:availablePositions) {
 			if (!piece.checkRemoved(pos)) {
 //				String piecename = piece.getMyPiece().getOntlogyName();

@@ -132,6 +132,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			setDirection(p, availablePositions); // Sets directions for all directions east,west south north, se,sw,ne,nw
 			setDirection(p, removedPositions);
 			tempList = b.checkRemovals(availablePositions, removedPositions);
+			checkOpponentRemoved(opponentRemoved,from, tempList,availablePositions);
 		}
 		if (pieceType instanceof ARook) {
 			r = (ARook) pieceType;
@@ -142,6 +143,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			List<Position>rooknorthsouthList = r.checkNorthSouthremovals(availablePositions, removedPositions);
 			tempList.addAll(rooknorthsouthList);
 			String rName = p.getMyPiece().getOntlogyName();
+			checkOpponentRemoved(opponentRemoved,from, tempList,availablePositions);
 			if (rName.equals("WhiteRook2")) {
 				writer.println("The white rook "+processNumber);
 				writer.println("Piece "+p.toString());
@@ -158,6 +160,9 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 //			writer.println("the piece is a queen ");
 			bishopRemoved = action.getBishopRemoved();
 			bishopPositions = p.getBishopPositions();
+			if (bishopPositions.isEmpty()) {
+				writer.println("The bishop positions are empty !!!!");
+			}
 			reacablePositions = p.getReacablePositions();
 			List<Position> queenAvailablepositions = p.getNewlistPositions();
 			queenscastlePositions = new ArrayList(reacablePositions.values()); // The queen castle movements
@@ -168,9 +173,16 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			setNSDirection(p, removedPositions);
 //			setDirection(p,queenscastlePositions);
 			List<Position>queensTempList = qt.checkRemovals(queenbishopPositions, bishopRemoved);
+			if (queensTempList.isEmpty()) {
+				writer.println("The queens temp list is empty !!!!");
+			}
+			if (from.getPositionName().equals("b3")) {
+				writer.println("The queens from position "+from.toString());
+			}
 			List<Position>queensnorthsouthList = qt.checkNorthSouthremovals(queenscastlePositions, removedPositions);
 			tempList.addAll(queensTempList);
 			tempList.addAll(queensnorthsouthList);
+			checkOpponentRemoved(opponentRemoved,from, tempList,availablePositions);
 			int pcol = from.getIntColumn();
 			int prow = from.getIntRow();
 // THis is to be removed:			
@@ -544,17 +556,57 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 	 * checkOpponentRemoved
 	 * This method finds which opponent removed position is closest to the held position
 	 * Then all other positions in the same direction are put in the tempList of positions (and thus in the removed list
-	 * @param removedPositions
-	 * @param heldPosition
+	 * @since 07.10.21 added check of sumdif
+	 * @param removedPositions contains all positions that contains an opponent piece
+	 * @param heldPosition The from position of the piece
 	 * @param tempList
 	 */
 	public void checkOpponentRemoved(List<Position> removedPositions,Position heldPosition,List<Position> tempList,List<Position> availablePos) {
-		List<Integer>remlocs = new ArrayList();
+//		List<Integer>remlocs = new ArrayList();
+//		List<Position> directionNorthRemoved = new ArrayList();
+		
+
+
+//		Position pos = removedPositions.get(0);
+		Position pos = availablePos.get(0);
+		// For all such directions:
+		List<Position>directionNorthRemoved = removedPositions.stream().filter(p -> pos.getNorthDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionSouthRemoved = removedPositions.stream().filter(p -> pos.getSouthDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionNERemoved = removedPositions.stream().filter(p -> pos.getNeDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionSERemoved = removedPositions.stream().filter(p -> pos.getSeDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionNWRemoved = removedPositions.stream().filter(p -> pos.getnWDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionSWRemoved = removedPositions.stream().filter(p -> pos.getSwDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionNorthavailable = availablePos.stream().filter(p -> pos.getNorthDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionSouthavailable = availablePos.stream().filter(p -> pos.getSouthDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionNEavailable = availablePos.stream().filter(p -> pos.getNeDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionSEavailable = availablePos.stream().filter(p -> pos.getSeDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionNWavailable = availablePos.stream().filter(p -> pos.getnWDirection() == p.getMydirection()).collect(Collectors.toList());
+		List<Position>directionSWavailable = availablePos.stream().filter(p -> pos.getSwDirection() == p.getMydirection()).collect(Collectors.toList());
+		Optional<Position> minpos = calculatePositiondif(directionNorthRemoved);
+		calculateRemdif(minpos,directionNorthRemoved, tempList, heldPosition);
+		calculateRemdif(minpos,directionNorthavailable, tempList, heldPosition);
+		Optional<Position> minpossouth = calculatePositiondif(directionSouthRemoved);
+		calculateRemdif(minpossouth,directionSouthRemoved, tempList, heldPosition);
+		calculateRemdif(minpossouth,directionSouthavailable, tempList, heldPosition);
+		Optional<Position> minposse = calculatePositiondif(directionSERemoved);
+		calculateRemdif(minposse,directionSERemoved, tempList, heldPosition);
+		calculateRemdif(minposse,directionSEavailable, tempList, heldPosition);
+		Optional<Position> minposne = calculatePositiondif(directionNERemoved);
+		calculateRemdif(minposne,directionNERemoved, tempList, heldPosition);
+		calculateRemdif(minposne,directionNEavailable, tempList, heldPosition);
+		Optional<Position> minposnw = calculatePositiondif(directionNWRemoved);
+		calculateRemdif(minposnw,directionNWRemoved, tempList, heldPosition);
+		calculateRemdif(minposnw,directionNWavailable, tempList, heldPosition);
+		Optional<Position> minpossw = calculatePositiondif(directionSWRemoved);
+		calculateRemdif(minpossw,directionSWRemoved, tempList, heldPosition);
+		calculateRemdif(minpossw,directionSWavailable, tempList, heldPosition);
+	}
+	private Optional<Position> calculatePositiondif(List<Position> removedPositions){
+		int dx = 0;
+		int dy = 0;
 		XYLocation heldLoc = heldPosition.getXyloc();
 		int x = heldLoc.getXCoOrdinate();
 		int y = heldLoc.getYCoOrdinate();
-		int dx = 0;
-		int dy = 0;
 		for (Position removed:removedPositions) {
 			XYLocation remloc = removed.getXyloc();
 			int tx = dx;int ty = dy;
@@ -564,32 +616,51 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			int diffy = Math.abs(y-ry);
 			Integer sumDif = new Integer(diffx+diffy);
 			removed.setSumDif(sumDif);
-			remlocs.add(sumDif);
+
+//			remlocs.add(sumDif);
 		}
+
 		Optional<Position> minpos = removedPositions.stream().reduce((p1,p2) -> p1.getSumDif() < p2.getSumDif() ? p1 : p2);
-//		List<Position>sortedRemoved = removedPositions.stream().sorted(Comparator.comparing(Position::getSumDif)).collect(Collectors.toList());
+		return minpos;
+	}
+	private void calculateRemdif(Optional<Position> minpos,List<Position> removedPositions,List<Position> tempList,Position heldPosition){
+
 		if (minpos.isPresent()) {
 			Position minx = minpos.get();
 			writer.println("CheckOpponentremove The min position: "+minx.toString());
 			List<Position>finalRemoved = removedPositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
-			List<Position>finalAvailable = availablePos.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
-			finalRemoved.addAll(finalAvailable);
+//			List<Position>finalAvailable = availablePos.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
+//			finalRemoved.addAll(finalAvailable);
 			for (Position rem:finalRemoved) {
-				if (rem != minx) {
+				int remdiff = 1;
+				if (rem.getSumDif() == null) {
+					writer.println("CheckOpponentremove no rem sumdif: "+rem.toString());
+				}else{
+					remdiff = rem.getSumDif().intValue();
+				}
+				int mindiff = 0;
+				if (minx.getSumDif() == null) {
+					writer.println("CheckOpponentremove no minx sumdif: "+minx.toString());
+				}else {
+					mindiff = minx.getSumDif().intValue(); // OBS nullpointer
+				}
+				 
+				if (rem != minx && remdiff > mindiff) {
 					tempList.add(rem);
 					writer.println("CheckOpponentremove: "+rem.toString()+" added to remove list");
 				}
-				rem.setSumDif(null);
+//				rem.setSumDif(null);
 			}
 		}
 		
+//		return null;
 	}
-	public void setNorthSouth(AgamePiece piece, List<Position> positions) {
+/*	public void setNorthSouth(AgamePiece piece, List<Position> positions) {
 		List<XYLocation> north = piece.getNorth();
 		List<XYLocation> south = piece.getSouth();
 		List<XYLocation> east = piece.getEast();
 		List<XYLocation> west = piece.getWest();
-	}
+	}*/
 	/**
 	 * setDirection
 	 * This method calculates the directions (nw,ne,sw,se)

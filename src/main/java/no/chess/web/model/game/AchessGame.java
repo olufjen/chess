@@ -239,7 +239,7 @@ public class AchessGame extends AbstractChessGame{
 			AgamePiece gamePiece = new AgamePiece(position,piece);
 			piece.setMyPiece(gamePiece);
 			gamePiece.setPredicate(piece.getPredicate());
-			gamePiece.setOntologyPositions(positions);
+			gamePiece.setOntologyPositions(positions); // The hashmap of positions from the ontology
 			
 			if(gamePiece.getColor().equals("w")) {
 				localwhitePlayer.getMygamePieces().add(gamePiece);

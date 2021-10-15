@@ -443,7 +443,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 				if (inuse) {
 					Position pos = otherPiece.getMyPosition();
 					if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
-						if (!checkQueen(pos) && type != type.KNIGHT) {
+						if (type != type.KNIGHT) { // !checkQueen(pos) &&  the check for queen is removed !!! olj 06.10.21
 							opponentRemoved.add(position);
 							position.setOpponentRemove(true);
 							String playerId = opponent.getPlayerId();

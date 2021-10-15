@@ -23,7 +23,7 @@ import no.games.chess.fol.FOLGamesFCAsk;
  * What rank do these pieces have?
  * How many of opponent pieces threaten this position?
  * What rank do these pieces have?
- * What makes a position valuable? So the it becomes important to control?
+ * What makes a position valuable? So it becomes important to control?
  * What material gain do I achieve by controlling this position?
  * What strategic advantage do I have from controlling this position?
  * I have a control over a position if I have more pieces reaching it than my opponent.
@@ -169,12 +169,12 @@ public class APerformance {
 						Position entryPos = entry.getValue();
 						if (entryPos == toPos) {
 							foundKey = entry.getKey();
-							writer.println("A found key "+foundKey); // The key is the name of the piece
+							writer.println("A found key "+foundKey); // The key is the name of the piece which occupies this position and it is an opponent piece
 							break;
 						}
 					}
 					if (foundKey != null) {
-						writer.println("Must find which piece can reach this position "+foundKey);
+						writer.println("Must find which piece can reach this position "+foundKey+"\n");
 					}
 				}
 			}
