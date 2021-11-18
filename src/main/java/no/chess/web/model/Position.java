@@ -103,8 +103,9 @@ public class Position extends ParentModel {
 	private direction westDirection = direction.WEST;
 	private direction eastDirection = direction.EAST;
 	
-	private boolean opponentRemove = false; // True if this position is blocked by opponent
-
+	private boolean opponentRemove = false; // True if this position is blocked by opponent. It is set by the chessAction when opponent pieces are checked
+	private boolean friendlyPosition = false; // True when this position is occupied by a friendly position, and therefore is protected
+	// It is set when this position is put in the removed list
 	public Position(String positionName, boolean inUse, ChessPiece usedBy) {
 		super();
 		this.positionName = positionName;
@@ -288,6 +289,13 @@ public class Position extends ParentModel {
 	}
 	public void setOpponentRemove(boolean opponentRemove) {
 		this.opponentRemove = opponentRemove;
+	}
+	
+	public boolean isFriendlyPosition() {
+		return friendlyPosition;
+	}
+	public void setFriendlyPosition(boolean friendlyPosition) {
+		this.friendlyPosition = friendlyPosition;
 	}
 	public boolean isNw() {
 		return nw;
@@ -711,7 +719,7 @@ public class Position extends ParentModel {
 			gp = usedBy.getMyPiece().getName();
 		}
 		
-		builder.append(positionName+ " Color "+positionColor+" Direction "+mydirection+" sumdif "+ sumDif+" Piece  "+p+" "+inUse+" gamepiece "+gp+"\n");
+		builder.append(positionName+ " Color "+positionColor+" Direction "+mydirection+" sumdif "+ sumDif+" Piece  "+p+" "+inUse+" Friendly "+friendlyPosition+" gamepiece "+gp+"\n");
 		return builder.toString();
 	}
 }
