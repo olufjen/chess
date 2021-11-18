@@ -38,7 +38,7 @@ public class APerformance {
 
 	private List<Position> controlPositions;
 	private HashMap<String,Position> positions; // The original HashMap of positions
-	private Map<String,Position> occupiedPositions;
+	private Map<String,Position> occupiedPositions; //Positions occupied by the opponent pieces. The key is the name of the piece
 	private APlayer myPlayer = null;
 	private APlayer opponent = null;
 	private ChessFolKnowledgeBase folKb = null; // The parent knowledge base
@@ -47,6 +47,9 @@ public class APerformance {
 	private FOLGamesFCAsk forwardChain;
 	private FOLGamesBCAsk backwardChain;
 	private List<String>positionKeys = null;// The key for positions that are reachable
+	private Map<String,ArrayList<String>> reachablePieces; //contains piecenames of the form WhiteQueen_c4, with a position name as a key
+	private Map<String,String> reachableOpponent; //contains piece names of the form BackPawn5, with a position name as a key
+	private OpponentAgent agent;
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\performance.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
@@ -63,6 +66,8 @@ public class APerformance {
 		this.forwardChain = forwardChain;
 		this.backwardChain = backwardChain;
 		occupiedPositions = new HashMap();
+		reachablePieces = new HashMap();
+		reachableOpponent = new HashMap();
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {
@@ -72,6 +77,14 @@ public class APerformance {
 	    writer = new PrintWriter(new BufferedWriter(fw));	
 	}
 	
+	public OpponentAgent getAgent() {
+		return agent;
+	}
+
+	public void setAgent(OpponentAgent agent) {
+		this.agent = agent;
+	}
+
 	public List<String> getPositionKeys() {
 		return positionKeys;
 	}
@@ -138,6 +151,7 @@ public class APerformance {
 	/**
 	 * occupiedPositions
 	 * This method creates a map of positions occupied by the opponent's pieces
+	 * The key is the name of the piece
 	 */
 	public void occupiedPositions() {
 //		List<Position> allPositions = (List<Position>) positions.values();
@@ -156,17 +170,20 @@ public class APerformance {
 	public void findReachable() {
 //		List<Position> occupied = (List<Position>) occupiedPositions.values();
 		String foundKey = null;
+		List<String> termTotals = new ArrayList<String>();
 		for (String key:positionKeys) { //Reachable positions: piecename_frompostopos
+			writer.println("Checking position key: "+key);
 			int l = key.length();
 			int index = l-2;
 			String toPosname = key.substring(index);
 			Position toPos = positions.get(toPosname); // The map of all positions
 			if (toPos != null) {
 				if (occupiedPositions.containsValue(toPos)) {
+					Position entryPos = null;
 					writer.println("An occupied position: "+toPos.toString());
 					for (Map.Entry<String,Position> entry:occupiedPositions.entrySet()) {
 //						writer.println("Key of entry set: "+entry.getKey()+ " value of entry set: "+entry.getValue().toString());
-						Position entryPos = entry.getValue();
+						entryPos = entry.getValue();
 						if (entryPos == toPos) {
 							foundKey = entry.getKey();
 							writer.println("A found key "+foundKey); // The key is the name of the piece which occupies this position and it is an opponent piece
@@ -174,7 +191,23 @@ public class APerformance {
 						}
 					}
 					if (foundKey != null) {
-						writer.println("Must find which piece can reach this position "+foundKey+"\n");
+						writer.println("Must find which piece can reach this position "+entryPos.toString()+"\n");
+						String posName = entryPos.getPositionName();
+						String reachable = agent.getREACHABLE();
+						ArrayList<String>termNames = (ArrayList<String>) localKb.searchFacts("x", posName, reachable);
+						reachablePieces.put(posName, termNames);
+						reachableOpponent.put(posName, foundKey);
+						String threaten = agent.getTHREATEN();
+						ArrayList<String>threatNames = (ArrayList<String>) folKb.searchFacts("x", posName, threaten);
+						termTotals.addAll(termNames);
+						int no = termNames.size();
+						int tn = threatNames.size();
+						for (int i = 0;i<no;i++) {
+							writer.println(termNames.get(i));
+						}
+						for (int i = 0;i<tn;i++) {
+							writer.println(threatNames.get(i));
+						}
 					}
 				}
 			}

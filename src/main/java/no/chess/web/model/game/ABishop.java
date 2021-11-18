@@ -33,6 +33,7 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 	private String[][] reachablepiecePosition;
 	private HashMap<String,Position> newPositions;
 	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
+	private HashMap<String,Position> friendPositions; // Represent positions occupied by friendly pieces
 	private int size = 8;
 	private String color;
 	private ChessPiece myPiece;
@@ -59,6 +60,7 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		friendPositions = new HashMap<String,Position>();
 	}
 
 	public ABishop(Position myPosition, ChessPiece myPiece) {
@@ -82,6 +84,7 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		friendPositions = new HashMap<String,Position>();
 		getLegalmoves(myPosition);
 	}
 
@@ -99,7 +102,16 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		friendPositions = new HashMap<String,Position>();
 		getLegalmoves(myPosition);
+	}
+
+	public HashMap<String, Position> getFriendPositions() {
+		return friendPositions;
+	}
+
+	public void setFriendPositions(HashMap<String, Position> friendPositions) {
+		this.friendPositions = friendPositions;
 	}
 
 	public direction getThisDirection() {
@@ -297,6 +309,8 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 	 */
 	public List<Position>addPositions(List<Position>availablePositions,List<Position>removedPositions){
 		Optional<Position> minpos = Optional.empty();
+		Optional<Position> availmin = Optional.empty();
+		List<Position>friendlyList = new ArrayList<Position>();
 		List<Position>tempAvail2 = new ArrayList();
 		List<Position>tempAvail = new ArrayList<Position>();
 		List<Position>tempList = new ArrayList<Position>();
@@ -309,13 +323,38 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 				System.out.println("CheckRemovals The min position: "+minx.toString());
 			}
 			tempList = removedPositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
+			// Find all available positions that have the same direction:
 			tempAvail = availablePositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
 			if (tempAvail != null && !tempAvail.isEmpty()) {
 				tempAvail2 = tempAvail.stream().filter(p -> minx.getSumDif() < p.getSumDif()).collect(Collectors.toList());
 			}
+			if (tempAvail2 != null && !tempAvail2.isEmpty()) {
+				availmin = tempAvail2.stream().reduce((p1,p2) -> p1.getSumDif() < p2.getSumDif() ? p1 : p2);
+			}
+			if (availmin.isPresent()){
+				Position availx = availmin.get();
+				int nx = minx.getSumDif().intValue();
+				int ny = availx.getSumDif().intValue();
+				if (tempAvail != null && !tempAvail.isEmpty()) {
+					friendlyList = tempAvail.stream().filter(p -> availx.getSumDif() < p.getSumDif()).collect(Collectors.toList());
+				}
+				if (nx < ny) {
+					friendlyList = null;
+					friendlyList = tempAvail.stream().filter(p -> minx.getSumDif() < p.getSumDif()).collect(Collectors.toList());
+				}
+				if (friendlyList != null && !friendlyList.isEmpty()) {
+					for (Position friend:friendlyList) {
+						String name = friend.getPositionName();
+						friendPositions.remove(name);
+					//	friend.setFriendlyPosition(false);
+					}
+				}
+			}
 			tempList.addAll(tempAvail2);
 			// must do the same with available positions !!!!
 		}
+
+	
 		return tempList;
 	}
 	@Override

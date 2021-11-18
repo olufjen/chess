@@ -48,6 +48,8 @@ import no.games.chess.planning.ChessProblem;
 import no.games.chess.planning.ChessSearchAlgorithm;
 
 /**
+ * The Chess Agent is both a utility based agent and a goal based agent.
+ * (For definition see p. 52 and p. 53.)
  * This is a Knowledgebase agent derived from the generic knowledgebase agent of AIMA chapter 7.
  * It is further adapted for the FOL knowledge base as described in chapter 10 and 11.
  * It is created every time the PlayGame object makes a move.
@@ -89,6 +91,7 @@ public class AChessAgent extends KBAgent {
 	private FOLGamesBCAsk backwardChain;
 	private InferenceProcedure infp;
 	private List <ChessActionImpl> actions = null;
+	private List <ChessActionImpl> opponentActions = null;
 	private String knowledgeFilename = "knowledgebase.txt";
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\knowledgebase.txt";
 	private PrintWriter writer = null;
@@ -157,6 +160,9 @@ public class AChessAgent extends KBAgent {
 		actions = new ArrayList<ChessActionImpl>();
 		opponentPieces = new ArrayList<String>();
 		positionList = game.getPositionlist();
+		for (Position pos:positionList) {
+			pos.setFriendlyPosition(false);
+		}
 		chessDomain = new FOLDomain();
 		setPredicatenames();
 	}
@@ -183,6 +189,9 @@ public class AChessAgent extends KBAgent {
 		actions = new ArrayList<ChessActionImpl>();
 		opponentPieces = new ArrayList<String>();
 		positionList = game.getPositionlist();
+		for (Position pos:positionList) {
+			pos.setFriendlyPosition(false);
+		}
 		positions = game.getPositions();
 		chessDomain = new FOLDomain();
 		setPredicatenames();
@@ -256,7 +265,12 @@ public class AChessAgent extends KBAgent {
 	public void setCastleAction(ChessActionImpl castleAction) {
 		this.castleAction = castleAction;
 	}
-
+	public void clearFriends(APlayer player) {
+		List<AgamePiece>pieces = player.getMygamePieces();
+		for (AgamePiece piece:pieces) {
+			piece.clearfriendPositions();
+		}
+	}
 	/**
 	 * execute
 	 * The execute function creates the necessary inference procedures and the parent knowledge base based on the current percept: The ChessState object.
@@ -290,9 +304,19 @@ public class AChessAgent extends KBAgent {
 		String playerName = stateImpl.getMyPlayer().getNameOfplayer();
 		Sentence playSentence = kb.newSymbol(kb.TOPLAY+playerName, noofMoves);
 		kb.tell(playSentence);
-		
+	
 		makeRules(myPlayer,"g1","c1"); // tells the FOL knowledgebase rules about how to capture opponent pieces
+		for (Position pos:positionList) {
+			pos.setFriendlyPosition(false);
+		}
+
+		// 04.11.21 This is done to create opponent friendly positions
+		opponentActions = this.stateImpl.getActions(opponent); // These are the opponent's actions
+		
+		// OBS uses white friendly positions: !!!!
 		makeRules(opponent,"g8","c8"); // tells the FOL knowledgebase rules about how to capture opponent pieces
+		clearFriends(myPlayer);
+		clearFriends(opponent);
 		HashSet<String> chessConstants = (HashSet<String>) chessDomain.getConstants();
 		HashSet<String> chessPredicates = (HashSet<String>) chessDomain.getPredicates();
 		String sample = "WhitePawn1";
@@ -616,6 +640,13 @@ public class AChessAgent extends KBAgent {
 				
 				ownerTerms.add(ownerVariable);
 				String name = piece.getMyPiece().getOntlogyName(); 
+				if (name.equals("WhiteQueen")) {
+					writer.println("The white queen\n"+piece.toString());
+				}
+				if (name.contains("WhiteRook")) {
+					writer.println("The white rook "+name);
+					writer.println("Piece "+piece.toString());
+				}
 				String posName = piece.getmyPosition().getPositionName();
 				chessDomain.addConstant(posName);
 				chessDomain.addConstant(name);
@@ -670,7 +701,10 @@ public class AChessAgent extends KBAgent {
 					for (Position pos:availablePositions){
 						//if(!piece.checkRemoved(pos)) 
 						//if(!piece.checkFriend(pos))
-						if(!piece.checkRemoved(pos)) {
+						if(!piece.checkRemoved(pos) || piece.checkFriendlyPosition(pos)) { // isFriendlyPosition() added 01.11.21
+/*							if (pos.isFriendlyPosition()) {
+								writer.println("=========== position is friendly !!"+pos.toString());
+							}*/
 							String position = pos.getPositionName();
 							Constant protectorVariable = new Constant(name);
 							Constant protectedVariable = new Constant(position);

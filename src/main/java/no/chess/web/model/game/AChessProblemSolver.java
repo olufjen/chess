@@ -484,16 +484,16 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
 				  boolean pawn = false;
 				  boolean pieceProtected = false;
 				  if (type  == type.PAWN) {
-					  pawn = folKb.checkpieceFacts("y",name, posName, PAWNATTACK, actions);
+					  pawn = folKb.checkpieceFacts("y",name, posName, PAWNATTACK);
 					  if (pawn) {
 						  possiblePieces.put(name, piece);
 						  possiblePositions.put(name, position);
 					  }
 				  }
 				  if (type  != type.PAWN) {
-					  reachable = folKb.checkpieceFacts("y",name,posName,REACHABLE,actions);
+					  reachable = folKb.checkpieceFacts("y",name,posName,REACHABLE);
 					  if (reachable) {
-						 pieceProtected = folKb.checkpieceFacts("x",name,posName,PROTECTED,actions);
+						 pieceProtected = folKb.checkpieceFacts("x",name,posName,PROTECTED);
 						  if (pieceProtected) {
 							  possiblePieces.put(name, piece);
 							  possiblePositions.put(name, position);
@@ -528,7 +528,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 	String pieceName = "WhiteBishop2";
 	String fpos = "f1";
 	String toPos = "d3";
-	boolean bishop = folKb.checkpieceFacts("y",pieceName,fpos,OCCUPIES,actions); // Rook occupies f1 !!??
+	boolean bishop = folKb.checkpieceFacts("y",pieceName,fpos,OCCUPIES); // Rook occupies f1 !!??
 	State goal = null;
 	State initstate = null;
 	if (bishop) {
@@ -544,7 +544,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 			if (pos != null) { // The bishop cannot be moved
 				String pawnName = "WhitePawn5";
 				String pawnPos = "e2";
-				boolean pawn = folKb.checkpieceFacts("y",pawnName,pawnPos,OCCUPIES,actions);
+				boolean pawn = folKb.checkpieceFacts("y",pawnName,pawnPos,OCCUPIES);
 				if (pawn) {
 					typeofPiece = PAWN;
 					moveName = "pawnmove";
@@ -669,7 +669,7 @@ public void checkCastling(ArrayList<ChessActionImpl> actions) {
 			String bishopName = "WhiteBishop2";
 			String fpos = "f1";
 			String toPos = "d3";
-			boolean bishop = folKb.checkpieceFacts("y",bishopName,fpos,OCCUPIES,actions);
+			boolean bishop = folKb.checkpieceFacts("y",bishopName,fpos,OCCUPIES);
 			if (bishop) {
 				String castlePos = "g1";
 				typeofPiece = KING;

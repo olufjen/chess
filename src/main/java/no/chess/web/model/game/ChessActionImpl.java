@@ -396,6 +396,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 				boolean inuse = otherPiece.getMyPiece().isUse();// inuse is false if a piece is removed permanently olj 1.08.20
 				if (inuse && otherPiece.isActive() && otherPiece != chessPiece) { // Added 31.07.20 Check if piece is active
 					Position pos = otherPiece.getMyPosition();
+//					pos.setFriendlyPosition(false);
 					if (pos != null) {
 						if (pos.isInUse()) { // OBS: Added 14.05.20 Are never active !! ??
 							if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
@@ -404,10 +405,13 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 /*								if (pieceType instanceof AQueen)
 									System.out.println("!!!!!! piece and position "+pName+" "+name);*/
 								Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
-								if (posinTable == null && !checkQueen(pos))
+								if (posinTable == null && !checkQueen(pos)) {
 									positionRemoved.add(position);
+									chessPiece.determinFriendPosition(pos);
+									//position.setFriendlyPosition(true);
+								}
 							}
-							if (castlePosition != null) // OBS castle positions are removedeveral times !!!
+							if (castlePosition != null) 
 								checkCastling(pos, castlePositions);
 						}else {
 							 System.out.println("??????? piece has position that is not in use ?????????????? "+otherPiece.toString()+"\n Posisjon: "+pos.toString()+"\n"+this.toString());
@@ -475,6 +479,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			Position posinTable =  (Position)bishopPositions.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null);
 			if (posinTable != null) { // If position is a bishopPosition remove it
 				bishopRemoved.add(pos);
+				chessPiece.determinFriendPosition(pos); // Only friendly positions
 				queen = true;
 			}
 	
@@ -496,6 +501,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 				Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
 				if (posinTable == null) {
 					positionRemoved.add(castlePos);
+					chessPiece.determinFriendPosition(castlePos);
 	//				System.out.println("Castle position: "+castlePos.toString());
 				}
 			}

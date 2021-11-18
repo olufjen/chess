@@ -144,8 +144,8 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			tempList.addAll(rooknorthsouthList);
 			String rName = p.getMyPiece().getOntlogyName();
 			checkOpponentRemoved(opponentRemoved,from, tempList,availablePositions);
-			if (rName.equals("WhiteRook2")) {
-				writer.println("The white rook "+processNumber);
+			if (rName.contains("WhiteRook")) {
+				writer.println("The white rook "+rName);
 				writer.println("Piece "+p.toString());
 			}
 		}

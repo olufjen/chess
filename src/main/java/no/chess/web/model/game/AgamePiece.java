@@ -61,6 +61,11 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private boolean active = true; // Set if piece is active participating, set to false when removed from board
 	private String predicate = "none"; //The predicate used by this object
 	private List<String> predicates; 
+	
+	private AQueen myqueen = null;
+	private ARook myrook = null;
+	private ABishop mybishop = null;
+	
 	private boolean castlingMove = false;
 	
 	public AgamePiece(Position myPosition) {
@@ -519,6 +524,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				chessType = new ABishop(myPosition,myPiece);
 				String pieceColorB = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
+				ABishop bishop = (ABishop) chessType;
+				mybishop = bishop;
 				reacablePositions = gamePiece.getNewPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
@@ -567,6 +574,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				String pieceColorR = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
 				ARook rook = (ARook) chessType;
+				myrook = rook;
 				reacablePositions = gamePiece.getNewPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
@@ -587,6 +595,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				String pieceColorQ = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
 				AQueen queen = (AQueen) chessType;
+				myqueen = queen;
 				reacablePositions = gamePiece.getNewPositions(); // Creates two sets of reachable positions: reacablePositions,bishopPositions
 				bishopPositions = queen.getBishopPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
@@ -606,7 +615,83 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				break;
 		}
 	}
-	
+	public void clearfriendPositions() {
+		if (myType == pieceType.QUEEN) {
+			myqueen.getFriendPositions().clear();
+		}
+		if (myType == pieceType.ROOK) {
+			myrook.getFriendPositions().clear();
+		}
+	}
+	/**
+	 * determinFriendPosition
+	 * This method puts a friendly position in the friendly list.
+	 * A friendly position is a position occupied by a friendly piece
+	 * @param pos
+	 */
+	public void determinFriendPosition(Position pos) {
+		if (myType == pieceType.QUEEN) {
+			//AQueen queen = (AQueen) chessType;
+			String name = pos.getPositionName();
+			HashMap<String,Position> friendly = myqueen.getFriendPositions();
+			friendly.put(name, pos);
+		}
+		if (myType == pieceType.ROOK) {
+			//AQueen queen = (AQueen) chessType;
+			String name = pos.getPositionName();
+			HashMap<String,Position> friendly = myrook.getFriendPositions();
+			friendly.put(name, pos);
+		}
+		if (myType == pieceType.BISHOP) {
+			//AQueen queen = (AQueen) chessType;
+			String name = pos.getPositionName();
+			HashMap<String,Position> friendly = mybishop.getFriendPositions();
+			friendly.put(name, pos);
+		}
+	}
+	public void removeFriendPosition(Position pos) {
+		if (myType == pieceType.QUEEN) {
+			//AQueen queen = (AQueen) chessType;
+			String name = pos.getPositionName();
+			HashMap<String,Position> friendly = myqueen.getFriendPositions();
+			friendly.remove(name);
+		}
+		if (myType == pieceType.ROOK) {
+			//AQueen queen = (AQueen) chessType;
+			String name = pos.getPositionName();
+			HashMap<String,Position> friendly = myrook.getFriendPositions();
+			friendly.remove(name);
+		}
+		if (myType == pieceType.BISHOP) {
+			//AQueen queen = (AQueen) chessType;
+			String name = pos.getPositionName();
+			HashMap<String,Position> friendly = mybishop.getFriendPositions();
+			friendly.remove(name);
+		}
+	}
+	/**
+	 * checkFriendlyPosition
+	 * This method checks if a position is occupied by a friendly piece which is reachable
+	 * @param pos
+	 * @return
+	 */
+	public boolean checkFriendlyPosition(Position pos) {
+		String name = pos.getPositionName();
+		boolean friendpos = false;
+		if (myType == pieceType.QUEEN) {
+			HashMap<String,Position> friendly = myqueen.getFriendPositions();
+			friendpos = friendly.containsKey(name);
+		}
+		if (myType == pieceType.ROOK) {
+			HashMap<String,Position> friendly = myrook.getFriendPositions();
+			friendpos = friendly.containsKey(name);
+		}
+		if (myType == pieceType.BISHOP) {
+			HashMap<String,Position> friendly = mybishop.getFriendPositions();
+			friendpos = friendly.containsKey(name);
+		}
+		return friendpos;
+	}
 	public List<Position> getPreferredPositions() {
 		return preferredPositions;
 	}
