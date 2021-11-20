@@ -622,6 +622,9 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		if (myType == pieceType.ROOK) {
 			myrook.getFriendPositions().clear();
 		}
+		if (myType == pieceType.BISHOP) {
+			mybishop.getFriendPositions().clear();
+		}
 	}
 	/**
 	 * determinFriendPosition

@@ -298,7 +298,8 @@ public class AChessAgent extends KBAgent {
 		folKb = new ChessFolKnowledgeBase(chessDomain, forwardChain,knowledgeFilename);
 		folKb.setBackWardChain(backwardChain);
 //		folKb.tell(mKing);
-		setOpponentpieces(opponent);//creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
+		// Moved to behind makerules !! 20.11.21
+//		setOpponentpieces(opponent);//creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
 		kb.setOpponentPieces(opponentPieces);
 		noofMoves = game.getMovements().size();
 		String playerName = stateImpl.getMyPlayer().getNameOfplayer();
@@ -315,6 +316,7 @@ public class AChessAgent extends KBAgent {
 		
 		// OBS uses white friendly positions: !!!!
 		makeRules(opponent,"g8","c8"); // tells the FOL knowledgebase rules about how to capture opponent pieces
+		setOpponentpieces(opponent);//creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
 		clearFriends(myPlayer);
 		clearFriends(opponent);
 		HashSet<String> chessConstants = (HashSet<String>) chessDomain.getConstants();
@@ -718,6 +720,10 @@ public class AChessAgent extends KBAgent {
 //								kb.tellCaptureRules(t, position, name);
 							}
 							folKb.tell(reachablePredicate);
+/*							if (player == opponent) {
+								Predicate threatenPredicate = new Predicate(THREATEN,protectedTerms);
+								folKb.tell(threatenPredicate);
+							}*/
 							chessDomain.addConstant(position);
 							if (type == type.KING && castlePositions != null) {
 								List<Position> removedKing = piece.getRemovedPositions();

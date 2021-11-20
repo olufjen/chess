@@ -363,7 +363,7 @@ public class OpponentAgent {
 				for (Position apos: available) {
 					String posName = apos.getPositionName();
 					Position pos =  (Position) removed.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
-					if(!piece.checkRemoved(apos)) {
+					if(!piece.checkRemoved(apos)|| piece.checkFriendlyPosition(pos)) {
 //						String posA = apos.getPositionName();
 						boolean posOccupies = checkFacts(pieceName,posName,OCCUPIES);
 						for (String key: positionKeys) {
@@ -479,7 +479,7 @@ public class OpponentAgent {
 			writer.println(piece.toString());
 		}*/
 		for (Position pos:availablePositions) {
-			if (!piece.checkRemoved(pos)) {
+			if (!piece.checkRemoved(pos)|| piece.checkFriendlyPosition(pos)) {
 //				String piecename = piece.getMyPiece().getOntlogyName();
 				String posname = pos.getPositionName();
 				possiblePositions.put(name+posname, pos);

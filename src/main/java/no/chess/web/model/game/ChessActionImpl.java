@@ -389,7 +389,10 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			castlePositions = new ArrayList(chessPiece.getCastlePositions().values());
 			castlePosition = castlePositions.get(0);
 		}
-
+		boolean bKnight = false;
+		if (pieceType instanceof AKnight) {
+			bKnight = true;
+		}
 		List<AgamePiece> pieces = player.getMygamePieces(); 
 		for (Position position:availablePositions) {
 			for (AgamePiece otherPiece:pieces) {
@@ -405,7 +408,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 /*								if (pieceType instanceof AQueen)
 									System.out.println("!!!!!! piece and position "+pName+" "+name);*/
 								Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
-								if (posinTable == null && !checkQueen(pos)) {
+								if (posinTable == null && !checkQueen(pos) && ! bKnight) {
 									positionRemoved.add(position);
 									chessPiece.determinFriendPosition(pos);
 									//position.setFriendlyPosition(true);

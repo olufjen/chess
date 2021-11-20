@@ -193,20 +193,31 @@ public class APerformance {
 					if (foundKey != null) {
 						writer.println("Must find which piece can reach this position "+entryPos.toString()+"\n");
 						String posName = entryPos.getPositionName();
+						if (posName.equals("d5")) {
+							writer.println("Checking for this position "+posName);
+						}
 						String reachable = agent.getREACHABLE();
 						ArrayList<String>termNames = (ArrayList<String>) localKb.searchFacts("x", posName, reachable);
 						reachablePieces.put(posName, termNames);
 						reachableOpponent.put(posName, foundKey);
 						String threaten = agent.getTHREATEN();
 						ArrayList<String>threatNames = (ArrayList<String>) folKb.searchFacts("x", posName, threaten);
+						ArrayList<String>reachparentNames = (ArrayList<String>) folKb.searchFacts("x", posName, reachable);
 						termTotals.addAll(termNames);
 						int no = termNames.size();
 						int tn = threatNames.size();
+						int tr = reachparentNames.size();
+						writer.println("Reachable from strategy knowledge base");
 						for (int i = 0;i<no;i++) {
 							writer.println(termNames.get(i));
 						}
+						writer.println("Threats from parent knowledge base");
 						for (int i = 0;i<tn;i++) {
 							writer.println(threatNames.get(i));
+						}
+						writer.println("Reachable from parent knowledge base");
+						for (int i = 0;i<tr;i++) {
+							writer.println(reachparentNames.get(i));
 						}
 					}
 				}
