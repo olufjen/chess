@@ -408,7 +408,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 /*								if (pieceType instanceof AQueen)
 									System.out.println("!!!!!! piece and position "+pName+" "+name);*/
 								Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
-								if (posinTable == null && !checkQueen(pos) && ! bKnight) {
+								if (posinTable == null && !checkQueen(pos) && ! bKnight) { //The bKnight added nov. 21. All positions are available to the knight
 									positionRemoved.add(position);
 									chessPiece.determinFriendPosition(pos);
 									//position.setFriendlyPosition(true);

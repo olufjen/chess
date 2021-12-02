@@ -97,8 +97,8 @@ public class OpponentAgent {
 		super();
 		this.stateImpl = stateImpl;
 		this.game = game;
-		this.myPlayer = myPlayer;
-		this.opponent = opponent;
+		this.myPlayer = myPlayer; // myPlyer is the opponent
+		this.opponent = opponent; // The opponent is the player of the game
 		this.folKb = folKb;
 		this.chessDomain = chessDomain;
 		forwardChain = new FOLGamesFCAsk(); // A Forward Chain inference procedure see p. 332
@@ -223,6 +223,13 @@ public class OpponentAgent {
 	}
 	public void setOpponent(APlayer opponent) {
 		this.opponent = opponent;
+	}
+	
+	public String getPAWNATTACK() {
+		return PAWNATTACK;
+	}
+	public void setPAWNATTACK(String pAWNATTACK) {
+		PAWNATTACK = pAWNATTACK;
 	}
 	/**
 	 * defineFacts

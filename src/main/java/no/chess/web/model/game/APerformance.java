@@ -18,6 +18,7 @@ import no.games.chess.fol.FOLGamesFCAsk;
 /**
  * APerformance
  * This class is responsible for calculating the performance measure.
+ * It is created by the opponent agent when the opponent agent is created
  * The questions to answer are:
  * How many of my pieces can reach/protect a position? 
  * What rank do these pieces have?
@@ -39,8 +40,8 @@ public class APerformance {
 	private List<Position> controlPositions;
 	private HashMap<String,Position> positions; // The original HashMap of positions
 	private Map<String,Position> occupiedPositions; //Positions occupied by the opponent pieces. The key is the name of the piece
-	private APlayer myPlayer = null;
-	private APlayer opponent = null;
+	private APlayer myPlayer = null; // The player of the game
+	private APlayer opponent = null; // The opponent of the game
 	private ChessFolKnowledgeBase folKb = null; // The parent knowledge base
 	private ChessFolKnowledgeBase localKb; // The strategy knowledge base
 	private FOLDomain chessDomain;
@@ -172,11 +173,13 @@ public class APerformance {
 		String foundKey = null;
 		List<String> termTotals = new ArrayList<String>();
 		for (String key:positionKeys) { //Reachable positions: piecename_frompostopos
-			writer.println("Checking position key: "+key);
 			int l = key.length();
 			int index = l-2;
 			String toPosname = key.substring(index);
 			Position toPos = positions.get(toPosname); // The map of all positions
+			String fromposName = key.substring(l-4, l-2);
+			String pieceName = key.substring(0,l-5);
+			writer.println("Checking position key: "+key+" Piece "+pieceName+" From position "+fromposName);
 			if (toPos != null) {
 				if (occupiedPositions.containsValue(toPos)) {
 					Position entryPos = null;
@@ -193,20 +196,31 @@ public class APerformance {
 					if (foundKey != null) {
 						writer.println("Must find which piece can reach this position "+entryPos.toString()+"\n");
 						String posName = entryPos.getPositionName();
-						if (posName.equals("d5")) {
+/*						if (posName.equals("d5")) {
 							writer.println("Checking for this position "+posName);
-						}
+						}*/
 						String reachable = agent.getREACHABLE();
 						ArrayList<String>termNames = (ArrayList<String>) localKb.searchFacts("x", posName, reachable);
+						ArrayList<String>fromtermNames = (ArrayList<String>) localKb.searchFacts("x", fromposName, reachable);
 						reachablePieces.put(posName, termNames);
 						reachableOpponent.put(posName, foundKey);
 						String threaten = agent.getTHREATEN();
+						String pawnAttack = agent.getPAWNATTACK();
 						ArrayList<String>threatNames = (ArrayList<String>) folKb.searchFacts("x", posName, threaten);
 						ArrayList<String>reachparentNames = (ArrayList<String>) folKb.searchFacts("x", posName, reachable);
+						ArrayList<String>pawnThreats = (ArrayList<String>) folKb.searchFacts("x", posName, pawnAttack);
+						ArrayList<String>fromthreatNames = (ArrayList<String>) folKb.searchFacts("x", fromposName, threaten);
+						ArrayList<String>fromreachparentNames = (ArrayList<String>) folKb.searchFacts("x", fromposName, reachable);
+						ArrayList<String>frompawnThreats = (ArrayList<String>) folKb.searchFacts("x", fromposName, pawnAttack);
 						termTotals.addAll(termNames);
 						int no = termNames.size();
 						int tn = threatNames.size();
 						int tr = reachparentNames.size();
+						int pn = pawnThreats.size();
+						int fno = fromtermNames.size();
+						int ftn = fromthreatNames.size();
+						int ftr = fromreachparentNames.size();
+						int fpn = frompawnThreats.size();
 						writer.println("Reachable from strategy knowledge base");
 						for (int i = 0;i<no;i++) {
 							writer.println(termNames.get(i));
@@ -218,6 +232,26 @@ public class APerformance {
 						writer.println("Reachable from parent knowledge base");
 						for (int i = 0;i<tr;i++) {
 							writer.println(reachparentNames.get(i));
+						}
+						writer.println("Pawn attack from parent knowledge base");
+						for (int i = 0;i<pn;i++) {
+							writer.println(pawnThreats.get(i));
+						}
+						writer.println("The from position Reachable from strategy knowledge base");
+						for (int i = 0;i<fno;i++) {
+							writer.println(fromtermNames.get(i));
+						}
+						writer.println("The from position Threats from parent knowledge base");
+						for (int i = 0;i<ftn;i++) {
+							writer.println(fromthreatNames.get(i));
+						}
+						writer.println("The from position Reachable from parent knowledge base");
+						for (int i = 0;i<ftr;i++) {
+							writer.println(fromreachparentNames.get(i));
+						}
+						writer.println("The from position Pawn attack from parent knowledge base");
+						for (int i = 0;i<fpn;i++) {
+							writer.println(frompawnThreats.get(i));
 						}
 					}
 				}

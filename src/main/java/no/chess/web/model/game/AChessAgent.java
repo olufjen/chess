@@ -262,6 +262,16 @@ public class AChessAgent extends KBAgent {
 	}
 
 
+	public String getPAWNATTACK() {
+		return PAWNATTACK;
+	}
+
+
+	public void setPAWNATTACK(String pAWNATTACK) {
+		PAWNATTACK = pAWNATTACK;
+	}
+
+
 	public void setCastleAction(ChessActionImpl castleAction) {
 		this.castleAction = castleAction;
 	}

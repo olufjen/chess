@@ -14,6 +14,8 @@ import no.games.chess.MoveRule;
  * and returns a list of XYLocations reachable by the bishop.
  * @since 16.08.20
  * Changed  <7 to <=7 olj
+ * @since 0.2.12.21
+ * 	if (j>=0) { //Changed from i>0
  * @author oluf
  *
  */
@@ -53,7 +55,7 @@ public class ABishopMoveRule implements MoveRule<AbstractGamePiece, List<XYLocat
 			}
 		}
 		j = x -1;
-		if (j>0) {
+		if (j>=0) { //Changed from i>0
 			for (int i = y+1;i<=7;i++) {
 				XYLocation xloc = new XYLocation(j,i);
 				locations.add(xloc);
@@ -75,7 +77,7 @@ public class ABishopMoveRule implements MoveRule<AbstractGamePiece, List<XYLocat
 			}
 		}
 		j = x -1;
-		if (j > 0 && y>0) {
+		if (j >= 0 && y>0) { // Changed from j>0
 			for (int i = y-1;i>=0;i--) { //Changed from i>0
 				XYLocation xloc = new XYLocation(j,i);
 				locations.add(xloc);
