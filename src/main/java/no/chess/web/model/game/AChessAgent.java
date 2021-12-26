@@ -171,7 +171,7 @@ public class AChessAgent extends KBAgent {
 	/**
 	 * This is constructor used by PlayGame
 	 * @param KB
-	 * @param localAction
+	 * @param localAction At present null
 	 * @param game
 	 */
 	public AChessAgent(ChessKnowledgeBase KB,ChessActionImpl localAction,PlayGame game) {
@@ -334,14 +334,14 @@ public class AChessAgent extends KBAgent {
 		String sample = "WhitePawn1";
 		List<String> chessConstant = chessConstants.stream().collect(Collectors.toList());
 		List<String> chesspredicateList = chessPredicates.stream().collect(Collectors.toList());
-		writer.println("The chessdomain constants");
+/*		writer.println("The chessdomain constants");
 		for (String c:chessConstant) {
 			writer.println(c);
 		}
 		writer.println("The chessdomain predicates");
 		for (String c:chesspredicateList) {
 			writer.println(c);
-		}
+		}*/
 		String pieceConstant = chessConstants.stream().filter(sample::equals).findAny().orElse(null);
 		String chessPr = chesspredicateList.get(0);
 		
@@ -652,13 +652,13 @@ public class AChessAgent extends KBAgent {
 				
 				ownerTerms.add(ownerVariable);
 				String name = piece.getMyPiece().getOntlogyName(); 
-				if (name.equals("WhiteQueen")) {
+/*				if (name.equals("WhiteQueen")) {
 					writer.println("The white queen\n"+piece.toString());
 				}
 				if (name.contains("WhiteRook")) {
 					writer.println("The white rook "+name);
 					writer.println("Piece "+piece.toString());
-				}
+				}*/
 				String posName = piece.getmyPosition().getPositionName();
 				chessDomain.addConstant(posName);
 				chessDomain.addConstant(name);

@@ -254,6 +254,15 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 			}
 			return false;
 	  }	
+	/**
+	 * searchFacts
+	 * This method returns a list of term names (ontology names of pieces)
+	 * It is used to find which pieces can reach/protect/threaten a given position
+	 * @param pieceName
+	 * @param posName
+	 * @param fact
+	 * @return a List of term names (or empty list
+	 */
 	public List<String> searchFacts(String pieceName,String posName,String fact) {
 		Variable pieceVarx = null;
 		Constant pieceVariable = null;

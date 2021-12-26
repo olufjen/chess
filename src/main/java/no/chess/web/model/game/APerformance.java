@@ -47,7 +47,7 @@ public class APerformance {
 	private FOLDomain chessDomain;
 	private FOLGamesFCAsk forwardChain;
 	private FOLGamesBCAsk backwardChain;
-	private List<String>positionKeys = null;// The key for positions that are reachable
+	private List<String>positionKeys = null;// The key for positions that are reachable. The key is of the form: piecename_frompostopos
 	private Map<String,ArrayList<String>> reachablePieces; //contains piecenames of the form WhiteQueen_c4, with a position name as a key
 	private Map<String,String> reachableOpponent; //contains piece names of the form BackPawn5, with a position name as a key
 	private OpponentAgent agent;
@@ -202,8 +202,8 @@ public class APerformance {
 						String reachable = agent.getREACHABLE();
 						ArrayList<String>termNames = (ArrayList<String>) localKb.searchFacts("x", posName, reachable);
 						ArrayList<String>fromtermNames = (ArrayList<String>) localKb.searchFacts("x", fromposName, reachable);
-						reachablePieces.put(posName, termNames);
-						reachableOpponent.put(posName, foundKey);
+						reachablePieces.put(posName, termNames); // posName is the name of the position of the opponent piece
+						reachableOpponent.put(posName, foundKey); // foundKey is the name of the opponent piece
 						String threaten = agent.getTHREATEN();
 						String pawnAttack = agent.getPAWNATTACK();
 						ArrayList<String>threatNames = (ArrayList<String>) folKb.searchFacts("x", posName, threaten);
@@ -237,7 +237,7 @@ public class APerformance {
 						for (int i = 0;i<pn;i++) {
 							writer.println(pawnThreats.get(i));
 						}
-						writer.println("The from position Reachable from strategy knowledge base");
+						writer.println("The from position "+fromposName+" Reachable from strategy knowledge base");
 						for (int i = 0;i<fno;i++) {
 							writer.println(fromtermNames.get(i));
 						}

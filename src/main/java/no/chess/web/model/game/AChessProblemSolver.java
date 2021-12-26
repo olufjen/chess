@@ -8,8 +8,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import aima.core.logic.fol.Connectors;
 import aima.core.logic.fol.domain.FOLDomain;
@@ -524,6 +526,8 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
  * @return
  */
 public String prepareAction( ArrayList<ChessActionImpl> actions) {
+	opponentAgent.probepossibilities(actions, myPlayer);
+	opponentAgent.chooseStrategy(actions);
 	String pname = checkoppoentThreat(THREATEN,actions); // returns null if no pieces are threatened
 	String pieceName = "WhiteBishop2";
 	String fpos = "f1";
@@ -729,7 +733,7 @@ public State buildGoalstate(String pieceName,String toPos) {
 		Literal player = new Literal((AtomicSentence)playerPredicate);
 		
 		literals.add(pos);
-		literals.add(own);
+//		literals.add(own);
 		literals.add(types);
 //		literals.add(player);
 		literals.add(boards);
@@ -855,22 +859,19 @@ public String deferredMove(ArrayList<ChessActionImpl> actions) {
 }
   /**
  * planProblem
+ * This is the main method of the ProblemSolver
  * This method creates and returns a High Level Action Problem given the available actions
  * Hierarchical Task networks and High Level Actions are described in  chapter 11.
  * At present, the High Level Problem contains one primitive action schema (chess action).
  * @param actions
- * @return
- */
-/**
- * @param actions
- * @return
+ * @return a ChessProblem
  */
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
-	  searchProblem(actions); // Builds an ActionSchema for every Chess Action.
+	  searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 	  String pieceName = null;
 	  ChessProblem problem = null;
 	  String actionName = deferredMove(actions);
-      pieceName = checkMovenumber(actions);
+      pieceName = checkMovenumber(actions); // Returns a possible piecename - a piece to be moved
 	  if (actionName != null && !pieceName.equals(actionName)) {
 		  pieceName = actionName;
 		  deferredKey = null;
@@ -902,7 +903,9 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(nactionName)).findAny().orElse(null);
 		  State initState = initStates.get(pieceName);
 		  State goal = goalStates.get(pieceName);
-		  problem = new ChessProblem(initState,goal,movedAction);
+		  Set<ActionSchema> aSchemas =  new HashSet<ActionSchema>(actionSchemas.values());
+//		  problem = new ChessProblem(initState,goal,movedAction);
+		  problem = new ChessProblem(initState,goal,aSchemas);		  
 		  writer.println("The fluents of the init state");
 	      for (Literal literal :
 	    	  initState.getFluents()) {
@@ -935,14 +938,17 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * searchProblem
  * For every available chessaction that contains a possible move and that is not blocked
  * create an actionschema
+ * @Since 17.12.21
+ * Preconditions and Effects are populated with Constants, the given piecename, posname and owner
  * @param actions
- * @return
+ * @return a List of ActionSchemas
  */
   public List<ActionSchema> searchProblem(ArrayList<ChessActionImpl> actions) {
 	  List<ActionSchema> schemas = new ArrayList<ActionSchema>();
 	  for (ChessActionImpl action:actions) {
 			if (action.getPossibleMove()!= null && !action.isBlocked()) {
 				determineParameters(action);
+				String newPos = action.getPossibleMove().getToPosition().getPositionName();
 				String pieceName = action.getChessPiece().getMyPiece().getOntlogyName();
 				Position position = action.getChessPiece().getHeldPosition();
 				if (position == null) {
@@ -954,17 +960,48 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 				State localgoalState = buildGoalstate(action);
 				initStates.put(pieceName, localinitialState);
 				goalStates.put(pieceName, localgoalState);
-				Variable piece = new Variable("piece");
-				Variable pos = new Variable("pos");
-				Variable toPos = new Variable("topos");
+				ArrayList<String>reachparentNames = (ArrayList<String>) folKb.searchFacts("x", newPos, PROTECTED);
+//				Variable piece = new Variable("piece");
+//				Variable pos = new Variable("pos");
+//				Variable toPos = new Variable("topos");
+				Constant piece = new Constant(pieceName);
+				Constant pos = new Constant(posName);
+				Constant toPos = new Constant(newPos);
 				Constant type = new Constant(typeofPiece);
 //				Variable ownerVar = new Variable("owner");
 				Constant ownerVar = new Constant(playerName);
-				List variables = new ArrayList<Variable>(Arrays.asList(piece,pos,toPos));
+//				List variables = new ArrayList<Variable>(Arrays.asList(piece,pos,toPos));
+				List variables = new ArrayList<Constant>(Arrays.asList(piece,pos,toPos));
 				List<Term> terms = new ArrayList<Term>();
 				List<Term> ownerterms = new ArrayList<Term>();
 				List<Term> newterms = new ArrayList<Term>();
 				List<Term> typeTerms = new ArrayList<Term>();
+				
+				List<Term> protectorTerms = new ArrayList();
+				Predicate protectedBy = null;
+				Constant protector = null;
+				String protectorName = null;
+				List<Literal> precondition = new ArrayList();
+				List<Literal> effects = new ArrayList();
+				if (reachparentNames != null && !reachparentNames.isEmpty() ) {
+					int psize = reachparentNames.size();
+					for (int i = 0;i<psize;i++) {
+						protectorName = reachparentNames.get(i);
+						if (!pieceName.equals(protectorName)) {
+							protector = new Constant(protectorName);
+//							Variable protector = new Variable("x"); //Cannot use Variable in preconditions and effects?
+							protectorTerms.add(protector);
+							protectorTerms.add(toPos);
+							protectedBy = new Predicate(PROTECTED,protectorTerms);
+							if (!typeofPiece.equals(PAWN)) {
+								precondition.add(new Literal((AtomicSentence) protectedBy));
+								variables.add(protector);
+							}
+							protectorTerms.clear();
+						}
+					}
+
+				}
 				ownerterms.add(ownerVar);
 				ownerterms.add(piece);
 				terms.add(piece);
@@ -978,15 +1015,13 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 				Predicate pospred = new Predicate(OCCUPIES,terms);
 				Predicate ownerPred = new Predicate(OWNER,ownerterms);
 				Predicate newPospred = new Predicate(OCCUPIES,newterms);
-				List<Literal> precondition = new ArrayList();
-				List<Literal> effects = new ArrayList();
 				precondition.add(new Literal((AtomicSentence) pospred));
-				precondition.add(new Literal((AtomicSentence) ownerPred));
+//				precondition.add(new Literal((AtomicSentence) ownerPred));
 				precondition.add(new Literal((AtomicSentence) typePred));
 //				Literal notAt = new Literal(pospred, true);
 //				effects.add(notAt);
 				effects.add(new Literal( (AtomicSentence)newPospred));
-				effects.add(new Literal( (AtomicSentence)ownerPred));
+//				effects.add(new Literal( (AtomicSentence)ownerPred));
 				effects.add(new Literal( (AtomicSentence)typePred));
 				ActionSchema movedAction = new ActionSchema(actionName,variables,precondition,effects);
 				actionSchemas.put(pieceName, movedAction);
@@ -998,13 +1033,10 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
   }
 
   /**
+   * OBS: NOT USED
    * solveProblem
    * This method solves a Problem for a given ChessAction
    * using the Graphplan algorithm. (see p. 383 chapter 10.3)
- * @param action
- * @return
- */
-/**
  * @param action
  * @return
  */
@@ -1026,7 +1058,12 @@ public List<List<ActionSchema>> solveProblem(ChessActionImpl action) {
 		return null;
   }
 
-  public Problem buildProblem(ChessActionImpl action) {
+  /**
+   * OBS: NOT USED
+ * @param action
+ * @return
+ */
+public Problem buildProblem(ChessActionImpl action) {
 		String pieceName = action.getChessPiece().getMyPiece().getOntlogyName();
 		AgamePiece apiece = action.getChessPiece();
 		ChessPieceType thepieceType = apiece.getChessType();
@@ -1155,7 +1192,7 @@ public List<List<ActionSchema>> solveProblem(ChessActionImpl action) {
 		Literal player = new Literal((AtomicSentence)playerPredicate);
 		
 		literals.add(pos);
-		literals.add(own);
+//		literals.add(own);
 		literals.add(types);
 //		literals.add(player);
 		literals.add(boards);
@@ -1271,7 +1308,7 @@ public List<List<ActionSchema>> solveProblem(ChessActionImpl action) {
 				}
 	
 			}
-			if (symName.equals(OWNER)) {
+/*			if (symName.equals(OWNER)) {
 				List<Term> terms = (List<Term>) s.getArgs();
 				Term f = terms.get(0);
 				ArrayList<Term> literalTerms = new ArrayList<>();
@@ -1279,15 +1316,15 @@ public List<List<ActionSchema>> solveProblem(ChessActionImpl action) {
 				Term last = terms.get(1);
 				String p = last.getSymbolicName();
 				if (owner.equals(playerName)&& p.equals(piece)) {
-	/*				Term term = new Constant(owner);
+					Term term = new Constant(owner);
 					Term ps = new Constant(p);
 					literalTerms.add(term);
 					literalTerms.add(ps);
-					Literal l = new Literal(new Predicate(symName, literalTerms));*/
+					Literal l = new Literal(new Predicate(symName, literalTerms));
 					Literal l = new Literal((AtomicSentence) s);
 					literals.add(l);
 				}
-			}
+			}*/
 			if (symName.equals(REACHABLE)) {
 				List<Term> terms = (List<Term>) s.getArgs();
 				ArrayList<Term> literalTerms = new ArrayList<>();

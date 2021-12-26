@@ -9,7 +9,7 @@ import no.games.chess.AbstractPieceMove;
 /**
  * ApieceMove represent the implementation of a piece move made by a player.
  * It contains a from position and a to position
- * It is created when a piece has been moved
+ * It is created when the ChessAction is created and the PreferredMove processor finds a possible move for this action
  * The <F,T> is replaced by the Position class
  * @author oluf
  * @param <F> Type parameter for from Position
