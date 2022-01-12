@@ -129,11 +129,20 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	/**
 	 * processPositions
 	 * This method recalculates removed positions for this action.
+	 * @since 6.01.22
+	 * When recalculating removed position, then the possible move must keep the original to position ???
+	 * @deprecated
+	 * 12.0122 This method is no longer necessary
 	 */
 	public void processPositions() {
+		Position movePos = null;
+		if (possibleMove != null) {
+			movePos = possibleMove.getToPosition();
+		}
 		ApieceMove newMove = ChessFunctions.processChessgame(this,chessPiece, myProcessor);
 		if (possibleMove != null && newMove != null) {
 			possibleMove = newMove;
+			possibleMove.setToPosition(movePos);
 		}
 		if (newMove == null) {
 			System.out.println("Action.processPosition new move is null "+possibleMove.toString());
