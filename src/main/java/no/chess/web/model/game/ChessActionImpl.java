@@ -132,7 +132,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * @since 6.01.22
 	 * When recalculating removed position, then the possible move must keep the original to position ???
 	 * @deprecated
-	 * 12.0122 This method is no longer necessary
+	 * 12.01.22 This method is no longer necessary
 	 */
 	public void processPositions() {
 		Position movePos = null;

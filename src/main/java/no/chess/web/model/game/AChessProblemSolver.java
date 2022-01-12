@@ -1222,6 +1222,8 @@ public Problem buildProblem(ChessActionImpl action) {
    * If the piece of the action has been moved recently
    * If the piece with its new position protects/reaches a centre position.
    * If the piece with its new position can capture an opponent piece.
+   * @since 12.01.22
+   * REcalculation of removed position no longer necessary
    * @param localAction
    */
   public void determineParameters(ChessActionImpl localAction) {

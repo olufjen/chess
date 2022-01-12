@@ -234,7 +234,7 @@ public class OpponentAgent {
 	}
 	/**
 	 * defineFacts
-	 * This method creates facts about the opponent pieces to the local knowledge base
+	 * This method creates facts about the opponent pieces to the local strategy knowledge base
 	 * These facts are: which positions they occupy and where they can move to.
 	 * It is called when the opponent agent is created.                           
 	 */
