@@ -22,7 +22,9 @@ import no.games.chess.fol.FOLGamesBCAsk;
 
 /**
  * The  ChessFolKnowledgeBase is a subclass of the FOLKnowledgeBase.
- * It is used to construct a local strategy First order knowledge base to search for the best move.
+ * It is used to construct a First order knowledge base to search for the best move.
+ * Two separate First order knowledge bases are maintained. The parent knowledge base and the
+ * strategy knowledge base. The strategy knowledge base contains knowledge about chess state one ply ahead.
  * It is filled with facts about possible new reachable positions and facts about opponent positions.
  * Then we can determine which opponent pieces I can capture based on which move I make.
  * 
