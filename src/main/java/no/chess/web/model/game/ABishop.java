@@ -72,6 +72,7 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 			localColor = pieceColor.BLACK;
 		this.myPiece = myPiece;
 		this.myPosition = myPosition;
+		value= 3;
 		reachablesqueres = new int[size][size];
 		reachablepiecePosition = new String[size][size];
 		for (int i = 0; i < size; i++) {
@@ -102,6 +103,7 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		value= 3;
 		friendPositions = new HashMap<String,Position>();
 		getLegalmoves(myPosition);
 	}

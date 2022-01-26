@@ -37,9 +37,10 @@ import no.games.chess.fol.FOLGamesFCAsk;
  */
 public class APerformance {
 
-	private List<Position> controlPositions;
+	private List<Position> controlPositions; // The original set of positions as a list
 	private HashMap<String,Position> positions; // The original HashMap of positions
 	private Map<String,Position> occupiedPositions; //Positions occupied by the opponent pieces. The key is the name of the piece
+	private Map<String,Position> takenPositions; //Positions occupied by the player's pieces. The key is the name of the piece
 	private APlayer myPlayer = null; // The player of the game
 	private APlayer opponent = null; // The opponent of the game
 	private ChessFolKnowledgeBase folKb = null; // The parent knowledge base
@@ -48,8 +49,18 @@ public class APerformance {
 	private FOLGamesFCAsk forwardChain;
 	private FOLGamesBCAsk backwardChain;
 	private List<String>positionKeys = null;// The key for positions that are reachable. The key is of the form: piecename_frompostopos
-	private Map<String,ArrayList<String>> reachablePieces; //contains piecenames of the form WhiteQueen_c4, with a position name as a key
-	private Map<String,String> reachableOpponent; //contains piece names of the form BackPawn5, with a position name as a key
+	private Map<String,ArrayList<String>> reachablePieces; //to position reachable from strategy KB. Contains piecenames of the form WhiteQueen_c4, with a position name as a key
+	private Map<String,ArrayList<String>> tothreatPieces; // to position threats from parent KB
+	private Map<String,ArrayList<String>> toreachablePieces; // to position reachable from parent KB
+	private Map<String,ArrayList<String>> topawnthreatPieces;// to position pawn threats from parent KB
+	private Map<String,ArrayList<String>> fromreachablePieces; //From position reachable from strategy KB
+	private Map<String,ArrayList<String>> fromthreatparentPieces; //From position threats from parent KB
+	private Map<String,ArrayList<String>> fromreachparentPieces; //From position reachable from parent KB
+	private Map<String,ArrayList<String>> frompawnparentPieces; //From position pawnthreats from parent KB
+	private Map<String,ArrayList<String>> threatparentPieces; // position threats from parent KB contains positions occupied by player's pieces
+	private Map<String,ArrayList<String>> reachparentPieces; // position reachable from parent KB contains positions occupied by player's pieces
+	private Map<String,ArrayList<String>> pawnparentPieces; // position pawnthreats from parent KB contains positions occupied by player's pieces
+	private Map<String,String> reachableOpponent; // A map of reachable opponent pieces. Contains piece names of the form BlackPawn5, with a position name like d5 as a key
 	private OpponentAgent agent;
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\performance.txt";
 	private PrintWriter writer = null;
@@ -67,8 +78,19 @@ public class APerformance {
 		this.forwardChain = forwardChain;
 		this.backwardChain = backwardChain;
 		occupiedPositions = new HashMap();
-		reachablePieces = new HashMap();
-		reachableOpponent = new HashMap();
+		takenPositions = new HashMap();
+		reachablePieces = new HashMap(); // to position reachable from strategy KB
+		reachableOpponent = new HashMap(); // What opponent pieces are at what positions.
+		tothreatPieces = new HashMap(); // to position threats from parent KB
+		toreachablePieces  = new HashMap(); // to position reachable from parent KB
+		topawnthreatPieces = new HashMap();// to position pawn threats from parent KB
+		fromreachablePieces  = new HashMap(); //From position reachable from strategy KB
+		fromthreatparentPieces  = new HashMap(); //From position threats from parent KB
+		fromreachparentPieces  = new HashMap(); //From position reachable from parent KB
+		frompawnparentPieces  = new HashMap(); //From position pawnthreats from parent KB
+		threatparentPieces = new HashMap();
+		reachparentPieces = new HashMap();
+		pawnparentPieces = new HashMap();
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {
@@ -78,6 +100,110 @@ public class APerformance {
 	    writer = new PrintWriter(new BufferedWriter(fw));	
 	}
 	
+	public Map<String, Position> getTakenPositions() {
+		return takenPositions;
+	}
+
+	public void setTakenPositions(Map<String, Position> takenPositions) {
+		this.takenPositions = takenPositions;
+	}
+
+	public Map<String, ArrayList<String>> getThreatparentPieces() {
+		return threatparentPieces;
+	}
+
+	public void setThreatparentPieces(Map<String, ArrayList<String>> threatparentPieces) {
+		this.threatparentPieces = threatparentPieces;
+	}
+
+	public Map<String, ArrayList<String>> getReachparentPieces() {
+		return reachparentPieces;
+	}
+
+	public void setReachparentPieces(Map<String, ArrayList<String>> reachparentPieces) {
+		this.reachparentPieces = reachparentPieces;
+	}
+
+	public Map<String, ArrayList<String>> getPawnparentPieces() {
+		return pawnparentPieces;
+	}
+
+	public void setPawnparentPieces(Map<String, ArrayList<String>> pawnparentPieces) {
+		this.pawnparentPieces = pawnparentPieces;
+	}
+
+	public Map<String, ArrayList<String>> getReachablePieces() {
+		return reachablePieces;
+	}
+
+	public void setReachablePieces(Map<String, ArrayList<String>> reachablePieces) {
+		this.reachablePieces = reachablePieces;
+	}
+
+	public Map<String, ArrayList<String>> getTothreatPieces() {
+		return tothreatPieces;
+	}
+
+	public void setTothreatPieces(Map<String, ArrayList<String>> tothreatPieces) {
+		this.tothreatPieces = tothreatPieces;
+	}
+
+	public Map<String, ArrayList<String>> getToreachablePieces() {
+		return toreachablePieces;
+	}
+
+	public void setToreachablePieces(Map<String, ArrayList<String>> toreachablePieces) {
+		this.toreachablePieces = toreachablePieces;
+	}
+
+	public Map<String, ArrayList<String>> getTopawnthreatPieces() {
+		return topawnthreatPieces;
+	}
+
+	public void setTopawnthreatPieces(Map<String, ArrayList<String>> topawnthreatPieces) {
+		this.topawnthreatPieces = topawnthreatPieces;
+	}
+
+	public Map<String, ArrayList<String>> getFromreachablePieces() {
+		return fromreachablePieces;
+	}
+
+	public void setFromreachablePieces(Map<String, ArrayList<String>> fromreachablePieces) {
+		this.fromreachablePieces = fromreachablePieces;
+	}
+
+	public Map<String, ArrayList<String>> getFromthreatparentPieces() {
+		return fromthreatparentPieces;
+	}
+
+	public void setFromthreatparentPieces(Map<String, ArrayList<String>> fromthreatparentPieces) {
+		this.fromthreatparentPieces = fromthreatparentPieces;
+	}
+
+	public Map<String, ArrayList<String>> getFromreachparentPieces() {
+		return fromreachparentPieces;
+	}
+
+	public void setFromreachparentPieces(Map<String, ArrayList<String>> fromreachparentPieces) {
+		this.fromreachparentPieces = fromreachparentPieces;
+	}
+
+	public Map<String, ArrayList<String>> getFrompawnparentPieces() {
+		return frompawnparentPieces;
+	}
+
+	public void setFrompawnparentPieces(Map<String, ArrayList<String>> frompawnparentPieces) {
+		this.frompawnparentPieces = frompawnparentPieces;
+	}
+
+	public Map<String, String> getReachableOpponent() {
+		return reachableOpponent;
+	}
+
+	public void setReachableOpponent(Map<String, String> reachableOpponent) {
+		this.reachableOpponent = reachableOpponent;
+	}
+
 	public OpponentAgent getAgent() {
 		return agent;
 	}
@@ -105,6 +231,7 @@ public class APerformance {
 	}
 	public void setPositions(HashMap<String, Position> positions) {
 		this.positions = positions;
+		controlPositions = new ArrayList(positions.values());
 	}
 	public APlayer getMyPlayer() {
 		return myPlayer;
@@ -152,6 +279,7 @@ public class APerformance {
 	/**
 	 * occupiedPositions
 	 * This method creates a map of positions occupied by the opponent's pieces
+	 * and a map of positions occupied by the player's pieces
 	 * The key is the name of the piece
 	 */
 	public void occupiedPositions() {
@@ -160,14 +288,34 @@ public class APerformance {
 		for (AgamePiece piece:pieces) {
 			if (piece.isActive()) {
 				String name = piece.getMyPiece().getOntlogyName();
-				int rank = piece.getValue();
+//				int rank = piece.getValue();
 				Position pos = piece.getmyPosition();
 				if (pos == null)
 					pos = piece.getHeldPosition();
 				occupiedPositions.put(name, pos);
 			}
 		}
+		List<AgamePiece> mypieces = myPlayer.getMygamePieces();
+		for (AgamePiece piece:mypieces) {
+			if (piece.isActive()) {
+				String name = piece.getMyPiece().getOntlogyName();
+//				int rank = piece.getValue();
+				Position pos = piece.getmyPosition();
+				if (pos == null)
+					pos = piece.getHeldPosition();
+				takenPositions.put(name, pos);
+			}
+		}		
 	}
+	/**
+	 * findReachable()
+	 * This method runs through all positions occupied by opponent pieces to see
+	 * if any of the player's pieces can reach these positions and safely take the opponent piece.
+	 * Important elements:
+	 * positionKeys: Reachable positions: piecename_frompostopos
+	 * positions: A Map of all positions. 
+	 * occupiedPositions : A Map of positions occupied by opponent pieces
+	 */
 	public void findReachable() {
 //		List<Position> occupied = (List<Position>) occupiedPositions.values();
 		String foundKey = null;
@@ -207,11 +355,18 @@ public class APerformance {
 						String threaten = agent.getTHREATEN();
 						String pawnAttack = agent.getPAWNATTACK();
 						ArrayList<String>threatNames = (ArrayList<String>) folKb.searchFacts("x", posName, threaten);
+						tothreatPieces.put(posName, threatNames); 
 						ArrayList<String>reachparentNames = (ArrayList<String>) folKb.searchFacts("x", posName, reachable);
+						toreachablePieces.put(posName, reachparentNames);
 						ArrayList<String>pawnThreats = (ArrayList<String>) folKb.searchFacts("x", posName, pawnAttack);
+						topawnthreatPieces.put(posName, pawnThreats);
 						ArrayList<String>fromthreatNames = (ArrayList<String>) folKb.searchFacts("x", fromposName, threaten);
+						fromthreatparentPieces.put(fromposName, fromthreatNames);
 						ArrayList<String>fromreachparentNames = (ArrayList<String>) folKb.searchFacts("x", fromposName, reachable);
+						fromreachablePieces.put(fromposName,fromtermNames);
+						fromreachparentPieces.put(fromposName, fromreachparentNames);
 						ArrayList<String>frompawnThreats = (ArrayList<String>) folKb.searchFacts("x", fromposName, pawnAttack);
+						frompawnparentPieces.put(fromposName, frompawnThreats);
 						termTotals.addAll(termNames);
 						int no = termNames.size();
 						int tn = threatNames.size();
@@ -254,16 +409,132 @@ public class APerformance {
 							writer.println(frompawnThreats.get(i));
 						}
 					}
-				}
+				} // The end of a confirmed occupied position
 			}
 		}
 		List<AgamePiece> pieces = myPlayer.getMygamePieces();
-		for (AgamePiece piece:pieces) {
-			if (piece.isActive()) {
-				
+		List<AgamePiece> opponentPieces = opponent.getMygamePieces();
+/*
+ * Different test strategies/statistics:
+ */
+		for (Position position:controlPositions) { // For all positions on the board
+			AgamePiece opponentPiece = null;
+			AgamePiece opponentrPiece = null;
+			AgamePiece piece = null;
+			AgamePiece strategyPiece = null;
+			AgamePiece opponentstrategyPiece = null;
+			String allposName = position.getPositionName();
+			String opponentPieceName = reachableOpponent.get(allposName);
+			if (opponentPieceName != null) {
+				opponentPiece =  (AgamePiece) opponentPieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(opponentPieceName)).findAny().orElse(null);
+			}
+			List<String> fromreachParent = fromreachparentPieces.get(allposName); 
+			List<String> fromreachStrategy = fromreachablePieces.get(allposName);
+			if (fromreachParent != null && !fromreachParent.isEmpty()) {
+				writer.println("Statistics for position "+allposName);
+				for (String name:fromreachParent) { // found a "from position" position reachable from parent KB
+					piece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(name)).findAny().orElse(null);
+					opponentrPiece = (AgamePiece) opponentPieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(name)).findAny().orElse(null);
+					if (piece != null && piece.isActive()) {
+						writer.println("Reachable from parent KB "+piece.getMyPiece().getOntlogyName());
+					}
+					if (opponentrPiece != null && opponentrPiece.isActive()) {
+						writer.println("Opponent reachable from parent KB "+opponentrPiece.getMyPiece().getOntlogyName());
+					}
+				}
+
+			}
+			if (fromreachStrategy != null && !fromreachStrategy.isEmpty()) {
+				for (String name:fromreachStrategy) { // found a "from position" position reachable from strategy KB
+					int l = name.length();
+					int index = l-2;
+					String pieceName = name.substring(0,l-5);
+					strategyPiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
+					opponentstrategyPiece = (AgamePiece) opponentPieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
+					if (strategyPiece != null && strategyPiece.isActive()) {
+						writer.println("Reachable from strategy KB "+strategyPiece.getMyPiece().getOntlogyName());
+					}
+					if (opponentstrategyPiece != null && opponentstrategyPiece.isActive()) {
+						writer.println("Opponent reachable from strategy KB "+opponentstrategyPiece.getMyPiece().getOntlogyName());
+					}
+				}
 			}
 		}
+
 	    writer.flush();
 	}
-	
+	public void simpleSearch() {
+		List<AgamePiece> pieces = myPlayer.getMygamePieces();
+		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
+		List<AgamePiece> opponentPawns = new ArrayList();
+		List<AgamePiece> myPawns = new ArrayList();
+		List<AgamePiece> opponentPieceThreats = new ArrayList();
+		for (Position pos:controlPositions) { // for all positions
+			String posName = pos.getPositionName();
+			opponentPawns.clear();
+			opponentPieceThreats.clear();
+			ArrayList<String> reachablePieces = fromreachparentPieces.get(posName);
+			if (reachablePieces != null && !reachablePieces.isEmpty()) { // There is a "from" position (like d5,b5)
+				writer.println("The from position "+posName + " investigated");
+				ArrayList<String> threatPieces = fromthreatparentPieces.get(posName);
+				ArrayList<String> threatPawns = frompawnparentPieces.get(posName);
+				boolean pawnthreats = threatPawns != null && !threatPawns.isEmpty();
+				boolean threats = threatPieces != null && !threatPieces.isEmpty();
+				if (pawnthreats) {
+					int psize = threatPawns.size();
+					for (int i = 0;i<psize;i++) {
+						String pawnName = threatPawns.get(i);
+						AgamePiece opponentPawn = (AgamePiece) opponentpieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(pawnName)).findAny().orElse(null);
+						AgamePiece myPawn = (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(pawnName)).findAny().orElse(null);
+						if (opponentPawn != null)
+							opponentPawns.add(opponentPawn);
+						if (myPawn != null) {
+							myPawns.add(myPawn);
+							pawnthreats = false;
+						}
+					}
+				}
+				if (threats) {
+					int psize = threatPieces.size();
+					for (int i = 0;i<psize;i++) {
+						String pieceName = threatPieces.get(i);
+						AgamePiece opponentPiece = (AgamePiece) opponentpieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(pieceName)).findAny().orElse(null);
+						opponentPieceThreats.add(opponentPiece);
+					}
+				}
+				int rsize = reachablePieces.size();
+				for (int i = 0;i<rsize;i++) {
+					String pieceName = reachablePieces.get(i);
+					AgamePiece movePiece = (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(pieceName)).findAny().orElse(null);
+					if (movePiece != null) { // found a piece
+						int v = movePiece.getValue();
+						if (!pawnthreats && !threats) {
+							writer.println("Piece "+movePiece.getMyPiece().getOntlogyName()+" with value "+v+ " can safely move to "+posName);
+						}
+						if (pawnthreats && !opponentPawns.isEmpty() || threats) {
+							writer.println("Piece "+movePiece.getMyPiece().getOntlogyName()+" with value "+v+ " must have a protection for "+posName);
+							if (pawnthreats && !opponentPawns.isEmpty()) {
+								writer.println("These pawns threatens the piece ");
+								int psize = opponentPawns.size();
+								for (int ip = 0;ip<psize;ip++) {
+									AgamePiece opponentPawn = opponentPawns.get(ip);
+									writer.println(opponentPawn.getMyPiece().getOntlogyName());
+								}
+							}
+							if (threats) {
+								writer.println("These pieces threatens the piece ");
+								int psize = opponentPieceThreats.size();
+								for (int ip = 0;ip<psize;ip++) {
+									AgamePiece opponentPiece = opponentPieceThreats.get(ip);
+									writer.println(opponentPiece.getMyPiece().getOntlogyName());
+									
+								}
+							}
+						}
+					}
+				}
+
+			}
+		}
+	}
 }

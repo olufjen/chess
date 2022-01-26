@@ -62,6 +62,7 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			localColor = pieceColor.BLACK;
 		this.myPiece = myPiece;
 		this.myPosition = myPosition;
+		value= 1;
 		reachablesqueres = new int[size][size];
 		reachablepiecePosition = new String[size][size];
 		for (int i = 0; i < size; i++) {

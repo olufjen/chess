@@ -82,6 +82,7 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		}
 		this.myPiece = myPiece;
 		this.myPosition = myPosition;
+		value= 5;
 		reachablesqueres = new int[size][size];
 		reachablepiecePosition = new String[size][size];
 		castlesqueres = new int[size][size];

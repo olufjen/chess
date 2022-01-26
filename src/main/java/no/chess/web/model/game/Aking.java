@@ -78,6 +78,7 @@ public class Aking extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		}
 		this.myPiece = myPiece;
 		this.myPosition = myPosition;
+		value= 0;
 		reachablesqueres = new int[size][size];
 		reachablepiecePosition = new String[size][size];
 		castlesqueres = new int[size][size];

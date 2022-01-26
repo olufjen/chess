@@ -65,7 +65,9 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private AQueen myqueen = null;
 	private ARook myrook = null;
 	private ABishop mybishop = null;
-	
+	private AKnight myKnight = null;
+	private Aking myKing = null;
+	private APawn myPawn = null;
 	private boolean castlingMove = false;
 	
 	public AgamePiece(Position myPosition) {
@@ -507,6 +509,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				myType = pieceType.PAWN;
 				chessType = new APawn(myPosition,myPiece);
 				APawn pawn = (APawn) chessType;
+				myPawn = pawn;
+				value = myPawn.getValue();
 //				pawn.setMother(this);
 				attackPositions = pawn.getAttackPositions();
 				gamePiece = (GamePiece) chessType;
@@ -526,6 +530,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				gamePiece = (GamePiece) chessType;
 				ABishop bishop = (ABishop) chessType;
 				mybishop = bishop;
+				value = mybishop.getValue();
 				reacablePositions = gamePiece.getNewPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
@@ -541,6 +546,9 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				chessType = new AKnight(myPosition,myPiece);
 				String pieceColorK = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
+				AKnight knight = (AKnight) chessType;
+				myKnight = knight;
+				value = myKnight.getValue();
 				reacablePositions = gamePiece.getNewPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
@@ -555,6 +563,8 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				chessType = new Aking(myPosition,myPiece);
 				gamePiece = (GamePiece) chessType;
 				Aking king = (Aking) chessType;
+				myKing = king;
+				value = myKing.getValue();
 				reacablePositions = gamePiece.getNewPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
@@ -575,6 +585,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				gamePiece = (GamePiece) chessType;
 				ARook rook = (ARook) chessType;
 				myrook = rook;
+				value = myrook.getValue();
 				reacablePositions = gamePiece.getNewPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
@@ -596,6 +607,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				gamePiece = (GamePiece) chessType;
 				AQueen queen = (AQueen) chessType;
 				myqueen = queen;
+				value = myqueen.getValue();
 				reacablePositions = gamePiece.getNewPositions(); // Creates two sets of reachable positions: reacablePositions,bishopPositions
 				bishopPositions = queen.getBishopPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions

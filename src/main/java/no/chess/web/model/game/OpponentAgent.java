@@ -361,7 +361,9 @@ public class OpponentAgent {
 		performanceMeasure.setPositions(positions);
 		performanceMeasure.setPositionKeys(positionKeys); // contains position keys of the form: WhiteBishop2_c4d5:
 		performanceMeasure.occupiedPositions(); // Finds positions occupied by the opponent's pieces
-		performanceMeasure.findReachable();
+		performanceMeasure.findReachable(); //runs through all positions occupied by opponent pieces to see
+		performanceMeasure.simpleSearch();
+//		 * if any of the player's pieces can reach these positions and safely take the opponent piece.
 		for (ChessAction action:actions) {
 			ChessActionImpl localAction = (ChessActionImpl) action;
 			ApieceMove move = localAction.getPossibleMove();
@@ -408,7 +410,7 @@ public class OpponentAgent {
 	 * Facts of the form
 	 * occupies(WhiteBishop2,c4)
 	 * REACHABLE(WhiteBishop2_c4,d5)
-	 * are created. - From position c4, the bishop can reach d5
+	 * are created in the strategy KB. - From position c4, the bishop can reach d5
 	 * @param actions - The actions available to player
 	 * @param player - The player of the game
 	 */
@@ -443,11 +445,11 @@ public class OpponentAgent {
 					piece.produceLegalmoves(pos); // Produces new reachable positions
 					piece.giveNewdirections(); // In case of bishop or queen or rook
 					HashMap<String,Position> reachablePositions = piece.getReacablePositions();
-					if (pieceType instanceof AQueen && piece.checkWhite() ) {
+/*					if (pieceType instanceof AQueen && piece.checkWhite() ) {
 						writer.println("Checking reachable for white queen\n"+piece.toString());
-					}
+					}*/
 					ChessActionImpl tempaction = new ChessActionImpl(reachablePositions,piece,player,myPlayer); // Creates new removed positions
-//					player.calculatePreferredPosition(piece, tempaction); // MUst use a new action
+//					player.calculatePreferredPosition(piece, tempaction); // Must use a new action
 
 					String occupies = piece.returnPredicate();
 					String piecename = piece.getMyPiece().getOntlogyName();

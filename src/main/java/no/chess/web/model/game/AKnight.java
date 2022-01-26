@@ -58,6 +58,7 @@ public class AKnight extends AbstractGamePiece<Position>  implements ChessPieceT
 			localColor = pieceColor.BLACK;
 		this.myPiece = myPiece;
 		this.myPosition = myPosition;
+		value= 3;
 		reachablesqueres = new int[size][size];
 		reachablepiecePosition = new String[size][size];
 		for (int i = 0; i < size; i++) {

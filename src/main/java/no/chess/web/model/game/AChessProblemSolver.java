@@ -871,7 +871,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  String pieceName = null;
 	  ChessProblem problem = null;
 	  String actionName = deferredMove(actions);
-      pieceName = checkMovenumber(actions); // Returns a possible piecename - a piece to be moved
+      pieceName = checkMovenumber(actions); // Returns a possible piecename - a piece to be moved - calls the prepareAction method
       searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 	  if (actionName != null && !pieceName.equals(actionName)) {
 		  pieceName = actionName;

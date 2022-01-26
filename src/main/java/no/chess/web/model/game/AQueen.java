@@ -64,6 +64,7 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 			localColor = pieceColor.BLACK;
 		this.myPiece = myPiece;
 		this.myPosition = myPosition;
+		value= 9;
 		reachablesqueres = new int[size][size];
 		reachablepiecePosition = new String[size][size];
 		for (int i = 0; i < size; i++) {
