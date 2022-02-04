@@ -158,6 +158,12 @@ public class OpponentAgent {
 
 	  }
 
+	public APerformance getPerformanceMeasure() {
+		return performanceMeasure;
+	}
+	public void setPerformanceMeasure(APerformance performanceMeasure) {
+		this.performanceMeasure = performanceMeasure;
+	}
 	public String getPROTECTED() {
 		return PROTECTED;
 	}
@@ -354,6 +360,7 @@ public class OpponentAgent {
 	 * chooseStrategy
 	 * Based on the facts found in the probepossibilities method
 	 * This method chooses a strategy for the next move.
+	 * It is called from the ChessProblemSolver
 	 * @param actions The actions available to player
 	 */
 	public void chooseStrategy(List<ChessActionImpl>actions) {
@@ -362,8 +369,8 @@ public class OpponentAgent {
 		performanceMeasure.setPositionKeys(positionKeys); // contains position keys of the form: WhiteBishop2_c4d5:
 		performanceMeasure.occupiedPositions(); // Finds positions occupied by the opponent's pieces
 		performanceMeasure.findReachable(); //runs through all positions occupied by opponent pieces to see
-		performanceMeasure.simpleSearch();
 //		 * if any of the player's pieces can reach these positions and safely take the opponent piece.
+		performanceMeasure.simpleSearch(); // Builds a map of movable pieces, protector pieces and need protection pieces.
 		for (ChessAction action:actions) {
 			ChessActionImpl localAction = (ChessActionImpl) action;
 			ApieceMove move = localAction.getPossibleMove();
@@ -411,6 +418,7 @@ public class OpponentAgent {
 	 * occupies(WhiteBishop2,c4)
 	 * REACHABLE(WhiteBishop2_c4,d5)
 	 * are created in the strategy KB. - From position c4, the bishop can reach d5
+	 * It is called from the ChessProblemSolver
 	 * @param actions - The actions available to player
 	 * @param player - The player of the game
 	 */

@@ -252,12 +252,30 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	/**
 	 * checkPawnremovals
 	 * This method moves the removed list to the processor's removed list
+	 * @since 01.02.22 Added a removed position at start
 	 * @param availablePositions
 	 * @param removedPositions
 	 * @return
 	 */
 	public List<Position> checkPawnremovals(List<Position>availablePositions,List<Position>removedPositions){
 		List<Position> removedList = new ArrayList();
+		boolean pawnColor = localColor == pieceColor.WHITE;
+		XYLocation loc =  myPosition.getXyloc();
+		int y = loc.getYCoOrdinate();
+		if(removedPositions != null && !removedPositions.isEmpty()) {
+			Position rem = removedPositions.get(0);
+			if (pawnColor && y == 1) {
+				blocked = true;
+			}
+			if (!pawnColor && y == 6) {
+				blocked = true;
+			}
+			for (Position pos:availablePositions) {
+				if (pos != rem) {
+					removedList.add(pos);
+				}
+			}
+		}
 		removedList.addAll(removedPositions);
 		return removedList;
 	}

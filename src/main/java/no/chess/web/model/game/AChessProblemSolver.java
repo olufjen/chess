@@ -806,8 +806,18 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
  * Here we must find a safe move		  
  */
 		  pieceName = prepareAction(actions);
-		  if (pieceName == null)
-			  pieceName = "WhitePawn1";
+		  if (pieceName == null) {
+			  AgamePiece chosen = opponentAgent.getPerformanceMeasure().getChosenPiece();
+			  Position chosenpos = opponentAgent.getPerformanceMeasure().getChosenPosition();
+			  if (chosen != null && chosenpos != null) {
+				  pieceName = chosen.getMyPiece().getOntlogyName();
+				  String pchosenPosname = chosenpos.getPositionName();
+				  folKb.checkFacts(pieceName, pchosenPosname, REACHABLE, actions,positionList);
+			  }
+			  if (pieceName == null) {
+				  pieceName = "WhitePawn1";
+			  }
+		  }
 		  break;
 	  }
 	  return pieceName;
@@ -817,7 +827,7 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
  * deferredMove
  * This method checks if any deferred move has been set.
  * If so, it returns the deferred key
- * A special case for castling
+ * This is a special case for castling
  * @param actions
  * @return
  */
@@ -870,7 +880,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 //	  searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 	  String pieceName = null;
 	  ChessProblem problem = null;
-	  String actionName = deferredMove(actions);
+	  String actionName = deferredMove(actions); // For castling
       pieceName = checkMovenumber(actions); // Returns a possible piecename - a piece to be moved - calls the prepareAction method
       searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 	  if (actionName != null && !pieceName.equals(actionName)) {
