@@ -69,7 +69,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private Aking myKing = null;
 	private APawn myPawn = null;
 	private boolean castlingMove = false;
-	private Integer myValue = null;
+	private Integer myValue = null; // This is the chess value of the piece represented as an Integer
 	
 	public AgamePiece(Position myPosition) {
 		super();

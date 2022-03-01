@@ -682,7 +682,7 @@ public class APerformance {
 	}
 	/**
 	 * evaluate
-	 * 
+	 * This method tries to evaluate the best move
 	 * @return
 	 */
 	public String evaluate() {
