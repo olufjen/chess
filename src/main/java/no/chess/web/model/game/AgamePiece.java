@@ -69,6 +69,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private Aking myKing = null;
 	private APawn myPawn = null;
 	private boolean castlingMove = false;
+	private Integer myValue = null;
 	
 	public AgamePiece(Position myPosition) {
 		super();
@@ -230,6 +231,15 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	public void setOntologyPositions(HashMap<String, Position> ontologyPositions) {
 		this.ontologyPositions = ontologyPositions;
 		determinePieceType();
+		myValue = new Integer(getValue());
+	}
+
+	public Integer getMyValue() {
+		return myValue;
+	}
+
+	public void setMyValue(Integer myValue) {
+		this.myValue = myValue;
 	}
 
 	public int getNofMoves() {
