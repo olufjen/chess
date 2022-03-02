@@ -719,7 +719,7 @@ public class APerformance {
 					if (chosenpiece.isPresent()) {
 						chosenPiece = chosenpiece.get();
 						chosenPosition = foundPos;
-						writer.println("Exit with   "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+foundPos.getPositionName());
+						writer.println("Exit with no protector or threat  "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+foundPos.getPositionName());
 						break;
 					}
 				}
@@ -734,7 +734,7 @@ public class APerformance {
 					if (protsize > 1 && chosenpiece.isPresent()) {
 						chosenPiece = chosenpiece.get();
 						chosenPosition = foundPos;
-						writer.println("Exit with  2 "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+foundPos.getPositionName());
+						writer.println("Exit with  protection "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+foundPos.getPositionName());
 						break;
 					}
 					if (protsize <= 1) { // Must find a piece to protect the piece I want to move
@@ -760,6 +760,7 @@ public class APerformance {
 									if (!threat) {
 										chosenPiece = strategyPiece; 
 										chosenPosition = positions.get(toPosname);
+										writer.println("Exit with  protector "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+toPosname);
 										break;
 									}
 								}
@@ -779,6 +780,8 @@ public class APerformance {
 								boolean threat = folKb.checkThreats("x", posName, threaten,opponent);
 								if (!threat) {
 									chosenPiece = piece; 
+									chosenPosition = positions.get(posName);
+									writer.println("Exit with  no threat "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+posName);
 									break;
 								}
 							}
