@@ -49,8 +49,13 @@ import no.games.chess.planning.ChessProblem;
  * This class is used to find best moves in the chess game through planning as described in chapter 10 and 11 of 
  * the aima book.
  * The ProblemSolver is created in the ChessAgent's execute method.
+ * In search for the best move, the ChessProblemSolver creates an opponent Agent object and a performance measure object.
  * The problem solver creates a ChessProblem object for the ChessSearchAlgorithm to solve.
  * The ChessProblem object contains one or more ActionSchemas. There is one ActionSchema for every ChessAction available for the player
+ * Some definitions:
+ * The planning phase: Actions are created and selected with some ordering constraints.
+ * The scheduling phase: Temporal information is added to ensure that the plan meets the goal: A winning game.
+ * (See chapter 11 p. 401) 
  * @author oluf
  * 
  */
@@ -139,6 +144,7 @@ public class AChessProblemSolver {
   private Map<String,Position>possiblePositions = null; // Contains the positions of these opponent pieces.
   private Map<String,AgamePiece>threatenedPieces = null; // Contains pieces that are threatened by the opponent
   private Map<String,Position>threadenedPositions = null; // Contains the positions of these pieces.
+  private Map<String,ArrayList<AgamePiece>>protectors = null; // Contains pieces that protect other pieces. The key is the name of the piece that it protects.
   private HashMap<String,Position> positions; // The original HashMap of positions
   private AgamePiece opponentCatch = null;
   private Position opponentcatchPosition = null;
@@ -146,7 +152,7 @@ public class AChessProblemSolver {
   private ChessActionImpl castleAction = null;
 
   private OpponentAgent opponentAgent = null;
-  
+  private AgamePiece chosenPiece = null;
   public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, ChessFolKnowledgeBase folKb, FOLDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
 		super();
 		this.stateImpl = stateImpl;
@@ -180,6 +186,7 @@ public class AChessProblemSolver {
 	    possiblePositions = new HashMap<String,Position>();
 	    threatenedPieces = new HashMap<String,AgamePiece>();
 	    threadenedPositions = new HashMap<String,Position>();
+	    protectors = new HashMap<String,ArrayList<AgamePiece>>();
 	    deferredGoalstates = new HashMap<String,State>();
 	    deferredGoal = game.getDeferredGoal();
 	    if (deferredGoal == null) {
@@ -366,6 +373,7 @@ public ChessStateImpl getStateImpl() {
    * This method checks the two Maps possiblePieces and possiblePositions
    * to see if there are opponent pieces that can be taken
    * The two Maps are filled by the call to the checkOpponent method
+   * It is called from the default part of the checkmovenumber method
  * @return
  * The name of the piece that can take this opponent piece
  * It only returns a name if the opponent piece has a value greater or equal to the value of the active piece
@@ -400,18 +408,21 @@ public String checkPossiblePieces() {
 /**
  * checkoppoentThreat
  * This method checks if any of my pieces are threatened by the opponent player
- * If there are no threatened pieces then it returns null.
+ * The threatened pieces and their positions are placed in the hashmaps threatenedPieces and threatenedPositions
  * It is called from the prepareAction method
  * OBS!:: Must empty the hashmaps before using them again. It is done at the start of this method
+ * The key used in the hashmaps is the name of the piece
  * @param fact
  * @param actions
- * @return The name of the pieces that is threatened if it has an action
- * If it does not have an action, Find a piece that can protect it.
+ * @since 11.03.22 This method is reworked
+ * The threatenedPieces threadenedPositions are filled if there are any threats
  */
-public String checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions) {
+public void checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions) {
 //	  List<AgamePiece> pieces = opponent.getMygamePieces();
 	  threatenedPieces.clear();	
 	  threadenedPositions.clear();
+	  protectors.clear();
+	  String thisPiece = "";String thisPos = "";
 	  List<AgamePiece> myPieces = myPlayer.getMygamePieces();
 	  for (AgamePiece mypiece:myPieces) { // For all my pieces: is this piece under threat from any opponent piece?
 		  if (mypiece.isActive()) {
@@ -432,33 +443,106 @@ public String checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions)
 		  }
 	  }
 	  if (!threatenedPieces.isEmpty()) {
-		  List<AgamePiece> pieces = myPlayer.getMygamePieces();
+		  ArrayList<AgamePiece> myProtectors = new ArrayList();
 		  for (AgamePiece piece:myPieces) {// For all my pieces: is this piece under threat from any opponent piece?
 			  String name = piece.getMyPiece().getOntlogyName();
+			  boolean protectedPiece = false;
+			  String posName = null;
+			  Position threatPos = null;
 			  if (threatenedPieces.containsKey(name)) {
 				  ActionSchema movedAction = actionSchemas.get(name);
-				  if (movedAction != null) {
-					  return name;
-				  }else {
-						pieceType type = piece.getPieceType();
-						if (type != type.PAWN) {
-							Position threatPos = threadenedPositions.get(name);
-							String posName = threatPos.getPositionName();
-							boolean toProtect = folKb.checkFacts(name, posName, REACHABLE, actions,positionList);
-							if (toProtect) {
-								return name;
+				  threatPos = threadenedPositions.get(name);
+				  posName = threatPos.getPositionName();
+				  writer.println("Piece under threat "+name+ " at "+posName);
+				  boolean maybeProtected = folKb.checkmyProtection(name, posName, PROTECTED, myPlayer);
+				  List<String> pieceNames = folKb.searchFacts("x", posName,PROTECTED);
+				  if (maybeProtected) {
+					  for (String protector:pieceNames) {
+ 						  AgamePiece protectorPiece = (AgamePiece) myPieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(protector)).findAny().orElse(null);
+ 						  if (protectorPiece != null) {
+ 							  writer.println(name+ " is protected by "+protector);
+ 							  protectedPiece = true;
+ 							  myProtectors.add(protectorPiece);
+ 						  }
+					  }
+					  protectors.put(name, myProtectors);
+				  }
+				  thisPiece = name;thisPos = posName;
+			  }
+			  if (!protectedPiece && posName != null) {
+				  List<String> fromreachStrategy = opponentAgent.getPerformanceMeasure().getFromreachablePieces().get(posName);
+				  List<String> reachStrategy = opponentAgent.getPerformanceMeasure().getReachablePieces().get(posName);
+				  writer.println("Trying to find a protector for "+posName);
+				  if (fromreachStrategy != null && !fromreachStrategy.isEmpty()) {
+					  for (String parentName:fromreachStrategy) { 
+							int l = parentName.length();
+							int index = l-2;
+							String pieceName = parentName.substring(0,l-3);
+							String toPosname = parentName.substring(index);
+							Position newPos = positions.get(toPosname);
+							writer.println("A protector "+pieceName+ " at "+toPosname);
+							AgamePiece protector =  (AgamePiece) myPieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
+							if (protector != null && protector.isActive()) {
+								chosenPiece = protector;
+								  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(parentName)).findAny().orElse(null);
+								  if (naction != null && naction.getPossibleMove() != null) {
+									  naction.getPossibleMove().setToPosition(newPos); // OBS !! wrong position !!!
+									  naction.setPreferredPosition(newPos);
+									  return;
+								  }
+							}
+					  }
+				  }
+				  if (reachStrategy != null && !reachStrategy.isEmpty()) {
+					  for (String parentName:fromreachStrategy) { 
+							int l = parentName.length();
+							int index = l-2;
+							String pieceName = parentName.substring(0,l-3);
+							String toPosname = parentName.substring(index);
+							Position newPos = positions.get(toPosname);
+							writer.println("A protector from reachstrategy "+pieceName+ " at "+toPosname);
+							AgamePiece protector =  (AgamePiece) myPieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
+							if (protector != null && protector.isActive()) {
+								chosenPiece = protector;
+								  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(parentName)).findAny().orElse(null);
+								  if (naction != null && naction.getPossibleMove() != null) {
+									  naction.getPossibleMove().setToPosition(newPos); // OBS !! wrong position !!!
+									  naction.setPreferredPosition(newPos);
+									  return;
+								  }
+							}
+					  }
+				  }else { // Must find a safe position for this piece or a protector
+						writer.println("No protector for  "+thisPiece+ " at "+thisPos);
+						List<Position> availablePositions = piece.getNewlistPositions();
+						for (Position pos:availablePositions){
+							String newPos = pos.getPositionName();
+							if(!piece.checkRemoved(pos) ) {
+								  boolean threat = folKb.checkThreats("x", newPos, fact,opponent);
+								  if (!threat) {
+									  chosenPiece = piece;
+									  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(name)).findAny().orElse(null);
+									  if (naction != null && naction.getPossibleMove() != null) {
+										  naction.getPossibleMove().setToPosition(pos); // OBS !! wrong position !!!
+										  naction.setPreferredPosition(pos);
+										  writer.println("Moves  "+thisPiece+ " to "+newPos);
+										  return;
+									  }
+								  }
 							}
 						}
 				  }
+
 			  }
 		  }
 	  }
-	return null;
+	  
 }
   /**
    * checkOpponent
    * This method finds which opponent pieces the active player can safely take.
    * The pieces found are placed in a Map called possiblePieces, and its position is placed in a Map called possiblePositions
+   * It is called from the checkMovenumber method
    * @since 15.03.21 Only pieces that are active are considered
  * @param fact
  * @param actions
@@ -526,9 +610,10 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
  * @return
  */
 public String prepareAction( ArrayList<ChessActionImpl> actions) {
+	String pname = null;
 	opponentAgent.probepossibilities(actions, myPlayer);
 	opponentAgent.chooseStrategy(actions);
-	String pname = checkoppoentThreat(THREATEN,actions); // returns null if no pieces are threatened
+	checkoppoentThreat(THREATEN,actions); // fills the threatenedPieces and threatenedPositions if any 
 	String pieceName = "WhiteBishop2";
 	String fpos = "f1";
 	String toPos = "d3";
@@ -571,6 +656,9 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 				return pieceName;
 			}
 		}
+	}
+	if (chosenPiece != null) {
+		return chosenPiece.getMyPiece().getOntlogyName();
 	}
 	if (pname != null) { // Has found a piece that is threatened. Then determine the best move
 		String name = pname;
@@ -813,6 +901,7 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 				  pieceName = chosen.getMyPiece().getOntlogyName();
 				  String pchosenPosname = chosenpos.getPositionName();
 				  folKb.checkFacts(pieceName, pchosenPosname, REACHABLE, actions,positionList);
+				  writer.println("Chosen piece from Opponent agent "+pieceName);
 			  }
 			  if (pieceName == null) {
 				  pieceName = "WhitePawn1";
@@ -877,12 +966,12 @@ public String deferredMove(ArrayList<ChessActionImpl> actions) {
  * @return a ChessProblem
  */
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
-//	  searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
+	  searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 	  String pieceName = null;
 	  ChessProblem problem = null;
 	  String actionName = deferredMove(actions); // For castling
       pieceName = checkMovenumber(actions); // Returns a possible piecename - a piece to be moved - calls the prepareAction method
-      searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
+//      searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 	  if (actionName != null && !pieceName.equals(actionName)) {
 		  pieceName = actionName;
 		  deferredKey = null;

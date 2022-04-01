@@ -850,6 +850,9 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		this.newlistPositions = newPositions;
 	}
 
+	/**
+	 * @return all available positions
+	 */
 	public ArrayList<Position> getNewlistPositions() {
 		return newlistPositions;
 	}

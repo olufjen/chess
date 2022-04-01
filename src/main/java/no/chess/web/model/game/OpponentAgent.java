@@ -31,7 +31,7 @@ import no.games.chess.fol.FOLGamesFCAsk;
  * It is created whenever the chessproblemsolver is created.
  * It also contains a FOL strategy Knowledge base, that contains
  * knowledge of possible moves one ply ahead.
- * Based on the knowledge from the strategy knowledge base, the agent maintains a Performance measure.
+ * Based on the knowledge from the strategy knowledge base, the agent creates and maintains a Performance measure.
  * The opponent agent object must be able to return with a best strategy for moves 
  * @author olj
  *
@@ -53,7 +53,7 @@ public class OpponentAgent {
 	private FOLGamesBCAsk backwardChain;
 	private ChessFolKnowledgeBase localKb; // The local strategy knowledge base
 	private APerformance performanceMeasure;
-	private Map<String,Position>protectedPositions = null; // Contains the set of protected positions
+	private Map<String,Position>protectedPositions = null; // Contains the set of positions protected by the opponent
 	private Map<String,Position>possiblePositions = null; // Contains the set of possible positions
 	// The key for this map is of the form: WhiteBishop2_c4d5
 	private HashMap<String,Position> positions; // The original HashMap of positions
@@ -109,7 +109,7 @@ public class OpponentAgent {
 		actions = this.stateImpl.getActions(myPlayer); // These are the opponent's actions
 		this.myPlayer.setActions(actions);
 		possiblePositions = new HashMap<String,Position>(); // Which positions are reachable
-		protectedPositions = new HashMap<String,Position>(); //Which positions are protected
+		protectedPositions = new HashMap<String,Position>(); //Which positions are protected by opponent
 		positionKeys = new ArrayList<String>();// The key for positions that are reachable
 		myPieceNames = new ArrayList<String>(); // A list of opponent pieces that are active
 		try {
@@ -241,6 +241,7 @@ public class OpponentAgent {
 	/**
 	 * defineFacts
 	 * This method creates facts about the opponent pieces to the local strategy knowledge base
+	 * This is done by calling the probePossibilities method
 	 * These facts are: which positions they occupy and where they can move to.
 	 * It is called when the opponent agent is created.                           
 	 */
@@ -303,7 +304,8 @@ public class OpponentAgent {
 	}
 	/**
 	 * probeConsequences
-	 * This action examines consequences a player's action may have.                                                                                    
+	 * This action examines consequences a player's action may have.  
+	 * AT PRESENT NOT USED                                                                                  
 	 * @param playerAction
 	 */
 	public void probeConsequences(ChessActionImpl playerAction) {
@@ -385,14 +387,14 @@ public class OpponentAgent {
 					Position pos =  (Position) removed.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
 					if(!piece.checkRemoved(apos)|| piece.checkFriendlyPosition(pos)) {
 //						String posA = apos.getPositionName();
-						boolean posOccupies = checkFacts(pieceName,posName,OCCUPIES);
+//						boolean posOccupies = checkFacts(pieceName,posName,OCCUPIES);
 						for (String key: positionKeys) {
 							if (key.contains(pieceName+sep+posName)) {
 								Position possiblepos = possiblePositions.get(key);
 								if (possiblepos != null) {
 									String posA = possiblepos.getPositionName();
-									boolean reachpos = checkReachable(pieceName, posA, key);
-									writer.println("Checking reachable for key "+key+" occupies is "+posOccupies+" for position "+posName+" is reachable "+reachpos+" for pos "+posA);
+//									boolean reachpos = checkReachable(pieceName, posA, key);
+									writer.println("Checking reachable for key "+key+" occupies is for position "+posName+" is reachable for pos "+posA);
 								}
 							}
 						}
@@ -400,14 +402,14 @@ public class OpponentAgent {
 				}
 			}
 		}
-		for (String key: positionKeys) {
+/*		for (String key: positionKeys) {
 			Position pos = possiblePositions.get(key);
 			if (pos != null) {
 				writer.println(key);
 				writer.println(pos.toString());
 			}
 			
-		}
+		}*/
 	    writer.flush();
 	}
 	/**
@@ -417,8 +419,11 @@ public class OpponentAgent {
 	 * Facts of the form
 	 * occupies(WhiteBishop2,c4)
 	 * REACHABLE(WhiteBishop2_c4,d5)
-	 * are created in the strategy KB. - From position c4, the bishop can reach d5
+	 * are created in the strategy KB. - From position c4, the bishop can reach d5.
+	 * The strategy KB represents possible moves one ply down.
 	 * It is called from the ChessProblemSolver
+	 * It is also called from the defineFact method, to create facts about the opponent pieces to the 
+	 * strategy knowledge base.
 	 * @param actions - The actions available to player
 	 * @param player - The player of the game
 	 */
@@ -495,6 +500,7 @@ public class OpponentAgent {
 	public void tellnewFacts(AgamePiece piece,String name) {
 		List<Position> availablePositions = piece.getNewlistPositions();
 		String piecename = piece.getMyPiece().getOntlogyName();
+		ChessPieceType pieceType = piece.getChessType();
 /*		if (piecename.equals("WhiteRook2")) {
 			writer.println("TellnewFacts from position "+name);
 			writer.println(piece.toString());
@@ -504,14 +510,18 @@ public class OpponentAgent {
 //				String piecename = piece.getMyPiece().getOntlogyName();
 				String posname = pos.getPositionName();
 				possiblePositions.put(name+posname, pos);
+				writer.println("Possible position\n"+name+posname);
 				positionKeys.add(name+posname);
 				localKb.createfacts(REACHABLE, posname, name);
-				boolean protectedpiece = false;
-				protectedpiece = folKb.checkmyProtection(piecename,posname,PROTECTED,opponent); // Is the new position protected then add it to protected positions
-				if (protectedpiece) {
-					protectedPositions.put(name+posname, pos);
-					writer.println("Protected position\n"+name+posname+"\n"+pos.toString());
+				if (!(pieceType instanceof APawn)) {
+					boolean protectedpiece = false;
+					protectedpiece = folKb.checkmyProtection(piecename,posname,PROTECTED,opponent); // Is the new position protected then add it to protected positions
+					if (protectedpiece) {
+						protectedPositions.put(name+posname, pos);
+						writer.println("Protected position\n"+name+posname+"\n"+pos.toString());
+					}
 				}
+
 			}
 		}
 	}

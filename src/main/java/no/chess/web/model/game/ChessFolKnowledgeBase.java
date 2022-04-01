@@ -263,7 +263,7 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 	 * @param pieceName
 	 * @param posName
 	 * @param fact
-	 * @return a List of term names (or empty list
+	 * @return a List of term names (or empty list)
 	 */
 	public List<String> searchFacts(String pieceName,String posName,String fact) {
 		Variable pieceVarx = null;

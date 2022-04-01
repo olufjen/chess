@@ -65,11 +65,17 @@ public class APerformance {
 	private FOLGamesFCAsk forwardChain;
 	private FOLGamesBCAsk backwardChain;
 	private List<String>positionKeys = null;// The key for positions that are reachable. The key is of the form: piecename_frompostopos
-	private Map<String,ArrayList<String>> reachablePieces; //to position reachable from strategy KB. Contains piecenames of the form WhiteQueen_c4, with a position name as a key
+/*
+ * The following two maps are only filled if there are opponent pieces than are reachable:
+ * See the method findreachable	
+ */
+	private Map<String,ArrayList<String>> reachablePieces; //to position reachable from strategy KB. 
+//															Contains piecenames of the form WhiteQueen_c4, with a position name as a key
+//															The position name is a position occupied by an opponent piece.
+	private Map<String,ArrayList<String>> fromreachablePieces; //From positions reachable from strategy KB
 	private Map<String,ArrayList<String>> tothreatPieces; // to position threats from parent KB
 	private Map<String,ArrayList<String>> toreachablePieces; // to position reachable from parent KB
 	private Map<String,ArrayList<String>> topawnthreatPieces;// to position pawn threats from parent KB
-	private Map<String,ArrayList<String>> fromreachablePieces; //From position reachable from strategy KB
 	private Map<String,ArrayList<String>> fromthreatparentPieces; //From position threats from parent KB
 	private Map<String,ArrayList<String>> fromreachparentPieces; //From position reachable from parent KB
 	private Map<String,ArrayList<String>> frompawnparentPieces; //From position pawnthreats from parent KB
@@ -82,6 +88,8 @@ public class APerformance {
 	private Map<String,AgamePiece>needprotectionPieces; // Pieces that can be moved that need protection
 	private Map<String,AgamePiece>protectorPieces; //Pieces that protect other pieces from a new position
 	private Map<String,AgamePiece>takePieces; //Opponent pieces that that can be taken
+	private Map<String,AgamePiece>canlosePieces; //Player's pieces that that can be lost to the opponent
+	
 	private Map<String,List<AgamePiece>>knownprotectorPieces;// Pieces that protect a given position
 	private Map<String,List<AgamePiece>>knownopponentPieces;// Pieces that threaten a given position
 	private List<Position> resourcePositions; // ResourcePositions are reachable positions
@@ -126,6 +134,7 @@ public class APerformance {
 		knownopponentPieces = new HashMap();
 		resourcePositions = new ArrayList();
 		takePieces = new HashMap(); //Opponent pieces that can be taken.
+		canlosePieces = new HashMap(); // pieces that can be lost to opponent
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {
@@ -373,6 +382,7 @@ public class APerformance {
 	 * This method creates a map of positions occupied by the opponent's pieces
 	 * and a map of positions occupied by the player's pieces
 	 * The key is the name of the piece
+	 * The maps are called occupiedPositions and takenPositions
 	 */
 	public void occupiedPositions() {
 //		List<Position> allPositions = (List<Position>) positions.values();
@@ -417,13 +427,13 @@ public class APerformance {
 			int index = l-2;
 			String toPosname = key.substring(index);
 			Position toPos = positions.get(toPosname); // The map of all positions
-			String fromposName = key.substring(l-4, l-2);
+			String fromposName = key.substring(l-4, l-2); // The position from which to reach a position
 			String pieceName = key.substring(0,l-5);
 			writer.println("Checking position key: "+key+" Piece "+pieceName+" From position "+fromposName);
 			if (toPos != null) {
 				if (occupiedPositions.containsValue(toPos)) {
 					Position entryPos = null;
-					writer.println("An occupied position: "+toPos.toString());
+					writer.println("An occupied position: "+toPos.getPositionName());
 					for (Map.Entry<String,Position> entry:occupiedPositions.entrySet()) {
 //						writer.println("Key of entry set: "+entry.getKey()+ " value of entry set: "+entry.getValue().toString());
 						entryPos = entry.getValue();
@@ -441,8 +451,10 @@ public class APerformance {
 						}*/
 						String reachable = agent.getREACHABLE();
 						ArrayList<String>termNames = (ArrayList<String>) localKb.searchFacts("x", posName, reachable);
+						// fromposName The position from which to reach a position:
 						ArrayList<String>fromtermNames = (ArrayList<String>) localKb.searchFacts("x", fromposName, reachable);
 						reachablePieces.put(posName, termNames); // posName is the name of the position of the opponent piece
+						fromreachablePieces.put(fromposName,fromtermNames);
 						reachableOpponent.put(posName, foundKey); // foundKey is the name of the opponent piece
 						String threaten = agent.getTHREATEN();
 						String pawnAttack = agent.getPAWNATTACK();
@@ -522,13 +534,15 @@ public class APerformance {
 			}
 			List<String> fromreachParent = fromreachparentPieces.get(allposName); 
 			List<String> fromreachStrategy = fromreachablePieces.get(allposName);
+			List<String> reachStrategy = reachablePieces.get(allposName);
 			if (fromreachParent != null && !fromreachParent.isEmpty()) {
 				writer.println("Statistics for position "+allposName); // Makes statistics for all positions on the board
 				for (String name:fromreachParent) { // found a "from position" position reachable from parent KB
 					piece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(name)).findAny().orElse(null);
 					opponentrPiece = (AgamePiece) opponentPieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(name)).findAny().orElse(null);
 					if (piece != null && piece.isActive()) {
-						writer.println("Reachable from parent KB "+piece.getMyPiece().getOntlogyName());
+						String pPos = piece.getMyPosition().getPositionName();
+						writer.println("Reachable from parent KB "+piece.getMyPiece().getOntlogyName()+ " At "+ pPos);
 					}
 					if (opponentrPiece != null && opponentrPiece.isActive()) {
 						writer.println("Opponent reachable from parent KB "+opponentrPiece.getMyPiece().getOntlogyName());
@@ -536,11 +550,12 @@ public class APerformance {
 				}
 
 			}
-			if (fromreachStrategy != null && !fromreachStrategy.isEmpty()) {
-				for (String name:fromreachStrategy) { // found a "from position" position reachable from strategy KB
+			if (fromreachStrategy != null && !fromreachStrategy.isEmpty()) { // These maps are only filled if there is an opponent piece at this particular position
+				for (String name:fromreachStrategy) { // found a "from position" position reachable from strategy KB Always empty??!! 30.03.22
 					int l = name.length();
 					int index = l-2;
-					String pieceName = name.substring(0,l-5);
+					String pieceName = name.substring(0,l-3);
+//					writer.println("Strategy: "+pieceName);
 					strategyPiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
 					opponentstrategyPiece = (AgamePiece) opponentPieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
 					if (strategyPiece != null && strategyPiece.isActive()) {
@@ -551,14 +566,35 @@ public class APerformance {
 					}
 				}
 			}
+			if (reachStrategy != null && !reachStrategy.isEmpty()) { // These maps are only filled if there is an opponent piece at this particular position
+				for (String name:reachStrategy) { // found a "from position" position reachable from strategy KB
+					int l = name.length();
+					int index = l-2;
+					String pieceName = name.substring(0,l-3);
+//					writer.println("Strategy 2: "+pieceName);
+					strategyPiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
+					opponentstrategyPiece = (AgamePiece) opponentPieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
+					if (strategyPiece != null && strategyPiece.isActive()) {
+						writer.println(allposName+ " Reachable from strategy KB "+strategyPiece.getMyPiece().getOntlogyName());
+					}
+					if (opponentstrategyPiece != null && opponentstrategyPiece.isActive()) {
+						writer.println(allposName+" Opponent reachable from strategy KB "+opponentstrategyPiece.getMyPiece().getOntlogyName());
+					}
+				}
+			}
 		}
 
 	    writer.flush();
 	}
 	/**
 	 * simpleSearch
-	 * This method builds a map of movable pieces, protector pieces and need protection pieces.
-	 * 
+	 * This method runs through all positions on the board and
+	 * investigates positions that are reachable from the parent KB
+	 * and which pieces that possibly can protect these reachable positions.
+	 * this results in three different Maps:
+	 * protectorPieces - pieces that protect a position from a new position
+	 * needprotectionPieces - pieces that need a protection in a new position.
+	 * movablePieces - pieces that can be moved to a new position without a threat.
 	 */
 	public void simpleSearch() {
 		List<AgamePiece> pieces = myPlayer.getMygamePieces();
@@ -635,9 +671,9 @@ public class APerformance {
 					}
 				}
 				int rsize = reachablePieces.size(); // reachablePieces also contains opponent pieces!!
-				checkOpponent(posName,reachablePieces);
+				checkOpponent(posName,reachablePieces); // opponent pieces placed in knownopponentPieces
 //				String opponentP = (String) reachablePieces.stream().filter(c -> c.contains("Black")).findAny().orElse(null);
-				boolean protectorpieces = checkMypieces(posName, reachablePieces);
+				boolean protectorpieces = checkMypieces(posName, reachablePieces);// player pieces placed in knownprotectorPieces
 				for (int i = 0;i<rsize;i++) {
 					String pieceName = reachablePieces.get(i);
 
@@ -645,14 +681,16 @@ public class APerformance {
 						writer.println("checking "+posName + " "+rsize);
 					}
 					AgamePiece movePiece = (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(pieceName)).findAny().orElse(null);
-					if (movePiece != null) { // found a piece to reach position pos
+					if (movePiece != null) { // found a piece for player to reach position posName
 						resourcePositions.add(pos); // reachable positions
 						int v = movePiece.getValue();
+						boolean safemove = false;
 						if ((!pawnthreats && !threats && !opponentreach) || protectorpieces) {
 							mymovablePieces.add(movePiece);
 							writer.println("Piece "+movePiece.getMyPiece().getOntlogyName()+" with value "+v+ " can safely move to "+posName);
+							safemove = true;
 						}
-						if ((pawnthreats && !opponentPawns.isEmpty() || threats || opponentreach) || !protectorpieces) {
+						if ((pawnthreats && !opponentPawns.isEmpty() || threats || opponentreach) && !safemove) {
 							writer.println("Piece "+movePiece.getMyPiece().getOntlogyName()+" with value "+v+ " must have a protection for "+posName);
 							needprotectionPieces.put(posName, movePiece);
 							if (pawnthreats && !opponentPawns.isEmpty()) {
@@ -682,7 +720,11 @@ public class APerformance {
 	}
 	/**
 	 * evaluate
-	 * This method tries to evaluate the best move
+	 * This method attempts to find the next move.
+	 * It runs through all reachable positions to find if there are any opponent pieces to take, and if there are any player's pieces under threat.
+	 * They are held in Maps called takePieces and canlosepieces. The key is the position they occupy.
+	 * If these maps are empty the method attempts to find the next move among the movable pieces held in the map movablePieces.
+	 * The key in this map is the position they occupy.
 	 * @return
 	 */
 	public String evaluate() {
@@ -691,6 +733,7 @@ public class APerformance {
 		String posName = null;
 		Position foundPos = null;
 		takePieces.clear();
+		canlosePieces.clear();
 		boolean chosen = false;
 		for (Position pos:resourcePositions) { // Resource positions are reachable positions.
 			ChessPiece piece = pos.getUsedBy();
@@ -698,13 +741,28 @@ public class APerformance {
 				AgamePiece myPiece = piece.getMyPiece();
 				String name = piece.getOntlogyName();
 				AgamePiece opponentPiece = (AgamePiece) opponentpieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(name)).findAny().orElse(null);
+				AgamePiece threatenedPiece = (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(name)).findAny().orElse(null);
 				if (opponentPiece != null && opponentPiece == myPiece ) {
 					posName = pos.getPositionName();
 //					foundPos = pos;
 					takePieces.put(posName, myPiece);
 //					break;
 				}
+				if (threatenedPiece != null && threatenedPiece == myPiece ) {
+					posName = pos.getPositionName();
+//					foundPos = pos;
+					canlosePieces.put(posName, myPiece);
+				}
 			}
+		}
+		if (!canlosePieces.isEmpty()) { //Find a safe place for these pieces
+			for (Map.Entry<String,AgamePiece> entry:canlosePieces.entrySet()) {
+				posName = entry.getKey();
+				AgamePiece myownPiece = entry.getValue();
+				String myPieceName = myownPiece.getMyPiece().getOntlogyName();
+				writer.println("This piece can be lost "+myPieceName + " at "+posName);
+			}
+				
 		}
 		if (!takePieces.isEmpty()) {	// Found opponent pieces that can be taken at reachable positions
 			for (Map.Entry<String,AgamePiece> entry:takePieces.entrySet()) {
@@ -791,6 +849,15 @@ public class APerformance {
 				}
 				
 			}
+		} // End pieces can be taken
+		if (takePieces.isEmpty()) { // No opponent pieces can be taken. What movable Piece to use?
+			if (!movablePieces.isEmpty()) {
+				writer.println("What movable piece to use?");
+				for (Map.Entry<String,ArrayList<AgamePiece>> entry:movablePieces.entrySet()) {
+					posName = entry.getKey();
+					ArrayList<AgamePiece> movablePieces = entry.getValue();
+				}
+			}
 		}
 		String chosename = "No name";
 		if (chosenPiece != null) {
@@ -801,11 +868,11 @@ public class APerformance {
 	}
 	/**
 	 * checkOpponent
-	 * This method checks if there is an opponent piece that is not a pawn among the reachable pieces.
-	 * If the opponent piece is a pawn, it then searches for opponent pawns that may hava an attack position
+	 * This method checks if there are opponent pieces among the reachable pieces.
+	 * If the opponent piece is a pawn, it then searches for opponent pawns that may have an attack position
+	 * These pieces are put in a map called knownopponentPieces with posName as key
 	 * that is posName
 	 * @param posName,reachablePieces
-	 * @return the name of the piece or null
 	 */
 	public void checkOpponent(String posName,ArrayList<String> reachablePieces) {
 		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
@@ -814,10 +881,12 @@ public class APerformance {
 		for (String name:reachablePieces) {
 			if (name.contains(opponentColor)) {
 				AgamePiece opponentPawn = (AgamePiece) opponentpieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(name)).findAny().orElse(null);
+				String pawname = opponentPawn.getMyPiece().getOntlogyName();
 				ChessPieceType pieceType = opponentPawn.getChessType();
 				boolean pawn = pieceType instanceof APawn;
 				if (!pawn && opponentPawn.isActive()) {
 					protectors.add(opponentPawn);
+					writer.println("Opponent  "+pawname+ " is reachable at "+posName);
 				}
 			}
 		}
@@ -831,15 +900,18 @@ public class APerformance {
 					Position pos = attackPos.get(posName);
 					if (pos != null) {
 						protectors.add(piece);
+						writer.println("Opponent pawn "+name+ " can take at "+posName);
 					}
 				}
 			}
 		}
 		knownopponentPieces.put(posName,protectors);
+		
 	}
 	/**
 	 * checkMypieces
 	 * This method checks which of the player's pieces protect a given position 
+	 * These pieces are put in a map called knownprotectorPieces with posName as key
 	 * @param posName The given position
 	 * @param reachablePieces
 	 * @return true if the position has a protection
@@ -854,9 +926,11 @@ public class APerformance {
 				AgamePiece myPiece = (AgamePiece) mypieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(name)).findAny().orElse(null);
 				if (myPiece != null && myPiece.isActive()) {
 					ChessPieceType pieceType = myPiece.getChessType();
+					String pawname = myPiece.getMyPiece().getOntlogyName();
 					boolean pawn = pieceType instanceof APawn;
 					if (!pawn) {
 						protectors.add(myPiece);
+						writer.println("Player's  "+pawname+ " is protector at "+posName);
 					}
 					counter++;
 				}
@@ -872,6 +946,7 @@ public class APerformance {
 					Position pos = attackPos.get(posName);
 					if (pos != null) {
 						protectors.add(piece);
+						writer.println("Player's  "+name+ " is protector at "+posName);
 					}
 				}
 			}
