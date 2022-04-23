@@ -765,7 +765,7 @@ public class APerformance {
 				
 		}
 		if (!takePieces.isEmpty()) {	// Found opponent pieces that can be taken at reachable positions
-			for (Map.Entry<String,AgamePiece> entry:takePieces.entrySet()) {
+			for (Map.Entry<String,AgamePiece> entry:takePieces.entrySet()) { // For loop 1
 				posName = entry.getKey();
 				AgamePiece opponentPiece = entry.getValue();
 				foundPos = positions.get(posName);
@@ -778,7 +778,7 @@ public class APerformance {
 						chosenPiece = chosenpiece.get();
 						chosenPosition = foundPos;
 						writer.println("Exit with no protector or threat  "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+foundPos.getPositionName());
-						break;
+						break; // break leaves the for loop 1
 					}
 				}
 				if (opponentprotectors != null && !opponentprotectors.isEmpty()) {
@@ -793,7 +793,7 @@ public class APerformance {
 						chosenPiece = chosenpiece.get();
 						chosenPosition = foundPos;
 						writer.println("Exit with  protection "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+foundPos.getPositionName());
-						break;
+						break;// break leaves the for loop 1
 					}
 					if (protsize <= 1) { // Must find a piece to protect the piece I want to move
 						writer.println("Must find protectors for  "+posName);
@@ -801,7 +801,7 @@ public class APerformance {
 						AgamePiece strategyPiece = null;
 						AgamePiece opponentstrategyPiece = null;
 						if (fromreachStrategy != null && !fromreachStrategy.isEmpty()) {
-							for (String name:fromreachStrategy) { // found a "from position" position reachable from strategy KB
+							for (String name:fromreachStrategy) { // for loop 2 found a "from position" position reachable from strategy KB
 								int l = name.length();
 								int index = l-2;
 								String toPosname = name.substring(index);
@@ -819,19 +819,19 @@ public class APerformance {
 										chosenPiece = strategyPiece; 
 										chosenPosition = positions.get(toPosname);
 										writer.println("Exit with  protector "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+toPosname);
-										break;
+										break;// break leaves the for loop 2
 									}
 								}
 								if (opponentstrategyPiece != null && opponentstrategyPiece.isActive()) {
 									writer.println("Evaluation Opponent reachable from strategy KB "+opponentstrategyPiece.getMyPiece().getOntlogyName());
 								}
-							}
+							} // End for loop 2
 						}
-						ArrayList<AgamePiece> mymovablePieces = movablePieces.get(posName);
+/*						ArrayList<AgamePiece> mymovablePieces = movablePieces.get(posName);
 						if (mymovablePieces!= null && !mymovablePieces.isEmpty() ) {
 							int msize = mymovablePieces.size();
 							AgamePiece piece = null;
-							for (int i = 0;i<msize;i++) {
+							for (int i = 0;i<msize;i++) { // For loop 3
 								piece = mymovablePieces.get(i);
 								String pieceName = piece.getMyPiece().getOntlogyName();
 								String threaten = agent.getTHREATEN();
@@ -840,17 +840,18 @@ public class APerformance {
 									chosenPiece = piece; 
 									chosenPosition = positions.get(posName);
 									writer.println("Exit with  no threat "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+posName);
-									break;
+									break;// break leaves the for loop 3
 								}
 							}
-						}
+						}*/
 					}
 //					List<AgamePiece> attackers = opponentprotectors.stream().sorted((p1,p2) -> p1.getMyValue().compareTo(p2.getMyValue()).;
 				}
 				
-			}
+			} // End for loop 1
 		} // End pieces can be taken
 		if (takePieces.isEmpty()) { // No opponent pieces can be taken. What movable Piece to use?
+			writer.println("No opponent pieces to take");
 			if (!movablePieces.isEmpty()) {
 				writer.println("What movable piece to use?");
 				for (Map.Entry<String,ArrayList<AgamePiece>> entry:movablePieces.entrySet()) {
@@ -864,7 +865,7 @@ public class APerformance {
 			chosename = chosenPiece.getMyPiece().getOntlogyName();
 		}
 		writer.println("Return from evaluation "+chosename+ " "+posName);
-		return posName;
+		return posName; //posName is the name of the position I want to move to or protect
 	}
 	/**
 	 * checkOpponent

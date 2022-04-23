@@ -321,4 +321,35 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 		writer.flush();
 		
 	}
+	/**
+	 * checkPosition
+	 * This method checks the position of a given piece
+	 * @param name
+	 * @param fact - the fact is the term occupies
+	 * @return The name of the position
+	 */
+	public String checkPosition(String name,String fact) {
+		Constant pieceVariable= new Constant(name);
+		Variable posVar = new Variable("x");
+		List<Term> reachableTerms = new ArrayList<Term>();
+		reachableTerms.add(pieceVariable);
+		reachableTerms.add(posVar);
+		Predicate factPredicate = new Predicate(fact,reachableTerms);
+		InferenceResult backWardresult =  backWardChain.ask(this, factPredicate);
+		BCGamesAskHandler handler = (BCGamesAskHandler)backWardresult;
+		HashMap vars = null;
+		Term usedTerm = null;
+		String termName = null;
+		List<HashMap<Variable, Term>> finals = handler.getFinalList();
+		int noofFinals = finals.size();
+		if (finals != null && !finals.isEmpty() && pieceVariable != null) {
+			for (int i = 0;i<noofFinals;i++) {
+				vars = finals.get(i);
+				usedTerm = (Term) vars.get(posVar);
+				termName = usedTerm.getSymbolicName(); // Finds which position this is used.
+//				termNames.add(termName);
+			}
+		}
+		return termName;
+	}
 }
