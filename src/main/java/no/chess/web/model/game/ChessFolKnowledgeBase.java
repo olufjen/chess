@@ -322,9 +322,41 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 		
 	}
 	/**
+	 * findFacts
+	 * This method returns a list of names of pieces that can reach a certain position
+	 * @param name - The name of the position
+	 * @param fact - The fact to query the KB 
+	 * @return - A list containing the name of the pieces
+	 */
+	public List<String> findFacts(String name,String fact) {
+		Constant nameConstant = new Constant(name);
+		Variable nameVar = new Variable("x");
+		List<Term> reachableTerms = new ArrayList<Term>();
+		List<String> termNames = new ArrayList<String>();
+		reachableTerms.add(nameVar);
+		reachableTerms.add(nameConstant);
+		Predicate factPredicate = new Predicate(fact,reachableTerms);
+		InferenceResult backWardresult =  backWardChain.ask(this, factPredicate);
+		BCGamesAskHandler handler = (BCGamesAskHandler)backWardresult;
+		HashMap vars = null;
+		Term usedTerm = null;
+		String termName = null;
+		List<HashMap<Variable, Term>> finals = handler.getFinalList();
+		int noofFinals = finals.size();
+		if (finals != null && !finals.isEmpty() && nameConstant != null) {
+			for (int i = 0;i<noofFinals;i++) {
+				vars = finals.get(i);
+				usedTerm = (Term) vars.get(nameVar);
+				termName = usedTerm.getSymbolicName(); // Finds which name of piece
+				termNames.add(termName);
+			}
+		}
+		return termNames;
+	}
+	/**
 	 * checkPosition
 	 * This method checks the position of a given piece
-	 * @param name
+	 * @param name - the name of the piece
 	 * @param fact - the fact is the term occupies
 	 * @return The name of the position
 	 */
@@ -351,5 +383,38 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 			}
 		}
 		return termName;
+	}
+	/**
+	 * searchKing
+	 * Given the name predicate this method returns a list of positions
+	 * from which the opponent king can be taken
+	 * @param namePredicate QUEEN,BISHOP,ROOK,KNIGHT,PAWN
+	 * @param kingPos
+	 * @return A list of positions
+	 */
+	public List<String> searchKing(String namePredicate,String kingPos){
+		Constant kingPosition = new Constant(kingPos);
+		Variable posVar = new Variable("x");
+		List<String> termNames = new ArrayList<String>();
+		List<Term> reachableTerms = new ArrayList<Term>();
+		reachableTerms.add(posVar);
+		reachableTerms.add(kingPosition);
+		Predicate factPredicate = new Predicate(namePredicate,reachableTerms);
+		InferenceResult backWardresult =  backWardChain.ask(this, factPredicate);
+		BCGamesAskHandler handler = (BCGamesAskHandler)backWardresult;
+		HashMap vars = null;
+		Term usedTerm = null;
+		String termName = null;
+		List<HashMap<Variable, Term>> finals = handler.getFinalList();
+		int noofFinals = finals.size();
+		if (finals != null && !finals.isEmpty() && kingPosition != null) {
+			for (int i = 0;i<noofFinals;i++) {
+				vars = finals.get(i);
+				usedTerm = (Term) vars.get(posVar);
+				termName = usedTerm.getSymbolicName(); // Finds which position this is used.
+				termNames.add(termName);
+			}
+		}
+		return termNames;
 	}
 }

@@ -22,6 +22,7 @@ import no.games.chess.AbstractGamePiece.pieceColor;
 public class Aking extends AbstractGamePiece<Position>  implements ChessPieceType {
 
 	private pieceType localType = pieceType.KING;
+	private static final String chessType = "KING"; // A class variable
 	private pieceColor localColor;
 	private int[][] reachablesqueres;
 	private String[][] reachablepiecePosition;
@@ -117,6 +118,10 @@ public class Aking extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		if (castlePositions == null)
 			castlePositions = new HashMap();
 		getLegalmoves(myPosition);
+	}
+
+	public static String getChesstype() {
+		return chessType;
 	}
 
 	public String getColor() {

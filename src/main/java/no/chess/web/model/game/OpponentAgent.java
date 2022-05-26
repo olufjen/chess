@@ -58,6 +58,7 @@ public class OpponentAgent {
 	// The key for this map is of the form: WhiteBishop2_c4d5
 	private HashMap<String,Position> positions; // The original HashMap of positions
 	private List<String>positionKeys = null; // contains position keys of the form: WhiteBishop2_c4d5:
+	private String opponentKingPosition = null;
 /*
  * From position c4 the white bishop can reach d5	
  */
@@ -158,6 +159,50 @@ public class OpponentAgent {
 
 	  }
 
+	public String getPAWN() {
+		return PAWN;
+	}
+	public void setPAWN(String pAWN) {
+		PAWN = pAWN;
+	}
+	public String getKNIGHT() {
+		return KNIGHT;
+	}
+	public void setKNIGHT(String kNIGHT) {
+		KNIGHT = kNIGHT;
+	}
+	public String getBISHOP() {
+		return BISHOP;
+	}
+	public void setBISHOP(String bISHOP) {
+		BISHOP = bISHOP;
+	}
+	public String getROOK() {
+		return ROOK;
+	}
+	public void setROOK(String rOOK) {
+		ROOK = rOOK;
+	}
+	public String getKING() {
+		return KING;
+	}
+	public void setKING(String kING) {
+		KING = kING;
+	}
+	public String getQUEEN() {
+		return QUEEN;
+	}
+	public void setQUEEN(String qUEEN) {
+		QUEEN = qUEEN;
+	}
+	public String getOpponentKingPosition() {
+		return opponentKingPosition;
+	}
+	public void setOpponentKingPosition(String opponentKingPosition) {
+		this.opponentKingPosition = opponentKingPosition;
+		performanceMeasure.setOpponentKingPosition(opponentKingPosition);
+		performanceMeasure.findKingsReachable();
+	}
 	public APerformance getPerformanceMeasure() {
 		return performanceMeasure;
 	}
@@ -194,6 +239,7 @@ public class OpponentAgent {
 	}
 	public void setPositions(HashMap<String, Position> positions) {
 		this.positions = positions;
+		performanceMeasure.setPositions(positions);
 	}
 	public ChessStateImpl getStateImpl() {
 		return stateImpl;
@@ -303,6 +349,25 @@ public class OpponentAgent {
 //		writer.println("Opponent piece "+piece+"\ncan move to "+pos);
 	}
 	/**
+	 * findPiece
+	 * This method returns a list of piece names.
+	 * These pieces can reach a certain position from the strategy KB
+	 * @param pos The position to reach
+	 * @param fact The fact REACHABLE
+	 * @return
+	 */
+	public List<String> findPiece(String pos,String fact) {
+		List<String> pieces = localKb.findFacts(pos, fact);
+		writer.println("The following pieces can reach "+pos);
+		if (pieces != null && !pieces.isEmpty()) {
+			for (String name:pieces) {
+				writer.println("Piece "+name);
+			}
+		}
+		 writer.flush();
+		return pieces;
+	}
+	/**
 	 * probeConsequences
 	 * This action examines consequences a player's action may have.  
 	 * AT PRESENT NOT USED                                                                                  
@@ -410,7 +475,7 @@ public class OpponentAgent {
 			}
 			
 		}*/
-	    writer.flush();
+//	    writer.flush();
 	}
 	/**
 	 * probepossibilities
@@ -518,7 +583,7 @@ public class OpponentAgent {
 					protectedpiece = folKb.checkmyProtection(piecename,posname,PROTECTED,opponent); // Is the new position protected then add it to protected positions
 					if (protectedpiece) {
 						protectedPositions.put(name+posname, pos);
-						writer.println("Protected position\n"+name+posname+"\n"+pos.toString());
+						writer.println("Protected position\n"+name+posname);
 					}
 				}
 

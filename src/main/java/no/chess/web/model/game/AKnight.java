@@ -22,7 +22,8 @@ import no.games.chess.AbstractGamePiece.pieceColor;
  */
 public class AKnight extends AbstractGamePiece<Position>  implements ChessPieceType {
 
-	private pieceType localType = pieceType.PAWN;
+	private pieceType localType = pieceType.KNIGHT;
+	private static final String chessType = "KNIGHT"; // A class variable
 	private pieceColor localColor;
 	private int[][] reachablesqueres;
 	private String[][] reachablepiecePosition;
@@ -89,6 +90,10 @@ public class AKnight extends AbstractGamePiece<Position>  implements ChessPieceT
 			}
 		}
 		getLegalmoves(myPosition);
+	}
+
+	public static String getChesstype() {
+		return chessType;
 	}
 
 	public String getColor() {

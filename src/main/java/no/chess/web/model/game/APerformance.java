@@ -60,7 +60,7 @@ public class APerformance {
 	private APlayer myPlayer = null; // The player of the game
 	private APlayer opponent = null; // The opponent of the game
 	private ChessFolKnowledgeBase folKb = null; // The parent knowledge base
-	private ChessFolKnowledgeBase localKb; // The strategy knowledge base
+	private ChessFolKnowledgeBase localKb = null; // The strategy knowledge base
 	private FOLDomain chessDomain;
 	private FOLGamesFCAsk forwardChain;
 	private FOLGamesBCAsk backwardChain;
@@ -95,9 +95,10 @@ public class APerformance {
 	private List<Position> resourcePositions; // ResourcePositions are reachable positions
 	private AgamePiece chosenPiece = null;
 	private Position chosenPosition = null;
-	private String opponentColor = "Black";
+	private String opponentColor = "Black"; //OBS !!
 	private String playerColor = "White";
 	private OpponentAgent agent;
+	private String opponentKingPosition = null;
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\performance.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
@@ -144,6 +145,14 @@ public class APerformance {
 	    writer = new PrintWriter(new BufferedWriter(fw));	
 	}
 	
+	public String getOpponentKingPosition() {
+		return opponentKingPosition;
+	}
+
+	public void setOpponentKingPosition(String opponentKingPosition) {
+		this.opponentKingPosition = opponentKingPosition;
+	}
+
 	public String getOpponentColor() {
 		return opponentColor;
 	}
@@ -515,7 +524,7 @@ public class APerformance {
 					}
 				} // The end of a confirmed occupied position
 			}
-		}
+		} // End reachable positions+
 		List<AgamePiece> pieces = myPlayer.getMygamePieces();
 		List<AgamePiece> opponentPieces = opponent.getMygamePieces();
 /*
@@ -584,7 +593,7 @@ public class APerformance {
 			}
 		}
 
-	    writer.flush();
+
 	}
 	/**
 	 * simpleSearch
@@ -597,6 +606,7 @@ public class APerformance {
 	 * movablePieces - pieces that can be moved to a new position without a threat.
 	 */
 	public void simpleSearch() {
+		writer.println("A simple search");
 		List<AgamePiece> pieces = myPlayer.getMygamePieces();
 		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
 		List<AgamePiece> opponentPawns = new ArrayList();
@@ -672,17 +682,19 @@ public class APerformance {
 				}
 				int rsize = reachablePieces.size(); // reachablePieces also contains opponent pieces!!
 				checkOpponent(posName,reachablePieces); // opponent pieces placed in knownopponentPieces
+				List<AgamePiece> opponentProtectors = knownopponentPieces.get(posName);
+				pawnthreats = opponentProtectors != null && !opponentProtectors.isEmpty(); // Added 2.05.22
 //				String opponentP = (String) reachablePieces.stream().filter(c -> c.contains("Black")).findAny().orElse(null);
 				boolean protectorpieces = checkMypieces(posName, reachablePieces);// player pieces placed in knownprotectorPieces
 				for (int i = 0;i<rsize;i++) {
 					String pieceName = reachablePieces.get(i);
-
+/*
 					if (posName.equals("b5")) { // TESTS !!
 						writer.println("checking "+posName + " "+rsize);
-					}
+					}*/
 					AgamePiece movePiece = (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(pieceName)).findAny().orElse(null);
 					if (movePiece != null) { // found a piece for player to reach position posName
-						resourcePositions.add(pos); // reachable positions
+						resourcePositions.add(pos); // reachable positions - pos is one of all positions on the board
 						int v = movePiece.getValue();
 						boolean safemove = false;
 						if ((!pawnthreats && !threats && !opponentreach) || protectorpieces) {
@@ -715,8 +727,9 @@ public class APerformance {
 				}
 				movablePieces.put(posName,mymovablePieces);
 			}
-		}
+		} //End for all positions
 		evaluate();
+	    writer.flush();
 	}
 	/**
 	 * evaluate
@@ -728,13 +741,17 @@ public class APerformance {
 	 * @return
 	 */
 	public String evaluate() {
+		writer.println("Evaluation");
 		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
 		List<AgamePiece> pieces = myPlayer.getMygamePieces();
 		String posName = null;
 		Position foundPos = null;
 		takePieces.clear();
 		canlosePieces.clear();
+		chosenPiece = null;
+		chosenPosition = null;
 		boolean chosen = false;
+		boolean noexit = false;
 		for (Position pos:resourcePositions) { // Resource positions are reachable positions.
 			ChessPiece piece = pos.getUsedBy();
 			if (piece != null) {
@@ -765,10 +782,13 @@ public class APerformance {
 				
 		}
 		if (!takePieces.isEmpty()) {	// Found opponent pieces that can be taken at reachable positions
+			int takesize = takePieces.size();
+			writer.println("There are "+takesize+ " opponent pieces to take ");
 			for (Map.Entry<String,AgamePiece> entry:takePieces.entrySet()) { // For loop 1
 				posName = entry.getKey();
 				AgamePiece opponentPiece = entry.getValue();
 				foundPos = positions.get(posName);
+				writer.println("A piece to take "+opponentPiece.getMyPiece().getOntlogyName()+" at "+posName);
 				List<AgamePiece>  opponentprotectors = knownopponentPieces.get(posName);// Pieces that threaten a given position
 				List<AgamePiece>  protectors = knownprotectorPieces.get(posName);// Pieces that protect a given position
 				int protsize = protectors.size();
@@ -801,14 +821,14 @@ public class APerformance {
 						AgamePiece strategyPiece = null;
 						AgamePiece opponentstrategyPiece = null;
 						if (fromreachStrategy != null && !fromreachStrategy.isEmpty()) {
-							for (String name:fromreachStrategy) { // for loop 2 found a "from position" position reachable from strategy KB
+							for (String name:fromreachStrategy) { // for loop 2 found a "from position" reachable from strategy KB
 								int l = name.length();
 								int index = l-2;
 								String toPosname = name.substring(index);
 								String pieceName = name.substring(0,l-3);
-								if (posName.equals("d5")) {
+/*								if (posName.equals("d5")) {
 									writer.println("A protector for "+posName+ " is "+pieceName+" from "+toPosname);
-								}
+								}*/
 								strategyPiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
 								opponentstrategyPiece = (AgamePiece) opponentpieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
 								if (strategyPiece != null && strategyPiece.isActive()) {
@@ -818,12 +838,14 @@ public class APerformance {
 									if (!threat) {
 										chosenPiece = strategyPiece; 
 										chosenPosition = positions.get(toPosname);
+										posName = toPosname;
 										writer.println("Exit with  protector "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+toPosname);
 										break;// break leaves the for loop 2
 									}
 								}
 								if (opponentstrategyPiece != null && opponentstrategyPiece.isActive()) {
-									writer.println("Evaluation Opponent reachable from strategy KB "+opponentstrategyPiece.getMyPiece().getOntlogyName());
+									writer.println("Evaluation Opponent reachable from strategy KB "+opponentstrategyPiece.getMyPiece().getOntlogyName()+" for "+toPosname);
+									noexit = true;
 								}
 							} // End for loop 2
 						}
@@ -846,17 +868,26 @@ public class APerformance {
 						}*/
 					}
 //					List<AgamePiece> attackers = opponentprotectors.stream().sorted((p1,p2) -> p1.getMyValue().compareTo(p2.getMyValue()).;
-				}
+				} // End there exist opponent protectors
 				
 			} // End for loop 1
 		} // End pieces can be taken
-		if (takePieces.isEmpty()) { // No opponent pieces can be taken. What movable Piece to use?
+		if (takePieces.isEmpty()|| chosenPiece == null || noexit) { // No opponent pieces can be taken. What movable Piece to use?
 			writer.println("No opponent pieces to take");
 			if (!movablePieces.isEmpty()) {
 				writer.println("What movable piece to use?");
 				for (Map.Entry<String,ArrayList<AgamePiece>> entry:movablePieces.entrySet()) {
-					posName = entry.getKey();
+					String possibleposName = entry.getKey();
 					ArrayList<AgamePiece> movablePieces = entry.getValue();
+					for (AgamePiece piece:movablePieces) {
+						String pieceName = piece.getMyPiece().getOntlogyName();
+						String predicate = piece.getNameType();
+						writer.println("Investigating for piece "+pieceName + " with type "+predicate+" and position "+possibleposName);
+						List<String> positions = localKb.searchKing(predicate, opponentKingPosition);
+						for (String pos:positions) {
+							writer.println("The piece can take the king from "+pos);
+						}
+					}
 				}
 			}
 		}
@@ -887,7 +918,7 @@ public class APerformance {
 				boolean pawn = pieceType instanceof APawn;
 				if (!pawn && opponentPawn.isActive()) {
 					protectors.add(opponentPawn);
-					writer.println("Opponent  "+pawname+ " is reachable at "+posName);
+					writer.println("Opponent  "+pawname+ " can reach "+posName);
 				}
 			}
 		}
@@ -955,5 +986,74 @@ public class APerformance {
 		knownprotectorPieces.put(posName,protectors);
 		protectorflag = counter>1;
 		return protectorflag;
+	}
+	/**
+	 * findKingsReachable
+	 * This method produces facts to the strategy KB of the form:
+	 * BISHOP(h7,g8) - which says that the position g8 is reachable from h7 by a BISHOP
+	 * The position g8 is the current position of the opponent king
+	 * It is called from the opponent agent when the opponent king's position is set.
+	 */
+	public void findKingsReachable() {
+		List<AgamePiece> pieces = myPlayer.getMygamePieces();
+		AgamePiece piece = pieces.get(0);
+		ChessPiece chesspiece = piece.getMyPiece();
+		if (opponentKingPosition != null) {
+			Position position = positions.get(opponentKingPosition);
+			ABishop bishop = new ABishop(position,chesspiece);
+			HashMap<String,Position> reachables = bishop.getLegalmoves();
+			String predicate = agent.getBISHOP();
+			List<Position> reachablelist = new ArrayList<Position>(reachables.values());
+			for (Position pos:reachablelist) {
+				String posName = pos.getPositionName();
+//				writer.println("Bishop Reachable to Kings position from "+posName + " King at "+opponentKingPosition);
+				localKb.createfacts(predicate,opponentKingPosition, posName);
+			}
+			ARook rook = new ARook(position,chesspiece);
+			HashMap<String,Position> rookreachables = rook.getLegalmoves();
+			String rookpredicate = agent.getROOK();
+			List<Position> rookreachablelist = new ArrayList<Position>(rookreachables.values());
+			for (Position pos:rookreachablelist) {
+				String posName = pos.getPositionName();
+//				writer.println("Rook Reachable to Kings position from "+posName + " King at "+opponentKingPosition);
+				localKb.createfacts(rookpredicate,opponentKingPosition, posName);
+			}
+			AQueen queen = new AQueen(position,chesspiece);
+			HashMap<String,Position> queenreachables = queen.getLegalmoves();
+			HashMap<String,Position> queenbishop = queen.getBishopPositions();
+			String queenpredicate = agent.getQUEEN();
+			List<Position> queenreachablelist = new ArrayList<Position>(queenreachables.values());
+			List<Position> queenbishoplist = new ArrayList<Position>(queenbishop.values());
+			for (Position pos:queenreachablelist) {
+				String posName = pos.getPositionName();
+//				writer.println("Queen rook Reachable to Kings position from "+posName + " King at "+opponentKingPosition);
+				localKb.createfacts(queenpredicate,opponentKingPosition, posName);
+			}
+			for (Position pos:queenbishoplist) {
+				String posName = pos.getPositionName();
+//				writer.println("Queen bishop Reachable to Kings position from "+posName + " King at "+opponentKingPosition);
+				localKb.createfacts(queenpredicate,opponentKingPosition, posName);
+			}
+			AKnight knight = new AKnight(position,chesspiece);
+			HashMap<String,Position> knightreachables = knight.getLegalmoves();
+			List<Position> knightreachablelist = new ArrayList<Position>(knightreachables.values());
+			String knightpredicate = agent.getKNIGHT();
+			for (Position pos:knightreachablelist) {
+				String posName = pos.getPositionName();
+//				writer.println("Knight Reachable to Kings position from "+posName + " King at "+opponentKingPosition);
+				localKb.createfacts(knightpredicate,opponentKingPosition, posName);
+			}
+			APawn pawn = new APawn(position,chesspiece);
+/*			HashMap<String,Position> pawnreachables = pawn.getAttackPositions();
+			List<Position> pawnreachablelist = new ArrayList<Position>(pawnreachables.values());*/
+			List<Position> pawnreachablelist = pawn.produceAttack(position);
+			String pawnpredicate = agent.getPAWN();
+			for (Position pos:pawnreachablelist) {
+				String posName = pos.getPositionName();
+				writer.println("Pawn Reachable to Kings position from "+posName + " King at "+opponentKingPosition);
+				localKb.createfacts(pawnpredicate,opponentKingPosition, posName);
+			}
+		}
+
 	}
 }

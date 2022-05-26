@@ -28,6 +28,7 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 
 
 	private pieceType localType = pieceType.BISHOP;
+	private static final String chessType = "BISHOP"; // A class variable
 	private pieceColor localColor;
 	private int[][] reachablesqueres;
 	private String[][] reachablepiecePosition;
@@ -122,6 +123,10 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 
 	public void setThisDirection(direction thisDirection) {
 		this.thisDirection = thisDirection;
+	}
+
+	public static String getChesstype() {
+		return chessType;
 	}
 
 	public String getColor() {

@@ -25,6 +25,7 @@ import no.games.chess.AbstractGamePiece.pieceColor;
 public class ARook extends AbstractGamePiece<Position>  implements ChessPieceType {
 
 	private pieceType localType = pieceType.ROOK;
+	private static final String chessType = "ROOK"; // A class variable
 	private pieceColor localColor;
 	private int[][] reachablesqueres;
 	private String[][] reachablepiecePosition;
@@ -151,6 +152,10 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 
 	public void setFriendPositions(HashMap<String, Position> friendPositions) {
 		this.friendPositions = friendPositions;
+	}
+
+	public static String getChesstype() {
+		return chessType;
 	}
 
 	public String getColor() {

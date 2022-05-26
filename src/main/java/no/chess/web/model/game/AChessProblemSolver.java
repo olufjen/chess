@@ -260,7 +260,19 @@ public void findOpponentKing() {
   }
   
 
- public HashMap<String, Position> getPositions() {
+ public AgamePiece getOpponentKing() {
+	return opponentKing;
+}
+public void setOpponentKing(AgamePiece opponentKing) {
+	this.opponentKing = opponentKing;
+}
+public String getOpponentKingPosition() {
+	return opponentKingPosition;
+}
+public void setOpponentKingPosition(String opponentKingPosition) {
+	this.opponentKingPosition = opponentKingPosition;
+}
+public HashMap<String, Position> getPositions() {
 	return positions;
 }
 
@@ -672,7 +684,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 	opponentAgent.probepossibilities(actions, myPlayer);
 	opponentAgent.chooseStrategy(actions);
 	checkoppoentThreat(THREATEN,actions); // fills the threatenedPieces and threatenedPositions if any 
-	String pieceName = "WhiteBishop2";
+	String pieceName = "WhiteBishop2"; //Rewrite: Must find player's bishop
 	String fpos = "f1";
 	String toPos = "d3";
 	boolean bishop = folKb.checkpieceFacts("y",pieceName,fpos,OCCUPIES); // Rook occupies f1 !!??
@@ -708,13 +720,13 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 				checkCastling(actions);
 				boolean threat = folKb.checkThreats("x", "c4", THREATEN,opponent);
 //				boolean threat = true;
-				if (threat) {
+				if (threat) { // Here we could also check b5
 					  folKb.checkFacts(pieceName, "d3", REACHABLE, actions,positionList);
 				}
 				return pieceName;
 			}
 		}
-	}
+	} // If not bishop
 	if (chosenPiece != null) {
 		return chosenPiece.getMyPiece().getOntlogyName();
 	}
@@ -817,7 +829,7 @@ public void checkCastling(ArrayList<ChessActionImpl> actions) {
 		String posName = "f1";
 		Position pos =  (Position) removed.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
 		if (pos != null) {
-			String bishopName = "WhiteBishop2";
+			String bishopName = "WhiteBishop2";// Rewrite: must find player's bishop
 			String fpos = "f1";
 			String toPos = "d3";
 			boolean bishop = folKb.checkpieceFacts("y",bishopName,fpos,OCCUPIES);
@@ -921,23 +933,34 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  String blackpieceName = "BlackBishop1";
 		  String blackpos = "g4";
 		  if (folKb.checkThreats(blackpieceName, blackpos, OCCUPIES,opponent)) {
-			  pieceName = "WhitePawn8";
+			  pieceName = "WhitePawn8"; // Result: This pawn is moved to h3. OBS change piecename to player's pawn 8
 			  break;
 		  }
 		  String pname = "x";
 		  String bpos = "d5";
-		  //			  pieceName = "WhitePawn3";
-		  if (folKb.checkThreats(pname, bpos, OCCUPIES,opponent)) {  // OBS What happens if a friendly piece occupies this position !!!???
-			  pieceName = "WhitePawn3";
-			  String wpos = "d5";
-			  if (folKb.checkFacts(pieceName, wpos, PAWNATTACK, actions,positionList))
-				  break;
+		  List<String> occupier = folKb.searchFacts(pname, bpos, OCCUPIES);
+		  if (!occupier.isEmpty()) {
+			  String pieceoccupier = occupier.get(0);
+			  List<AgamePiece> pieces = opponent.getMygamePieces();
+			  AgamePiece piece = pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceoccupier)).findAny().orElse(null);
+			  if (piece != null && piece.isActive()) {
+				  if (folKb.checkThreats(pname, bpos, OCCUPIES,opponent)) {  // OBS What happens if a friendly piece occupies this position !!!???
+					  pieceName = "WhitePawn3";
+					  String wpos = "d5";
+					  if (folKb.checkFacts(pieceName, wpos, PAWNATTACK, actions,positionList))
+						  break; // If this is true then the white pawn takes the opponent piece at d5
+				  }				  
+			  }
 		  }
+		  //			  pieceName = "WhitePawn3";
+
 		  String kingName = opponentKing.getMyPiece().getOntlogyName();
 		  String kingPos = folKb.checkPosition(kingName, OCCUPIES);
 		  opponentKingPosition = kingPos;
+		  opponentAgent.setOpponentKingPosition(kingPos);
 		  writer.println("The opponent king is in "+kingPos);
-		  pieceName = checkPossiblePieces(); // Checks which opponent pieces that be safely taken from the list of opponent pieces
+
+		  pieceName = checkPossiblePieces(); // Checks which opponent pieces that can be safely taken from the list of opponent pieces
 		  if (pieceName != null) {
 			  Position opponentPos = possiblePositions.get(pieceName);
 			  if (opponentPos != null) {
@@ -952,11 +975,31 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 				  }
 			  }
 		  }
-		  writer.println("No pieces and positions ");
+		  writer.println("No pieces and positions to take");
 /*
  * Here we must find a safe move		  
  */
 		  pieceName = prepareAction(actions);
+		  List<String> kingpieces = opponentAgent.findPiece(kingPos, REACHABLE);
+		  List<AgamePiece> catchers = new ArrayList();
+		  writer.println("The following pieces can reach "+kingPos);
+		  if (kingpieces != null && !kingpieces.isEmpty()) {
+			  List<AgamePiece>mypieces = myPlayer.getMygamePieces();
+			  for (String name:kingpieces) {
+				  writer.println("Piece "+name);
+				  int l = name.length();
+				  String kingAttacker = name.substring(0,l-3);
+				  AgamePiece kingCatcher = (AgamePiece) mypieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(kingAttacker)).findAny().orElse(null);
+				  if (kingCatcher != null) {
+					  catchers.add(kingCatcher);
+				  }
+			  }
+			  int csize = catchers.size();
+			  if (!catchers.isEmpty()) {
+				  for (AgamePiece catcher:catchers )
+					  writer.println("A king catcher "+catcher.getMyPiece().getOntlogyName());
+			  }
+		  }
 		  if (pieceName == null) {
 			  AgamePiece chosen = opponentAgent.getPerformanceMeasure().getChosenPiece();
 			  Position chosenpos = opponentAgent.getPerformanceMeasure().getChosenPosition();
@@ -964,7 +1007,7 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 				  pieceName = chosen.getMyPiece().getOntlogyName();
 				  String pchosenPosname = chosenpos.getPositionName();
 				  folKb.checkFacts(pieceName, pchosenPosname, REACHABLE, actions,positionList);
-				  writer.println("Chosen piece from Opponent agent "+pieceName);
+				  writer.println("Chosen piece from Opponent agent "+pieceName+ " and chosen position "+pchosenPosname);
 			  }
 			  if (pieceName == null) {
 				  pieceName = "WhitePawn1";
@@ -1109,7 +1152,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
   /**
  * searchProblem
  * For every available chessaction that contains a possible move and that is not blocked
- * create an actionschema
+ * create an actionschema.
+ * These action schemas are held in the Map actionSchemas with the name of the piece as the key.
  * @Since 17.12.21
  * Preconditions and Effects are populated with Constants, the given piecename, posname and owner
  * @param actions

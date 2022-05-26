@@ -23,6 +23,7 @@ import no.games.chess.GamePiece;
 public class APawn extends AbstractGamePiece<Position>  implements ChessPieceType {
 
 	private pieceType localType = pieceType.PAWN;
+	private static final String chessType = "PAWN"; // A class variable
 	private pieceColor localColor;
 	private int[][] reachablesqueres;
 	private String[][] reachablepiecePosition;
@@ -93,6 +94,11 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			}
 		}
 		getLegalmoves(myPosition);
+	}
+
+
+	public static String getChesstype() {
+		return chessType;
 	}
 
 
@@ -201,6 +207,38 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	}
 
 
+	/**
+	 * produceAttack
+	 * This method produces Pawn attack positions given a position on the board
+	 * @param pos
+	 * @return The attack positions in a list
+	 */
+	public List<Position> produceAttack(Position pos) {
+		int diff = -1;
+		if (localColor == pieceColor.BLACK) {
+			diff = 1;
+		}
+		XYLocation loc = pos.getXyloc();
+		int x = loc.getXCoOrdinate() - 1;
+		int y = loc.getYCoOrdinate() + diff;
+		Position attackOne = null;
+		Position attackTwo = null;
+		XYLocation attacklocLeft = null;
+		XYLocation attackRight = null;
+		List<Position> attackPositions = new ArrayList<Position>();
+		if (x >= 0 && y >= 0 ) {
+			attacklocLeft = new XYLocation(x,y);
+			attackOne = new Position(attacklocLeft,false,null);
+			attackPositions.add(attackOne);
+		}
+		int xRight = loc.getXCoOrdinate() + 1;
+		if (xRight <= 7 && y >= 0) {
+			attackRight = new XYLocation(xRight,y);
+			attackTwo = new Position(attackRight,false,null);
+			attackPositions.add(attackTwo);
+		}
+		return attackPositions;
+	}
 
 	/**
 	 * getLegalmoves

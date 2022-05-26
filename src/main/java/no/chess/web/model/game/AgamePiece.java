@@ -70,6 +70,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private APawn myPawn = null;
 	private boolean castlingMove = false;
 	private Integer myValue = null; // This is the chess value of the piece represented as an Integer
+	private String nameType = null; // The name of the type of piece: PAWN,Queen etc
 	
 	public AgamePiece(Position myPosition) {
 		super();
@@ -100,6 +101,14 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		
 	}
 	
+	public String getNameType() {
+		return nameType;
+	}
+
+	public void setNameType(String nameType) {
+		this.nameType = nameType;
+	}
+
 	public List<XYLocation> getSouth() {
 		return south;
 	}
@@ -519,19 +528,16 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				myType = pieceType.PAWN;
 				chessType = new APawn(myPosition,myPiece);
 				APawn pawn = (APawn) chessType;
+				nameType = pawn.getChesstype();
 				myPawn = pawn;
 				value = myPawn.getValue();
 //				pawn.setMother(this);
 				attackPositions = pawn.getAttackPositions();
 				gamePiece = (GamePiece) chessType;
-//				gamePiece.g
 				reacablePositions = gamePiece.getNewPositions();
 				createPosition(reacablePositions); // To replace created positions with ontology positions
 				gamePiece.setOntologyPositions(ontologyPositions);
 				newlistPositions = new ArrayList(reacablePositions.values());
-/*				for (Position pos:newlistPositions) {
-					System.out.println("Pawn positions: "+pos.getPositionName() + " " + pos.getPositionColor());
-				}*/
 				break;
 			case"B":	
 				myType = pieceType.BISHOP;
@@ -539,6 +545,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				String pieceColorB = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
 				ABishop bishop = (ABishop) chessType;
+				nameType = bishop.getChesstype();
 				mybishop = bishop;
 				value = mybishop.getValue();
 				reacablePositions = gamePiece.getNewPositions();
@@ -557,6 +564,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				String pieceColorK = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
 				AKnight knight = (AKnight) chessType;
+				nameType = knight.getChesstype();
 				myKnight = knight;
 				value = myKnight.getValue();
 				reacablePositions = gamePiece.getNewPositions();
@@ -573,6 +581,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				chessType = new Aking(myPosition,myPiece);
 				gamePiece = (GamePiece) chessType;
 				Aking king = (Aking) chessType;
+				nameType = king.getChesstype();
 				myKing = king;
 				value = myKing.getValue();
 				reacablePositions = gamePiece.getNewPositions();
@@ -594,6 +603,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				String pieceColorR = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
 				ARook rook = (ARook) chessType;
+				nameType = rook.getChesstype();
 				myrook = rook;
 				value = myrook.getValue();
 				reacablePositions = gamePiece.getNewPositions();
@@ -616,6 +626,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 				String pieceColorQ = myPiece.getColor();
 				gamePiece = (GamePiece) chessType;
 				AQueen queen = (AQueen) chessType;
+				nameType = queen.getChesstype();
 				myqueen = queen;
 				value = myqueen.getValue();
 				reacablePositions = gamePiece.getNewPositions(); // Creates two sets of reachable positions: reacablePositions,bishopPositions
@@ -674,6 +685,12 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 			friendly.put(name, pos);
 		}
 	}
+	/**
+	 * removeFriendPosition
+	 * This method removes friendpositions from the list
+	 * NOT USED !!??
+	 * @param pos
+	 */
 	public void removeFriendPosition(Position pos) {
 		if (myType == pieceType.QUEEN) {
 			//AQueen queen = (AQueen) chessType;
@@ -697,6 +714,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	/**
 	 * checkFriendlyPosition
 	 * This method checks if a position is occupied by a friendly piece which is reachable
+	 * @since 28.04.22 The king has always a friend position?
 	 * @param pos
 	 * @return
 	 */
@@ -714,6 +732,9 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		if (myType == pieceType.BISHOP) {
 			HashMap<String,Position> friendly = mybishop.getFriendPositions();
 			friendpos = friendly.containsKey(name);
+		}
+		if (myType == pieceType.KING) {
+			friendpos = true;
 		}
 		return friendpos;
 	}

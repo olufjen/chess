@@ -55,6 +55,13 @@ public class AKnightMoveRule implements MoveRule<AKnight, List<XYLocation>> {
 			locations.add(xloc1);
 			
 		}
+		if (x>1 &&(y>0&&y<=7)) { // Replaces the below lines olj 29.07.20
+/*			XYLocation xloc = new XYLocation(x-2,y+1);
+			locations.add(xloc);*/
+			XYLocation xloc1 = new XYLocation(x-2,y-1);
+			locations.add(xloc1);
+			
+		}
 /*		if (x == 6 && y == 0) {  // From g1
 			XYLocation xloc = new XYLocation(x-2,y+1);
 			locations.add(xloc);
