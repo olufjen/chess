@@ -459,7 +459,7 @@
 	    <dependency>
 				<groupId>com.itextpdf</groupId>
 				<artifactId>itextpdf</artifactId>
-				<version>5.2.0</version>
+				<version>5.5.12</version>
 			</dependency>
    <!-- Joda time added 10.07.12 -->
 	<dependency>
