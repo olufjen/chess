@@ -27,7 +27,7 @@ import no.games.chess.fol.FOLGamesBCAsk;
  * strategy knowledge base. The strategy knowledge base contains knowledge about chess state one ply ahead.
  * It is filled with facts about possible new reachable positions and facts about opponent positions.
  * Then we can determine which opponent pieces I can capture based on which move I make.
- * 
+ * The ChessFolKnowledgebases are created in the execute method of the Chess Agent  and when the opponent agent is created
  * @author oluf
  *
  */
@@ -44,12 +44,14 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	private String KING;
 	private String QUEEN;
 	private List<String>pieceTypes;
+	private List<AgamePiece> movePieces; // A list of pieces actively involved in a possible move. THis list is set when the checkthreats
+	// method is called.
 	
 	public ChessFolKnowledgeBase(FOLDomain domain, InferenceProcedure inferenceProcedure) {
 		super(domain, inferenceProcedure);
 		fileName = "tempknowledgebase.txt";
 		outputFileName = outputFileName+this.fileName;
-		
+		movePieces = new ArrayList<AgamePiece>();
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {
@@ -71,6 +73,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 			e1.printStackTrace();
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));
+		movePieces = new ArrayList<AgamePiece>();
 	    setPieceTypes();
 	}
 	private void setPieceTypes() {
@@ -87,6 +90,13 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 		pieceTypes.add(ROOK);
 		pieceTypes.add(KING);
 		pieceTypes.add(QUEEN);
+	}
+	
+	public List<AgamePiece> getMovePieces() {
+		return movePieces;
+	}
+	public void setMovePieces(List<AgamePiece> movePieces) {
+		this.movePieces = movePieces;
 	}
 	public String getFileName() {
 		return fileName;
@@ -154,12 +164,15 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 	   * checkThreats
 	   * This method checks the FOL knowledge base for certain facts about the opponent's pieces.
 	   * These facts can be any of the available predicates in the FOL Domain (see the domain object)
+	   * The APlayer parameter must always be the opponent
 	 * @param pieceName
 	 * @param pos
 	 * @param fact
+	 * @param opponent. The opponent player
 	 * @return true if the fact is true
 	 */
 	public boolean checkThreats(String pieceName,String pos,String fact,APlayer opponent ) {
+		  movePieces.clear();	
 		  List<AgamePiece> pieces = opponent.getMygamePieces();
 		  AgamePiece piece = pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
 		  Constant pieceVariable = null;
@@ -177,9 +190,35 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 		  Predicate threatPredicate = new Predicate(fact,reachableTerms);
 //		  writer.println("Trying to prove\n"+threatPredicate.toString());
 		  InferenceResult backWardresult =  backWardChain.ask(this,threatPredicate);
+//		  boolean result = backWardresult.isTrue();
+		  boolean result = false;
 //		  writer.println(InferenceResultPrinter.printInferenceResult(backWardresult));
-
-		  return backWardresult.isTrue();
+/*
+ * Added 28.5.22:
+ */
+		  List<String> termNames = new ArrayList<String>();
+		  BCGamesAskHandler handler = (BCGamesAskHandler)backWardresult;
+		  List<HashMap<Variable, Term>> finals = handler.getFinalList();
+		  int noofFinals = finals.size();
+		  HashMap vars = null;
+		  Term usedTerm = null;
+		  String termName = null;
+		  if (finals != null && !finals.isEmpty() && pieceVar != null) {
+			  for (int i = 0;i<noofFinals;i++) {
+				  vars = finals.get(i);
+				  usedTerm = (Term) vars.get(pieceVar);
+				  termName = usedTerm.getSymbolicName(); // Finds which piece(s) is protecting/threatening this position.
+				  termNames.add(termName);
+			  }
+			  for (String name:termNames) {
+				  AgamePiece opponentpiece = pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(name)).findAny().orElse(null);
+				  if (opponentpiece != null && opponentpiece.isActive()) {
+					  movePieces.add(opponentpiece);
+					  result = true;
+				  }
+			  }
+		  }
+		  return result;
 		  
 	  }	
 	  /**

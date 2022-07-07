@@ -152,7 +152,7 @@ public class AChessProblemSolver {
   private Position opponentcatchPosition = null;
   private List <ChessActionImpl> actions = null;
   private ChessActionImpl castleAction = null;
-
+  private List<ActionSchema> actionSchemalist = null; // The list of actionschemas produced by the searchProblem method (Check the Map actionSchemas)
   private OpponentAgent opponentAgent = null;
   private AgamePiece chosenPiece = null;
   private AgamePiece opponentKing = null;
@@ -185,6 +185,7 @@ public class AChessProblemSolver {
 	    writer = new PrintWriter(new BufferedWriter(fw));	
 	    setPredicatenames();
 	    actionSchemas = new HashMap<String,ActionSchema>();
+	    actionSchemalist = new ArrayList<ActionSchema>();
 	    initStates = new HashMap<String,State>(); 
 	    goalStates = new HashMap<String,State>();
 	    possiblePieces = new HashMap<String,AgamePiece>();
@@ -591,21 +592,24 @@ public void checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions) {
 						if(!piece.checkRemoved(pos) ) {
 							boolean threat = folKb.checkThreats("x", newPos, fact,opponent);
 							if (!threat) {
-								chosenPiece = piece;
-								String xName = name;
-								ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(xName)).findAny().orElse(null);
-								if (naction != null && naction.getPossibleMove() != null) {
-									naction.getPossibleMove().setToPosition(pos); // OBS !! wrong position !!!
-									naction.setPreferredPosition(pos);
-									writer.println("Moves  "+thisPiece+ " to "+newPos);
-									return;
+								boolean protect = folKb.checkThreats("x", newPos, PROTECTED,opponent);
+								if (!protect) {
+									chosenPiece = piece;
+									String xName = name;
+									ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(xName)).findAny().orElse(null);
+									if (naction != null && naction.getPossibleMove() != null) {
+										naction.getPossibleMove().setToPosition(pos); // OBS !! wrong position !!!
+										naction.setPreferredPosition(pos);
+										writer.println("Moves  "+thisPiece+ " to "+newPos);
+										return;
+									}
 								}
 							}
 						}
 					}
 			  }
 		  }// END For all my pieces under threat
-	  }
+	  } //END there are threatened pieces
 	  
 }
   /**
@@ -683,11 +687,11 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 	String pname = null;
 	opponentAgent.probepossibilities(actions, myPlayer);
 	opponentAgent.chooseStrategy(actions);
-	checkoppoentThreat(THREATEN,actions); // fills the threatenedPieces and threatenedPositions if any 
+	checkoppoentThreat(THREATEN,actions); // fills the threatenedPieces and threatenedPositions if any. This is temporal information 
 	String pieceName = "WhiteBishop2"; //Rewrite: Must find player's bishop
-	String fpos = "f1";
-	String toPos = "d3";
-	boolean bishop = folKb.checkpieceFacts("y",pieceName,fpos,OCCUPIES); // Rook occupies f1 !!??
+	String fpos = "f1"; // Must find player's bishop first position
+	String toPos = "d3"; // and player's bishop destination
+	boolean bishop = folKb.checkpieceFacts("y",pieceName,fpos,OCCUPIES); // Rook occupies f1 !!?? This is part of GOAL: Opening positions
 	State goal = null;
 	State initstate = null;
 	if (bishop) {
@@ -774,6 +778,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 	}
 */	// Find the best move and a protected position to move to.
 	// For a possible strategy, see notes in compendium and notes on zenhub
+	// Here we can pursue other GOALS:
 	opponentAgent.probepossibilities(actions, myPlayer);
 	opponentAgent.chooseStrategy(actions);
 	writer.println("Prepareaction returns with no piece ");
@@ -944,12 +949,13 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  List<AgamePiece> pieces = opponent.getMygamePieces();
 			  AgamePiece piece = pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceoccupier)).findAny().orElse(null);
 			  if (piece != null && piece.isActive()) {
-				  if (folKb.checkThreats(pname, bpos, OCCUPIES,opponent)) {  // OBS What happens if a friendly piece occupies this position !!!???
-					  pieceName = "WhitePawn3";
-					  String wpos = "d5";
-					  if (folKb.checkFacts(pieceName, wpos, PAWNATTACK, actions,positionList))
-						  break; // If this is true then the white pawn takes the opponent piece at d5
-				  }				  
+//				  if (folKb.checkThreats(pname, bpos, OCCUPIES,opponent)) {  // OBS What happens if a friendly piece occupies this position !!!???
+// The above call is unnecessary ??
+				  pieceName = "WhitePawn3";
+				  String wpos = "d5";
+				  if (folKb.checkFacts(pieceName, wpos, PAWNATTACK, actions,positionList))
+					  break; // If this is true then the white pawn takes the opponent piece at d5
+//				  }				  
 			  }
 		  }
 		  //			  pieceName = "WhitePawn3";
@@ -1000,7 +1006,7 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 					  writer.println("A king catcher "+catcher.getMyPiece().getOntlogyName());
 			  }
 		  }
-		  if (pieceName == null) {
+		  if (pieceName == null) { // prepareAction returns with no piece
 			  AgamePiece chosen = opponentAgent.getPerformanceMeasure().getChosenPiece();
 			  Position chosenpos = opponentAgent.getPerformanceMeasure().getChosenPosition();
 			  if (chosen != null && chosenpos != null) {
@@ -1073,7 +1079,7 @@ public String deferredMove(ArrayList<ChessActionImpl> actions) {
  * @return a ChessProblem
  */
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
-	  searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
+	  actionSchemalist = searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 	  String pieceName = null;
 	  ChessProblem problem = null;
 	  String actionName = deferredMove(actions); // For castling
@@ -1138,12 +1144,13 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  }
 		   List<ActionSchema> schemas =  problem.getGroundActions();
 		   int s = schemas.size();
-		   writer.println("No of permuted primitive actions from problem "+s);
+		   int listSize = actionSchemalist.size();
+		   writer.println("No of permuted primitive actions from problem "+s+" No of schemas in list (chessActions) "+listSize);
 		   for (ActionSchema primitiveAction :
 			   schemas) {
 			   writer.println(primitiveAction.toString());
 		   }
-		  writer.println("Chosen action\n"+naction.toString());
+		  writer.println("Chosen action\n"+naction.getActionName());
 	  }
 
 	  writer.flush();

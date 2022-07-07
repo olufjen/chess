@@ -92,6 +92,10 @@ public class APerformance {
 	
 	private Map<String,List<AgamePiece>>knownprotectorPieces;// Pieces that protect a given position
 	private Map<String,List<AgamePiece>>knownopponentPieces;// Pieces that threaten a given position
+	private List<AgamePiece> opponentThreats; // A list of opponent pieces that are threatening a given position
+	// It is filled with a call to the folKb.checkThreats method
+	private List<AgamePiece> opponentProtectors;// A list of opponent pieces that are protecting a given position
+	// It is filled with a call to the folKb.checkThreats method
 	private List<Position> resourcePositions; // ResourcePositions are reachable positions
 	private AgamePiece chosenPiece = null;
 	private Position chosenPosition = null;
@@ -784,7 +788,7 @@ public class APerformance {
 		if (!takePieces.isEmpty()) {	// Found opponent pieces that can be taken at reachable positions
 			int takesize = takePieces.size();
 			writer.println("There are "+takesize+ " opponent pieces to take ");
-			for (Map.Entry<String,AgamePiece> entry:takePieces.entrySet()) { // For loop 1
+			for (Map.Entry<String,AgamePiece> entry:takePieces.entrySet()) { // For loop 1 Opponent pieces to take
 				posName = entry.getKey();
 				AgamePiece opponentPiece = entry.getValue();
 				foundPos = positions.get(posName);
@@ -808,7 +812,7 @@ public class APerformance {
 					AgamePiece lastprotector = opponentprotectors.get(size-1);
 					String firstname = opponentProtector.getMyPiece().getOntlogyName();
 					String lastname = lastprotector.getMyPiece().getOntlogyName();
-					writer.println("Opponent protectors "+firstname+" "+lastname);
+					writer.println("Opponent protectors "+firstname+" "+lastname+ " No of protectors "+size);
 					if (protsize > 1 && chosenpiece.isPresent()) {
 						chosenPiece = chosenpiece.get();
 						chosenPosition = foundPos;
@@ -816,7 +820,11 @@ public class APerformance {
 						break;// break leaves the for loop 1
 					}
 					if (protsize <= 1) { // Must find a piece to protect the piece I want to move
-						writer.println("Must find protectors for  "+posName);
+						String chosenpieceName = "";
+						if (chosenpiece.isPresent()) {
+							chosenpieceName = chosenpiece.get().getMyPiece().getOntlogyName();
+						}
+						writer.println("Must find protectors for  "+chosenpieceName+ " at "+posName);
 						List<String> fromreachStrategy = fromreachablePieces.get(posName);
 						AgamePiece strategyPiece = null;
 						AgamePiece opponentstrategyPiece = null;
@@ -826,16 +834,22 @@ public class APerformance {
 								int index = l-2;
 								String toPosname = name.substring(index);
 								String pieceName = name.substring(0,l-3);
+								writer.println("Evaluation investigating "+pieceName + " and position "+toPosname);
 /*								if (posName.equals("d5")) {
 									writer.println("A protector for "+posName+ " is "+pieceName+" from "+toPosname);
 								}*/
 								strategyPiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
 								opponentstrategyPiece = (AgamePiece) opponentpieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
 								if (strategyPiece != null && strategyPiece.isActive()) {
+									writer.println("Evaluation player reachable from strategy KB "+strategyPiece.getMyPiece().getOntlogyName()+" from "+toPosname);
 //									writer.println("Reachable from strategy KB "+strategyPiece.getMyPiece().getOntlogyName());
 									String threaten = agent.getTHREATEN();
+									String protect = agent.getPROTECTED();
 									boolean threat = folKb.checkThreats("x", toPosname, threaten,opponent);
-									if (!threat) {
+									opponentThreats = folKb.getMovePieces();
+									boolean opponentProtect = folKb.checkThreats("x", toPosname, protect,opponent); // Added 29.05.22
+									opponentProtectors = folKb.getMovePieces();
+									if (!threat && !opponentProtect) { // Changed 29.05.22
 										chosenPiece = strategyPiece; 
 										chosenPosition = positions.get(toPosname);
 										posName = toPosname;
@@ -844,7 +858,7 @@ public class APerformance {
 									}
 								}
 								if (opponentstrategyPiece != null && opponentstrategyPiece.isActive()) {
-									writer.println("Evaluation Opponent reachable from strategy KB "+opponentstrategyPiece.getMyPiece().getOntlogyName()+" for "+toPosname);
+									writer.println("Evaluation Opponent reachable from strategy KB "+opponentstrategyPiece.getMyPiece().getOntlogyName()+" from "+toPosname);
 									noexit = true;
 								}
 							} // End for loop 2
