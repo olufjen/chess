@@ -52,7 +52,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private Sentence sentence = null; // Contains a possible action sentence contained in the chess knowledge base
 	private boolean blocked = false;
 	private Integer actionValue = null; // The action value for this action created from the chess agent and its knowledge bases
-	private List<Position> attackedPositions = null;
+	private List<Position> attackedPositions = null; // These positions are set from the action processor
 	private List<Position> notAttackedPos = null;
 	private List<Position> notProtected = null;
 	private List<Position> protectedPositions = null;

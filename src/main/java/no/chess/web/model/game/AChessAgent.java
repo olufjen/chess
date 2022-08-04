@@ -481,7 +481,9 @@ public class AChessAgent extends KBAgent {
 			ActionSchema actionSchema = actionSchemas.get(0);
 
 			String nactionName = actionSchema.getName();
-			naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(nactionName)).findAny().orElse(null);
+			int nIndex = nactionName.indexOf("_");
+			String chessName = nactionName.substring(0, nIndex);
+			naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(chessName)).findAny().orElse(null);
 		}
 
 		for (ChessActionImpl action:actions) {
