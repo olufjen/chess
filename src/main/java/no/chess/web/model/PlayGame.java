@@ -44,7 +44,7 @@ import no.games.chess.GamePiece;
  * From this it creates
  * A list of used positions
  * A list of not used positions.
- * It creates a AchessGame. This object is given the HashMap of positions.
+ * It creates a AchessGame object. This object is given the HashMap of positions.
  * This AchessGame contains boardpositions from a given ontology game.
  * The AchessGame  transfers the current positions of the chess pieces to the AIMA chessboard
  * It also creates a AgamePiece for every chess piece found from the ontology game
@@ -52,7 +52,9 @@ import no.games.chess.GamePiece;
  * It also creates a white player and a black player and gives the correct chesspieces to each of the players.
  * It finally creates an initial state of the game with the initial gameboard and the two players.
  * The initial state creates a list of actions that are available for the chosen search algorithm.
- * 
+ * As of  04.03.21 the use of adversarial search has been removed.
+ * The Playgame object uses a Knowledgebase agent derived from the generic knowledgebase agent of AIMA chapter 7 
+ * and first order knowledge bases and planning algorithms to play the game of chess.  
  * When a piece is moved a new ApieceMove object is created and placed in the list over moves.
  * 
  * @author oluf
