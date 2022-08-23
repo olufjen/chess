@@ -156,6 +156,11 @@ public class AChessProblemSolver {
   private AgamePiece chosenPiece = null;
   private AgamePiece opponentKing = null;
   private String opponentKingPosition = null;
+/*
+ * theState represents the total initial state containing all the stateLiterals   
+ */
+  private List<Literal> stateLiterals = null;
+  private State theState = null;
   
   public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, ChessFolKnowledgeBase folKb, FOLDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
 		super();
@@ -204,6 +209,8 @@ public class AChessProblemSolver {
 	    	}
 	    }
 	    findOpponentKing();
+	    stateLiterals = new ArrayList<Literal>();
+	    theState = new State(stateLiterals);
   }
   /**
  * findOpponentKing
@@ -916,7 +923,7 @@ public State buildGoalstate(String pieceName,String toPos) {
    * This method determine the first moves based on the queen gambit process
    * After the first 4 moves, the default part of the case statement then determines the next move 
  * @param actions
- * @return
+ * @return A String A piecename pointer: The pieceName + "_" + PosName
  */
 public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 	  String pieceName = "";
@@ -1102,8 +1109,8 @@ public String deferredMove(ArrayList<ChessActionImpl> actions) {
  * This method creates and returns a High Level Action Problem given the available actions
  * Hierarchical Task networks and High Level Actions are described in  chapter 11.
  * At present, the High Level Problem contains one primitive action schema (chess action).
- * @param actions
- * @return a ChessProblem
+ * @param actions - A list of chess actions available
+ * @return a ChessProblem to be solved
  */
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  actionSchemalist = searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
@@ -1112,7 +1119,9 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  String actionName = deferredMove(actions); // For castling
 	  // 11.07.22 Changes this to return piece name and possible position
 	  // This is the only call to checkMovenumber Changed the key pieceName
-      pieceName = checkMovenumber(actions); // Returns a possible piecename - a piece to be moved - calls the prepareAction method
+      pieceName = checkMovenumber(actions); // Returns a possible piecename A String A piecename pointer: The pieceName + "_" + PosName
+//      - a piece to be moved - calls the prepareAction method
+      
 //      searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 //		Plan first schedule later      
 	  if (actionName != null && !pieceName.equals(actionName)) {
@@ -1158,7 +1167,15 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  State goal = goalStates.get(pieceName);
 		  Set<ActionSchema> aSchemas =  new HashSet<ActionSchema>(actionSchemas.values());
 //		  problem = new ChessProblem(initState,goal,movedAction);
-		  problem = new ChessProblem(initState,goal,aSchemas);		  
+		  problem = new ChessProblem(initState,goal,aSchemas);	
+/*
+ * The object variable theState contains all Literals of the current ChessState.
+ * Then the are too many preconditions from actionschemas that can be entailed by the initial state.		  
+ */
+//		  problem = new ChessProblem(theState,goal,aSchemas);
+/*
+ * The initial state and goal state is determined by the choice of piece		  
+ */
 		  writer.println("The fluents of the init state");
 	      for (Literal literal :
 	    	  initState.getFluents()) {
@@ -1194,7 +1211,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * create an actionschema.
  * These action schemas are held in the Map actionSchemas with the name of the piece as the key.
  * @Since 17.12.21
- * Preconditions and Effects are populated with Constants, the given piecename, posname and owner
+ * Preconditions and Effects are populated with Constants, the given piecename, posname
  * @param actions
  * @return a List of ActionSchemas
  */
@@ -1636,7 +1653,10 @@ public Problem buildProblem(ChessActionImpl action) {
    * buildInitialstate
    * THis method creates an initial state for a problem 
    * with a given piece name and posname
+   * @since 09.08.22
+   * The object variable theState contains all Literals of the initial state
    * @param piece
+   * @param posName
    * @return
    */
   public State buildInitialstate(String piece,String posName) {
@@ -1790,6 +1810,7 @@ public Problem buildProblem(ChessActionImpl action) {
 		List<Literal>castletemp = addProtected(folSentences,castlePos,piece);
 		literals.addAll(attacktemp);
 		literals.addAll(castletemp);
+		stateLiterals.addAll(literals);
 		return initState = new State(literals);
 		
   }

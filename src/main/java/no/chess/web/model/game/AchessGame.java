@@ -82,6 +82,11 @@ public class AchessGame extends AbstractChessGame{
 
 
 	}
+	/**
+	 * createInitialState
+	 * Creates the initial state of the game
+	 * It is called when the PlayGame object is set.
+	 */
 	private void createInitialState() {
 		chessState = new ChessStateImpl(this, gameBoard,localwhitePlayer,localblackPlayer);
 		playerTomove = (APlayer) chessState.getPlayerTomove();
