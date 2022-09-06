@@ -227,6 +227,7 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 	   * These facts can be any of the available predicates in the FOL Domain (see the domain object)
 	   * It is called from the ProblemSolver's checkOpponent, prepareAction, and checkCastling methods.
 	   * @since 22.10.21 The list of actions are not used
+	 * @param pieceVar If pieceVar has value x, the pieceName is of type Variable to the predicate
 	 * @param pieceName The name of the piece
 	 * @param pos The position to move to
 	 * @param fact The predicate fact

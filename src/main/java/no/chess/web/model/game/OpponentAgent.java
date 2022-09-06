@@ -99,7 +99,7 @@ public class OpponentAgent {
 		super();
 		this.stateImpl = stateImpl;
 		this.game = game;
-		this.myPlayer = myPlayer; // myPlyer is the opponent
+		this.myPlayer = myPlayer; // myPlayer is the opponent
 		this.opponent = opponent; // The opponent is the player of the game
 		this.folKb = folKb;
 		this.chessDomain = chessDomain;
@@ -198,6 +198,14 @@ public class OpponentAgent {
 	public String getOpponentKingPosition() {
 		return opponentKingPosition;
 	}
+	/**
+	 * setOpponentKingPosition
+	 * This method sets the position of the opponent king and 
+	 * creates fact of the type PAWN(x,kingPosition) to the strategy KB
+	 * - A pawn can reach the king position from position x
+	 * This is done by the call to the findKingsReachable method of the performanceMeasure object
+	 * @param opponentKingPosition
+	 */
 	public void setOpponentKingPosition(String opponentKingPosition) {
 		this.opponentKingPosition = opponentKingPosition;
 		performanceMeasure.setOpponentKingPosition(opponentKingPosition);
@@ -352,6 +360,7 @@ public class OpponentAgent {
 	 * findPiece
 	 * This method returns a list of piece names.
 	 * These pieces can reach a certain position from the strategy KB
+	 * It is called from the AChessProblem object to find pieces that can reach the opponent king position
 	 * @param pos The position to reach
 	 * @param fact The fact REACHABLE
 	 * @return

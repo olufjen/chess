@@ -863,23 +863,7 @@ public class APerformance {
 								}
 							} // End for loop 2
 						}
-/*						ArrayList<AgamePiece> mymovablePieces = movablePieces.get(posName);
-						if (mymovablePieces!= null && !mymovablePieces.isEmpty() ) {
-							int msize = mymovablePieces.size();
-							AgamePiece piece = null;
-							for (int i = 0;i<msize;i++) { // For loop 3
-								piece = mymovablePieces.get(i);
-								String pieceName = piece.getMyPiece().getOntlogyName();
-								String threaten = agent.getTHREATEN();
-								boolean threat = folKb.checkThreats("x", posName, threaten,opponent);
-								if (!threat) {
-									chosenPiece = piece; 
-									chosenPosition = positions.get(posName);
-									writer.println("Exit with  no threat "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+posName);
-									break;// break leaves the for loop 3
-								}
-							}
-						}*/
+
 					}
 //					List<AgamePiece> attackers = opponentprotectors.stream().sorted((p1,p2) -> p1.getMyValue().compareTo(p2.getMyValue()).;
 				} // End there exist opponent protectors

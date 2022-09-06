@@ -153,7 +153,8 @@ public class AChessProblemSolver {
   private ChessActionImpl castleAction = null;
   private List<ActionSchema> actionSchemalist = null; // The list of actionschemas produced by the searchProblem method (Check the Map actionSchemas)
   private OpponentAgent opponentAgent = null;
-  private AgamePiece chosenPiece = null;
+  private AgamePiece chosenPiece = null; // Is only set in the checkoppoentThreat method
+  private Position chosenPosition = null;// Is only set in the checkoppoentThreat method
   private AgamePiece opponentKing = null;
   private String opponentKingPosition = null;
 /*
@@ -558,6 +559,7 @@ public void checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions) {
 						AgamePiece protector =  (AgamePiece) myPieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
 						if (protector != null && protector.isActive()) {
 							chosenPiece = protector;
+							chosenPosition = toPos;
 							writer.println("A protector "+pieceName+ " at "+fromposName+ " protects "+toPosname);
 							ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
 							if (naction != null && naction.getPossibleMove() != null) {
@@ -574,6 +576,7 @@ public void checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions) {
 									boolean threat = folKb.checkThreats("x", newPos, fact,opponent);
 									if (!threat) {
 										chosenPiece = piece;
+										chosenPosition = pos;
 										String xName = name;
 										ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(xName)).findAny().orElse(null);
 										if (naction != null && naction.getPossibleMove() != null) {
@@ -601,6 +604,7 @@ public void checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions) {
 								boolean protect = folKb.checkThreats("x", newPos, PROTECTED,opponent);
 								if (!protect) {
 									chosenPiece = piece;
+									chosenPosition = pos;
 									String xName = name;
 									ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(xName)).findAny().orElse(null);
 									if (naction != null && naction.getPossibleMove() != null) {
@@ -686,6 +690,8 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
    * This method attempts to analyze the chess state and prepare for next move.
    * It is called from the checkMovenumber method when the opening moves have been made.
    * From the default case of checkmovenumber
+   * This method returns a piecename and position if the movement is in preparation for castling
+   * or if a piece is under threat. Otherwise it returns null
  * @param actions
  * @return
  */
@@ -719,12 +725,6 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 					typeofPiece = PAWN;
 					moveName = "pawnmove";
 					initstate = buildInitialstate(pawnName, pawnPos);
-/*					deferredInitial = initstate; REmoved 28.07.22
-					deferredGoal = goal;
-					deferredGoalstates.put(pieceName, goal);
-					game.setDeferredGoal(deferredGoal);
-					game.setDeferredInitial(deferredInitial);
-					game.setDeferredGoalstates(deferredGoalstates);*/
 					return pawnName+piecePos+"e3";
 				}
 			}else { // The bishop can be moved
@@ -739,53 +739,11 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 				return pieceName+piecePos+chosenPos;
 			}
 		}
-	} // If not bishop
+	} // If not bishop Then if there are threatened pieces:
 	if (chosenPiece != null) {
-		return chosenPiece.getMyPiece().getOntlogyName();
+		return chosenPiece.getMyPiece().getOntlogyName()+piecePos+chosenPosition.getPositionName();
 	}
-/*	if (pname != null) { // Has found a piece that is threatened. Then determine the best move
-		String name = pname;
-		ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(name)).findAny().orElse(null);
-		if (naction != null) { // If the threatened piece has an action. Then move it to a safe position
-			ApieceMove move = naction.getPossibleMove();
-			AgamePiece piece = naction.getChessPiece();
-			List<Position> prefPos = piece.getPreferredPositions();
-			Position tonewPos = move.getToPosition();
-			String toPosname = tonewPos.getPositionName();
-			boolean protectedpiece = false;
-			protectedpiece = folKb.checkmyProtection(name,toPosname,PROTECTED,myPlayer); // Is the new position protected then move the piece
-			if (protectedpiece) {
-//				opponentAgent.probeConsequences(naction);
-				opponentAgent.probepossibilities(actions, myPlayer);
-				opponentAgent.chooseStrategy(actions);
-//				opponentAgent.writeFacts();
-				return pname;
-			}
-			else { // Never reaches this !!!
-				List<Position> reachable = piece.getNewlistPositions();
-				for (Position pos:reachable) {
-					if (!piece.checkRemoved(pos)) {
-						String posName = pos.getPositionName();
-						protectedpiece = folKb.checkmyProtection(name,posName,PROTECTED,myPlayer); // must also set the new to position !!
-						boolean threat = folKb.checkThreats(pname, posName, THREATEN,opponent);
-						if (protectedpiece && !threat) {
-							naction.getPossibleMove().setToPosition(pos);
-							naction.setPreferredPosition(pos);
-//							opponentAgent.probeConsequences(naction);
-							opponentAgent.probepossibilities(actions, myPlayer);
-							opponentAgent.chooseStrategy(actions);
-							return pname;
-						}
-					}
-				}
-			}
-		} // Never reaches this !!!
-//		opponentAgent.probeConsequences(naction);
-		opponentAgent.probepossibilities(actions, myPlayer);
-		opponentAgent.chooseStrategy(actions);
-		return pname; // The name of the piece that is threatened. Or the name of the piece that can protect it
-	}
-*/	// Find the best move and a protected position to move to.
+// Find the best move and a protected position to move to.
 	// For a possible strategy, see notes in compendium and notes on zenhub
 	// Here we can pursue other GOALS:
 	opponentAgent.probepossibilities(actions, myPlayer);
@@ -1012,11 +970,13 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  List<AgamePiece> catchers = new ArrayList();
 		  writer.println("The following pieces can reach "+kingPos);
 		  if (kingpieces != null && !kingpieces.isEmpty()) {
+			  String kingFromPos = "none";
 			  List<AgamePiece>mypieces = myPlayer.getMygamePieces();
 			  for (String name:kingpieces) {
 				  writer.println("Piece "+name);
 				  int l = name.length();
 				  String kingAttacker = name.substring(0,l-3);
+				  kingFromPos = name.substring(l-2);
 				  AgamePiece kingCatcher = (AgamePiece) mypieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(kingAttacker)).findAny().orElse(null);
 				  if (kingCatcher != null) {
 					  catchers.add(kingCatcher);
@@ -1025,10 +985,10 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  int csize = catchers.size();
 			  if (!catchers.isEmpty()) {
 				  for (AgamePiece catcher:catchers )
-					  writer.println("A king catcher "+catcher.getMyPiece().getOntlogyName());
+					  writer.println("A king catcher "+catcher.getMyPiece().getOntlogyName()+" From position "+kingFromPos);
 			  }
 		  }
-		  if (pieceName == null) { // prepareAction returns with no piece
+		  if (pieceName == null) { // prepareAction returns with no piece. There are no threats and castling is done
 			  AgamePiece chosen = opponentAgent.getPerformanceMeasure().getChosenPiece();
 			  Position chosenpos = opponentAgent.getPerformanceMeasure().getChosenPosition();
 			  if (chosen != null && chosenpos != null) {
