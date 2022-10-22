@@ -51,7 +51,7 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 	private AgamePiece preferredPiece;
 	private List<Position> preferredPositions;
 	private List<Position> heldPositions; // The list of positions held by the pieces belonging to the player
-	
+	private List<AgamePiece> inactivePieces; // Contain a list of inactive pieces for this player
 	
 	public APlayer(ArrayList<AgamePiece> mygamePieces) {
 		super();
@@ -62,6 +62,7 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 		pieceValues = new ArrayList<Integer>();
 		myontologyPieces = new ArrayList<Piece>();
 		namesAndrank = new HashMap();
+		inactivePieces = new ArrayList<AgamePiece>();
 	}
 
 	public APlayer() {
@@ -73,6 +74,7 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 		pieceValues = new ArrayList<Integer>();
 		myontologyPieces = new ArrayList<Piece>();
 		namesAndrank = new HashMap();
+		inactivePieces = new ArrayList<AgamePiece>();
 	}
 	public APlayer(player playerName) {
 		super();
@@ -84,10 +86,43 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 		pieceValues = new ArrayList<Integer>();
 		myontologyPieces = new ArrayList<Piece>();
 		namesAndrank = new HashMap();
+		inactivePieces = new ArrayList<AgamePiece>();
 	}
 	
 	public String getNameOfplayer() {
 		return nameOfplayer;
+	}
+	/**
+	 * showPieceactivity
+	 * This method produces a list of inactive pieces for the player
+	 * 
+	 */
+	public void showPieceactivity() {
+		inactivePieces.clear();
+		for (AgamePiece piece:mygamePieces) {
+			if (piece.isActive()) {
+				int thisactivity = piece.getMyMoves().size();
+				if (thisactivity <= 0) {
+					inactivePieces.add(piece);
+				}
+			}
+		}
+	}
+	
+	public HashMap<String, Integer> getNamesAndrank() {
+		return namesAndrank;
+	}
+
+	public void setNamesAndrank(HashMap<String, Integer> namesAndrank) {
+		this.namesAndrank = namesAndrank;
+	}
+
+	public List<AgamePiece> getInactivePieces() {
+		return inactivePieces;
+	}
+
+	public void setInactivePieces(List<AgamePiece> inactivePieces) {
+		this.inactivePieces = inactivePieces;
 	}
 
 	public void setNameOfplayer(String nameOfplayer) {

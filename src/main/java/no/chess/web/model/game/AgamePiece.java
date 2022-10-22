@@ -24,7 +24,8 @@ import no.games.chess.AbstractGamePiece.pieceColor;
  * AgamePiece contains two enum type variables:
  * pieceType for PAWN,ROOK,KNIGHT,BISHOP,QUEEN,KING
  * pieceColor for BLACK or WHITE.
- * 
+ * @since 07.10.22
+ * Added a List of all moves this piece has made. It is a measure of piece activity.
  * @author oluf 
  *
  * @param <P>
@@ -61,7 +62,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	private boolean active = true; // Set if piece is active participating, set to false when removed from board
 	private String predicate = "none"; //The predicate used by this object
 	private List<String> predicates; 
-	
+	private List<ApieceMove> myMoves; // Contains all the moves this piece has made
 	private AQueen myqueen = null;
 	private ARook myrook = null;
 	private ABishop mybishop = null;
@@ -84,6 +85,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		this.myPiece = myPiece;
 		heldPositions = new Stack();
 		moveNumbers = new ArrayList<Integer>();
+		myMoves = new ArrayList<ApieceMove>();
 		predicates = new ArrayList<String>();
 		northEast = new ArrayList<XYLocation>();
 		northWest = new ArrayList<XYLocation>();
@@ -101,6 +103,14 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		
 	}
 	
+	public List<ApieceMove> getMyMoves() {
+		return myMoves;
+	}
+
+	public void setMyMoves(List<ApieceMove> myMoves) {
+		this.myMoves = myMoves;
+	}
+
 	public String getNameType() {
 		return nameType;
 	}

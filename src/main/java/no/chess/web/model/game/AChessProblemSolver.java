@@ -610,7 +610,7 @@ public void checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions) {
 									if (naction != null && naction.getPossibleMove() != null) {
 										naction.getPossibleMove().setToPosition(pos); // OBS !! wrong position !!!
 										naction.setPreferredPosition(pos);
-										writer.println("Moves  "+thisPiece+ " to "+newPos);
+										writer.println("Suggested Move  "+thisPiece+ " to "+newPos);
 										return;
 									}
 								}
@@ -740,7 +740,22 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 			}
 		}
 	} // If not bishop Then if there are threatened pieces:
-	if (chosenPiece != null) {
+	AgamePiece chosen = opponentAgent.getPerformanceMeasure().getChosenPiece();
+	Position chosenpos = opponentAgent.getPerformanceMeasure().getChosenPosition();
+	if (chosenPiece != null && chosen != null && chosen.equals(chosenPiece)) {
+		boolean takeKing = opponentAgent.getPerformanceMeasure().isCanTakeKing();
+		if (takeKing) {
+			writer.println("Prepareaction: The opponent king to be taken");
+		}
+		String xName = chosenPiece.getMyPiece().getOntlogyName();
+		ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(xName)).findAny().orElse(null);
+		naction.getPossibleMove().setToPosition(chosenpos); // Set new position
+		naction.setPreferredPosition(chosenpos);
+		writer.println("Prepareaction returns with "+ chosenPiece.getMyPiece().getOntlogyName() + " and alt. position "+chosenpos.getPositionName());
+		return chosenPiece.getMyPiece().getOntlogyName()+piecePos+chosenpos.getPositionName();
+	}
+	if (chosenPiece != null && chosen != null && !chosen.equals(chosenPiece)) {
+		writer.println("Prepareaction returns with "+ chosenPiece.getMyPiece().getOntlogyName() + " and " + chosen.getMyPiece().getOntlogyName());
 		return chosenPiece.getMyPiece().getOntlogyName()+piecePos+chosenPosition.getPositionName();
 	}
 // Find the best move and a protected position to move to.
@@ -991,11 +1006,15 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  if (pieceName == null) { // prepareAction returns with no piece. There are no threats and castling is done
 			  AgamePiece chosen = opponentAgent.getPerformanceMeasure().getChosenPiece();
 			  Position chosenpos = opponentAgent.getPerformanceMeasure().getChosenPosition();
+			  boolean takeKing = opponentAgent.getPerformanceMeasure().isCanTakeKing();
 			  if (chosen != null && chosenpos != null) {
 				  pieceName = chosen.getMyPiece().getOntlogyName();
 				  String pchosenPosname = chosenpos.getPositionName();
 				  folKb.checkFacts(pieceName, pchosenPosname, REACHABLE, actions,positionList);
 				  writer.println("Chosen piece from Opponent agent "+pieceName+ " and chosen position "+pchosenPosname);
+				  if (takeKing) {
+					  writer.println("The opponent king to be taken");
+				  }
 				  piecePos = pieceName + piecePos + pchosenPosname;
 			  }
 			  if (pieceName == null) {
@@ -1130,7 +1149,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  problem = new ChessProblem(initState,goal,aSchemas);	
 /*
  * The object variable theState contains all Literals of the current ChessState.
- * Then the are too many preconditions from actionschemas that can be entailed by the initial state.		  
+ * Then the are too many preconditions from the list of actionschemas that can be entailed by the initial state.
+ * The initial state may contain more fluents than the precondition.		  
  */
 //		  problem = new ChessProblem(theState,goal,aSchemas);
 /*
@@ -1271,7 +1291,7 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 	  //		Constant toPos = new Constant(toPosit);
 	  List<Literal> precondition = new ArrayList();
 	  List<Literal> effects = new ArrayList();
-	  if (reachparentNames != null && !reachparentNames.isEmpty() ) {
+	  if (reachparentNames != null && !reachparentNames.isEmpty() ) { // A list of piece names that protect a given position
 		  int psize = reachparentNames.size();
 		  for (int i = 0;i<psize;i++) {
 			  protectorName = reachparentNames.get(i);

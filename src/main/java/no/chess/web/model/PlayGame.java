@@ -483,22 +483,52 @@ public class PlayGame {
 		createMove(piece,oldPosition, position);
 	    piece.giveNewdirections(); // Calculates nw,ne,sw,se for bishop and queen Added 03.06.21
 		HashMap<String,ApieceMove> myMoves = stateImpl.getMyPlayer().getMyMoves();
+		APlayer myplayer = stateImpl.getMyPlayer();
+		checkCastling(stateImpl.getMyPlayer());
+		myplayer.showPieceactivity();
+		moveStatistics(myplayer);
 		int index = movements.size();
 		ApieceMove lastMove = movements.get(index-1);
 		String moveNot = lastMove.getMoveNotation(); // OBS move notation is not set !!!
-		myMoves.put(moveNot, lastMove);
+		myMoves.put(moveNot, lastMove); // For castling: must have different move notation
 		Integer moveNumber = new Integer(lastMove.getMoveNumber());
 		piece.getMoveNumbers().add(moveNumber);
-		checkCastling(stateImpl.getMyPlayer());
+//		checkCastling(stateImpl.getMyPlayer()); The call to checkCastling is moved 07.10.22
 		stateImpl.switchActivePlayer(); // 16.04.20 After a move, must switch active player
 //		localAction.getActions(playerTomove); // Added 24.02.20 When a move has been made then the pieces belonging to the same player must get new
-//available positions calculated		
+//available positions calculated
+
 		game.createNewboard(); // A new set of usedunused lists are created.
 		 writer.println("After call to game.createnewboard \n"+game.getBoardPic()+"\n");
 /*		 for ( Position pos : positionlist) {
 			 writer.println(pos.toString());
 		 }*/
 		 writer.flush();
+	}
+	private void moveStatistics(APlayer myplayer) {
+		List<AgamePiece> inactivePieces = myplayer.getInactivePieces();
+		List myPieces = myplayer.getMygamePieces();
+		HashMap<String,ApieceMove> myMoves = myplayer.getMyMoves();
+		HashMap<String, Integer> nameandRank = myplayer.getNamesAndrank(); // The key is //http....#WhiteRook
+		if (!inactivePieces.isEmpty()) {
+			writer.println("Inactive pieces for "+myplayer.getNameOfplayer());
+			for (AgamePiece piece:inactivePieces) {
+				String name = piece.getMyPiece().getFullName();
+				Integer theValue = piece.getMyValue();
+				int rankvalue = -1;
+				Integer rank = nameandRank.get(name);
+				if (rank != null )
+					rankvalue = rank.intValue();
+				writer.println("Name and rank "+name+" "+rankvalue+ " "+theValue.intValue());
+			}
+		}
+
+		List<ApieceMove> movetotals = new ArrayList<ApieceMove>(myMoves.values());
+		 writer.println(" Moves so far");
+		for (ApieceMove thismove:movetotals) {
+			 writer.println(" Move "+thismove.toString());
+		}
+		
 	}
 	/**
 	 * checkCastling
@@ -523,6 +553,7 @@ public class PlayGame {
    	    		String castleName = castle.getName();
    	    		if (castlePos != null) {
    	    			toPos = castlePos.getPositionName();
+   	    			createMove(castle,castlePosfrom, castlePos);
    	    			myFrontBoard.determineMove(fromPos, toPos, castleName); // Determine if move is legal
    	    			castle.setNofMoves(0);
    	    			castle.setMyPosition(castlePos);
@@ -650,6 +681,7 @@ public class PlayGame {
 		pieceMove.setMoveNumber(noofMoves);
 		 writer.println("Creating piecemove "+pieceMove.toString());
 		movements.add(pieceMove);
+		piece.getMyMoves().add(pieceMove); // Add the move to the piece
 			
 	}
 	/**

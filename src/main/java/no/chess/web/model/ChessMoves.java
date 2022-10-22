@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * This class represent moves in a chessgame as shown in chess algebraic notation.
- * THe source of the move is either moves on the chessboard, or from a chess game file
+ * The source of the move is either moves on the chessboard, or from a chess game file
  * @author Oluf
  *
  */

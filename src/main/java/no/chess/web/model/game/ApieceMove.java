@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import no.chess.web.model.Position;
+import no.games.chess.AbstractGamePiece.pieceType;
 import no.games.chess.AbstractPieceMove;
 
 /**
@@ -51,6 +52,11 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 		this.piece = piece;
 		blackMove = piece.checkBlack();
 		whiteMove = piece.checkWhite();		
+		if (piece.getPieceType() == piece.getMyType().ROOK && moveNotation.equals("o-o")) {
+			this.moveNotation = moveNotation+"x";
+			moveNumber--;
+		}
+
 		creation = "Created with from and to position";
 	}
 
@@ -110,6 +116,6 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	}
 
 	public String toString() {
-		return "Move\nPiece "+piece.toString()+"\nFrom position "+fromPosition.toString()+"\nTo position "+toPosition.toString()+" Move number "+moveNumber+moveNotation+"\nCreation "+creation;
+		return "Move\nPiece "+piece.getMyPiece().getOntlogyName()+"From position "+fromPosition.toString()+"To position "+toPosition.toString()+" Move number "+moveNumber+" "+moveNotation+"Creation "+creation;
 	}
 }
