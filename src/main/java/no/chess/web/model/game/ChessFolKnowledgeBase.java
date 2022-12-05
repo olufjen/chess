@@ -44,7 +44,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	private String KING;
 	private String QUEEN;
 	private List<String>pieceTypes;
-	private List<AgamePiece> movePieces; // A list of pieces actively involved in a possible move. THis list is set when the checkthreats
+	private List<AgamePiece> movePieces; // A list of pieces actively involved in a possible move. This list is set when the checkthreats
 	// method is called.
 	
 	public ChessFolKnowledgeBase(FOLDomain domain, InferenceProcedure inferenceProcedure) {

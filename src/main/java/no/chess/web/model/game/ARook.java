@@ -360,7 +360,7 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 				if (friendlyList != null && !friendlyList.isEmpty()) {
 					for (Position friend:friendlyList) {
 						String name = friend.getPositionName();
-						friendPositions.remove(name);
+						friendPositions.remove(name); // The friendpositions are set in the AgamePiece determinefriend method
 					//	friend.setFriendlyPosition(false);
 					}
 				}

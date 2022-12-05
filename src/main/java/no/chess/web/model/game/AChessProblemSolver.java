@@ -138,8 +138,8 @@ public class AChessProblemSolver {
   private String deferredKey = null;
   private GraphPlanAlgorithm graphPlan =  null;
   private Map<String,ActionSchema> actionSchemas = null;
-  private Map<String,State>initStates = null;
-  private Map<String,State>goalStates = null;
+  private Map<String,State>initStates = null; // Contains all initial states for current move
+  private Map<String,State>goalStates = null; // Contains all goal states for current move
   private Map<String,AgamePiece>possiblePieces = null; // Contains opponent pieces that can be taken
   private Map<String,Position>possiblePositions = null; // Contains the positions of these opponent pieces.
   private Map<String,AgamePiece>threatenedPieces = null; // Contains pieces that are threatened by the opponent
@@ -746,6 +746,20 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 		boolean takeKing = opponentAgent.getPerformanceMeasure().isCanTakeKing();
 		if (takeKing) {
 			writer.println("Prepareaction: The opponent king to be taken");
+ 	    	List<ApieceMove>  movesofar = game.getMovements();
+ // The last move in the list must be reversed, and the planned move must not be executed !!	    	
+	    	 writer.println("Moves so far ");
+	    	for (ApieceMove  piecemove:movesofar) {
+	    		writer.println(piecemove.toString());
+	    		Position topos = piecemove.getToPosition();
+	    		AgamePiece movePiece = piecemove.getPiece();
+	    		Position movedPos = movePiece.getmyPosition();
+	    		Position heldPos = movePiece.getHeldPosition();
+	    		if (topos == heldPos && movedPos != topos) {
+	    			writer.println(movePiece.toString());
+	    		}
+	    		
+	    	}
 		}
 		String xName = chosenPiece.getMyPiece().getOntlogyName();
 		ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(xName)).findAny().orElse(null);
@@ -905,6 +919,9 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 	  case 0:
 		  pieceName = "WhitePawn4";
 		  piecePos = pieceName + piecePos + "d4";
+		  Position posin = positions.get("d4");
+		  APerceptor perceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null);
+		  State chosenState = perceptor.checkPercept(initStates);
 		  break;
 	  case 2:
 		  pieceName = "WhitePawn3";

@@ -383,6 +383,14 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		this.attackPositions = attackPositions;
 	}
 
+	public APawn getMyPawn() {
+		return myPawn;
+	}
+
+	public void setMyPawn(APawn myPawn) {
+		this.myPawn = myPawn;
+	}
+
 	/**
 	 * createPosition
 	 * This method moves any ontologypositions to the list of positions reachable by this piece
@@ -724,6 +732,7 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	/**
 	 * checkFriendlyPosition
 	 * This method checks if a position is occupied by a friendly piece which is reachable
+	 * OBS No friends positions for knights!
 	 * @since 28.04.22 The king has always a friend position?
 	 * @param pos
 	 * @return

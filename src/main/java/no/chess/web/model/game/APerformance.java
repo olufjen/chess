@@ -154,6 +154,14 @@ public class APerformance {
 	    writer = new PrintWriter(new BufferedWriter(fw));	
 	}
 	
+	public Map<String, Position> getOccupiedPositions() {
+		return occupiedPositions;
+	}
+
+	public void setOccupiedPositions(Map<String, Position> occupiedPositions) {
+		this.occupiedPositions = occupiedPositions;
+	}
+
 	public boolean isCanTakeKing() {
 		return canTakeKing;
 	}

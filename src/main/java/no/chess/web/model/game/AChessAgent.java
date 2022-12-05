@@ -896,7 +896,7 @@ public class AChessAgent extends KBAgent {
 	public void setOpponentpieces(APlayer opponent) {
 		List<AgamePiece> pieces = opponent.getMygamePieces();
 		chessDomain.addConstant(opponent.getNameOfplayer());
-		Variable ownerVariable = new Variable(opponent.getNameOfplayer());
+		Constant ownerVariable = new Constant(opponent.getNameOfplayer());
 		String predicate = "";
 		chessDomain.addPredicate(THREATEN);
 		for (AgamePiece piece:pieces) {
