@@ -275,7 +275,7 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 	 * @param fact The predicate fact
 	 * @param actions All the actions available to the player
 	 */
-	public boolean checkFacts(String pieceName,String pos,String fact,ArrayList<ChessActionImpl> actions,List<Position>positionList) {
+	public boolean checkFacts(String pieceName,String pos,String fact,List<ChessActionImpl> actions,List<Position>positionList) {
 			Constant pieceVariable= new Constant(pieceName);
 			Constant posVariable = new Constant(pos);
 			List<Term> reachableTerms = new ArrayList<Term>();

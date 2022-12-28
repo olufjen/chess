@@ -358,6 +358,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * This method is called when the ChessAction is created.
 	 * A ChessAction is created by the call to the ChesState getActions() method
 	 * @since 25.02.21 Adapted for castling
+	 * @since 24.12.22 Added friendspositions for knights
 	 * @return
 	 */
 	public List<Position> getActions(){
@@ -422,6 +423,11 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 									chessPiece.determinFriendPosition(pos);
 									//position.setFriendlyPosition(true);
 								}
+								if (posinTable == null && bKnight) { // If piece is a Knight
+//									positionRemoved.add(position);
+//									String posName = position.getPositionName();
+									chessPiece.determinFriendPosition(pos);
+								}
 							}
 							if (castlePosition != null) 
 								checkCastling(pos, castlePositions);
@@ -435,7 +441,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 
 		
 		}
-;
+
 		checkOpponent();
 		return availablePositions;
 		

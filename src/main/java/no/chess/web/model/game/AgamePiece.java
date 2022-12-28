@@ -676,6 +676,9 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		if (myType == pieceType.BISHOP) {
 			mybishop.getFriendPositions().clear();
 		}
+		if (myType == pieceType.KNIGHT) {
+			myKnight.getFriendPositions().clear();
+		}
 	}
 	/**
 	 * determinFriendPosition
@@ -700,6 +703,11 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 			//AQueen queen = (AQueen) chessType;
 			String name = pos.getPositionName();
 			HashMap<String,Position> friendly = mybishop.getFriendPositions();
+			friendly.put(name, pos);
+		}
+		if (myType == pieceType.KNIGHT) {
+			String name = pos.getPositionName();
+			HashMap<String,Position> friendly = myKnight.getFriendPositions();
 			friendly.put(name, pos);
 		}
 	}
@@ -732,8 +740,9 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 	/**
 	 * checkFriendlyPosition
 	 * This method checks if a position is occupied by a friendly piece which is reachable
-	 * OBS No friends positions for knights!
+	 * OBS No friends positions for knights! - Added 24.12.22
 	 * @since 28.04.22 The king has always a friend position?
+	 * @since 24.12.22 Friendly positions are added to knights
 	 * @param pos
 	 * @return
 	 */
@@ -750,6 +759,10 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 		}
 		if (myType == pieceType.BISHOP) {
 			HashMap<String,Position> friendly = mybishop.getFriendPositions();
+			friendpos = friendly.containsKey(name);
+		}
+		if (myType == pieceType.KNIGHT) {
+			HashMap<String,Position> friendly = myKnight.getFriendPositions();
 			friendpos = friendly.containsKey(name);
 		}
 		if (myType == pieceType.KING) {

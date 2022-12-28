@@ -60,6 +60,9 @@ import no.games.chess.planning.ChessProblem;
  * 
  */
 public class AChessProblemSolver {
+/*
+ * Predicate names	
+ */
   private String ACTION;
   private String PROTECTED;
   private String simpleProtected;
@@ -157,6 +160,7 @@ public class AChessProblemSolver {
   private Position chosenPosition = null;// Is only set in the checkoppoentThreat method
   private AgamePiece opponentKing = null;
   private String opponentKingPosition = null;
+  private State chosenInitstate = null;
 /*
  * theState represents the total initial state containing all the stateLiterals   
  */
@@ -177,6 +181,7 @@ public class AChessProblemSolver {
 		positions = this.game.getPositions();
 		opponentAgent = new OpponentAgent(this.stateImpl,this.game,this.opponent,this.myPlayer,this.folKb,chessDomain);
 		opponentAgent.setPositions(positions);
+
 		playerName = this.myPlayer.getNameOfplayer();
 		playSide = playerName.substring(0,5);
 		noofMoves = game.getMovements().size();
@@ -598,7 +603,7 @@ public void checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions) {
 					List<Position> availablePositions = piece.getNewlistPositions();
 					for (Position pos:availablePositions){
 						String newPos = pos.getPositionName();
-						if(!piece.checkRemoved(pos) ) {
+						if(!piece.checkRemoved(pos) ) { 
 							boolean threat = folKb.checkThreats("x", newPos, fact,opponent);
 							if (!threat) {
 								boolean protect = folKb.checkThreats("x", newPos, PROTECTED,opponent);
@@ -639,12 +644,12 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
 		  String posName = "";
 		  Position position = piece.getHeldPosition();
 		  if (position == null) {
-			  writer.println("\nPosition from myposition\n"+piece.toString());
+//			  writer.println("\nPosition from myposition\n"+piece.toString());
 			  position = piece.getmyPosition();
 			  posName = position.getPositionName();
 		  }else {
 			  posName = position.getPositionName();
-			  writer.println("\nPosition from heldposition\n"+piece.toString());
+//			  writer.println("\nPosition from heldposition\n"+piece.toString());
 		  }
 		  if (piece.isActive()) {
 			  for (AgamePiece mypiece:myPieces) { // For all my pieces: Can this piece reach the opponent's position?
@@ -725,6 +730,12 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 					typeofPiece = PAWN;
 					moveName = "pawnmove";
 					initstate = buildInitialstate(pawnName, pawnPos);
+					Position d2posin = positions.get("e3");
+					APerceptor d2perceptor = new APerceptor(d2posin,REACHABLE,PIECETYPE,PAWN,playerName);
+					State d2chosenState = d2perceptor.checkPercept(initStates); // A hash table of available init states.
+					if (d2chosenState != null) {
+						chosenInitstate = d2chosenState;
+					}
 					return pawnName+piecePos+"e3";
 				}
 			}else { // The bishop can be moved
@@ -736,6 +747,12 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 					  folKb.checkFacts(pieceName, "d3", REACHABLE, actions,positionList);
 					  chosenPos = "d3";
 				}
+				  Position d2posin = positions.get(chosenPos);
+				  APerceptor d2perceptor = new APerceptor(d2posin,REACHABLE,PIECETYPE,BISHOP,playerName);
+				  State d2chosenState = d2perceptor.checkPercept(initStates); // A hash table of available init states.
+				  if (d2chosenState != null) {
+					  chosenInitstate = d2chosenState;
+				  }
 				return pieceName+piecePos+chosenPos;
 			}
 		}
@@ -920,19 +937,34 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  pieceName = "WhitePawn4";
 		  piecePos = pieceName + piecePos + "d4";
 		  Position posin = positions.get("d4");
-		  APerceptor perceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null);
-		  State chosenState = perceptor.checkPercept(initStates);
+		  APerceptor perceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
+		  State chosenState = perceptor.checkPercept(initStates); // A hash table of available init states.
+		  if (chosenState != null) {
+			  chosenInitstate = chosenState;
+		  }
 		  break;
 	  case 2:
 		  pieceName = "WhitePawn3";
 		  String pos = "c4";
 		  piecePos = pieceName + piecePos + pos;
 		  folKb.checkFacts(pieceName, pos, REACHABLE, actions,positionList);
+		  Position case2posin = positions.get("c4");
+		  APerceptor case2perceptor = new APerceptor(case2posin,REACHABLE,PIECETYPE,null,playerName);
+		  State case2chosenState = case2perceptor.checkPercept(initStates); // A hash table of available init states.
+		  if (case2chosenState != null) {
+			  chosenInitstate = case2chosenState;
+		  }
 		  break;
 	  case 4:
 		  checkOpponent("", actions);
 		  pieceName = "WhiteKnight1";
 		  piecePos = pieceName + piecePos + "c3";
+		  Position case4posin = positions.get("c3");
+		  APerceptor case4perceptor = new APerceptor(case4posin,REACHABLE,PIECETYPE,null,playerName);
+		  State case4chosenState = case4perceptor.checkPercept(initStates); // A hash table of available init states.
+		  if (case4chosenState != null) {
+			  chosenInitstate = case4chosenState;
+		  }
 		  break;
 	  case 6:
 		  checkOpponent("", actions);
@@ -940,6 +972,12 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  String posx = "f3";
 		  piecePos = pieceName + piecePos + posx;
 		  folKb.checkFacts(pieceName, posx, REACHABLE, actions,positionList);
+		  Position case6posin = positions.get("f3");
+		  APerceptor case6perceptor = new APerceptor(case6posin,REACHABLE,PIECETYPE,null,playerName);
+		  State case6chosenState = case6perceptor.checkPercept(initStates); // A hash table of available init states.
+		  if (case6chosenState != null) {
+			  chosenInitstate = case6chosenState;
+		  }
 		  break;
 	  default:
 		  checkOpponent("", actions); // Result: A list of opponent pieces that can be taken
@@ -948,6 +986,12 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  if (folKb.checkThreats(blackpieceName, blackpos, OCCUPIES,opponent)) {
 			  pieceName = "WhitePawn8"; // Result: This pawn is moved to h3. OBS change piecename to player's pawn 8
 			  piecePos = pieceName + piecePos + "h3";
+			  Position d1posin = positions.get("h3");
+			  APerceptor d1perceptor = new APerceptor(d1posin,REACHABLE,PIECETYPE,null,playerName);
+			  State d1chosenState = d1perceptor.checkPercept(initStates); // A hash table of available init states.
+			  if (d1chosenState != null) {
+				  chosenInitstate = d1chosenState;
+			  }
 			  break;
 		  }
 		  String pname = "x";
@@ -964,6 +1008,12 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 				  String wpos = "d5";
 				  if (folKb.checkFacts(pieceName, wpos, PAWNATTACK, actions,positionList)) {
 					  piecePos = pieceName + piecePos + wpos;
+					  Position d2posin = positions.get("d5");
+					  APerceptor d2perceptor = new APerceptor(d2posin,PAWNATTACK,PIECETYPE,PAWN,playerName);
+					  State d2chosenState = d2perceptor.checkPercept(initStates); // A hash table of available init states.
+					  if (d2chosenState != null) {
+						  chosenInitstate = d2chosenState;
+					  }
 					  break; // If this is true then the white pawn takes the opponent piece at d5
 				  }
 			  }
@@ -977,14 +1027,29 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  writer.println("The opponent king is in "+kingPos);
 
 		  pieceName = checkPossiblePieces(); // Checks which opponent pieces that can be safely taken from the list of opponent pieces
-		  if (pieceName != null) {
-			  Position opponentPos = possiblePositions.get(pieceName);
+		  if (pieceName != null) { // An opponent piece can be taken
+			  Position opponentPos = possiblePositions.get(pieceName); // At this position
 			  if (opponentPos != null) {
 				  String name = pieceName;
+				  String oppPosName = opponentPos.getPositionName();
 				  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(name)).findAny().orElse(null);
 				  if (naction != null && naction.getPossibleMove() != null) {
 					  naction.getPossibleMove().setToPosition(opponentPos);
 					  naction.setPreferredPosition(opponentPos);
+					  String nameType = naction.getChessPiece().getNameType();
+					  ChessPieceType pieceType = naction.getChessPiece().getChessType();
+					  boolean pawn = pieceType instanceof APawn;
+					  String predicate = REACHABLE;
+					  if (pawn) {
+						  predicate = PAWNATTACK;
+					  }
+					  piecePos = pieceName + piecePos + oppPosName;
+					  Position d2posin = positions.get(oppPosName);
+					  APerceptor d2perceptor = new APerceptor(d2posin,predicate,PIECETYPE,nameType,playerName);
+					  State d2chosenState = d2perceptor.checkPercept(initStates); // A hash table of available init states.
+					  if (d2chosenState != null) {
+						  chosenInitstate = d2chosenState;
+					  }
 					  break;
 				  }else {
 					  writer.println("No action for "+pieceName);
@@ -1027,20 +1092,22 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  if (chosen != null && chosenpos != null) {
 				  pieceName = chosen.getMyPiece().getOntlogyName();
 				  String pchosenPosname = chosenpos.getPositionName();
-				  folKb.checkFacts(pieceName, pchosenPosname, REACHABLE, actions,positionList);
+				  boolean possibleMove = folKb.checkFacts(pieceName, pchosenPosname, REACHABLE, actions,positionList);
 				  writer.println("Chosen piece from Opponent agent "+pieceName+ " and chosen position "+pchosenPosname);
-				  if (takeKing) {
+				  if (takeKing && possibleMove) {
 					  writer.println("The opponent king to be taken");
 				  }
-				  piecePos = pieceName + piecePos + pchosenPosname;
+				  if (possibleMove)
+					  piecePos = pieceName + piecePos + pchosenPosname;
 			  }
-			  if (pieceName == null) {
+			  if (pieceName == null || piecePos.equals("_")) {// Chosen piece and chosen position is null
 				  pieceName = "WhitePawn1";
 				  writer.println("No chosen piece "+pieceName);
+				  piecePos = pieceName + piecePos + "a3";
 			  }
 		  }
 		  break;
-	  }
+	  } // End switch
 //	  return pieceName;
 	  return  piecePos;
   }
@@ -1109,6 +1176,8 @@ public String deferredMove(ArrayList<ChessActionImpl> actions) {
  * @return a ChessProblem to be solved
  */
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
+	  this.actions = actions;
+	  opponentAgent.setPlayeractions(actions);
 	  actionSchemalist = searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 	  String pieceName = null;
 	  ChessProblem problem = null;
@@ -1119,7 +1188,29 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 //      - a piece to be moved - calls the prepareAction method
       
 //      searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
-//		Plan first schedule later      
+//		Plan first schedule later
+      String pieceKey = null;
+/*
+ * Added 10.12.22 
+ * The APerceptor object checks for a percept action to see if it
+ * is applicable in an initial state s. That is if the precondition of the percept action is satisfied by s.
+ * Then s is the returned chosenInitstate      
+ */
+      if (chosenInitstate != null) {
+          for (Map.Entry<String,State> entry:initStates.entrySet()) {
+        	  State thisState = entry.getValue();
+        	  String theKey = entry.getKey();
+        	  writer.println("The key in list "+theKey+" the piecename key "+pieceName);
+        	  if (thisState.equals(chosenInitstate)) {
+        		  pieceKey = entry.getKey();
+        		  writer.println("Key of chosen init state "+pieceKey);
+        		  if (pieceKey.equals(pieceName)) {
+        			  break;
+        		  }
+        	  }
+          }
+      }
+
 	  if (actionName != null && !pieceName.equals(actionName)) {
 		  pieceName = actionName;
 		  deferredKey = null;
@@ -1152,6 +1243,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  /*
   * The initial and goal states are determined here
   * given the name of the piece.
+  * 10.12.22 The init state is determined by a percept schema
+  * If the percept schema finds an init state then the chosenInitstate is not null.
  */
 
 		  writer.println("Chosen action Schema\n"+movedAction.toString());

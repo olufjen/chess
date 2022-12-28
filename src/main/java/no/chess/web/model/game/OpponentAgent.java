@@ -36,11 +36,16 @@ import no.games.chess.fol.FOLGamesFCAsk;
  * @author olj
  *
  */
+/**
+ * @author bruker
+ *
+ */
 public class OpponentAgent {
 
 	private ChessStateImpl stateImpl = null;
 	private ChessActionImpl localAction = null;
 	private List <ChessAction> actions = null; // All actions available to the opponent
+	private List <ChessActionImpl> playeractions = null; // all actions available to player
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\opponent.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
@@ -164,6 +169,13 @@ public class OpponentAgent {
 
 	  }
 
+	public List<ChessActionImpl> getPlayeractions() {
+		return playeractions;
+	}
+	public void setPlayeractions(List<ChessActionImpl> playeractions) {
+		this.playeractions = playeractions;
+	    performanceMeasure.setPlayeractions(playeractions);
+	}
 	public String getPAWN() {
 		return PAWN;
 	}

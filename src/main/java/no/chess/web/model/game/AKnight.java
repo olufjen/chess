@@ -15,7 +15,8 @@ import no.games.chess.AbstractGamePiece.pieceColor;
 
 /**
  * This class represent the Knight chesspiece 
- * It implements the method legalMoves for the Knight 
+ * It implements the method legalMoves for the Knight
+ * @since 23.12.22 Added friendsPositions 
  * @author oluf
  * @param <P>
  *
@@ -29,6 +30,7 @@ public class AKnight extends AbstractGamePiece<Position>  implements ChessPieceT
 	private String[][] reachablepiecePosition;
 	HashMap<String,Position> newPositions;
 	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
+	private HashMap<String,Position> friendPositions; // Represent positions occupied by friendly pieces
 	private int size = 8;
 	private String color;
 	private ChessPiece myPiece;
@@ -48,6 +50,7 @@ public class AKnight extends AbstractGamePiece<Position>  implements ChessPieceT
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		friendPositions = new HashMap<String,Position>();
 	}
 
 	public AKnight(Position myPosition, ChessPiece myPiece) {
@@ -72,6 +75,7 @@ public class AKnight extends AbstractGamePiece<Position>  implements ChessPieceT
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		friendPositions = new HashMap<String,Position>();
 		getLegalmoves(myPosition);
 	}
 
@@ -89,7 +93,16 @@ public class AKnight extends AbstractGamePiece<Position>  implements ChessPieceT
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		friendPositions = new HashMap<String,Position>();
 		getLegalmoves(myPosition);
+	}
+
+	public HashMap<String, Position> getFriendPositions() {
+		return friendPositions;
+	}
+
+	public void setFriendPositions(HashMap<String, Position> friendPositions) {
+		this.friendPositions = friendPositions;
 	}
 
 	public static String getChesstype() {

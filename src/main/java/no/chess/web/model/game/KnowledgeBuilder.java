@@ -13,7 +13,7 @@ import no.games.chess.AbstractGamePiece.pieceType;
 
 /**
  * KnowledgeBuilder
- * This class contains constants and buildingblocks to be used in knowledgebases.
+ * This class contains constants and buildingblocks to be used in knowledgebases used in a chess game.
  * 
  * @author oluf
  * 
