@@ -13,8 +13,10 @@ import no.games.chess.AbstractGamePiece.pieceType;
 
 /**
  * KnowledgeBuilder
- * This class contains constants and buildingblocks to be used in knowledgebases used in a chess game.
- * 
+ * This class contains constants and knowledge base facts to be used in knowledgebases used in a chess game.
+ * @since 18.01.22
+ * Added two more knowledge base facts: POSSIBLEPROTECT, POSSIBLEREACH
+ * All available positions for a piece are possible to protect or possible to reach
  * @author oluf
  * 
  */
@@ -47,13 +49,31 @@ public class KnowledgeBuilder {
   private static String PLAYER = "PLAYER";
   private static String CASTLE = "CASTLE";
   private static String OPPONENTTO = "OPPONENTTO";
-  private static String POSSIBLETHREAT = "POSSIBLETHREAT";
+  private static String POSSIBLETHREAT = "POSSIBLETHREAT"; // All available positions for a piece are possibly threatened by that piece
+  private static String POSSIBLEPROTECT = "POSSIBLEPROTECT"; // All available positions for a piece are possibly protected by that piece
+  private static String POSSIBLEREACH = "POSSIBLEREACH"; // All available positions for a piece are possibly reachable by that piece
   
   
-  
-  public static String getOPPONENTTO() {
+public static String getOPPONENTTO() {
 	return OPPONENTTO;
 }
+
+public static String getPOSSIBLEPROTECT() {
+	return POSSIBLEPROTECT;
+}
+
+public static void setPOSSIBLEPROTECT(String pOSSIBLEPROTECT) {
+	POSSIBLEPROTECT = pOSSIBLEPROTECT;
+}
+
+public static String getPOSSIBLEREACH() {
+	return POSSIBLEREACH;
+}
+
+public static void setPOSSIBLEREACH(String pOSSIBLEREACH) {
+	POSSIBLEREACH = pOSSIBLEREACH;
+}
+
 public static void setOPPONENTTO(String oPPONENTTO) {
 	OPPONENTTO = oPPONENTTO;
 }

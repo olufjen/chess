@@ -61,6 +61,8 @@ public class APerceptor {
 	  private String CASTLE;
 	  private String OPPONENTTO;
 	  private String POSSIBLETHREAT;
+      private String POSSIBLEPROTECT; // All available positions for a piece are possibly protected by that piece
+      private String POSSIBLEREACH; // All available positions for a piece are possibly reachable by that piece
 
 	  private PerceptSchema percept;
 	  private String reaches;
@@ -140,6 +142,8 @@ public void setPredicatenames() {
 		CASTLE = KnowledgeBuilder.getCASTLE();
 		OPPONENTTO = KnowledgeBuilder.getOPPONENTTO();
 		POSSIBLETHREAT = KnowledgeBuilder.getPOSSIBLETHREAT();
+		POSSIBLEPROTECT = KnowledgeBuilder.getPOSSIBLEPROTECT();
+		POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
 }
 public PerceptSchema getPercept() {
 	return percept;

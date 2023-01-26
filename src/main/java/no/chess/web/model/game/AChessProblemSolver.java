@@ -94,6 +94,9 @@ public class AChessProblemSolver {
   private String CASTLE;
   private String OPPONENTTO;
   private String POSSIBLETHREAT;
+  private String POSSIBLEPROTECT; // All available positions for a piece are possibly protected by that piece
+  private String POSSIBLEREACH; // All available positions for a piece are possibly reachable by that piece
+
   /**
    *  The type of piece under consideration
    */
@@ -270,10 +273,18 @@ public void findOpponentKing() {
 		CASTLE = KnowledgeBuilder.getCASTLE();
 		OPPONENTTO = KnowledgeBuilder.getOPPONENTTO();
 		POSSIBLETHREAT = KnowledgeBuilder.getPOSSIBLETHREAT();
+		POSSIBLEPROTECT = KnowledgeBuilder.getPOSSIBLEPROTECT();
+		POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
   }
   
 
- public AgamePiece getOpponentKing() {
+ public OpponentAgent getOpponentAgent() {
+	return opponentAgent;
+}
+public void setOpponentAgent(OpponentAgent opponentAgent) {
+	this.opponentAgent = opponentAgent;
+}
+public AgamePiece getOpponentKing() {
 	return opponentKing;
 }
 public void setOpponentKing(AgamePiece opponentKing) {
@@ -1179,6 +1190,9 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  this.actions = actions;
 	  opponentAgent.setPlayeractions(actions);
 	  actionSchemalist = searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
+// The maps initStates and goalStates are also filled.	
+	  opponentAgent.setInitStates(initStates);
+	  opponentAgent.setGoalStates(goalStates);
 	  String pieceName = null;
 	  ChessProblem problem = null;
 	  String actionName = deferredMove(actions); // For castling
@@ -1186,7 +1200,6 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  // This is the only call to checkMovenumber Changed the key pieceName
       pieceName = checkMovenumber(actions); // Returns a possible piecename A String A piecename pointer: The pieceName + "_" + PosName
 //      - a piece to be moved - calls the prepareAction method
-      
 //      searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 //		Plan first schedule later
       String pieceKey = null;
@@ -1300,6 +1313,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * For every available chessaction that contains a possible move and that is not blocked
  * create an actionschema.
  * These action schemas are held in the Map actionSchemas with the name of the piece as the key.
+ * With every action schema there is an init state and a goal state. These are held in the maps initStates and goalStates
  * @Since 17.12.21
  * Preconditions and Effects are populated with Constants, the given piecename, posname
  * @param actions

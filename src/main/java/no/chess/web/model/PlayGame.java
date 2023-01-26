@@ -303,7 +303,7 @@ public class PlayGame {
 		chessAgent = new AChessAgent(kb,localAction,this);
 //		chessAgent.execute(currentState); // Creates new knowledge for the knowledge base
 		localAction = (ChessActionImpl) chessAgent.execute(currentState); // Creates new knowledge for the knowledge base and determines the next move.
-// The next move is in the returned action.		
+// The next move is in the returned local action.		
 		
 /*		if (localAction != newAction)
 			newAction = localAction;*/
@@ -503,6 +503,8 @@ public class PlayGame {
 /*		 for ( Position pos : positionlist) {
 			 writer.println(pos.toString());
 		 }*/
+		 writer.println("Knowledge base after last move \n"+chessAgent.getFolKb().toString());
+		 writer.println("Straegy Knowledge base after last move \n"+chessAgent.getStrategyKB().toString());
 		 writer.flush();
 	}
 	private void moveStatistics(APlayer myplayer) {

@@ -36,7 +36,8 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * action's getAction method is called
 	 */
 	private List<Position> availablePositions;
-	private List<Position> positionRemoved; // These are the positions blocked by other friendly pieces.
+	private List<Position> positionRemoved; // When the ChessAction is created the getAction method and the preferredMove processor
+	// fill this table with all removed positions.
 	private List<Position> opponentRemoved; // These are the positions blocked by opponent pieces.
 	private List<Position> bishopRemoved; // This list contains removed positions for the queen in bishop movements
 	private Position preferredPosition = null; // Each action has a preferred position that the piece should move to

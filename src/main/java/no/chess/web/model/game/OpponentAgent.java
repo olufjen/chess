@@ -16,6 +16,7 @@ import aima.core.logic.fol.kb.FOLKnowledgeBase;
 import aima.core.logic.fol.parsing.ast.Constant;
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
+import aima.core.logic.planning.State;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
 import no.games.chess.ChessAction;
@@ -73,6 +74,9 @@ public class OpponentAgent {
  */
 	private String opponentKingPosition = null;
 	private List<String>myPieceNames = null;
+    private Map<String,State>initStates = null; // Contains all initial states for current move
+	private Map<String,State>goalStates = null; // Contains all goal states for current move
+
 	
 	private String ACTION;
 	private String PROTECTED;
@@ -104,6 +108,9 @@ public class OpponentAgent {
     private String CASTLE;
     private String OPPONENTTO;
     private String POSSIBLETHREAT;
+    private String POSSIBLEPROTECT; // All available positions for a piece are possibly protected by that piece
+    private String POSSIBLEREACH; // All available positions for a piece are possibly reachable by that piece
+
     
 	public OpponentAgent(ChessStateImpl stateImpl, PlayGame game, APlayer myPlayer, APlayer opponent,ChessFolKnowledgeBase folKb,FOLDomain chessDomain) {
 		super();
@@ -166,9 +173,30 @@ public class OpponentAgent {
 			CASTLE = KnowledgeBuilder.getCASTLE();
 			OPPONENTTO = KnowledgeBuilder.getOPPONENTTO();
 			POSSIBLETHREAT = KnowledgeBuilder.getPOSSIBLETHREAT();
-
+			POSSIBLEPROTECT = KnowledgeBuilder.getPOSSIBLEPROTECT();
+			POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
 	  }
 
+	public ChessFolKnowledgeBase getLocalKb() {
+		return localKb;
+	}
+	public void setLocalKb(ChessFolKnowledgeBase localKb) {
+		this.localKb = localKb;
+	}
+	public Map<String, State> getInitStates() {
+		return initStates;
+	}
+	public void setInitStates(Map<String, State> initStates) {
+		this.initStates = initStates;
+		performanceMeasure.setInitStates(initStates);
+	}
+	public Map<String, State> getGoalStates() {
+		return goalStates;
+	}
+	public void setGoalStates(Map<String, State> goalStates) {
+		this.goalStates = goalStates;
+		performanceMeasure.setGoalStates(goalStates);
+	}
 	public List<ChessActionImpl> getPlayeractions() {
 		return playeractions;
 	}
@@ -624,6 +652,7 @@ public class OpponentAgent {
 	 * This is done by calling the strategy knowledge base createfacts method
 	 * It also checks to see if the new reachable position is protected.
 	 * It is called from the probepossiblities method
+	 * @since 18.01.22 Added possible reach facts
 	 * @param piece
 	 * @param name name is of type piecename + _ + posname
 	 * @param posnameNow The name of the position the piece is occupying now
@@ -634,6 +663,7 @@ public class OpponentAgent {
 		ChessPieceType pieceType = piece.getChessType();
 		for (Position pos:availablePositions) {
 			String posname = pos.getPositionName();
+			localKb.createfacts(POSSIBLEREACH, posname, name);
 			writer.println("Checking available position for  "+piecename+ " and "+posname + " with the given name "+name+" From occupied position "+posnameNow);
 			if (piece.checkFriendlyPosition(pos)) {
 				writer.println("Position "+posname+" is occupied by friendly piece");

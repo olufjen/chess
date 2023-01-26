@@ -80,7 +80,7 @@ public class AChessAgent extends KBAgent {
  * A first order knowledge base
  */
 	private ChessFolKnowledgeBase folKb;
-	
+	private ChessFolKnowledgeBase strategyKB = null;
 /**
  * ChessDomain:
  *  All pieces are constants
@@ -137,6 +137,8 @@ public class AChessAgent extends KBAgent {
     private String CASTLE;
     private String OPPONENTTO;
     private String POSSIBLETHREAT;
+    private String POSSIBLEPROTECT; // All available positions for a piece are possibly protected by that piece
+    private String POSSIBLEREACH; // All available positions for a piece are possibly reachable by that piece
     
     private ChessActionImpl castleAction = null;
     
@@ -226,6 +228,8 @@ public class AChessAgent extends KBAgent {
 			CASTLE = KnowledgeBuilder.getCASTLE();
 			OPPONENTTO = KnowledgeBuilder.getOPPONENTTO();
 			POSSIBLETHREAT = KnowledgeBuilder.getPOSSIBLETHREAT();
+			POSSIBLEPROTECT = KnowledgeBuilder.getPOSSIBLEPROTECT();
+			POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
 			chessDomain.addPredicate(OPPONENTTO);
 			chessDomain.addPredicate(POSSIBLETHREAT);
 			chessDomain.addPredicate(PROTECTED);
@@ -256,6 +260,26 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(KNIGHT);
 	  }
 	  
+
+	public ChessFolKnowledgeBase getStrategyKB() {
+		return strategyKB;
+	}
+
+
+	public void setStrategyKB(ChessFolKnowledgeBase strategyKB) {
+		this.strategyKB = strategyKB;
+	}
+
+
+	public ChessFolKnowledgeBase getFolKb() {
+		return folKb;
+	}
+
+
+	public void setFolKb(ChessFolKnowledgeBase folKb) {
+		this.folKb = folKb;
+	}
+
 
 	public ChessActionImpl getCastleAction() {
 		return castleAction;
@@ -522,6 +546,7 @@ public class AChessAgent extends KBAgent {
 		writer.println("The first order knowledge base");
 		writer.println(folKb.toString());
 		writer.flush();
+		strategyKB =  solver.getOpponentAgent().getLocalKb();
 		if (naction != null)
 			localAction = naction;
 		return localAction;
@@ -635,6 +660,7 @@ public class AChessAgent extends KBAgent {
 	 * @since 29.01.21 Only active pieces are considered
 	 * @since 07.04.21 Castling rules are added
 	 * @since 14.08.21 The chesstypes KING,QUEEN,ROOK, etc are unary relations
+	 * @since 18.01.22 Added possible reach and possible protect facts
 	 * param t
 	 */
 	public void makeRules(APlayer player,String castleone,String castle2) {
@@ -715,6 +741,19 @@ public class AChessAgent extends KBAgent {
 					for (Position pos:availablePositions){
 						//if(!piece.checkRemoved(pos)) 
 						//if(!piece.checkFriend(pos))
+						String possibleposition = pos.getPositionName();
+						Constant possibleprotectorVariable = new Constant(name);
+						Constant possibleprotectedVariable = new Constant(possibleposition);
+						List<Term> possibleprotectedTerms = new ArrayList<Term>();
+						possibleprotectedTerms.add(possibleprotectorVariable);
+						possibleprotectedTerms.add(possibleprotectedVariable);
+						Predicate possibleprotectorPredicate = new Predicate(POSSIBLEPROTECT,possibleprotectedTerms);
+						Predicate possiblereachablePredicate = new Predicate(POSSIBLEREACH,possibleprotectedTerms);
+						if (!pawnattack) {
+							folKb.tell(possibleprotectorPredicate);
+//							kb.tellCaptureRules(t, position, name);
+						}
+						folKb.tell(possiblereachablePredicate);
 						if(!piece.checkRemoved(pos) || piece.checkFriendlyPosition(pos)) { // isFriendlyPosition() added 01.11.21
 /*							if (pos.isFriendlyPosition()) {
 								writer.println("=========== position is friendly !!"+pos.toString());

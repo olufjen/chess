@@ -13,6 +13,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import aima.core.logic.fol.domain.FOLDomain;
+import aima.core.logic.fol.kb.data.Literal;
+import aima.core.logic.planning.State;
 import no.chess.web.model.ChessPiece;
 import no.chess.web.model.Position;
 import no.games.chess.ChessPieceType;
@@ -85,6 +87,9 @@ public class APerformance {
 	private String CASTLE;
 	private String OPPONENTTO;
 	private String POSSIBLETHREAT;
+    private String POSSIBLEPROTECT; // All available positions for a piece are possibly protected by that piece
+    private String POSSIBLEREACH; // All available positions for a piece are possibly reachable by that piece
+
 	private List<Position> controlPositions; // The original set of positions as a list
 	private HashMap<String,Position> positions; // The original HashMap of positions
 	private Map<String,Position> occupiedPositions; //Positions occupied by the opponent pieces. The key is the name of the piece
@@ -98,6 +103,9 @@ public class APerformance {
 	private FOLGamesBCAsk backwardChain;
 	private List<String>positionKeys = null;// The key for positions that are reachable. The key is of the form: piecename_frompostopos
 	private PerceptSchema thePreceptSchema = null;
+    private Map<String,State>initStates = null; // Contains all initial states for current move
+	private Map<String,State>goalStates = null; // Contains all goal states for current move
+	private List<State> possibleStates = null;
 	
 /*
  * The following two maps are only filled if there are opponent pieces than are reachable:
@@ -177,7 +185,9 @@ public class APerformance {
 		resourcePositions = new ArrayList();
 		takePieces = new HashMap(); //Opponent pieces that can be taken.
 		canlosePieces = new HashMap(); // pieces that can be lost to opponent
+		possibleStates = new ArrayList();
 		setPredicatenames();
+		playerName = this.myPlayer.getNameOfplayer();
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {
@@ -216,15 +226,30 @@ public class APerformance {
 			CASTLE = KnowledgeBuilder.getCASTLE();
 			OPPONENTTO = KnowledgeBuilder.getOPPONENTTO();
 			POSSIBLETHREAT = KnowledgeBuilder.getPOSSIBLETHREAT();
+			POSSIBLEPROTECT = KnowledgeBuilder.getPOSSIBLEPROTECT();
+			POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
+
 	  }	
 	  
+	  public Map<String, State> getInitStates() {
+		  return initStates;
+	  }
+	  public void setInitStates(Map<String, State> initStates) {
+		  this.initStates = initStates;
+	  }
+	  public Map<String, State> getGoalStates() {
+		  return goalStates;
+	  }
+	  public void setGoalStates(Map<String, State> goalStates) {
+		  this.goalStates = goalStates;
+	  }
 	  public List<ChessActionImpl> getPlayeractions() {
-		return playeractions;
+		  return playeractions;
 	  }
 	  public void setPlayeractions(List<ChessActionImpl> playeractions) {
 		  this.playeractions = playeractions;
 	  }
-	public Map<String, Position> getOccupiedPositions() {
+	  public Map<String, Position> getOccupiedPositions() {
 		  return occupiedPositions;
 	  }
 
@@ -898,6 +923,7 @@ public class APerformance {
 					  if (chosenpiece.isPresent()) {
 						  chosenPiece = chosenpiece.get();
 						  chosenPosition = foundPos;
+						  posName = foundPos.getPositionName();
 						  writer.println("Exit with no protector or threat  "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+foundPos.getPositionName());
 						  break; // break leaves the for loop 1
 					  }
@@ -913,6 +939,7 @@ public class APerformance {
 					  if (protsize > 1 && chosenpiece.isPresent()) {
 						  chosenPiece = chosenpiece.get();
 						  chosenPosition = foundPos;
+						  posName = foundPos.getPositionName();
 						  writer.println("Exit with  protection "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+foundPos.getPositionName());
 						  break;// break leaves the for loop 1
 					  }
@@ -929,6 +956,7 @@ public class APerformance {
 							  for (String name:fromreachStrategy) { // for loop 2 found a "from position" reachable from strategy KB
 								  int l = name.length();
 								  int index = l-2;
+								  //noexit = false;
 								  String toPosname = name.substring(index);
 								  String pieceName = name.substring(0,l-3);
 								  writer.println("Evaluation investigating "+pieceName + " and position "+toPosname);
@@ -955,25 +983,29 @@ public class APerformance {
 									  }
 								  }
 								  if (opponentstrategyPiece != null && opponentstrategyPiece.isActive()) {
-									  writer.println("Evaluation Opponent reachable from strategy KB "+opponentstrategyPiece.getMyPiece().getOntlogyName()+" from "+toPosname);
+									  writer.println("Evaluation noexit set Opponent reachable from strategy KB "+opponentstrategyPiece.getMyPiece().getOntlogyName()+" from "+toPosname);
 									  noexit = true;
 								  }
-							  } // End for loop 2
+							  } // End for loop 2 a "from position" reachable from strategy KB
+							  if (chosenPiece != null && chosenPosition != null) { // Added 23.01.23
+								  writer.println("Leaves loop 1 with "+chosenPiece.getMyPiece().getOntlogyName());
+								  break;
+							  }
 						  }
 
 					  }
 					  //					List<AgamePiece> attackers = opponentprotectors.stream().sorted((p1,p2) -> p1.getMyValue().compareTo(p2.getMyValue()).;
 				  } // End there exist opponent protectors
 
-			  } // End for loop 1
-		  } // End pieces can be taken
+			  } // End for loop 1 Opponent pieces to take
+		  } // End pieces can be taken. noexit is true if there are opponent pieces that can reach a certain position from the strategy KB.
 		  if (takePieces.isEmpty()|| chosenPiece == null || noexit) { // No opponent pieces can be taken. What movable Piece to use?
 			  writer.println("No opponent pieces to take");
 			  if (!movablePieces.isEmpty()) {
 				  writer.println("What movable piece to use?");
 				  for (Map.Entry<String,ArrayList<AgamePiece>> entry:movablePieces.entrySet()) { // Checking for all my movable pieces
 					  String possibleposName = entry.getKey(); // A position the piece can move to
-					  ArrayList<AgamePiece> movablePieces = entry.getValue();
+					  ArrayList<AgamePiece> movablePieces = entry.getValue(); // A list of movable pieces to a given position
 					  for (AgamePiece piece:movablePieces) { // A set of movable pieces to use
 						  String pieceName = piece.getMyPiece().getOntlogyName();
 						  String predicate = piece.getNameType();
@@ -982,11 +1014,26 @@ public class APerformance {
 						  if (inPos == null) {
 							  inPos = piece.getHeldPosition();
 						  }
+						  String inposName = inPos.getPositionName();
 						  writer.println("Investigating for piece "+pieceName + " at " + inPos.getPositionName() + " with type "+predicate+" and position to move to "+possibleposName);
-						  List<String> localpositions = localKb.searchKing(predicate, opponentKingPosition);
+						  List<String> localpositions = localKb.searchKing(predicate, opponentKingPosition);// Positions that can reach the opponent king's position given a certain type of piece
 						  boolean possibleMove = folKb.checkFacts(pieceName, opponentKingPosition, REACHABLE, playeractions,controlPositions);
+						  boolean protectorset = false; // set if a protector is available
+						  boolean setChess = false; // True if opponent king can be set chess
+						  String strategyPiecename = pieceName + "_";
 						  for (String pos:localpositions) { // Positions that can reach the opponent king's position given a certain type of piece
-							  writer.println("The piece can take the king from "+pos+" and move is possible? "+possibleMove);
+							  writer.println("The piece can take the king from "+pos+" and capture is possible? "+possibleMove+ " from "+inposName);
+							  strategyPiecename = strategyPiecename + pos;
+							  boolean attackposReachable = folKb.checkpieceFacts("y", pieceName, pos, REACHABLE);//Check if pos is reachable from current position
+							  boolean pieceProtected = folKb.checkmyProtection(pieceName, pos,PROTECTED, myPlayer); // Is pos protected?
+							  boolean possibleProtected = folKb.checkmyProtection(pieceName, pos,POSSIBLEPROTECT, myPlayer); // Is pos protected?
+//							  boolean kingReachable = folKb.checkpieceFacts("x", pieceName,  opponentKingPosition, REACHABLE);//Check if kings pos is reachable from current position
+							  boolean kingReachable = localKb.checkpieceFacts("y", strategyPiecename,  opponentKingPosition, REACHABLE);//Check if kings pos is reachable from current position
+							  //							  List<String> reachablePieces = folKb.searchFacts("x", opponentKingPosition, REACHABLE);
+							  writer.println("The piece can take the king from "+pos+" using " + strategyPiecename + " and position is reachable "+attackposReachable + " and protected " + pieceProtected + " and possible protected "+ possibleProtected + " and king position is reachable "+kingReachable);
+							  strategyPiecename = null;
+							  strategyPiecename = pieceName + "_";
+							  
 							  boolean takeKing = inPos.getPositionName().equals(pos); // inPos is the position of the piece investigated
 							  if (takeKing && possibleMove) { // Must create a warning. The opponent king will be taken
 								  posName = opponentKingPosition;
@@ -996,9 +1043,17 @@ public class APerformance {
 								  // chosenPiece = piece;
 								  canTakeKing = takeKing;
 							  }
+							  if (kingReachable && attackposReachable && (pieceProtected || possibleProtected)){
+								  chosenPiece = piece; 
+								  chosenPosition = positions.get(pos);
+								  posName = pos;
+								  setChess = true;
+								  writer.println("Exit with king set chess "+chosenPiece.getMyPiece().getOntlogyName()+" to position "+pos);
+								  break;// break leaves the for loop Positions that can reach the opponent king's position
+							  }
 							  List<String> pieceNames = fromreachparentPieces.get(pos); // Pieces that can reach a given position
 							  if (pieceNames != null && !pieceNames.isEmpty()) {
-								  for (String pName:pieceNames) {
+								  for (String pName:pieceNames) {// Pieces that can reach a given position
 									  AgamePiece possiblePiece = (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(pName)).findAny().orElse(null);
 									  if(possiblePiece != null) { // Must check pawn !!!
 										  ChessPieceType pieceType = possiblePiece.getChessType();
@@ -1014,31 +1069,56 @@ public class APerformance {
 												  thePos = possiblePiece.getHeldPosition();
 											  }
 											  writer.println("The following piece is available as protector for position "+pos+": "+pName+ " and is at "+thePos.getPositionName() );
-											  if (pName.equals(pieceName) || takeKing) {
-												  writer.println(pieceName+" Can threaten the king from  "+pos);
+											  if (!protectorset)
+												  protectorset = !pName.equals(pieceName);
+											  if (pName.equals(pieceName) || takeKing) { // pieceName is the piece under investigation
+													  boolean possiblethreat = folKb.checkFacts(pieceName, pos, REACHABLE, playeractions,controlPositions);
+													  writer.println(pieceName+" Can threaten the king from  "+pos+ " threat and protector "+possiblethreat+" "+protectorset );
 												  if (takeKing) {// Must create a warning. The opponent king will be taken
 													  writer.println(pieceName+"Takes the King WARNING!!");
 													  chosenPiece = possiblePiece;
 													  canTakeKing = takeKing;
+												  }
+												  if (kingReachable && pieceProtected) { // possibleMove: true if king's position is reachable from pos
+													  writer.println(pieceName+" Can move to  "+pos+ " and threaten the king");
+													  chosenPiece = possiblePiece;
+													  chosenPosition = positions.get(pos);
 												  }
 											  }
 										  }
 
 									  }
 
-								  }
+								  } // Loop Pieces that can reach a given position
 							  }
 						  } // Loop positions that can reach opponent king's position
-						  if(canTakeKing) {
-							  writer.println(pieceName+" Takes the king ");
+						  if(canTakeKing || setChess) {
+							  writer.println(pieceName+" Takes the king - or king set chess ");
 							  break; // break loop 1 checking my movable pieces
-						  }else { // No pieces can take the king
+						  }else { // No pieces can take the king. Create a set of percept actions?
+							  writer.println("No pieces can take the king. Create a set of percept actions? with given positions "+posName+" possible "+possibleposName);
+							  if (posName.equals(possibleposName)) {// A position the piece can move to: 
+								  Position d2posin = positions.get(posName);
+								  //	  Position d2posin = positions.get(possibleposName);
+								  String otherpredicate = REACHABLE;
+								  String nameType = piece.getNameType();
+								  APerceptor d2perceptor = new APerceptor(d2posin,otherpredicate,PIECETYPE,nameType,playerName);
+								  State d2chosenState = d2perceptor.checkPercept(initStates); // A hash table of available init states.
+								  if (d2chosenState != null) {
+									  possibleStates.add(d2chosenState);
+									  writer.println("The fluents of the possible state");
+									  for (Literal literal :
+										  d2chosenState.getFluents()) {
+										  writer.println(literal.toString());
+									  }
+								  }
+							  }
 
 						  }
-					  } // Loop set of movable pieces
-				  } // End checking my movable pieces
-			  }
-		  }
+					  } // Loop set of movable pieces to use for a given position
+				  } // End checking all my movable pieces
+			  } // End my set of movable pieces is not empty
+		  } // End no opponent pieces can be taken
 		  String chosename = "No name";
 		  if (chosenPiece != null) {
 			  chosename = chosenPiece.getMyPiece().getOntlogyName();
