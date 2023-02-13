@@ -45,7 +45,7 @@ public class OpponentAgent {
 
 	private ChessStateImpl stateImpl = null;
 	private ChessActionImpl localAction = null;
-	private List <ChessAction> actions = null; // All actions available to the opponent
+	private List <ChessAction> actions = null; // All actions available to the opponent of the game
 	private List <ChessActionImpl> playeractions = null; // all actions available to player
 	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\opponent.txt";
 	private PrintWriter writer = null;
@@ -54,12 +54,13 @@ public class OpponentAgent {
 	private APlayer myPlayer = null; // This is the opponent of the game
 	private APlayer opponent = null; // This is the chess player of the game
 	private ChessFolKnowledgeBase folKb = null; // The parent knowledge base
-	private FOLDomain chessDomain;
+	private ChessDomain chessDomain;
 	private FOLGamesFCAsk forwardChain;
 	private FOLGamesBCAsk backwardChain;
 	private ChessFolKnowledgeBase localKb; // The local strategy knowledge base
 	private APerformance performanceMeasure;
-	private Map<String,Position>protectedPositions = null; // Contains the set of positions protected by any of the two players of the game
+	private Map<String,Position>protectedPositions = null; // Contains the set of positions protected by the player of the game
+	// These positions can be occupied by opponent pieces, be vacant or occupied by a friendly piece.
 	// Key: A piece x is protected at pos y when it moves from pos z to y. ex: WhiteBishop1_d2e1. This means that the
 	// Bishop is protected by another player's piece if it moves from d2 to e1
 	// With the key: BlackBishop2_a3c1, then this opponent Bishop is threatened by another player's piece if it moves from 
@@ -112,7 +113,7 @@ public class OpponentAgent {
     private String POSSIBLEREACH; // All available positions for a piece are possibly reachable by that piece
 
     
-	public OpponentAgent(ChessStateImpl stateImpl, PlayGame game, APlayer myPlayer, APlayer opponent,ChessFolKnowledgeBase folKb,FOLDomain chessDomain) {
+	public OpponentAgent(ChessStateImpl stateImpl, PlayGame game, APlayer myPlayer, APlayer opponent,ChessFolKnowledgeBase folKb,ChessDomain chessDomain) {
 		super();
 		this.stateImpl = stateImpl;
 		this.game = game;
@@ -346,7 +347,7 @@ public class OpponentAgent {
 	 */
 	public void defineFacts() {
 		Position heldPosition = null;
-		for (AgamePiece piece:myPlayer.getMygamePieces()) {
+		for (AgamePiece piece:myPlayer.getMygamePieces()) { // myPlayer is here the opponent of the game
 			if (piece.isActive()){
 				heldPosition = piece.getMyPosition();
 				if (heldPosition == null) {
@@ -355,7 +356,7 @@ public class OpponentAgent {
 				String occupies = piece.returnPredicate();
 				String pieceName = piece.getMyPiece().getOntlogyName();
 				String posName = heldPosition.getPositionName();
-				localKb.createfacts(occupies, posName, pieceName);
+				localKb.createfacts(occupies, posName, pieceName); // localKB is the strategy KB
 				myPieceNames.add(pieceName);
 			}
 		}
@@ -397,8 +398,8 @@ public class OpponentAgent {
 		terms.add(pieceVariable);
 		terms.add(posVariable);
 		Predicate folPredicate = new Predicate(predicate,terms);
-		folKb.tell(folPredicate);
-		localKb.tell(folPredicate);
+		folKb.tell(folPredicate); // parent KB
+		localKb.tell(folPredicate); // strategy KB
 //		writer.println("Opponent piece "+piece+"\ncan move to "+pos);
 	}
 	/**
@@ -578,7 +579,7 @@ public class OpponentAgent {
 	 * REACHABLE(WhiteBishop2_c4,d5)
 	 * are created in the strategy KB. - From position c4, the bishop can reach d5.
 	 * The strategy KB represents possible moves one ply down.
-	 * It is called from the ChessProblemSolver
+	 * It is called from the ChessProblemSolver prepareAction method
 	 * It is also called from the defineFact method when the opponent agent is created,
 	 * to create facts about the opponent pieces to the strategy knowledge base.
 	 * @param actions - The actions available to player
@@ -586,8 +587,9 @@ public class OpponentAgent {
 	 */
 	public void probepossibilities(List<ChessActionImpl>actions,APlayer player) {
 		Position heldPosition = null;
-		possiblePositions.clear();
-		positionKeys.clear();
+//		possiblePositions.clear(); These tables and maps are created for every new move
+//		protectedPositions.clear();
+//		positionKeys.clear();
 		for (ChessAction action:actions) {
 			ChessActionImpl localAction = (ChessActionImpl) action;
 			AgamePiece piece = localAction.getChessPiece();
@@ -652,7 +654,7 @@ public class OpponentAgent {
 	 * This is done by calling the strategy knowledge base createfacts method
 	 * It also checks to see if the new reachable position is protected.
 	 * It is called from the probepossiblities method
-	 * @since 18.01.22 Added possible reach facts
+	 * @since 18.01.23 Added possible reach facts
 	 * @param piece
 	 * @param name name is of type piecename + _ + posname
 	 * @param posnameNow The name of the position the piece is occupying now
@@ -693,10 +695,18 @@ public class OpponentAgent {
 					}
 				}
 				if (!(pieceType instanceof APawn)) {
-					protectedpiece = folKb.checkmyProtection(piecename,posname,protectPiece,opponent); // Is the new position protected by player then add it to protected positions
+					protectedpiece = folKb.checkmyProtection(piecename,posname,protectPiece,opponent); // Is the new position protected by player with a different piece then add it to protected positions
 					if (protectedpiece) {
 						protectedPositions.put(name+posname, pos); // Key: A piece x is protected at pos y when it moves from pos z to y. !!
 						writer.println(protectText+name+posname);
+					}
+					if (!protectedpiece) { // Added 3.02.23 Position is also protected with possiblereach
+						protectedpiece = folKb.checkmyProtection(piecename,posname,POSSIBLEREACH,opponent);
+						if (protectedpiece) {
+							protectText = protectText + "by possible reach ";
+							protectedPositions.put(name+posname, pos); // Key: A piece x is protected at pos y when it moves from pos z to y. !!
+							writer.println(protectText+name+posname);
+						}
 					}
 				}
 			}

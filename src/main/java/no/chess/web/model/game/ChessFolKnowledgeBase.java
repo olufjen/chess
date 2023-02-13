@@ -47,7 +47,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	private List<AgamePiece> movePieces; // A list of pieces actively involved in a possible move. This list is set when the checkthreats
 	// method is called.
 	
-	public ChessFolKnowledgeBase(FOLDomain domain, InferenceProcedure inferenceProcedure) {
+	public ChessFolKnowledgeBase(ChessDomain domain, InferenceProcedure inferenceProcedure) {
 		super(domain, inferenceProcedure);
 		fileName = "tempknowledgebase.txt";
 		outputFileName = outputFileName+this.fileName;
@@ -62,7 +62,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	    setPieceTypes();
 	 
 	}
-	public ChessFolKnowledgeBase(FOLDomain domain, InferenceProcedure inferenceProcedure,String fileName) {
+	public ChessFolKnowledgeBase(ChessDomain domain, InferenceProcedure inferenceProcedure,String fileName) {
 		super(domain, inferenceProcedure);
 		this.fileName = fileName;
 		outputFileName = outputFileName+this.fileName;

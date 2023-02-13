@@ -50,7 +50,8 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private int pn = 0;
 	private int pny = 0;
 	private PreferredMoveProcessor myProcessor;
-	private Sentence sentence = null; // Contains a possible action sentence contained in the chess knowledge base
+//	private Sentence sentence = null; // Contains a possible action sentence contained in the chess knowledge base
+	// This is for propositional logic and not used olj 13.2.23
 	private boolean blocked = false;
 	private Integer actionValue = null; // The action value for this action created from the chess agent and its knowledge bases
 	private List<Position> attackedPositions = null; // These positions are set from the action processor
@@ -227,16 +228,6 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 
 	public void setOtherprotectedPositions(List<Position> otherprotectedPositions) {
 		this.otherprotectedPositions = otherprotectedPositions;
-	}
-
-
-	public Sentence getSentence() {
-		return sentence;
-	}
-
-
-	public void setSentence(Sentence sentence) {
-		this.sentence = sentence;
 	}
 
 

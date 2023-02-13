@@ -86,7 +86,7 @@ public class AChessAgent extends KBAgent {
  *  All pieces are constants
  *  all positions are constants
  */
-	private FOLDomain chessDomain;
+	private ChessDomain chessDomain;
 	private FOLGamesFCAsk forwardChain;
 	private FOLGamesBCAsk backwardChain;
 	private InferenceProcedure infp;
@@ -165,7 +165,7 @@ public class AChessAgent extends KBAgent {
 		for (Position pos:positionList) {
 			pos.setFriendlyPosition(false);
 		}
-		chessDomain = new FOLDomain();
+		chessDomain = new ChessDomain();
 		setPredicatenames();
 	}
 
@@ -195,7 +195,7 @@ public class AChessAgent extends KBAgent {
 			pos.setFriendlyPosition(false);
 		}
 		positions = game.getPositions();
-		chessDomain = new FOLDomain();
+		chessDomain = new ChessDomain();
 		setPredicatenames();
 	}
 	  public void setPredicatenames() {
@@ -232,6 +232,8 @@ public class AChessAgent extends KBAgent {
 			POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
 			chessDomain.addPredicate(OPPONENTTO);
 			chessDomain.addPredicate(POSSIBLETHREAT);
+			chessDomain.addPredicate(POSSIBLEPROTECT);
+			chessDomain.addPredicate(POSSIBLEREACH);
 			chessDomain.addPredicate(PROTECTED);
 			chessDomain.addPredicate(MOVE);
 			chessDomain.addPredicate(ACTION);
@@ -258,6 +260,7 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(PAWN);
 			chessDomain.addPredicate(BISHOP);
 			chessDomain.addPredicate(KNIGHT);
+
 	  }
 	  
 
@@ -545,6 +548,8 @@ public class AChessAgent extends KBAgent {
 		castleAction = solver.getCastleAction();
 		writer.println("The first order knowledge base");
 		writer.println(folKb.toString());
+		writer.println("The domain of the knowledge base");
+		writer.println(chessDomain.toString());
 		writer.flush();
 		strategyKB =  solver.getOpponentAgent().getLocalKb();
 		if (naction != null)
@@ -1034,6 +1039,10 @@ public class AChessAgent extends KBAgent {
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * This method is used to make sentences for propositional logic
+	 * @see aima.core.logic.propositional.agent.KBAgent#makeActionSentence(aima.core.agent.Action, int)
+	 */
 	@Override
 	public Sentence makeActionSentence(Action action, int t) {
 		ChessActionImpl thisAction = (ChessActionImpl) action;
@@ -1102,7 +1111,7 @@ public class AChessAgent extends KBAgent {
 				Sentence sentence = kb.newSymbol(moveNotation+name+"_"+toPos, t);*/
 //				kb.tell(sentence);
 				Sentence sentence = kb.newSymbol(ACTION+name+"_AT"+position, t);
-				thisAction.setSentence(sentence);
+//				thisAction.setSentence(sentence); Removed 13.2.23 olj
 //				kb.tell(sentence);
 				kb.tellmoveRule(kb.newSymbol(ACTION+name+"_TO"+toPos, t), "AT"+position, t);
 				return sentence;

@@ -128,7 +128,7 @@ public class AChessProblemSolver {
    * 
    */
   private FOLGamesFCAsk forwardChain;
-  private FOLDomain chessDomain;
+  private ChessDomain chessDomain;
   
   private FOLGamesBCAsk backwardChain; // The backward chain inference procedure
   private PrintWriter writer =  null;
@@ -170,7 +170,7 @@ public class AChessProblemSolver {
   private List<Literal> stateLiterals = null;
   private State theState = null;
   
-  public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, ChessFolKnowledgeBase folKb, FOLDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
+  public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, ChessFolKnowledgeBase folKb, ChessDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
 		super();
 		this.stateImpl = stateImpl;
 		this.localAction = localAction;
@@ -384,11 +384,11 @@ public ChessStateImpl getStateImpl() {
 		this.folKb = folKb;
   }
 
-  public FOLDomain getChessDomain() {
+  public ChessDomain getChessDomain() {
 		return chessDomain;
   }
 
-  public void setChessDomain(FOLDomain chessDomain) {
+  public void setChessDomain(ChessDomain chessDomain) {
 		this.chessDomain = chessDomain;
   }
 
@@ -714,8 +714,8 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
 public String prepareAction( ArrayList<ChessActionImpl> actions) {
 	String pname = null;
 	String piecePos = "_";
-	opponentAgent.probepossibilities(actions, myPlayer);
-	opponentAgent.chooseStrategy(actions);
+//	opponentAgent.probepossibilities(actions, myPlayer);
+//	opponentAgent.chooseStrategy(actions);
 	checkoppoentThreat(THREATEN,actions); // fills the threatenedPieces and threatenedPositions if any. This is temporal information 
 	String pieceName = "WhiteBishop2"; //Rewrite: Must find player's bishop
 	String fpos = "f1"; // Must find player's bishop first position
