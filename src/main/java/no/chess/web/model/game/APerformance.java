@@ -105,7 +105,8 @@ public class APerformance {
 	private PerceptSchema thePreceptSchema = null;
     private Map<String,State>initStates = null; // Contains all initial states for current move
 	private Map<String,State>goalStates = null; // Contains all goal states for current move
-	private List<State> possibleStates = null;
+	private List<State> possibleStates = null; // Possible init states for which percept schemas are applicable.
+	// This is when no pieces can threaten or take the opponent king.
 	
 /*
  * The following two maps are only filled if there are opponent pieces than are reachable:
@@ -185,7 +186,7 @@ public class APerformance {
 		resourcePositions = new ArrayList();
 		takePieces = new HashMap(); //Opponent pieces that can be taken.
 		canlosePieces = new HashMap(); // pieces that can be lost to opponent
-		possibleStates = new ArrayList();
+		possibleStates = new ArrayList(); // Possible init states for which produced percept schemas are applicable.
 		setPredicatenames();
 		playerName = this.myPlayer.getNameOfplayer();
 		try {
@@ -231,7 +232,13 @@ public class APerformance {
 
 	  }	
 	  
-	  public Map<String, State> getInitStates() {
+	  public List<State> getPossibleStates() {
+		return possibleStates;
+	}
+	public void setPossibleStates(List<State> possibleStates) {
+		this.possibleStates = possibleStates;
+	}
+	public Map<String, State> getInitStates() {
 		  return initStates;
 	  }
 	  public void setInitStates(Map<String, State> initStates) {
@@ -1133,7 +1140,7 @@ public class APerformance {
 								  }
 							  }
 
-						  }
+						  }// end No pieces can take or threaten the king. Create a set of percept actions?
 					  } // Loop set of movable pieces to use for a given position
 				  } // End checking all my movable pieces
 			  } // End my set of movable pieces is not empty

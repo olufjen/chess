@@ -44,6 +44,7 @@ import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
 import no.games.chess.planning.ChessProblem;
+import no.games.chess.planning.ChessGraphPlanAlgorithm;
 /**
  * AChessProblemSolver
  * This class is used to find best moves in the chess game through planning as described in chapter 10 and 11 of 
@@ -164,6 +165,7 @@ public class AChessProblemSolver {
   private AgamePiece opponentKing = null;
   private String opponentKingPosition = null;
   private State chosenInitstate = null;
+  private ActionSchema theSolution = null; // An action Schema chosen from the graphplan algorithm
 /*
  * theState represents the total initial state containing all the stateLiterals   
  */
@@ -278,7 +280,13 @@ public void findOpponentKing() {
   }
   
 
- public OpponentAgent getOpponentAgent() {
+ public ActionSchema getTheSolution() {
+	return theSolution;
+}
+public void setTheSolution(ActionSchema theSolution) {
+	this.theSolution = theSolution;
+}
+public OpponentAgent getOpponentAgent() {
 	return opponentAgent;
 }
 public void setOpponentAgent(OpponentAgent opponentAgent) {
@@ -1303,6 +1311,31 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 			   writer.println(primitiveAction.toString());
 		   }
 		  writer.println("Chosen action\n"+naction.getActionName());
+	  }
+
+	
+/*
+ * Planning graphs p. 379.
+ * S0 - A0 - S1
+ * A0 contains ground actions that might be applicable in S0
+ * S0 consists of nodes representing fluents that holds in S0	  
+ */
+	  ChessGraphPlanAlgorithm graphplan = new ChessGraphPlanAlgorithm(); // Added graphplan 8.3.23
+	  List<List<ActionSchema>> solutions = graphplan.graphPlan(problem);
+	  if (solutions != null && !solutions.isEmpty()) {
+		  for (List<ActionSchema> solutionschemas:solutions) {
+			  writer.println("Solutions from graphplan - levelled off at "+graphplan.getTheLevel());
+			  writer.println("The levels \n"+ graphplan.getTheChesslevel().printLevelObject());
+			  for (ActionSchema asolution:solutionschemas) {
+				  String solutionName = asolution.getName();
+				  writer.println("The solution name "+solutionName+"\n"+asolution.toString());
+				  if (!solutionName.equals("No-op")) {
+					  theSolution = asolution;
+				  }
+			  }
+		  }
+	  }else {
+		  writer.println("No solutions from graphplan\n");
 	  }
 
 	  writer.flush();

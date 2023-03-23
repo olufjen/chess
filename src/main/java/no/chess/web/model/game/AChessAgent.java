@@ -48,7 +48,7 @@ import no.games.chess.planning.ChessProblem;
 import no.games.chess.planning.ChessSearchAlgorithm;
 
 /**
- * The Chess Agent is both a utility based agent and a goal based agent.
+ * The Chess Agent is both a utility based agent, a goal based agent and a model based agent.
  * (For definition see p. 52 and p. 53.)
  * This is a Knowledgebase agent derived from the generic knowledgebase agent of AIMA chapter 7.
  * It is further adapted for the FOL knowledge base as described in chapter 10 and 11.
@@ -58,7 +58,7 @@ import no.games.chess.planning.ChessSearchAlgorithm;
  * KBAgent is an abstract class extending the AbstractAgent class 
  * 
  * The agent main purpose is to choose the best action from the list of available actions.
- * The available actions are held in the ChessState object (the Percept)
+ * All the available chess actions are held in the ChessState object (the Percept)
  * So the agent program performs a mapping from the Percept to an action.
  * For this purpose the agent must find:
  * If the chosen action has a movement
@@ -93,7 +93,7 @@ public class AChessAgent extends KBAgent {
 	private List <ChessActionImpl> actions = null;
 	private List <ChessActionImpl> opponentActions = null;
 	private String knowledgeFilename = "knowledgebase.txt";
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\knowledgebase.txt";
+	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\chessAgent.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
 	private PlayGame game = null;
@@ -391,7 +391,7 @@ public class AChessAgent extends KBAgent {
 		
 		Predicate folPredicate = new Predicate(chessPr,terms);  // The folPredicate is OWNER
 		QuantifiedSentence qSentence = new QuantifiedSentence("FORALL",variables,folPredicate);
-//		folKb.tell(qSentence);
+		folKb.tell(qSentence); // Returned to code 28.02.23
 		createConnected("player", "y", "x");
 		String s1 = "occupies(o,px)^occupies(pi,py)";
 		String s2 = "MOVE(pi,pz)";
@@ -546,11 +546,11 @@ public class AChessAgent extends KBAgent {
 //		Sentence sentence = makePerceptSentence(state, 0);
 //		KB.tell(sentence);
 		castleAction = solver.getCastleAction();
-		writer.println("The first order knowledge base");
-		writer.println(folKb.toString());
-		writer.println("The domain of the knowledge base");
-		writer.println(chessDomain.toString());
+//		writer.println("The first order knowledge base");
+//		writer.println(folKb.toString());
+		folKb.writeKnowledgebase();
 		writer.flush();
+		chessDomain.printDomain();
 		strategyKB =  solver.getOpponentAgent().getLocalKb();
 		if (naction != null)
 			localAction = naction;
