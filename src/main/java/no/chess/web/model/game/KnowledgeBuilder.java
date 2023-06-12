@@ -14,6 +14,7 @@ import no.games.chess.AbstractGamePiece.pieceType;
 /**
  * KnowledgeBuilder
  * This class contains constants and knowledge base facts to be used in knowledgebases used in a chess game.
+ * All these constants act as predicates in first order logic.
  * @since 18.01.22
  * Added two more knowledge base facts: POSSIBLEPROTECT, POSSIBLEREACH
  * All available positions for a piece are possible to protect or possible to reach

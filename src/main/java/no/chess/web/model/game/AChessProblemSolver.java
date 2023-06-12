@@ -1011,7 +1011,7 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  if (d1chosenState != null) {
 				  chosenInitstate = d1chosenState;
 			  }
-			  break;
+			  break; // Black bishop at g4: If this is true then pawn at h2 is moved to h3
 		  }
 		  String pname = "x";
 		  String bpos = "d5";
@@ -1037,8 +1037,6 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 				  }
 			  }
 		  }
-		  //			  pieceName = "WhitePawn3";
-
 		  String kingName = opponentKing.getMyPiece().getOntlogyName();
 		  String kingPos = folKb.checkPosition(kingName, OCCUPIES);
 		  opponentKingPosition = kingPos;
@@ -1306,6 +1304,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		   int s = schemas.size();
 		   int listSize = actionSchemalist.size();
 		   writer.println("No of permuted primitive actions from problem "+s+" No of schemas in list (chessActions) "+listSize);
+		   writer.println("The ground actions in problem: ");
 		   for (ActionSchema primitiveAction :
 			   schemas) {
 			   writer.println(primitiveAction.toString());
@@ -1328,9 +1327,9 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 			  writer.println("The levels \n"+ graphplan.getTheChesslevel().printLevelObject());
 			  for (ActionSchema asolution:solutionschemas) {
 				  String solutionName = asolution.getName();
-				  writer.println("The solution name "+solutionName+"\n"+asolution.toString());
 				  if (!solutionName.equals("No-op")) {
 					  theSolution = asolution;
+					  writer.println("The solution name "+solutionName+"\n"+asolution.toString());
 				  }
 			  }
 		  }

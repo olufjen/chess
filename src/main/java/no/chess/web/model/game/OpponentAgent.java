@@ -250,6 +250,7 @@ public class OpponentAgent {
 	 * creates fact of the type PAWN(x,kingPosition) to the strategy KB
 	 * - A pawn can reach the king position from position x
 	 * This is done by the call to the findKingsReachable method of the performanceMeasure object
+	 * It is called from the ChessProblemSolver
 	 * @param opponentKingPosition
 	 */
 	public void setOpponentKingPosition(String opponentKingPosition) {
@@ -489,7 +490,7 @@ public class OpponentAgent {
 		writer.println("Choose strategy");
 		performanceMeasure.setPositions(positions);
 		performanceMeasure.setPositionKeys(positionKeys); // contains position keys of the form: WhiteBishop2_c4d5:
-		performanceMeasure.occupiedPositions(); // Finds positions occupied by the opponent's pieces
+		performanceMeasure.occupiedPositions(); // Finds positions occupied by the opponent's pieces and player's pieces
 		performanceMeasure.findReachable(); //runs through all positions occupied by opponent pieces to see
 //		 * if any of the player's pieces can reach these positions and safely take the opponent piece.
 		performanceMeasure.simpleSearch(); // Builds a map of movable pieces, protector pieces and need protection pieces.

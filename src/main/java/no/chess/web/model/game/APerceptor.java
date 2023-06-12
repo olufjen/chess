@@ -174,7 +174,7 @@ public void setPos(Position pos) {
  * This method checks the generated percept action against all available initial states.
  * The initial states have only ground atoms.
  * The percept action is applicable in state s if the precondition of the percept action is satisfied by s.
- * @param initStates
+ * @param initStates all initial states
  * @return the chosen state or null
  */
 public State checkPercept( Map<String,State>initStates) {
@@ -192,7 +192,7 @@ public State checkPercept( Map<String,State>initStates) {
 					stateconstants.add(c);
 			}
 		}
-		PerceptSchema conPercept = percept.getActionBySubstitution(stateconstants);
+		PerceptSchema conPercept = percept.getActionBySubstitution(stateconstants); // Create a percept with only ground atoms
 		boolean found = state.getFluents().containsAll(conPercept.getPrecondition());//is applicable in state s if the precondition of the percept action is satisfied by s.
 		stateconstants.clear();
 		if (found) {

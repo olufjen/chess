@@ -139,8 +139,8 @@ public class APerformance {
 	// It is filled with a call to the folKb.checkThreats method
 	private List<AgamePiece> opponentProtectors;// A list of opponent pieces that are protecting a given position
 	// It is filled with a call to the folKb.checkThreats method
-	private List<Position> resourcePositions; // ResourcePositions are reachable positions
-	private AgamePiece chosenPiece = null;
+	private List<Position> resourcePositions; // ResourcePositions are positions reachable by player's pieces
+	private AgamePiece chosenPiece = null; // This piece is null or set in the evaluate function
 	private Position chosenPosition = null; // This position is null or set in the evaluate function
 	private String opponentColor = "Black"; //OBS !!
 	private String playerColor = "White";
@@ -549,6 +549,18 @@ public class APerformance {
 	   * findReachable()
 	   * This method runs through all positions occupied by opponent pieces to see
 	   * if any of the player's pieces can reach these positions and safely take the opponent piece.
+	   * It maintains the following HashMaps where the name of the position is the key:
+	   * reachablePieces to position reachable from strategy KB. Contains piecenames of the form WhiteQueen_c4,
+	   * with the reachable position name as a key The position name is a position occupied by an opponent piece.
+	   * fromreachablePieces From positions reachable from strategy KB. The fromposname is key
+	   * reachableOpponent;  A map of reachable opponent pieces. Contains piece names of the form BlackPawn5,
+	   * with a position name like d5 as a key
+	   * tothreatPieces;  to position threats from parent KB, the to position is the key.
+	   * toreachablePieces;  to position reachable from parent KB, the to position is the key.
+	   * topawnthreatPieces; to position pawn threats from parent KB, the to position is the key.
+	   * fromthreatparentPieces; From position threats from parent KB, the from position is the key
+	   * fromreachparentPieces; From position reachable from parent KB, the from position is the key
+	   * frompawnparentPieces; From position pawnthreats from parent KB, the from position is the key
 	   * Important elements:
 	   * positionKeys: Reachable positions: piecename_frompostopos
 	   * positions: A Map of all positions. 
@@ -728,9 +740,9 @@ public class APerformance {
 	   * investigates positions that are reachable from the parent KB
 	   * and which pieces that possibly can protect these reachable positions.
 	   * this results in three different Maps:
-	   * protectorPieces - pieces that protect a position from a new position
-	   * needprotectionPieces - pieces that need a protection in a new position.
-	   * movablePieces - pieces that can be moved to a new position without a threat.
+	   * protectorPieces - pieces that protect a position from a new position The key is posName+toPosname
+	   * needprotectionPieces - pieces that need a protection in a new position. The position name is the key
+	   * movablePieces - pieces that can be moved to a new position without a threat.The position name is the key
 	   */
 	  public void simpleSearch() {
 		  writer.println("A simple search");
@@ -879,7 +891,7 @@ public class APerformance {
 		  chosenPosition = null;
 		  boolean chosen = false;
 		  boolean noexit = false;
-		  for (Position pos:resourcePositions) { // Resource positions are reachable positions.
+		  for (Position pos:resourcePositions) { // Resource positions are positions reachable by player's pieces.
 			  ChessPiece piece = pos.getUsedBy(); // Is position occupied?
 			  if (piece != null) {
 				  AgamePiece myPiece = piece.getMyPiece();
@@ -892,14 +904,16 @@ public class APerformance {
 					  takePieces.put(posName, myPiece); // opponent pieces that can be taken
 					  //					break;
 				  }
-				  if (threatenedPiece != null && threatenedPiece == myPiece ) {
+/*	This will never occur: ojn 11.4. 23
+ * 			  if (threatenedPiece != null && threatenedPiece == myPiece ) {
 					  posName = pos.getPositionName();
 					  //					foundPos = pos;
 					  canlosePieces.put(posName, myPiece); // own pieces that can be lost
-				  }
+				  }*/
 			  }
 		  }
-		  if (!canlosePieces.isEmpty()) { //Find a safe place for these pieces
+/* This will never occur: ojn 11.4. 23
+ * 		  if (!canlosePieces.isEmpty()) { //Find a safe place for these pieces
 			  for (Map.Entry<String,AgamePiece> entry:canlosePieces.entrySet()) {
 				  posName = entry.getKey();
 				  AgamePiece myownPiece = entry.getValue();
@@ -907,7 +921,7 @@ public class APerformance {
 				  writer.println("This piece can be lost "+myPieceName + " at "+posName);
 			  }
 
-		  }
+		  }*/
 		  if (!takePieces.isEmpty()) {	// Found opponent pieces that can be taken at reachable positions
 			  int takesize = takePieces.size();
 			  writer.println("There are "+takesize+ " opponent pieces to take ");
@@ -978,9 +992,11 @@ public class APerformance {
 									  String threaten = agent.getTHREATEN();
 									  String protect = agent.getPROTECTED();
 									  boolean threat = folKb.checkThreats("x", toPosname, threaten,opponent);
-									  opponentThreats = folKb.getMovePieces();
+									  if (threat) // OBS: opponent threats and opponentProterors are the same !!
+										  opponentThreats = folKb.getMovePieces();
 									  boolean opponentProtect = folKb.checkThreats("x", toPosname, protect,opponent); // Added 29.05.22
-									  opponentProtectors = folKb.getMovePieces();
+									  if (opponentProtect)
+										  opponentProtectors = folKb.getMovePieces();
 									  if (!threat && !opponentProtect) { // Changed 29.05.22
 										  chosenPiece = strategyPiece; // This represent a possible move
 										  chosenPosition = positions.get(toPosname);
@@ -1037,7 +1053,7 @@ public class APerformance {
 						  for (String pos:localpositions) { // Positions that can reach the opponent king's position given a certain type of piece
 							  writer.println("The piece can take the king from "+pos+" and capture is possible? "+possibleMove+ " from "+inposName);
 							  strategyPiecename = strategyPiecename + pos;
-							  possibleThreat = folKb.checkpieceFacts("x", pieceName, pos, THREATEN);
+							  boolean kingpossibleThreat = folKb.checkpieceFacts("x", pieceName, pos, THREATEN);
 							  possiblePawn = folKb.checkpieceFacts("x", pieceName, pos, PAWNATTACK);
 							  attackposReachable = folKb.checkpieceFacts("y", pieceName, pos, REACHABLE);//Check if pos is reachable from current position
 							  boolean pieceProtected = folKb.checkmyProtection(pieceName, pos,PROTECTED, myPlayer); // Is pos protected?
@@ -1059,15 +1075,15 @@ public class APerformance {
 								  canTakeKing = takeKing;
 							  }
 							  boolean makeMove = kingReachable && attackposReachable && (pieceProtected || possibleProtected);
-							  if (possibleThreat) {
+							  if (possibleThreat) { // OBS: two different possibleThreat
 								  writer.println("Threats from");
-								  if (opponentThreats != null && !opponentThreats.isEmpty()) {
+								  if (opponentThreats != null && !opponentThreats.isEmpty()) { // OBS: These lists are empty here !!
 									  for (AgamePiece oppiece:opponentThreats) {
 										  writer.println(oppiece.getMyPiece().getOntlogyName());
 									  }
 								  }
 							  }
-							  if (makeMove && (!possibleThreat && !possiblePawn)){
+							  if (makeMove && (!kingpossibleThreat && !possiblePawn)){
 								  chosenPiece = piece; 
 								  chosenPosition = positions.get(pos);
 								  posName = pos;
