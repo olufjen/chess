@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import no.basic.ontology.model.OntologyModel;
@@ -252,7 +253,8 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	     String meldingsText = " ";
 	     String fileName = null;
 	     SimpleScalar simple = new SimpleScalar(piece);
-	     SimpleScalar movedTo = new SimpleScalar(newPos);
+	     SimpleScalar movedTo = new SimpleScalar(snewPosition);
+	     SimpleScalar movedfrom = new SimpleScalar(soldPosition);
 	     SimpleScalar chessPosition = new SimpleScalar(startPosition);
 //	     SimpleScalar chessMove = new SimpleScalar(moves);
 	     ChessBoard chessBoard = new ChessBoard(fileName);
@@ -271,6 +273,8 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 //	     if (whitePawn1 != null)
 //	    	 whitePawn1.setLegalMoves(legalMoves);
 		 dataModel.put(pieceId,simple );
+		 dataModel.put(newPosId,movedTo );
+		 dataModel.put(oldPosId,movedfrom );
 		 dataModel.put(displayKey, chessPosition);
 
 		
@@ -644,12 +648,20 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
   	    	opponent.calculateOpponentActions(game.getActiveState());   
  // 	    	opponent.calculateOpponentPositions();This call is replaced by the call to calculateOpponentActions
        	    System.out.println("Start positions\n"+game.getGame().getBoardPic());
-    		SimpleScalar pieceMoved = new SimpleScalar(piece);
-    		SimpleScalar movedTo = new SimpleScalar(newPos);
+    	
     		SimpleScalar chessPosition = new SimpleScalar(position);
     		establishRules(chessBoard);
     		chessBoard.emptyGame();
     		game.proposeMove();
+  	    	AgamePiece playerPiece = game.getLastPiece();
+   	    	piece = playerPiece.getMyPiece().getName();
+  	    	snewPosition = game.getNewPosition().getPositionName();
+   	    	soldPosition = game.getOldPosition().getPositionName();
+        	SimpleScalar movedTo = new SimpleScalar(snewPosition);
+        	SimpleScalar movedfrom = new SimpleScalar(soldPosition);
+        	SimpleScalar pieceMoved = new SimpleScalar(piece);
+    		 dataModel.put(newPosId,movedTo );
+    		 dataModel.put(oldPosId,movedfrom );
       	    String fen = chessBoard.createFen();
 //       	    System.out.println("Piece name "+chessPiece.getOntlogyName());
        	    System.out.println(fen);
@@ -738,7 +750,12 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    		}
    	    		
    	    	}
-
+   	    	
+   	    	HashMap<String,Position> allMoves =  movedPiece.getLegalmoves();
+   	    	Set<String> keySet = allMoves.keySet();
+   	    	ArrayList<String> listOfKeys = new ArrayList<String>(keySet);
+   	    	ArrayList<Position> allMoveslist = new ArrayList<>(allMoves.values());
+   	    	
    	    	chessBoard.determineMove(oldPos, newPos, piece); // Determine if move is legal
    	    	if (castle != null) {
    	    		castle.setCastlingMove(false);
@@ -762,7 +779,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  /*
   * end new	    	
   */
- 	    	System.out.println("Old position "+oldPosition.toString()+ " New position "+newPosition.toString());
+// 	    	System.out.println("Old position "+oldPosition.toString()+ " New position "+newPosition.toString());
  	    // setHeldPosition(oldPosition); in this position removes the black pawn in move nr. 3 
  	    	List<ApieceMove>  movesofar = game.getMovements();
  	    	 System.out.println("Moves so far ");
@@ -776,6 +793,13 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  	    			System.out.println(movePiece.toString());
  	    		}
  	    		
+ 	    	}
+ 	    	System.out.println("Available positions for "+piece+" before move");
+ 	    	for (Position pos:allMoveslist) {
+ 	    		System.out.println(pos.getPositionName());
+ 	    	}
+ 	    	for (String akey:listOfKeys) {
+ 	    		System.out.println(akey);
  	    	}
   	    	game.getGame().movePiece(movedPiece, newPosition,"Opponent");// 16.04.20 Move piece before setting new position.
 
@@ -807,19 +831,26 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    	System.out.println(game.getGame().getBoardPic());
 //   	    	game.getGame().setChosenPlayer(); // This method is only used at startup OLJ 20.04.20
    	    	
-   	    	game.proposeMove(); //The game object proposes the next move
+   	    	game.proposeMove(); //The game object proposes the next move for player
+   	    	AgamePiece playerPiece = game.getLastPiece();
+   	    	piece = playerPiece.getMyPiece().getName();
+   	    	snewPosition = game.getNewPosition().getPositionName();
+   	    	soldPosition = game.getOldPosition().getPositionName();
      	    fen = chessBoard.createFen();
 //   	    System.out.println("Piece name "+chessPiece.getOntlogyName());
-     	    System.out.println(fen);
+     	    System.out.println("moved piece "+piece+" "+fen);
    	    	System.out.println(game.getGame().getBoardPic());
-   	    	for (ChessMoves move:chessMoves) {
+ /*  	    	for (ChessMoves move:chessMoves) {
    	    		System.out.println(move.toString());
-   	    	}
+   	    	}*/
    	    } // End opponent move
    	    dataModel.put(fenPosid,fen);
     	SimpleScalar pieceMoved = new SimpleScalar(piece);
-    	SimpleScalar movedTo = new SimpleScalar(newPos);
+    	SimpleScalar movedTo = new SimpleScalar(snewPosition);
+    	SimpleScalar movedfrom = new SimpleScalar(soldPosition);
 	    SimpleScalar chessPosition = new SimpleScalar(position);
+		 dataModel.put(newPosId,movedTo );
+		 dataModel.put(oldPosId,movedfrom );
 		dataModel.put(displayKey, chessPosition);
    	 	dataModel.put(pieceId,pieceMoved );
   		establishRules(chessBoard);

@@ -27,9 +27,13 @@ public class ChessServerResource extends SessionServerResource {
 
 	protected String moveId = "move";
 	protected String pieceId = "piece";
-	protected String piece = "p";
-	protected String newPos = "pos";
-	protected String oldPos = "xy";
+	protected String piece = "pp"; // name of opponent piece when opponent has made a move
+	protected String soldPosition = "p";
+	protected String snewPosition = "p";
+	protected String newPos = "x"; // Contains the opponent new position as a string during a game
+	protected String oldPos = "y"; // Contains the opponent old position as a string during a game
+	protected String newPosId = "newpos";
+	protected String oldPosId = "oldpos";
 	protected String pawnId = "whitepawn1";
 	protected String fenPosid = "fenpos";
 	protected String popupId ="popup";

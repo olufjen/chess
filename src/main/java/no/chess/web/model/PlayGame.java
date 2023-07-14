@@ -86,6 +86,10 @@ public class PlayGame {
 	private State deferredInitial = null;
 	private State deferredGoal = null;
 	private Map<String,State>deferredGoalstates = null;
+	private AgamePiece lastPiece = null; // last piece moved by player 
+	private Position oldPosition = null;
+	private Position newPosition = null; 
+	
 	public PlayGame(HashMap<String, Position> positions,ChessBoard frontBoard)   {
 		super();
 		this.myFrontBoard = frontBoard;
@@ -111,6 +115,30 @@ public class PlayGame {
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));
 //		kb = new ChessKnowledgeBase();
+	}
+
+	public Position getOldPosition() {
+		return oldPosition;
+	}
+
+	public void setOldPosition(Position oldPosition) {
+		this.oldPosition = oldPosition;
+	}
+
+	public Position getNewPosition() {
+		return newPosition;
+	}
+
+	public void setNewPosition(Position newPosition) {
+		this.newPosition = newPosition;
+	}
+
+	public AgamePiece getLastPiece() {
+		return lastPiece;
+	}
+
+	public void setLastPiece(AgamePiece lastPiece) {
+		this.lastPiece = lastPiece;
 	}
 
 	public Map<String, State> getDeferredGoalstates() {
@@ -495,6 +523,9 @@ public class PlayGame {
 		piece.getMoveNumbers().add(moveNumber);
 //		checkCastling(stateImpl.getMyPlayer()); The call to checkCastling is moved 07.10.22
 		stateImpl.switchActivePlayer(); // 16.04.20 After a move, must switch active player
+		lastPiece = piece; // Set the lastpiece to be moved
+		newPosition = position;
+		this.oldPosition = oldPosition;
 //		localAction.getActions(playerTomove); // Added 24.02.20 When a move has been made then the pieces belonging to the same player must get new
 //available positions calculated
 
@@ -504,7 +535,7 @@ public class PlayGame {
 			 writer.println(pos.toString());
 		 }*/
 		 writer.println("Knowledge base after last move \n"+chessAgent.getFolKb().toString());
-		 writer.println("Straegy Knowledge base after last move \n"+chessAgent.getStrategyKB().toString());
+		 writer.println("Strategy Knowledge base after last move \n"+chessAgent.getStrategyKB().toString());
 		 writer.flush();
 	}
 	private void moveStatistics(APlayer myplayer) {
