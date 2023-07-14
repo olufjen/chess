@@ -8,9 +8,10 @@
  * Date: $date$
  */
 
-// start anonymous scope
+// start anonymous scope OJN: This is a closure - a function with a referencing environment
+// It calls the init function
 ;(function() {
-'use strict';
+'use strict'; // OJN: Using strict mode
 
 //------------------------------------------------------------------------------
 // Chess Util Functions
@@ -184,7 +185,8 @@ function objToFen(obj) {
 
   return fen;
 }
-
+// OJN : start window.ChessBoard. Ends at line 1723... The variable ChessBoard is the entire function
+// OJN : containerElOrId is the 'board2' <div> argument
 window['ChessBoard'] = window['ChessBoard'] || function(containerElOrId, cfg) {
 
 cfg = cfg || {};
@@ -335,7 +337,7 @@ function error(code, msg, obj) {
 // check dependencies
 function checkDeps() {
   // if containerId is a string, it must be the ID of a DOM node
-	 console.log( "checkDeps ChessBoard check dependencies yyy" );
+	 console.log( "checkDeps ChessBoard check dependencies of "+containerElOrId);
   if (typeof containerElOrId === 'string') {
     // cannot be empty
     if (containerElOrId === '') {
@@ -353,9 +355,11 @@ function checkDeps() {
         '\n\nExiting...');
       return false;
     }
-
-    // set the containerEl
     containerEl = $(el);
+    console.log("The container E1 The board2 <div> "); // OJN: The board2 <div>
+    console.log(containerEl);
+    // set the containerEl
+  
   }
 
   // else it must be something that becomes a jQuery collection
@@ -389,10 +393,10 @@ function checkDeps() {
       'higher on the page.\n\nExiting...');
     return false;
   }
-  console.log( "ChessBoard ok" );
- 
+  console.log( "checkDeps: ChessBoard ok with container ");
+  console.log(containerEl); // containerE1 is the board2 <div>
   return true;
-}
+} // OJN: end checkDeps - dependencies
 
 function validAnimationSpeed(speed) {
   if (speed === 'fast' || speed === 'slow') {
@@ -563,7 +567,7 @@ function buildBoardContainer() {
   }
 
   html += '</div>';
-
+  console.log(" buildBoardContainer: "+html);
   return html;
 }
 
@@ -640,7 +644,7 @@ function buildBoard(orientation) {
       row++;
     }
   }
-
+  /*console.log(" buildboard "+html);*/
   return html;
 }
 
@@ -1102,7 +1106,7 @@ function snapbackDraggedPiece() {
     complete: complete
   };
   draggedPieceEl.animate(sourceSquarePosition, opts);
-
+  console.log( "Inside snapbackDraggedPiece "+draggedPieceEl);
   // set state
   DRAGGING_A_PIECE = false;
 }
@@ -1124,9 +1128,12 @@ function trashDraggedPiece() {
   // set state
   DRAGGING_A_PIECE = false;
 }
-
+/*
+ * This method is executed when the piece is dropped on a square
+ * And the btmove button is clicked OJN 04.07.23
+ */
 function dropDraggedPieceOnSquare(square) {
-  removeSquareHighlights();
+//  removeSquareHighlights(); call removed OJN 13.07.23 to keep the last move highlighted
 
   // update position
   var newPosition = deepCopy(CURRENT_POSITION);
@@ -1207,6 +1214,21 @@ function beginDraggingPiece(source, piece, x, y) {
       .find('.' + CSS.piece).css('display', 'none');
   }
 }
+/*
+ * This function shows the player's last move
+ */
+function updatePlayerPiece(fromPos,toPos){
+	  if (validSquare(fromPos) === true) {
+		    $('#' + SQUARE_ELS_IDS[fromPos])
+		      .addClass(CSS.highlight1);
+		  }
+	  // add highlight to new square
+	  if (validSquare(toPos) === true) {
+	    $('#' + SQUARE_ELS_IDS[toPos]).addClass(CSS.highlight2);
+//	    console.log("updateDraggedPiece Adding class");
+//	    console.log($('#' + SQUARE_ELS_IDS[location]));
+	  }
+}
 
 function updateDraggedPiece(x, y) {
   // put the dragged piece over the mouse cursor
@@ -1214,22 +1236,28 @@ function updateDraggedPiece(x, y) {
     left: x - (SQUARE_SIZE / 2),
     top: y - (SQUARE_SIZE / 2)
   });
-
+//  console.log("updateDraggedPiece x "+x+" y "+y);
+ 
   // get location
   var location = isXYOnSquare(x, y);
-
+  console.log("updateDraggedPiece "+location);
   // do nothing if the location has not changed
   if (location === DRAGGED_PIECE_LOCATION) return;
 
   // remove highlight from previous square
-  if (validSquare(DRAGGED_PIECE_LOCATION) === true) {
+/*  if (validSquare(DRAGGED_PIECE_LOCATION) === true) {
     $('#' + SQUARE_ELS_IDS[DRAGGED_PIECE_LOCATION])
       .removeClass(CSS.highlight2);
-  }
-
+  } replaced by code below:*/
+  if (validSquare(DRAGGED_PIECE_LOCATION) === true) {
+	    $('#' + SQUARE_ELS_IDS[DRAGGED_PIECE_LOCATION])
+	      .addClass(CSS.highlight1);
+	  }
   // add highlight to new square
   if (validSquare(location) === true) {
     $('#' + SQUARE_ELS_IDS[location]).addClass(CSS.highlight2);
+//    console.log("updateDraggedPiece Adding class");
+//    console.log($('#' + SQUARE_ELS_IDS[location]));
   }
 
   // run onDragMove
@@ -1253,7 +1281,7 @@ function stopDraggedPiece(location) {
   if (location === 'offboard' && cfg.dropOffBoard === 'trash') {
     action = 'trash';
   }
-
+  console.log( "ChessBoardstopDraggedPiece cfg ondrop "+cfg.hasOwnProperty('onDrop')+ " type "+typeof cfg.onDrop);
   // run their onDrop function, which can potentially change the drop action
   if (cfg.hasOwnProperty('onDrop') === true &&
     typeof cfg.onDrop === 'function') {
@@ -1267,7 +1295,7 @@ function stopDraggedPiece(location) {
     if (DRAGGED_PIECE_SOURCE === 'spare' && validSquare(location) === true) {
       // add the piece to the board
       newPosition[location] = DRAGGED_PIECE;
-      console.log( "ChessBoard brikke på brettet "+DRAGGED_PIECE );
+      console.log( "ChessBoard ekstra brikke på brettet "+DRAGGED_PIECE );
      }
 
     // source piece was on the board and position is off the board
@@ -1275,21 +1303,24 @@ function stopDraggedPiece(location) {
       // remove the piece from the board
       delete newPosition[DRAGGED_PIECE_SOURCE];
     }
-
+    console.log( "ChessBoard tester "+DRAGGED_PIECE_SOURCE+" og "+validSquare(DRAGGED_PIECE_SOURCE)+" og "+location+" og "+validSquare(location) );
     // source piece was on the board and position is on the board
     if (validSquare(DRAGGED_PIECE_SOURCE) === true &&
       validSquare(location) === true) {
       // move the piece
       delete newPosition[DRAGGED_PIECE_SOURCE];
       newPosition[location] = DRAGGED_PIECE;
-      console.log( "ChessBoard brikke ikke på brettet "+DRAGGED_PIECE );
+      console.log( "ChessBoard brikke flyttet på brettet "+DRAGGED_PIECE );
       
     }
 
     var oldPosition = deepCopy(CURRENT_POSITION);
 
-    var result = cfg.onDrop(DRAGGED_PIECE_SOURCE, location, DRAGGED_PIECE,
+    var result = cfg.onDrop(DRAGGED_PIECE_SOURCE, location, DRAGGED_PIECE,    		
       newPosition, oldPosition, CURRENT_ORIENTATION);
+    console.log("Result is "+result+" "+DRAGGED_PIECE+ " new position "+Object.getOwnPropertyNames(newPosition)+" old position "+Object.getOwnPropertyNames(oldPosition)+" orientation "+CURRENT_ORIENTATION);
+ //   console.log("Values of new position "+Object.values(newPosition));
+ //   console.log("Values of old position "+Object.values(oldPosition));
     if (result === 'snapback' || result === 'trash') {
       action = result;
     }
@@ -1306,7 +1337,7 @@ function stopDraggedPiece(location) {
 	  console.log( "ChessBoard brikke på brettet "+DRAGGED_PIECE );
 	  document.getElementById("posisjon").value = location;
 	  document.getElementById("piece").value = DRAGGED_PIECE;
-    dropDraggedPieceOnSquare(location);
+    dropDraggedPieceOnSquare(location); // This is the end of the move by opponent
   }
 }
 
@@ -1592,6 +1623,8 @@ function touchendWindow(e) {
 function mouseenterSquare(e) {
   // do not fire this event if we are dragging a piece
   // NOTE: this should never happen, but it's a safeguard
+/*	console.log("mouseenterSquare event: ");
+	console.log(e);*/
   if (DRAGGING_A_PIECE !== false) return;
 
   if (cfg.hasOwnProperty('onMouseoverSquare') !== true ||
@@ -1599,7 +1632,8 @@ function mouseenterSquare(e) {
 
   // get the square
   var square = $(e.currentTarget).attr('data-square');
-
+/*  console.log("mouseenterSquare square: ");
+  console.log(square);*/
   // NOTE: this should never happen; defensive
   if (validSquare(square) !== true) return;
 
@@ -1618,13 +1652,15 @@ function mouseleaveSquare(e) {
   // do not fire this event if we are dragging a piece
   // NOTE: this should never happen, but it's a safeguard
   if (DRAGGING_A_PIECE !== false) return;
-
+/*	console.log("mouseleaveSquare event: ");
+	console.log(e);*/
   if (cfg.hasOwnProperty('onMouseoutSquare') !== true ||
     typeof cfg.onMouseoutSquare !== 'function') return;
 
   // get the square
   var square = $(e.currentTarget).attr('data-square');
-
+/*  console.log("mouseleaveSquare square: ");
+  console.log(square);*/
   // NOTE: this should never happen; defensive
   if (validSquare(square) !== true) return;
 
@@ -1644,7 +1680,7 @@ function mouseleaveSquare(e) {
 //------------------------------------------------------------------------------
 
 function addEvents() {
-  // prevent browser "image drag"
+  // prevent browser "image drag" OJN: 'body' is the <body> tag
   $('body').on('mousedown mousemove', '.' + CSS.piece, stopDefault);
 
   // mouse drag pieces
@@ -1655,7 +1691,10 @@ function addEvents() {
   // mouse enter / leave square
   boardEl.on('mouseenter', '.' + CSS.square, mouseenterSquare)
     .on('mouseleave', '.' + CSS.square, mouseleaveSquare);
-
+  if (cfg.playerMove === false){
+	  console.log('Add player move');
+	  updatePlayerPiece(cfg.oldPos,cfg.newPos);
+  }  
   // IE doesn't like the events on the window object, but other browsers
   // perform better that way
   if (isMSIE() === true) {
@@ -1678,6 +1717,8 @@ function addEvents() {
     $(window).on('touchmove', touchmoveWindow)
       .on('touchend', touchendWindow);
   }
+  console.log('Events added on');
+  console.log(boardEl);
 }
 
 function initDom() {
@@ -1687,12 +1728,19 @@ function initDom() {
   // build board and save it in memory
   containerEl.html(buildBoardContainer());
   boardEl = containerEl.find('.' + CSS.board);
-
+  console.log('initDom playerMove y ');
   if (cfg.sparePieces === true) {
     sparePiecesTopEl = containerEl.find('.' + CSS.sparePiecesTop);
     sparePiecesBottomEl = containerEl.find('.' + CSS.sparePiecesBottom);
+    console.log('initDom sparepieces set  xxx');
   }
-
+  if (cfg.playerMove === true){
+	  console.log('initDom playermove set');
+  }
+  if (cfg.playerMove === false){
+	  console.log('initDom playermove not set');
+  }  
+//  console.log('initDom playerMove xx ');
   // create the drag piece
   var draggedPieceId = uuid();
   $('body').append(buildPiece('wP', true, draggedPieceId));
@@ -1702,28 +1750,34 @@ function initDom() {
   BOARD_BORDER_SIZE = parseInt(boardEl.css('borderLeftWidth'), 10);
 
   // set the size and draw the board
-  widget.resize();
+  
+	  console.log('initDom draws the board');
+	  widget.resize();
+ 
 }
-
+// OJN: +window.ChessBoard.MINIMUM_JQUERY_VERSION is undefined
 function init() {
-	console.log('ChessBoard init');	
+	console.log('ChessBoard init set: ');	
   if (checkDeps() !== true ||
       expandConfig() !== true) return;
 
   initDom();
   addEvents();
 }
+// +Object.getOwnPropertyNames(this) this is here undefined OJN 11.07.23
+console.log("Before call to init window name "+window.name+" window document ");
 
 // go time
 init();
-
+console.log(window.document);
 // return the widget object
-return widget;
+console.log('The widget: '+Object.getOwnPropertyNames(widget));
+return widget; // An object with a set of functions
 
-}; // end window.ChessBoard
+}; // end window.ChessBoard - the chessboard function
 
 // expose util functions
 window.ChessBoard.fenToObj = fenToObj;
 window.ChessBoard.objToFen = objToFen;
 
-})(); // end anonymous wrapper
+})(); // end anonymous wrapper  OJN: This is a closure - a function with a referencing environment
