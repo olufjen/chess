@@ -14,8 +14,11 @@
    <link href="/chess_web/resources/css/normalize-2.1.2.min.css" rel="stylesheet">
    <link href="/chess_web/resources/css/site.css" rel="stylesheet">
    <link href="/chess_web/resources/css/site2.css" rel="stylesheet">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script> -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
+   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<!--    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"></script> -->
   <link href="/chess_web/resources/css/biovigilans.css" rel="stylesheet">
 
 
@@ -107,15 +110,16 @@
 <div class="container">
 
 <form action="?method=PUT" method="post">
-<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<!-- <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script> -->
 <!-- <script src="http://code.jquery.com/jquery-latest.min.js"></script> -->
 <!-- <script src="/chess_web/resources/js/chessboard-0.3.0.js"></script> -->
 <!-- <script src="/chess_web/resources/js/chessboard-0.3.0.min.js"></script> -->
 <!-- <script src="/chess_web/resources/js/prettify.js"></script> -->
-<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<!-- <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Kraken/3.8.2/js/html5.js"></script>
 <script src="/chess_web/resources/js/chessboard.js"></script>
 <script src="/chess_web/resources/js/chess.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js"></script>
 <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
 <script type="text/javascript">
  function formSubmit(button){
@@ -136,45 +140,95 @@ function Position(position,piece){
 
 function isTouchDevice() {
 	  return ('ontouchstart' in document.documentElement);
-	};
+};
 
+/*
+ * The window.onload function is the $(document).ready function. This is JQuery syntax
+ */
 	$(document).ready(function() {
 /* 	 var framesrc = 'test.html';
 	 document.getElementById('testframe').setAttribute('src', framesrc); */
-     console.log( "start ready!" );
+	 var selectedPiece = '${piece}';
+	 var oldpos = '${oldpos}';
+	 var newpos = '${newpos}';
+     console.log( "start ready! with piece "+ selectedPiece+ " "+"${oldpos}"+ " " + "${newpos}");
 /*      console.log("popup value "+"${popup}"); */
 /*      console.log("frame "+framesrc); */
-	 console.log( document.getElementById("posisjon").value );
+/* 	 console.log( document.getElementById("posisjon").value );
 	 if (document.getElementById("posisjon").value !== 'pos'){
      console.log( "Starter board 2 formsubmit!" );
 		 MOVE_MADE = true;
-	 }
-
+	 } */
+	var playerMove = selectedPiece === "pp";
+	 console.log('playerMove is '+playerMove);
 	 var cfg = {
 			    draggable: true,
-			    dropOffBoard: 'trash',
+			    sparePieces: true, // added 26.06.23
+			    showErrors: 'console', // Added 13.06.23
+			    dropOffBoard: 'snapback',
+
 				position:
-					"${fenpos}"
-
+					"${fenpos}",
+				playerMove:	playerMove,
+				selectedPiece: selectedPiece,
+				oldPos: oldpos, //  Old and new positions of player's last move
+				newPos: newpos
 			};
+/*
+*
+*/
+	 cfg.onDrop = function() {
+		 console.log("The onDrop function");
+		 return 'none';
+	 }
+ /*
+ * This method is called from 
+ * the mouseentersquare function
+ * 
+ */	 
+	 cfg.onMouseoverSquare = function(square,piece,position,orientation){
+/*
+ * square is name of square as string, piece is simple name of piece as string, or false if square is empty
+ position is an object with all taken position and their pieces.
+ orientation is white
+ */
+/* 		 console.log("The onMouseoverSquare function");
+		 console.log(square);
+		 console.log(piece);
+		 console.log(position);
+		 console.log(orientation); */
+	 }
+	 /*
+	  * This method is called from 
+	  * the mouseleaveSquare function
+	  * 
+	  */	
+ 	cfg.onMouseoutSquare = function(square,piece,position,orientation){
+		 
+	 }
+// Chessboard is defined in chessboard.js: window['ChessBoard'] = window['ChessBoard']
+// ChessBoard is the function described in chessboard.js
 
-// board2 is a window object named Chessboard - må inneholde en onload
-	  var board2 = ChessBoard('board2', cfg);
+	 var board2 = ChessBoard('board2', cfg); // Returns the widget
+
+	 var getFen = board2.fen();
+	  console.log( "start chessboard now "+getFen);
+// The 'board2' points to the <div> element board2	  
 /* 	  var board2 = ChessBoard('board2', {
 	    draggable: true,
 	    dropOffBoard: 'trash',
 	    sparePieces: true
 	  }); */
-	  if (MOVE_MADE === true){
-		  console.log( "Starter board 2 formsubmit!" );
+	  if (playerMove === false){
+		  console.log( "Player has made a move!" );
 //		  formSubmit('startBtn');
 //		  board2.start;
 //		  drawBoard();
 //drawBoard();
 		  console.log( "Tegnet brettet på nytt" );
 	  }
-	  $('#startBtn').on('click', board2.start);
-	  $('#clearBtn').on('click', board2.clear);
+//	  $('#startBtn').on('click', board2.start(true)); // OJN 24.06.23 Added () Draws the startposition again
+//	  $('#clearBtn').on('click', board2.clear(true)); // Empties the board for pieces.
 
 	  // prevent "browser drag" of the black king
 	  $('#hero img').on('mousedown', function(e) { e.preventDefault(); });
@@ -183,7 +237,7 @@ function isTouchDevice() {
 	  if (isTouchDevice() === true) {
 	    $('#start').removeClass('hover-effect');
 	  }
-	  console.log(board2);
+	  console.log(board2); // Board2 is the widget
 	  console.log( "end ready!!!" );
  	});
 </script>
