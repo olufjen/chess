@@ -133,6 +133,7 @@
 //-------------------
 var  MOVE_MADE = false;
 
+
 function Position(position,piece){
 	this.position = position;
 	this.piece = piece;
@@ -148,10 +149,12 @@ function isTouchDevice() {
 	$(document).ready(function() {
 /* 	 var framesrc = 'test.html';
 	 document.getElementById('testframe').setAttribute('src', framesrc); */
+	 var chosenPiece = "";
 	 var selectedPiece = '${piece}';
 	 var oldpos = '${oldpos}';
 	 var newpos = '${newpos}';
-     console.log( "start ready! with piece "+ selectedPiece+ " "+"${oldpos}"+ " " + "${newpos}");
+     console.log( "start ready! with piece "+ selectedPiece+ " oldpos "+"${oldpos}"+ " newpos " + "${newpos}");
+     document.getElementById("tilgjengeligpos").value = "xx";
 /*      console.log("popup value "+"${popup}"); */
 /*      console.log("frame "+framesrc); */
 /* 	 console.log( document.getElementById("posisjon").value );
@@ -159,8 +162,24 @@ function isTouchDevice() {
      console.log( "Starter board 2 formsubmit!" );
 		 MOVE_MADE = true;
 	 } */
+
 	var playerMove = selectedPiece === "pp";
-	 console.log('playerMove is '+playerMove);
+	var len = '${available?size}';
+	var availableMoves = [<#list available as avail>'${avail}',</#list>];
+	 console.log('playerMove is '+playerMove+" No of available moves "+len);
+ 	for (var i = 0;i<len;i = i + 1){
+ 		console.log("The available moves are "+availableMoves[i]);
+	}
+ 	var movex = availableMoves[0];
+ 	var noMove = false;
+ 	if (len <= 1 && movex === "xx"){
+ 		console.log("The available moves are empty "+availableMoves[0]);
+ 		nomove = true;
+ 	}
+ 	nomove = oldpos === newpos;
+	if (nomove === true){
+		console.log("A piece is selcted but not moved. The first available move is "+availableMoves[0]);
+	}
 	 var cfg = {
 			    draggable: true,
 			    sparePieces: true, // added 26.06.23
@@ -169,10 +188,13 @@ function isTouchDevice() {
 
 				position:
 					"${fenpos}",
-				playerMove:	playerMove,
+				lenx: len,	
+				playerMove:	playerMove, // playermove is false: Opponent has selected a piece
 				selectedPiece: selectedPiece,
 				oldPos: oldpos, //  Old and new positions of player's last move
-				newPos: newpos
+				newPos: newpos,
+				opponentMoves: availableMoves,
+				opponentMove: nomove // opponentMove is true if there is no move from opponent, but a piece has been selected
 			};
 /*
 *
@@ -198,13 +220,26 @@ function isTouchDevice() {
 		 console.log(position);
 		 console.log(orientation); */
 	 }
-	 /*
-	  * This method is called from 
-	  * the mouseleaveSquare function
-	  * 
-	  */	
+ /*
+  * This method is called from 
+  * the mouseleaveSquare function
+  * 
+  */	
  	cfg.onMouseoutSquare = function(square,piece,position,orientation){
-		 
+ 		console.log("onMouseoutSquare The available moves piece "+piece);
+		 	for (var i = 0;i<len;i = i + 1){
+		 		console.log("The available moves are "+cfg.opponentMoves[i]);
+			}
+		 	if (piece !== false){
+				document.getElementById("startposisjon").value = square;
+				document.getElementById("piece").value = piece;
+				document.getElementById("tilgjengeligpos").value = "til";
+				if (chosenPiece !== piece){
+				 	formSubmit('btnfind');
+				}
+		 		chosenPiece = piece;
+		 	}
+
 	 }
 // Chessboard is defined in chessboard.js: window['ChessBoard'] = window['ChessBoard']
 // ChessBoard is the function described in chessboard.js
@@ -269,6 +304,7 @@ function isTouchDevice() {
   <input type="text" name="posisjon" value="pos" id="posisjon" size="20" style="display: none" >
   <input type="text" name="piece" value="x" id="piece" size="20" style="display: none">
   <input type="text" name="startposisjon" value="y" id="startposisjon" size="20" style="display: none">
+  <input type="text" name="tilgjengeligpos" value="z" id="tilgjengeligpos" size="20" style="display: none">
 
 <div class="col-sm-8" id="tabeller">
 <h3>Available rules</h3>
@@ -289,7 +325,7 @@ function isTouchDevice() {
  	<h4>Ontlogy File</h4><!-- This only reads local client files !! -->
 	<input type="file" id="ontologyinput" name="ontologyinput" onchange="formSubmit('ontselect');"><br><!--  onchange="formSubmit('fileselect');" This must change to files available on server -->
 
-       <table class="table table-hover">
+       <table class="table table-hover" >
   		<tr><th>Moves</th></tr>
  		<#list moves as move>
   			<tr id="moves"><td>"${move.moveNr}"<td>"${move.whiteMove}"</td><td>"${move.blackMove}"</td></tr>
@@ -297,12 +333,14 @@ function isTouchDevice() {
  	</table>
  </div>
 <!--  <iframe src="test.html" name="iframe_a" title="Iframe Example" id="testframe"></iframe> -->
+<!-- <#list available as avail><tr id=“availablemoves” type=“hidden”><td>"${avail}"</td></tr></#list> -->
 </div>
 
 </div>
 
 
 		  <button type="submit" id="btnmove" value="nokkel"  name="formValue" class="btn btn-primary" style="display: none" > getValue </button>
+		  <button type="submit" id="btnfind" value="nokkel"  name="formValue" class="btn btn-primary" style="display: none" > getValue </button>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
