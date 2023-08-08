@@ -1215,7 +1215,19 @@ function beginDraggingPiece(source, piece, x, y) {
   }
 }
 /*
+ * This function highlights an available position
+ * Ojn 07.08.23 It is called when the opponent marks a piece
+ * It is called from checkOpponentpiece()
+*/
+function showSquare(fromPos){
+	  if (validSquare(fromPos) === true) {
+		    $('#' + SQUARE_ELS_IDS[fromPos])
+		      .addClass(CSS.highlight1);
+	  }
+}
+/*
  * This function shows the player's last move
+ * Ojn 15.07.23 It is called when the player makes a move
  */
 function updatePlayerPiece(fromPos,toPos){
 	  if (validSquare(fromPos) === true) {
@@ -1229,7 +1241,10 @@ function updatePlayerPiece(fromPos,toPos){
 //	    console.log($('#' + SQUARE_ELS_IDS[location]));
 	  }
 }
-
+/*
+ * This function shows the opponent's last move
+ * It is called when the opponent moves a piece over a new square
+ */
 function updateDraggedPiece(x, y) {
   // put the dragged piece over the mouse cursor
   draggedPieceEl.css({
@@ -1238,7 +1253,7 @@ function updateDraggedPiece(x, y) {
   });
 //  console.log("updateDraggedPiece x "+x+" y "+y);
  
-  // get location
+  // get location: The location is a string like d5 Ojn
   var location = isXYOnSquare(x, y);
   console.log("updateDraggedPiece "+location);
   // do nothing if the location has not changed
@@ -1755,6 +1770,23 @@ function initDom() {
 	  widget.resize();
  
 }
+/*
+ * checkOpponentpiece()
+ * This function checks if opponent has touched a piece.
+ * The opponent touches a piece by holding the mouse over a piece and then leave this piece's position
+ * The call to showSquare then highlights all positions available to this piece
+ */
+function checkOpponentpiece() {
+	console.log("checkOpponentpiece(), opponentMove is "+ cfg.opponentMove);
+	if (cfg.opponentMove === true){
+		console.log("checkOpponentpiece() There is no move from opponent "+cfg.selectedPiece);
+		for (var i = 0;i<cfg.lenx;i = i + 1){
+	 		console.log("The available moves are "+cfg.opponentMoves[i]);
+	 		showSquare(cfg.opponentMoves[i]);
+		}
+	}
+}
+
 // OJN: +window.ChessBoard.MINIMUM_JQUERY_VERSION is undefined
 function init() {
 	console.log('ChessBoard init set: ');	
@@ -1763,13 +1795,16 @@ function init() {
 
   initDom();
   addEvents();
+//  console.log("Before checkOpponentpiece()");
+  checkOpponentpiece();
+//  console.log("After checkOpponentpiece()");
 }
 // +Object.getOwnPropertyNames(this) this is here undefined OJN 11.07.23
 console.log("Before call to init window name "+window.name+" window document ");
 
 // go time
 init();
-console.log(window.document);
+console.log("The window document "+window.document);
 // return the widget object
 console.log('The widget: '+Object.getOwnPropertyNames(widget));
 return widget; // An object with a set of functions
