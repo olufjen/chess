@@ -334,9 +334,9 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		}
 		if (minpos.isPresent()) {
 			Position minx = minpos.get();
-			if (localColor == pieceColor.WHITE) {
+/*			if (localColor == pieceColor.WHITE) {
 				System.out.println("CheckRemovals The min position: "+minx.toString());
-			}
+			}*/
 			tempList = removedPositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());
 			// Find all available positions that have the same direction:
 			tempAvail = availablePositions.stream().filter(p -> minx.getMydirection() == p.getMydirection()).collect(Collectors.toList());

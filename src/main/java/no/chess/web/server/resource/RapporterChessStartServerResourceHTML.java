@@ -68,6 +68,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	private String displayPassord = "passord";
 	private String position = "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R";
 	private String startPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+	private String tilgjengeligPos = "t";
 /*
  * Session keys	
  */
@@ -76,7 +77,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	private String movesKey = "moves";
 	private String blackmovesKey = "blackmoves";
 	private String ontologyKey = "ontologyfile";
-	
+	private String availableKey = "available";
 	private List<String> rules;
 	private List<String> labels;
 	private List<ChessRules> chessRules;
@@ -85,7 +86,42 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	private ChessMoves chessMove;
 	private ArrayList<ChessMoves> chessMoves;
 
+	private List<Position> availableMoves;
+	private List<String>availablePosNames;
 	
+	
+	public String getTilgjengeligPos() {
+		return tilgjengeligPos;
+	}
+
+	public void setTilgjengeligPos(String tilgjengeligPos) {
+		this.tilgjengeligPos = tilgjengeligPos;
+	}
+
+	public List<String> getAvailablePosNames() {
+		return availablePosNames;
+	}
+
+	public void setAvailablePosNames(List<String> availablePosNames) {
+		this.availablePosNames = availablePosNames;
+	}
+
+	public String getAvailableKey() {
+		return availableKey;
+	}
+
+	public void setAvailableKey(String availableKey) {
+		this.availableKey = availableKey;
+	}
+
+	public List<Position> getAvailableMoves() {
+		return availableMoves;
+	}
+
+	public void setAvailableMoves(List<Position> availableMoves) {
+		this.availableMoves = availableMoves;
+	}
+
 	public String getMovesKey() {
 		return movesKey;
 	}
@@ -276,10 +312,11 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 		 dataModel.put(newPosId,movedTo );
 		 dataModel.put(oldPosId,movedfrom );
 		 dataModel.put(displayKey, chessPosition);
-
-		
+		 availablePosNames = new ArrayList<String>();
+		 availablePosNames.add("xx");
    	 	dataModel.put(rulesKey,chessRules);
    	 	dataModel.put(movesKey, chessMoves);
+   	 	dataModel.put(availableKey, availablePosNames);
  //  	 	dataModel.put(blackmovesKey, blackMoves);
 //   	 	dataModel.put(rulelabelKey, labels);
    	 	
@@ -335,6 +372,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	    moves = chessBoard.getMoves();
 	    blackMoves = chessBoard.getBlackMoves();
 	    chessMoves = chessBoard.getChessMoves();
+	    availableMoves = new ArrayList<Position>();
     	Parameter restartGame = form.getFirst("startBtnx"); // Bruker oppgir å starte på nytt
     	Parameter ontology = form.getFirst("ontBtnx"); // User wants ontology position on chessboard
     	Parameter printOntology = form.getFirst("printBtnx"); // User wants ontology printed
@@ -345,6 +383,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	Parameter printGame = form.getFirst("printgame"); // User has selected to print the game
     	Parameter eightqueen = form.getFirst("eightqueen"); // User has selected to solve the eight queen problem
     	Parameter achessGame = form.getFirst("playgame"); // User has selected to play a game of chess
+//    	Parameter findPiece = form.getFirst("btnfind"); // User has moved over a piece
     	if (printGame != null) {
 //         	chessBoard.findMoves(gameMoves);
 //	     	int nolines = gameMoves.size();
@@ -671,6 +710,9 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  //      	    System.out.println(game.getGame().getBoardPic());
     		dataModel.put(fenPosid,fen);
     		//     		dataModel.put(pieceId,simple );
+   		 	availablePosNames = new ArrayList<String>();
+   		 	availablePosNames.add("yy");
+   	  	 	dataModel.put(availableKey, availablePosNames);
     		dataModel.put(rulesKey,chessRules);
     		dataModel.put(movesKey, chessMoves);
     		//     	 	dataModel.put(blackmovesKey, blackMoves);
@@ -683,6 +725,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     				MediaType.TEXT_HTML);	
     		return templateRep;
     	}
+
    // Player has moved a piece 	
     	for (Parameter entry : form) {
 			if (entry.getValue() != null && !(entry.getValue().equals(""))){
@@ -693,13 +736,17 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 						newPos = entry.getValue();
 					if (entry.getName().equals("startposisjon"))
 						oldPos = entry.getValue();
+					if (entry.getName().equals("tilgjengeligpos"))
+						tilgjengeligPos = entry.getValue();
 			}
 			
     	}
     	if (newPos == null || newPos.equals("")){
     		newPos = "a2";
     	}
-    	
+    	if (oldPos == null || oldPos.equals("y")){
+    		oldPos = newPos;
+    	}    	
     	String moveText = "Proper move";
     	if (oldPos.equals(newPos)) { // A no move
     		noMove = true;
@@ -711,17 +758,17 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  * corresponds to position.positionName and piece.name !!! 
  */
 
-
+    	boolean findTilgjengelig = tilgjengeligPos.equals("til");
    	    chessPiece = chessBoard.findPiece(oldPos,piece);
    	   	AgamePiece movedPiece = chessPiece.getMyPiece();
    	    String fen = chessBoard.createFen();
-   	    System.out.println("Piece name "+chessPiece.getOntlogyName());
+   	    System.out.println("Piece name "+chessPiece.getOntlogyName()+" Finding available positions "+findTilgjengelig);
    	    System.out.println(fen);
-   	    if (noMove) {
+/*   	    if (noMove) {
    	    	System.out.println(movedPiece.toString());
-   	    }
+   	    }*/
    	    
-   	    if (game != null && !noMove) { // Performs the opponent's move
+   	    if (game != null && !noMove && !findTilgjengelig) { // Performs the opponent's move
 
 //       	chessPiece.setPosition(newPos);
    	    	APlayer opponent = game.getActiveState().getOpponent();
@@ -755,7 +802,12 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    	Set<String> keySet = allMoves.keySet();
    	    	ArrayList<String> listOfKeys = new ArrayList<String>(keySet);
    	    	ArrayList<Position> allMoveslist = new ArrayList<>(allMoves.values());
-   	    	
+   	    	availableMoves.addAll(allMoveslist);
+   	    	availablePosNames = new ArrayList<String>();
+ 	    	for (Position pos:availableMoves) {
+ 	    		availablePosNames.add(pos.getPositionName());
+ 	    	}
+
    	    	chessBoard.determineMove(oldPos, newPos, piece); // Determine if move is legal
    	    	if (castle != null) {
    	    		castle.setCastlingMove(false);
@@ -844,32 +896,51 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    		System.out.println(move.toString());
    	    	}*/
    	    } // End opponent move
-   	    dataModel.put(fenPosid,fen);
-    	SimpleScalar pieceMoved = new SimpleScalar(piece);
-    	SimpleScalar movedTo = new SimpleScalar(snewPosition);
-    	SimpleScalar movedfrom = new SimpleScalar(soldPosition);
-	    SimpleScalar chessPosition = new SimpleScalar(position);
-		 dataModel.put(newPosId,movedTo );
-		 dataModel.put(oldPosId,movedfrom );
-		dataModel.put(displayKey, chessPosition);
-   	 	dataModel.put(pieceId,pieceMoved );
-  		establishRules(chessBoard);
-//		dataModel.put(pieceId,simple );
-	 	dataModel.put(rulesKey,chessRules);
-		dataModel.put(movesKey, chessMoves);
-//  	 	dataModel.put(blackmovesKey, blackMoves);
+   	 if (game != null && findTilgjengelig) { // 
+	    	APlayer opponent = game.getActiveState().getOpponent();
+	    	Position oldPosition = chessBoard.findPostion(oldPos);
+	    	Position newPosition = chessBoard.findPostion(newPos);
+   	    	HashMap<String,Position> allMoves =  movedPiece.getLegalmoves();
+   	    	Set<String> keySet = allMoves.keySet();
+   	    	ArrayList<String> listOfKeys = new ArrayList<String>(keySet);
+   	    	ArrayList<Position> allMoveslist = new ArrayList<>(allMoves.values());
+   	    	availableMoves.addAll(allMoveslist);
+   	    	availablePosNames = new ArrayList<String>();
+ 	    	for (Position pos:availableMoves) {
+ 	    		availablePosNames.add(pos.getPositionName());
+ 	    	}
+   	 }
+   	 if (availablePosNames == null) {
+	 	availablePosNames = new ArrayList<String>();
+		 	availablePosNames.add("yy");
+   	 }
+   	 dataModel.put(fenPosid,fen);
+   	 SimpleScalar pieceMoved = new SimpleScalar(piece);
+   	 SimpleScalar movedTo = new SimpleScalar(snewPosition);
+   	 SimpleScalar movedfrom = new SimpleScalar(soldPosition);
+   	 SimpleScalar chessPosition = new SimpleScalar(position);
+   	 dataModel.put(newPosId,movedTo );
+   	 dataModel.put(oldPosId,movedfrom );
+   	 dataModel.put(displayKey, chessPosition);
+   	 dataModel.put(pieceId,pieceMoved );
+   	 establishRules(chessBoard);
+   	 //		dataModel.put(pieceId,simple );
+   	 dataModel.put(rulesKey,chessRules);
+   	 dataModel.put(movesKey, chessMoves);
+   	 dataModel.put(availableKey, availablePosNames);
+   	 //  	 	dataModel.put(blackmovesKey, blackMoves);
 
- //		 dataModel.put(pawnId,whitePawn1);
-	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-        Representation pasientkomplikasjonFtl = clres2.get();
-        templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-                MediaType.TEXT_HTML);	
-        String page = "../chess/test.html";
-/*         if (noMove) {
+   	 //		 dataModel.put(pawnId,whitePawn1);
+   	 ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
+   	 Representation pasientkomplikasjonFtl = clres2.get();
+   	 templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+   			 MediaType.TEXT_HTML);	
+   	 String page = "../chess/test.html";
+   	 /*         if (noMove) {
         	redirectTemporary(page);
         }*/
 
-    	return templateRep;
+        return templateRep;
     }
     private Position castleMove(AgamePiece castle,Position newPosition,APlayer opponent,ChessBoard chessBoard) {
     	String posName = newPosition.getPositionName();
