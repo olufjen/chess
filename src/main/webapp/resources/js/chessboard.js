@@ -1175,6 +1175,7 @@ function dropDraggedPieceOnSquare(square) {
 function beginDraggingPiece(source, piece, x, y) {
   // run their custom onDragStart function
   // their custom onDragStart function can cancel drag start
+	// source is  as b8
 	  console.log( "ChessBoard startposisjon "+source );
 	  document.getElementById("startposisjon").value = source;
   if (typeof cfg.onDragStart === 'function' &&
@@ -1228,6 +1229,7 @@ function showSquare(fromPos){
 /*
  * This function shows the player's last move
  * Ojn 15.07.23 It is called when the player makes a move
+ * The player represent the computer chess program
  */
 function updatePlayerPiece(fromPos,toPos){
 	  if (validSquare(fromPos) === true) {
@@ -1243,7 +1245,7 @@ function updatePlayerPiece(fromPos,toPos){
 }
 /*
  * This function shows the opponent's last move
- * It is called when the opponent moves a piece over a new square
+ * It is called when the opponent moves a piece to a new square
  */
 function updateDraggedPiece(x, y) {
   // put the dragged piece over the mouse cursor
@@ -1255,7 +1257,7 @@ function updateDraggedPiece(x, y) {
  
   // get location: The location is a string like d5 Ojn
   var location = isXYOnSquare(x, y);
-  console.log("updateDraggedPiece "+location);
+//  console.log("updateDraggedPiece "+location);
   // do nothing if the location has not changed
   if (location === DRAGGED_PIECE_LOCATION) return;
 
@@ -1285,7 +1287,9 @@ function updateDraggedPiece(x, y) {
   // update state
   DRAGGED_PIECE_LOCATION = location;
 }
-
+/*
+ * This function is called from the mouseupWindow function
+ */
 function stopDraggedPiece(location) {
   // determine what the action should be
   var action = 'drop';
@@ -1332,7 +1336,7 @@ function stopDraggedPiece(location) {
     var oldPosition = deepCopy(CURRENT_POSITION);
 
     var result = cfg.onDrop(DRAGGED_PIECE_SOURCE, location, DRAGGED_PIECE,    		
-      newPosition, oldPosition, CURRENT_ORIENTATION);
+      newPosition, oldPosition, CURRENT_ORIENTATION); // Calling onDrop function
     console.log("Result is "+result+" "+DRAGGED_PIECE+ " new position "+Object.getOwnPropertyNames(newPosition)+" old position "+Object.getOwnPropertyNames(oldPosition)+" orientation "+CURRENT_ORIENTATION);
  //   console.log("Values of new position "+Object.values(newPosition));
  //   console.log("Values of old position "+Object.values(oldPosition));
@@ -1543,12 +1547,14 @@ function isMSIE() {
 function stopDefault(e) {
   e.preventDefault();
 }
-
+/*
+ * This function is triggered on mouse down event
+ */
 function mousedownSquare(e) {
   // do nothing if we're not draggable
   if (cfg.draggable !== true) return;
 
-  var square = $(this).attr('data-square');
+  var square = $(this).attr('data-square'); // This is a board position as b8
 
   // no piece on this square
   if (validSquare(square) !== true ||
@@ -1595,7 +1601,9 @@ function touchstartSparePiece(e) {
   beginDraggingPiece('spare', piece,
     e.changedTouches[0].pageX, e.changedTouches[0].pageY);
 }
-
+/*
+ * This function is triggered by the mouse move event
+ */
 function mousemoveWindow(e) {
   // do nothing if we are not dragging a piece
   if (DRAGGING_A_PIECE !== true) return;
@@ -1613,20 +1621,46 @@ function touchmoveWindow(e) {
   updateDraggedPiece(e.originalEvent.changedTouches[0].pageX,
     e.originalEvent.changedTouches[0].pageY);
 }
-
+/*
+ * mouseupWindow
+ * This function is called when a mouse button is released over an element
+ * 
+ */
 function mouseupWindow(e) {
   // do nothing if we are not dragging a piece
-  if (DRAGGING_A_PIECE !== true) return;
+  if (DRAGGING_A_PIECE !== true){ // Always true?? - NO ojn 23.08.23
+	  if (cfg.hasOwnProperty('onMouseoutSquare') !== true ||
+			    typeof cfg.onMouseoutSquare !== 'function') return;
+	  var square = $(e.currentTarget).attr('data-square');
+	    console.log("mouseupWindow square: ");
+	    console.log(square);
+	    // NOTE: this should never happen; defensive
+	    if (validSquare(square) !== true) return;
+
+	    // get the piece on this square
+	    var piece = false;
+	    if (CURRENT_POSITION.hasOwnProperty(square) === true) {
+	      piece = CURRENT_POSITION[square];
+	    }
+	  // execute their function
+	  cfg.onMouseoutSquare(square, piece, deepCopy(CURRENT_POSITION),
+	    CURRENT_ORIENTATION);
+	  return;
+  }
+
 
   // get the location
   var location = isXYOnSquare(e.pageX, e.pageY);
-  console.log( "ChessBoardmove "+location );
+  console.log( "mouseupWindow ChessBoardmove: "+location );
   stopDraggedPiece(location);
 }
 
 function touchendWindow(e) {
   // do nothing if we are not dragging a piece
-  if (DRAGGING_A_PIECE !== true) return;
+  if (DRAGGING_A_PIECE !== true){
+	  
+	  return;
+  }
 
   // get the location
   var location = isXYOnSquare(e.originalEvent.changedTouches[0].pageX,
@@ -1686,8 +1720,8 @@ function mouseleaveSquare(e) {
   }
 
   // execute their function
-  cfg.onMouseoutSquare(square, piece, deepCopy(CURRENT_POSITION),
-    CURRENT_ORIENTATION);
+/*  cfg.onMouseoutSquare(square, piece, deepCopy(CURRENT_POSITION),
+    CURRENT_ORIENTATION); taken out 23.08.23 ojn */
 }
 
 //------------------------------------------------------------------------------
@@ -1706,7 +1740,7 @@ function addEvents() {
   // mouse enter / leave square
   boardEl.on('mouseenter', '.' + CSS.square, mouseenterSquare)
     .on('mouseleave', '.' + CSS.square, mouseleaveSquare);
-  if (cfg.playerMove === false){
+  if (cfg.playerMove === false){ // false when opponent has made a move
 	  console.log('Add player move');
 	  updatePlayerPiece(cfg.oldPos,cfg.newPos);
   }  
