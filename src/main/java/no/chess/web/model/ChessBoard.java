@@ -986,10 +986,10 @@ public class ChessBoard extends ParentModel {
 					boardRow[i][j] = pieceName;
 				}else{
 					boardRow[i][j] = "f";
-					if ( position.getUsedBy() == null) {
+/*					if ( position.getUsedBy() == null) {
 						System.out.println("No piece: "+position.toString()
 						);
-					}
+					}*/
 				}
 
 				String cp = "ledig";

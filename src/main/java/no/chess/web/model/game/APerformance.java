@@ -1023,7 +1023,7 @@ public class APerformance {
 
 			  } // End for loop 1 Opponent pieces to take
 		  } // End pieces can be taken. noexit is true if there are opponent pieces that can reach a certain position from the strategy KB.
-		  if (takePieces.isEmpty()|| chosenPiece == null || noexit) { // No opponent pieces can be taken. What movable Piece to use?
+		  if (takePieces.isEmpty()&& chosenPiece == null) { // 19.02.24 No opponent pieces can be taken and a player piece is not found. What movable Piece to use?
 			  writer.println("No opponent pieces to take");
 			  if (!movablePieces.isEmpty()) {
 				  writer.println("What movable piece to use?");

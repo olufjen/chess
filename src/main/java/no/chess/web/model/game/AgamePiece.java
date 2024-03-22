@@ -30,7 +30,7 @@ import no.games.chess.AbstractGamePiece.pieceColor;
  *
  * @param <P>
  */
-public class AgamePiece extends AbstractGamePiece<Position>{
+public class AgamePiece extends AbstractGamePiece<Position> implements ChessPieceType{
 
 	private Position myPosition;
 	private List<XYLocation> northWest;
@@ -385,6 +385,47 @@ public class AgamePiece extends AbstractGamePiece<Position>{
 
 	public APawn getMyPawn() {
 		return myPawn;
+	}
+	
+
+	public AQueen getMyqueen() {
+		return myqueen;
+	}
+
+	public void setMyqueen(AQueen myqueen) {
+		this.myqueen = myqueen;
+	}
+
+	public ARook getMyrook() {
+		return myrook;
+	}
+
+	public void setMyrook(ARook myrook) {
+		this.myrook = myrook;
+	}
+
+	public ABishop getMybishop() {
+		return mybishop;
+	}
+
+	public void setMybishop(ABishop mybishop) {
+		this.mybishop = mybishop;
+	}
+
+	public AKnight getMyKnight() {
+		return myKnight;
+	}
+
+	public void setMyKnight(AKnight myKnight) {
+		this.myKnight = myKnight;
+	}
+
+	public Aking getMyKing() {
+		return myKing;
+	}
+
+	public void setMyKing(Aking myKing) {
+		this.myKing = myKing;
 	}
 
 	public void setMyPawn(APawn myPawn) {

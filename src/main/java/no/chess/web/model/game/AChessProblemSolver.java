@@ -120,7 +120,7 @@ public class AChessProblemSolver {
    * 
    */
   private ChessFolKnowledgeBase folKb;
-
+  private ChessFolKnowledgeBase localKb = null; // The strategy knowledge base
   /**
    * 
    * ChessDomain:
@@ -186,7 +186,7 @@ public class AChessProblemSolver {
 		positions = this.game.getPositions();
 		opponentAgent = new OpponentAgent(this.stateImpl,this.game,this.opponent,this.myPlayer,this.folKb,chessDomain);
 		opponentAgent.setPositions(positions);
-
+		localKb = opponentAgent.getLocalKb();
 		playerName = this.myPlayer.getNameOfplayer();
 		playSide = playerName.substring(0,5);
 		noofMoves = game.getMovements().size();
@@ -722,10 +722,24 @@ public void checkOpponent(String fact,ArrayList<ChessActionImpl> actions) {
 public String prepareAction( ArrayList<ChessActionImpl> actions) {
 	String pname = null;
 	String piecePos = "_";
+	  String pieceName = "";
+	  APerceptor thePerceptor = null;
+	  State thechosenState = null;
+	  Position posin = null;
 //	opponentAgent.probepossibilities(actions, myPlayer);
 //	opponentAgent.chooseStrategy(actions);
 	checkoppoentThreat(THREATEN,actions); // fills the threatenedPieces and threatenedPositions if any. This is temporal information 
-	String pieceName = "WhiteBishop2"; //Rewrite: Must find player's bishop
+//	String pieceName = "WhiteBishop2"; //Rewrite: Must find player's bishop
+	
+	  posin = positions.get("d3");
+	  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
+	  fillthePerceptor(thePerceptor);
+	  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
+	  thePerceptor.findReachable(posin);
+	  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
+//	  folKb.checkFacts(pieceName, pos, REACHABLE, actions,positionList);
+	  piecePos = pieceName + piecePos + "d3";
+	
 	String fpos = "f1"; // Must find player's bishop first position
 	String toPos = "d3"; // and player's bishop destination
 	boolean bishop = folKb.checkpieceFacts("y",pieceName,fpos,OCCUPIES); // Rook occupies f1 !!?? This is part of GOAL: Opening positions
@@ -742,7 +756,7 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 			List<Position> removed = piece.getRemovedPositions();
 			Position pos =  (Position) removed.stream().filter(c -> c.getPositionName().contains(toPos)).findAny().orElse(null);
 			if (pos != null) { // The bishop cannot be moved
-				String pawnName = "WhitePawn5";
+				String pawnName = null;
 				String pawnPos = "e2";
 				boolean pawn = folKb.checkpieceFacts("y",pawnName,pawnPos,OCCUPIES);
 				if (pawn) {
@@ -751,7 +765,10 @@ public String prepareAction( ArrayList<ChessActionImpl> actions) {
 					initstate = buildInitialstate(pawnName, pawnPos);
 					Position d2posin = positions.get("e3");
 					APerceptor d2perceptor = new APerceptor(d2posin,REACHABLE,PIECETYPE,PAWN,playerName);
+					fillthePerceptor(d2perceptor);
 					State d2chosenState = d2perceptor.checkPercept(initStates); // A hash table of available init states.
+					  d2perceptor.findReachable(d2posin);
+					  pawnName = d2perceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 					if (d2chosenState != null) {
 						chosenInitstate = d2chosenState;
 					}
@@ -941,6 +958,13 @@ public State buildGoalstate(String pieceName,String toPos) {
 		return gState;
 	  
   }
+public void fillthePerceptor(APerceptor thePerceptor) {
+	  thePerceptor.setMyPlayer(myPlayer);
+	  thePerceptor.setOpponent(opponent);
+	  thePerceptor.setAgent(opponentAgent);
+	  thePerceptor.setFolKb(folKb);
+	  thePerceptor.setLocalKb(localKb);
+}
   /**
    * checkMovenumber
    * This method determine the first moves based on the queen gambit process
@@ -951,65 +975,86 @@ public State buildGoalstate(String pieceName,String toPos) {
 public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 	  String pieceName = "";
 	  String piecePos = "_";
+	  APerceptor thePerceptor = null;
+	  State thechosenState = null;
+	  Position posin = null;
 	  switch(noofMoves) {
 	  case 0:
-		  pieceName = "WhitePawn4";
+//		  pieceName = "WhitePawn4";
+		  posin = positions.get("d4");
+		  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
+		  fillthePerceptor(thePerceptor);
+		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
+		  thePerceptor.findReachable(posin);
+		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 		  piecePos = pieceName + piecePos + "d4";
-		  Position posin = positions.get("d4");
-		  APerceptor perceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
-		  State chosenState = perceptor.checkPercept(initStates); // A hash table of available init states.
-		  if (chosenState != null) {
-			  chosenInitstate = chosenState;
+		  if (thechosenState != null) {
+			  chosenInitstate = thechosenState;
 		  }
 		  break;
 	  case 2:
-		  pieceName = "WhitePawn3";
+//		  pieceName = "WhitePawn3";
 		  String pos = "c4";
-		  piecePos = pieceName + piecePos + pos;
+//		  folKb.checkFacts(pieceName, pos, REACHABLE, actions,positionList);
+		  posin = positions.get("c4");
+		  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
+		  fillthePerceptor(thePerceptor);
+		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
+		  thePerceptor.findReachable(posin);
+		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 		  folKb.checkFacts(pieceName, pos, REACHABLE, actions,positionList);
-		  Position case2posin = positions.get("c4");
-		  APerceptor case2perceptor = new APerceptor(case2posin,REACHABLE,PIECETYPE,null,playerName);
-		  State case2chosenState = case2perceptor.checkPercept(initStates); // A hash table of available init states.
-		  if (case2chosenState != null) {
-			  chosenInitstate = case2chosenState;
+		  piecePos = pieceName + piecePos + "c4";
+		  writer.println("The percept schema "+thePerceptor.getPercept().toString());
+		  if (thechosenState != null) {
+			  chosenInitstate = thechosenState;
 		  }
 		  break;
 	  case 4:
 		  checkOpponent("", actions);
-		  pieceName = "WhiteKnight1";
+//		  pieceName = "WhiteKnight1";
+		  posin = positions.get("c3");
+		  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
+		  fillthePerceptor(thePerceptor);
+		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
+		  thePerceptor.findReachable(posin);
+		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 		  piecePos = pieceName + piecePos + "c3";
-		  Position case4posin = positions.get("c3");
-		  APerceptor case4perceptor = new APerceptor(case4posin,REACHABLE,PIECETYPE,null,playerName);
-		  State case4chosenState = case4perceptor.checkPercept(initStates); // A hash table of available init states.
-		  if (case4chosenState != null) {
-			  chosenInitstate = case4chosenState;
+		  if (thechosenState != null) {
+			  chosenInitstate = thechosenState;
 		  }
 		  break;
 	  case 6:
 		  checkOpponent("", actions);
-		  pieceName = "WhiteKnight2";
+//		  pieceName = "WhiteKnight2";
 		  String posx = "f3";
-		  piecePos = pieceName + piecePos + posx;
+		  posin = positions.get("f3");
+		  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
+		  fillthePerceptor(thePerceptor);
+		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
+		  thePerceptor.findReachable(posin);
+		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 		  folKb.checkFacts(pieceName, posx, REACHABLE, actions,positionList);
-		  Position case6posin = positions.get("f3");
-		  APerceptor case6perceptor = new APerceptor(case6posin,REACHABLE,PIECETYPE,null,playerName);
-		  State case6chosenState = case6perceptor.checkPercept(initStates); // A hash table of available init states.
-		  if (case6chosenState != null) {
-			  chosenInitstate = case6chosenState;
+		  piecePos = pieceName + piecePos + posx;
+		  if (thechosenState != null) {
+			  chosenInitstate = thechosenState;
 		  }
 		  break;
 	  default:
-		  checkOpponent("", actions); // Result: A list of opponent pieces that can be taken
+		  checkOpponent("", actions); // Result: A list of opponent pieces that can be taken possiblePOieces and possiblePositions
 		  String blackpieceName = "BlackBishop1"; // Find opponent bishop
 		  String blackpos = "g4";
 		  if (folKb.checkThreats(blackpieceName, blackpos, OCCUPIES,opponent)) {
-			  pieceName = "WhitePawn8"; // Result: This pawn is moved to h3. OBS change piecename to player's pawn 8
+//			  pieceName = "WhitePawn8"; // Result: This pawn is moved to h3. OBS change piecename to player's pawn 8
+//			  piecePos = pieceName + piecePos + "h3";
+			  posin = positions.get("h3");
+			  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
+			  fillthePerceptor(thePerceptor);
+			  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
+			  thePerceptor.findReachable(posin);
+			  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 			  piecePos = pieceName + piecePos + "h3";
-			  Position d1posin = positions.get("h3");
-			  APerceptor d1perceptor = new APerceptor(d1posin,REACHABLE,PIECETYPE,null,playerName);
-			  State d1chosenState = d1perceptor.checkPercept(initStates); // A hash table of available init states.
-			  if (d1chosenState != null) {
-				  chosenInitstate = d1chosenState;
+			  if (thechosenState != null) {
+				  chosenInitstate = thechosenState;
 			  }
 			  break; // Black bishop at g4: If this is true then pawn at h2 is moved to h3
 		  }
@@ -1023,15 +1068,18 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  if (piece != null && piece.isActive()) {
 //				  if (folKb.checkThreats(pname, bpos, OCCUPIES,opponent)) {  // OBS What happens if a friendly piece occupies this position !!!???
 // The above call is unnecessary ??
-				  pieceName = "WhitePawn3";
+//				  pieceName = "WhitePawn3";
 				  String wpos = "d5";
 				  if (folKb.checkFacts(pieceName, wpos, PAWNATTACK, actions,positionList)) {
+					  posin = positions.get("d5");
+					  thePerceptor = new APerceptor(posin,PAWNATTACK,PIECETYPE,PAWN,playerName);
+					  fillthePerceptor(thePerceptor);
+					  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
+					  thePerceptor.findReachable(posin);
+					  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 					  piecePos = pieceName + piecePos + wpos;
-					  Position d2posin = positions.get("d5");
-					  APerceptor d2perceptor = new APerceptor(d2posin,PAWNATTACK,PIECETYPE,PAWN,playerName);
-					  State d2chosenState = d2perceptor.checkPercept(initStates); // A hash table of available init states.
-					  if (d2chosenState != null) {
-						  chosenInitstate = d2chosenState;
+					  if (thechosenState != null) {
+						  chosenInitstate = thechosenState;
 					  }
 					  break; // If this is true then the white pawn takes the opponent piece at d5
 				  }
@@ -1060,12 +1108,15 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 					  if (pawn) {
 						  predicate = PAWNATTACK;
 					  }
+					  posin = positions.get(oppPosName);
+					  thePerceptor = new APerceptor(posin,predicate,PIECETYPE,nameType,playerName);
+					  fillthePerceptor(thePerceptor);
+					  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
+					  thePerceptor.findReachable(posin);
+					  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 					  piecePos = pieceName + piecePos + oppPosName;
-					  Position d2posin = positions.get(oppPosName);
-					  APerceptor d2perceptor = new APerceptor(d2posin,predicate,PIECETYPE,nameType,playerName);
-					  State d2chosenState = d2perceptor.checkPercept(initStates); // A hash table of available init states.
-					  if (d2chosenState != null) {
-						  chosenInitstate = d2chosenState;
+					  if (thechosenState != null) {
+						  chosenInitstate = thechosenState;
 					  }
 					  break;
 				  }else {
@@ -1103,6 +1154,7 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  }
 		  }
 		  if (pieceName == null) { // prepareAction returns with no piece. There are no threats and castling is done
+			  writer.println("prepareAction returns with no piece. There are no threats and castling is done");
 			  AgamePiece chosen = opponentAgent.getPerformanceMeasure().getChosenPiece();
 			  Position chosenpos = opponentAgent.getPerformanceMeasure().getChosenPosition();
 			  boolean takeKing = opponentAgent.getPerformanceMeasure().isCanTakeKing();
@@ -1247,6 +1299,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  String nactionName = movedAction.getName();
 		  int nIndex = nactionName.indexOf("_");
 		  String chessName = nactionName.substring(0, nIndex);
+		  String posName = nactionName.substring(nIndex+1,nactionName.length());
 		  if (deferredInitial != null && deferredGoal != null) {
 			  writer.println("Deferred initial and goal states\n");
 		      for (Literal literal :
@@ -1267,10 +1320,14 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  */
 
 		  writer.println("Chosen action Schema\n"+movedAction.toString());
+		  writer.println("Chessname for chess action "+chessName);
 		  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(chessName)).findAny().orElse(null);
+		  writer.println("Chosen action "+naction.toString());
+		  List<Position>available = naction.getAvailablePositions();
+		  Position toPos = (Position) available.stream().filter(c -> c.getPositionName().equals(posName)).findAny().orElse(null);
 		  String newPos = naction.getPossibleMove().getToPosition().getPositionName(); // Get newPos from Preferred position ??!!
 		  String newprefPos = naction.getPreferredPosition().getPositionName(); 
-		  writer.println("The new position and the preferred position\n"+newPos+"\n"+newprefPos);
+		  writer.println("The new position and the preferred position and chosen position\n"+newPos+"\n"+newprefPos+"\n"+toPos.getPositionName());
 		  State initState = initStates.get(pieceName);
 		  State goal = goalStates.get(pieceName);
 		  Set<ActionSchema> aSchemas =  new HashSet<ActionSchema>(actionSchemas.values());
@@ -1278,7 +1335,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  problem = new ChessProblem(initState,goal,aSchemas);	
 /*
  * The object variable theState contains all Literals of the current ChessState.
- * Then the are too many preconditions from the list of actionschemas that can be entailed by the initial state.
+ * Then there are too many preconditions from the list of actionschemas that can be entailed by the initial state.
  * The initial state may contain more fluents than the precondition.		  
  */
 //		  problem = new ChessProblem(theState,goal,aSchemas);
@@ -1308,6 +1365,10 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		   for (ActionSchema primitiveAction :
 			   schemas) {
 			   writer.println(primitiveAction.toString());
+			   writer.println("The constants in action: "+primitiveAction.getName());
+			   for(Constant c : primitiveAction.getConstants()) {
+				   writer.println(c.toString());
+			   }
 		   }
 		  writer.println("Chosen action\n"+naction.getActionName());
 	  }
@@ -1795,7 +1856,7 @@ public Problem buildProblem(ChessActionImpl action) {
    * @param posName
    * @return
    */
-  public State buildInitialstate(String piece,String posName) {
+  public State  buildInitialstate(String piece,String posName) {
 		List<Sentence> folSentences = folKb.getOriginalSentences();
 		State initState = null;
 		String pieceName = null;

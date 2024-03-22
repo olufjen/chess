@@ -590,7 +590,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 			pMove = possibleMove.toString();
 		if (preferredPosition != null)
 			posName = preferredPosition.getPositionName();
-		StringBuffer logText = new StringBuffer("ChessAction: Preferred Position " + posName+ " Piece " + chessPiece.toString()+" Possible move "+pMove);
+		StringBuffer logText = new StringBuffer(actionName + " Preferred Position " + posName+ " Piece " + chessPiece.toString()+" Possible move "+pMove);
 		return logText.toString();
 	}
 	/**

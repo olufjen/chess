@@ -2,6 +2,7 @@
 package no.chess.web.model.game;
 
 import java.util.List;
+import java.util.function.Function;
 
 import aima.core.logic.fol.Connectors;
 import aima.core.logic.fol.kb.FOLKnowledgeBase;
@@ -280,59 +281,92 @@ public static String getPLAY()
   }
   public static void setSAFEMOVE(String sAFEMOVE)
   {
-		SAFEMOVE = sAFEMOVE;
+	  SAFEMOVE = sAFEMOVE;
   }
   public static String getSTRIKE()
   {
-		return STRIKE;
+	  return STRIKE;
   }
   public static void setSTRIKE(String sTRIKE)
   {
-		STRIKE = sTRIKE;
+	  STRIKE = sTRIKE;
   }
   /**
    * getPieceType
    * This method returns the string type of the piece
- * @param piece
- * @return
- */
-public static String getPieceType(AgamePiece piece) {
+   * @param piece
+   * @return The piecetype as a string
+   */
+  public static String getPieceType(AgamePiece piece) {
 	  pieceType type = piece.getPieceType();
-		if (type == type.PAWN) {
-			return PAWN;
-		}
-		if (type == type.BISHOP) {
-			return BISHOP;
-		}		
-		if (type == type.ROOK) {
-			return ROOK;
-		}			
-		if (type == type.KNIGHT) {
-			return KNIGHT;
-		}
-		if (type == type.QUEEN) {
-			return QUEEN;
-		}
-		if (type == type.KING) {
-			return KING;
-		}	
+	  if (type == type.PAWN) {
+		  return PAWN;
+	  }
+	  if (type == type.BISHOP) {
+		  return BISHOP;
+	  }		
+	  if (type == type.ROOK) {
+		  return ROOK;
+	  }			
+	  if (type == type.KNIGHT) {
+		  return KNIGHT;
+	  }
+	  if (type == type.QUEEN) {
+		  return QUEEN;
+	  }
+	  if (type == type.KING) {
+		  return KING;
+	  }	
 	  return null;
   }
 
-public static void parseSentence(String sentence,String goalSentence,FOLKnowledgeBase kb){
-	List<Literal> rules = Utils.parse(sentence);
-	List<Literal> goals = Utils.parse(goalSentence);
-	ConnectedSentence premise = null;
-	int s = rules.size();
-	for (int i= 0; i < s;i=i+2) {
-		Predicate p = (Predicate) rules.get(i).getAtomicSentence();
-		Predicate y = (Predicate) rules.get(i+1).getAtomicSentence();	
-		premise = new ConnectedSentence(Connectors.AND,p,y);
+  /**
+   * parseSentence
+   * This method takes two first order logic sentences and creates a rule 
+   * to be stored in the knowledge base.
+   * @param sentence
+   * @param goalSentence
+   * @param kb
+   */
+  public static void parseSentence(String sentence,String goalSentence,FOLKnowledgeBase kb){
+	  List<Literal> rules = Utils.parse(sentence);
+	  List<Literal> goals = Utils.parse(goalSentence);
+	  ConnectedSentence premise = null;
+	  int s = rules.size();
+	  for (int i= 0; i < s;i=i+2) {
+		  Predicate p = (Predicate) rules.get(i).getAtomicSentence();
+		  Predicate y = (Predicate) rules.get(i+1).getAtomicSentence();	
+		  premise = new ConnectedSentence(Connectors.AND,p,y);
+
+	  }
+	  Predicate g = (Predicate)goals.get(0).getAtomicSentence();
+	  ConnectedSentence goal = new ConnectedSentence(Connectors.IMPLIES,premise,g);
+	  kb.tell(goal);
+
+  }
+	public  static String extract(String s,Function <String,String> f){
+		return f.apply(s);
+	}
+
+	/**
+	 * extractString
+	 * This routine extracts a substring form a string  using the Function interface
+	 * It finds the last index of a string using separator
+	 * @param line The original string
+	 * @param separator The separator
+	 * @param startindex The startindex
+	 * @return the substring
+	 */
+	public static String extractString(String line,char separator,int startindex){
+		int index = line.lastIndexOf(separator);
+		if (index == -1)
+			return null;
+		Function<String,String> f = (String s) -> line.substring(startindex,index);
+		Function<String,String> ef = (String s) -> line.substring(index+1);
+		if (startindex == -1)
+			return extract(line,ef);
+		else
+			return extract(line,f);
 
 	}
-	Predicate g = (Predicate)goals.get(0).getAtomicSentence();
-	ConnectedSentence goal = new ConnectedSentence(Connectors.IMPLIES,premise,g);
-	kb.tell(goal);
-
-}
 }

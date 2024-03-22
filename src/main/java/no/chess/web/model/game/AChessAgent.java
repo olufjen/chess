@@ -552,6 +552,7 @@ public class AChessAgent extends KBAgent {
 		writer.flush();
 		chessDomain.printDomain();
 		strategyKB =  solver.getOpponentAgent().getLocalKb();
+		strategyKB.writeKnowledgebase();
 		if (naction != null)
 			localAction = naction;
 		return localAction;
