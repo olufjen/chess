@@ -122,6 +122,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js"></script>
 <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
 <script type="text/javascript">
+/*
+ * This method is called from the dropDraggedPieceOnSquare function
+ * with button btnmove
+ * It is also called from the cfg.onMouseoutSquare function
+ * with button btnfind
+ */
  function formSubmit(button){
 //	 alert("formsubmit "+button);
 	var clickbutton = "#"+button;
@@ -166,19 +172,19 @@ function isTouchDevice() {
 	var playerMove = selectedPiece === "pp";
 	var len = '${available?size}';
 	var availableMoves = [<#list available as avail>'${avail}',</#list>];
-	 console.log('playerMove is '+playerMove+" No of available moves "+len);
+	 console.log('playerMove is '+playerMove+" No of available moves "+len);//playermove is true if no move from computer
  	for (var i = 0;i<len;i = i + 1){
- 		console.log("The available moves are "+availableMoves[i]);
+ 		console.log("The available moves are "+availableMoves[i]); // Then the available moves are xx
 	}
  	var movex = availableMoves[0];
  	var noMove = false;
  	if (len <= 1 && movex === "xx"){
  		console.log("The available moves are empty "+availableMoves[0]);
- 		nomove = true;
+ 		nomove = true; // nomove is true if available moves are xx
  	}
- 	nomove = oldpos === newpos;
+ 	nomove = oldpos === newpos; //nomove is true if oldpos and newpos are equal
 	if (nomove === true){
-		console.log("A piece is selcted but not moved. The first available move is "+availableMoves[0]);
+		console.log("A piece is selected but not moved. The first available move is "+availableMoves[0]);
 	}
 	 var cfg = {
 			    draggable: true,
@@ -197,10 +203,18 @@ function isTouchDevice() {
 				opponentMove: nomove // opponentMove is true if there is no move from opponent, but a piece has been selected
 			};
 /*
-*
+* This method is called from the stopDraggedPiece function
 */
-	 cfg.onDrop = function() {
+	 cfg.onDrop = function(DRAGGED_PIECE_SOURCE, location, DRAGGED_PIECE,    		
+		      newPosition, oldPosition, CURRENT_ORIENTATION) {
 		 console.log("The onDrop function");
+		 console.log(DRAGGED_PIECE_SOURCE);
+		 console.log(DRAGGED_PIECE);
+		 console.log(location);
+		 console.log(newPosition);
+		 console.log(oldPosition);
+		 document.getElementById("tilgjengeligpos").value = "xx";
+		 chosenPiece = DRAGGED_PIECE;
 		 return 'none';
 	 }
  /*
@@ -222,15 +236,16 @@ function isTouchDevice() {
 	 }
  /*
   * This method is called from 
-  * the mouseleaveSquare function
+  * the mouseleaveSquare/mouseupWindow function
+  * It calls the formSubmit function
   * 
   */	
  	cfg.onMouseoutSquare = function(square,piece,position,orientation){
- 		console.log("onMouseoutSquare The available moves piece "+piece);
-		 	for (var i = 0;i<len;i = i + 1){
-		 		console.log("The available moves are "+cfg.opponentMoves[i]);
-			}
-		 	if (piece !== false){
+ 		console.log("onMouseoutSquare The available moves piece "+piece+ " orientation is "+orientation);
+		 	if (piece !== false){ // piece is false if square is empty
+			 	for (var i = 0;i<len;i = i + 1){
+			 		console.log("The available moves are "+cfg.opponentMoves[i]);
+				}
 				document.getElementById("startposisjon").value = square;
 				document.getElementById("piece").value = piece;
 				document.getElementById("tilgjengeligpos").value = "til";
@@ -340,7 +355,7 @@ function isTouchDevice() {
 
 
 		  <button type="submit" id="btnmove" value="nokkel"  name="formValue" class="btn btn-primary" style="display: none" > getValue </button>
-		  <button type="submit" id="btnfind" value="nokkel"  name="formValue" class="btn btn-primary" style="display: none" > getValue </button>
+		  <button type="submit" id="btnfind" value="find"  name="btnfind" class="btn btn-primary" style="display: none" > getValue </button>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
