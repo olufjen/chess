@@ -77,6 +77,7 @@ public class APerformance {
 	private String ROOK;
 	private String KING;
 	private String QUEEN;
+	private String PIECE = "PIECE"; 
 	private String PAWNMOVE;
 	private String playerName =  "";
 	private String OCCUPIES = "";
@@ -219,6 +220,7 @@ public class APerformance {
 			ROOK = KnowledgeBuilder.getROOK();
 			KING = KnowledgeBuilder.getKING();
 			QUEEN = KnowledgeBuilder.getQUEEN();
+			PIECE = KnowledgeBuilder.getPIECE();
 			OCCUPIES = KnowledgeBuilder.getOCCUPIES();
 			PAWNMOVE = KnowledgeBuilder.getPAWNMOVE();
 			PAWNATTACK = KnowledgeBuilder.getPAWNATTACK();

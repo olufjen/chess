@@ -128,6 +128,7 @@ public class AChessAgent extends KBAgent {
 	private String ROOK;
 	private String KING;
 	private String QUEEN;
+	private String PIECE = "PIECE"; 
 	private String PAWNMOVE;
 	private String playerName = "";
     private String OCCUPIES = "";
@@ -220,6 +221,7 @@ public class AChessAgent extends KBAgent {
 			ROOK = KnowledgeBuilder.getROOK();
 			KING = KnowledgeBuilder.getKING();
 			QUEEN = KnowledgeBuilder.getQUEEN();
+			PIECE = KnowledgeBuilder.getPIECE();
 			OCCUPIES = KnowledgeBuilder.getOCCUPIES();
 			PAWNMOVE = KnowledgeBuilder.getPAWNMOVE();
 			PAWNATTACK = KnowledgeBuilder.getPAWNATTACK();
@@ -256,6 +258,7 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(CASTLE);
 			chessDomain.addPredicate(KING);
 			chessDomain.addPredicate(QUEEN);
+			chessDomain.addPredicate(PIECE);
 			chessDomain.addPredicate(ROOK);
 			chessDomain.addPredicate(PAWN);
 			chessDomain.addPredicate(BISHOP);
@@ -566,7 +569,7 @@ public class AChessAgent extends KBAgent {
 	 * @param name
 	 * @param pos
 	 * @param piece
-	 * @return a Connected sentence
+
 	 */
 	public void createConnected(String name, String pos, String piece) {
 		List<Term> ownerTerms = new ArrayList<Term>();
@@ -854,6 +857,10 @@ public class AChessAgent extends KBAgent {
 		for (AgamePiece piece:pieces) {
 			String name = piece.getMyPiece().getOntlogyName();
 			Constant nameVariable = new Constant(name);
+			List<Term> nameTerms = new ArrayList<Term>();
+			nameTerms.add(nameVariable);
+			Predicate piecePredicate = new Predicate(PIECE,nameTerms);
+			folKb.tell(piecePredicate);
 			typeTerms.clear();
 			typeTerms.add(nameVariable);
 			piece.setPredicate(piece.getMyPiece().getPredicate());

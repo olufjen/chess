@@ -62,6 +62,7 @@ public class APerceptor {
 	  private String KING;
 	  private String QUEEN;
 	  private String PAWNMOVE;
+	  private String PIECE = "PIECE"; 
 	  private String playerName =  "";
 	  private String OCCUPIES = "";
 	  private String PAWNATTACK ="";
@@ -153,6 +154,7 @@ public class APerceptor {
 		  ROOK = KnowledgeBuilder.getROOK();
 		  KING = KnowledgeBuilder.getKING();
 		  QUEEN = KnowledgeBuilder.getQUEEN();
+		  PIECE = KnowledgeBuilder.getPIECE();
 		  OCCUPIES = KnowledgeBuilder.getOCCUPIES();
 		  PAWNMOVE = KnowledgeBuilder.getPAWNMOVE();
 		  PAWNATTACK = KnowledgeBuilder.getPAWNATTACK();
