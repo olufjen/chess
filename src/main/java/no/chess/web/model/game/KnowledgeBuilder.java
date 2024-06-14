@@ -405,54 +405,75 @@ public static void setAllconstants(List<Constant> allconstants) {
 	  kb.tell(goal);
 
   }
-  /**
-   * createOccupyaction
-   * This method creates an action schema of the form 
-   * Action ("occupy_pos",posx,byPiece)
-   * PRECONDITION: (REACHABLE(byPiece,posx)
-   * EFFECT: (occupies(byPiece,posx)
-   * The action schema contains only variables
- * @return An action Schema
+
+/**
+ * createOccupyaction
+ * This method creates an action schema of the form 
+ * Action ("occupy_pos",posx,byPiece)
+ * PRECONDITION: (REACHABLE(byPiece,posx)
+ * EFFECT: (occupies(byPiece,posx)
+ * The action schema contains any number of variables
+ * @param names - if parameters are given they are used as constants in preconditions or effects in the returned action schema
+ * @return A lifted action Schema
  */
-public static ActionSchema createOccupyaction() {
-	  List<Literal> precondition = new ArrayList();
-	  List<Literal> effects = new ArrayList();
-	  Variable startPos = new Variable("posy");
-	  Variable pieceName = new Variable("byPiece");
-//	  Variable otherpieceName = new Variable("yPiece");
-//	  Variable typepieceName = new Variable("tPiece");
-	  Variable posname = new Variable("posx");
-	  Variable typeofPiece = new Variable("type");
-	  List<Term> variables = new ArrayList<Term>();
-	  List<Term> othervariables = new ArrayList<Term>();
-	  List<Term> typevariables = new ArrayList<Term>();
-	  List<Term> totalvariables = new ArrayList<Term>();
-	  List<Term> boardTerms = new ArrayList<Term>();
-	  variables.add(pieceName);
-	  variables.add(posname);
-	  othervariables.add(pieceName);
-	  othervariables.add(startPos);
-	  typevariables.add(pieceName);
-	  typevariables.add(typeofPiece);
-	  boardTerms.add(startPos);
-	  String actionName = "occupypos";
-//	  totalvariables.addAll(boardTerms);
-	  totalvariables.add(pieceName);
-	  totalvariables.add(startPos);
-	  totalvariables.add(typeofPiece);
-	  totalvariables.add(posname);
-	  Predicate firstposPredicate = new Predicate(OCCUPIES,othervariables); 
-	  Predicate reachPredicate = new Predicate(REACHABLE,variables);
-	  Predicate typePredicate = new Predicate(PIECETYPE,typevariables);
-	  Predicate boardPredicate = new Predicate(BOARD,boardTerms);
-	  precondition.add(new Literal((AtomicSentence)firstposPredicate));
-	  precondition.add(new Literal((AtomicSentence) boardPredicate));
-	  precondition.add(new Literal((AtomicSentence) typePredicate));
-	  precondition.add(new Literal((AtomicSentence) reachPredicate));
-	  Predicate occupyPredicate = new Predicate(OCCUPIES,variables); 
-	  effects.add(new Literal((AtomicSentence) occupyPredicate));
-	  ActionSchema occupyAction = new ActionSchema(actionName,totalvariables,precondition,effects);
-	  return occupyAction;
+public static ActionSchema createOccupyaction(String... names) {
+	int nargs = names.length;
+	String apos = null;
+	Variable posname = new Variable("posx");
+	Constant givenPos = null;
+	Variable startPos = null;
+	Variable pieceName = new Variable("byPiece");
+	List<Term> othervariables = new ArrayList<Term>();
+	List<Term> totalvariables = new ArrayList<Term>();
+	List<Term> boardTerms = new ArrayList<Term>();
+	othervariables.add(pieceName);
+	totalvariables.add(pieceName);
+	if (nargs > 0) {
+		apos = names[0];
+		givenPos = new Constant(apos);
+		othervariables.add(givenPos);
+		totalvariables.add(givenPos);
+		boardTerms.add(givenPos);
+	}
+	if (nargs == 0) {
+		startPos = new Variable("posy");
+		othervariables.add(startPos);
+		totalvariables.add(startPos);
+		boardTerms.add(startPos);
+	}
+	List<Literal> precondition = new ArrayList();
+	List<Literal> effects = new ArrayList();
+	Variable typeofPiece = new Variable("type");
+	List<Term> variables = new ArrayList<Term>();
+
+	List<Term> typevariables = new ArrayList<Term>();
+
+
+	variables.add(pieceName);
+	variables.add(posname);
+	
+
+	typevariables.add(pieceName);
+	typevariables.add(typeofPiece);
+
+	String actionName = "occupypos";
+	//	  totalvariables.addAll(boardTerms);
+	
+	
+	totalvariables.add(typeofPiece);
+	totalvariables.add(posname);
+	Predicate firstposPredicate = new Predicate(OCCUPIES,othervariables); 
+	Predicate reachPredicate = new Predicate(REACHABLE,variables);
+	Predicate typePredicate = new Predicate(PIECETYPE,typevariables);
+	Predicate boardPredicate = new Predicate(BOARD,boardTerms);
+	precondition.add(new Literal((AtomicSentence)firstposPredicate));
+	precondition.add(new Literal((AtomicSentence) boardPredicate));
+	precondition.add(new Literal((AtomicSentence) typePredicate));
+	precondition.add(new Literal((AtomicSentence) reachPredicate));
+	Predicate occupyPredicate = new Predicate(OCCUPIES,variables); 
+	effects.add(new Literal((AtomicSentence) occupyPredicate));
+	ActionSchema occupyAction = new ActionSchema(actionName,totalvariables,precondition,effects);
+	return occupyAction;
   }
   /**
    * findApplicable
@@ -460,7 +481,7 @@ public static ActionSchema createOccupyaction() {
    * given an action schema containing variables
  * @param initStates a set of ground initial states
  * @param action The lifted action schema (with variables)
- * @return a list of propositionalized action schemas
+ * @return a list of propositionalized action schemas that are applicable
  */
 public static List<ActionSchema> findApplicable(Map<String,State>initStates,ActionSchema action) {
 	  List<State> allStates = new ArrayList<State>(initStates.values());
@@ -484,29 +505,16 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 		  }
 		  ActionSchema propAction = null;
 		  int nofVar = action.getVariables().size();
-		  int noC = stateconstants.size();
+		  int noC = stateconstants.size(); // This value changes when elements are removed
 //		  List<Term> vars = action.getVariables();
 /*		  tempconstants.add(stateconstants.get(0));
 		  for (int i = 1;i<nofVar;i++) {
 			  tempconstants.add(stateconstants.get(i));
 		  }*/
-		  if(noC >= nofVar) {
-			  propAction = action.getActionBySubstitution(stateconstants);
-			  boolean found = state.getFluents().containsAll(propAction.getPrecondition());//is applicable in state s if the precondition of the action is satisfied by s.
-			  boolean finnes = false;
-			  if (!actions.isEmpty()) {
-				  for (ActionSchema schema:actions) {
-					  finnes = schema.getPrecondition().containsAll(propAction.getPrecondition());
-					  if (finnes)
-						  break;
-				  }
-			  }
-			  if (found && !finnes) {
-				  actions.add(propAction);
-			  }
-		  }
-		  else {
-			  actions.add(action);
+		  int diff = noC-nofVar;
+		  for (int i = 0;i<diff;i++) {
+			  makeProp(action, stateconstants, state, actions);
+			  stateconstants.remove(nofVar-1);
 		  }
 	
 		  stateconstants.clear();
@@ -515,6 +523,35 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 
 	  
   }
+	/**
+	 * makeProp
+	 * This method creates propostionalized action schemas given a lifted action schema
+	 * @param action - a lifted action schema
+	 * @param stateconstants - state constants to be used in the propostionalization
+	 * @param state - The state used to check if the propostionalized action schema is applicable
+	 * @param actions - The list of propostionalized action schemas that are applicable in this state
+	 */
+	private static void makeProp(ActionSchema action,List<Constant> stateconstants,State state, List<ActionSchema> actions) {
+		  ActionSchema propAction = null;
+//		  if(noC >= nofVar) {
+			  propAction = action.getActionBySubstitution(stateconstants); // a propostionalized action schema
+			  boolean found = state.getFluents().containsAll(propAction.getPrecondition());//is applicable in state s if the precondition of the action is satisfied by s.
+			  boolean finnes = false;
+/*			  if (!actions.isEmpty()) {
+				  for (ActionSchema schema:actions) {
+					  finnes = schema.getPrecondition().containsAll(propAction.getPrecondition());
+					  if (finnes)
+						  break;
+				  }
+			  }*/
+			  if (found && !finnes) {
+				  actions.add(propAction);
+			  }
+//		  }
+/*		  else {
+			  actions.add(action);
+		  }*/
+	}
   public  static String extract(String s,Function <String,String> f){
 	  return f.apply(s);
   }

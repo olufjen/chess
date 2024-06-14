@@ -116,6 +116,6 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	}
 
 	public String toString() {
-		return "Move\nPiece "+piece.getMyPiece().getOntlogyName()+"From position "+fromPosition.toString()+"To position "+toPosition.toString()+" Move number "+moveNumber+" "+moveNotation+"Creation "+creation;
+		return "Move\nPiece "+piece.getMyPiece().getOntlogyName()+" From position "+fromPosition.toString()+"To position "+toPosition.toString()+" Move number "+moveNumber+" "+moveNotation+"Creation "+creation;
 	}
 }

@@ -11,6 +11,8 @@ import no.games.chess.MoveRule;
  *  AKnightMoveRule
  *  This rule calculates all legal moves for the Knight
  * @author oluf
+ * @since 06.05.24
+ * Bug fix Knight move from g1
  * Usage:
  * 		AKnightMoveRule knightRules = new AKnightMoveRule;
  *		List<XYLocation> locations = ChessFunctions.moveRule(this, knightRules);
@@ -62,11 +64,11 @@ public class AKnightMoveRule implements MoveRule<AKnight, List<XYLocation>> {
 			locations.add(xloc1);
 			
 		}
-/*		if (x == 6 && y == 0) {  // From g1
+		if (x == 6 && y == 0) {  // From g1
 			XYLocation xloc = new XYLocation(x-2,y+1);
 			locations.add(xloc);
 		}
-		if (x == 6 && y == 7) {  // From g8
+/*		if (x == 6 && y == 7) {  // From g8
 			XYLocation xloc = new XYLocation(x-2,y-1);
 			locations.add(xloc);
 		}*/

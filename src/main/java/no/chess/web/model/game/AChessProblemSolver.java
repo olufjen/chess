@@ -120,7 +120,7 @@ public class AChessProblemSolver {
    * A first order knowledge base
    * 
    */
-  private ChessFolKnowledgeBase folKb;
+  private ChessFolKnowledgeBase folKb; // The chess knowledge base
   private ChessFolKnowledgeBase localKb = null; // The strategy knowledge base
   /**
    * 
@@ -146,6 +146,7 @@ public class AChessProblemSolver {
   private String deferredKey = null;
   private GraphPlanAlgorithm graphPlan =  null;
   private Map<String,ActionSchema> actionSchemas = null;
+  private List<List> initialStates = null; // A list of initial states 
   private Map<String,State>initStates = null; // Contains all initial states for current move
   private Map<String,State>goalStates = null; // Contains all goal states for current move
   private Map<String,AgamePiece>possiblePieces = null; // Contains opponent pieces that can be taken
@@ -202,6 +203,7 @@ public class AChessProblemSolver {
 	    setPredicatenames();
 	    actionSchemas = new HashMap<String,ActionSchema>();
 	    actionSchemalist = new ArrayList<ActionSchema>();
+	    initialStates = new ArrayList<List>();
 	    initStates = new HashMap<String,State>(); 
 	    goalStates = new HashMap<String,State>();
 	    possiblePieces = new HashMap<String,AgamePiece>();
@@ -282,7 +284,13 @@ public void findOpponentKing() {
   }
   
 
- public ActionSchema getTheSolution() {
+ public List<List> getInitialStates() {
+	return initialStates;
+}
+public void setInitialStates(List<List> initialStates) {
+	this.initialStates = initialStates;
+}
+public ActionSchema getTheSolution() {
 	return theSolution;
 }
 public void setTheSolution(ActionSchema theSolution) {
@@ -1337,6 +1345,15 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  Set<ActionSchema> aSchemas =  new HashSet<ActionSchema>(actionSchemas.values());
 //		  problem = new ChessProblem(initState,goal,movedAction);
 		  problem = new ChessProblem(initState,goal,aSchemas);	
+/*		  for ( List<State> states:initialStates) {
+			  writer.println("The fluents of the alternative init states");
+			  for (State state:states) {
+			      for (Literal literal :
+			    	  state.getFluents()) {
+			    	 writer.println(literal.toString());
+			      }
+			  }
+		  }*/
 /*
  * The object variable theState contains all Literals of the current ChessState.
  * Then there are too many preconditions from the list of actionschemas that can be entailed by the initial state.
@@ -1392,13 +1409,21 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  writer.println(v.toString());
 	  }
 	  List<ActionSchema> occupyActions = KnowledgeBuilder.findApplicable(initStates,toOccupy);
-	  writer.println("Constants of initial states");
+/*	  writer.println("Constants of initial states");
 	  for (Constant c:KnowledgeBuilder.getAllconstants()) {
 		  writer.println(c.getValue());
-	  }
+	  }*/
 	  
 	  for (ActionSchema primitiveAction :
 		   occupyActions) {	 
+		  writer.println(primitiveAction.toString());
+	  }
+	  writer.println("Actions with d2");
+	  ActionSchema occupy = KnowledgeBuilder.createOccupyaction("d2");
+	  writer.println(occupy.toString());
+	  List<ActionSchema> otherActions = KnowledgeBuilder.findApplicable(initStates,occupy);
+	  for (ActionSchema primitiveAction :
+		   otherActions) {	 
 		  writer.println(primitiveAction.toString());
 	  }
 	  ChessGraphPlanAlgorithm graphplan = new ChessGraphPlanAlgorithm(); // Added graphplan 8.3.23
@@ -1531,6 +1556,8 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 	  //		Constant toPos = new Constant(toPosit);
 	  List<Literal> precondition = new ArrayList();
 	  List<Literal> effects = new ArrayList();
+	  boolean protectorFlag = false;
+	  boolean attackFlag = false;
 	  if (reachparentNames != null && !reachparentNames.isEmpty() ) { // A list of piece names that protect a given position
 		  int psize = reachparentNames.size();
 		  for (int i = 0;i<psize;i++) {
@@ -1546,6 +1573,7 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 				  if (!typeofPiece.equals(PAWN)) {
 					  precondition.add(new Literal((AtomicSentence) protectedBy));
 					  variables.add(protector);
+					  protectorFlag = true;
 				  }
 				  protectorTerms.clear();
 				  if (typeofPiece.equals(PAWN)) {
@@ -1558,6 +1586,7 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 								String aposName = apos.getPositionName();
 								String occupant= null;
 								AgamePiece ownpiece = null;
+								 attackFlag = true;
 								ArrayList<String>occupier = (ArrayList<String>)folKb.searchFacts("x", aposName, OCCUPIES);
 								if (!occupier.isEmpty()) {
 									occupant = occupier.get(0);
@@ -1582,9 +1611,9 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 					  
 				  }
 			  }
-		  }
+		  } // End for all piece names that protect a given position
 
-	  }
+	  } // end if protector names
 //	  ownerterms.add(ownerVar);
 //	  ownerterms.add(piece);
 	  terms.add(piece);
@@ -1604,13 +1633,27 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 	  Predicate pospred = new Predicate(OCCUPIES,terms);
 	  //		Predicate ownerPred = new Predicate(OWNER,ownerterms);
 	  Predicate newPospred = new Predicate(OCCUPIES,newterms);
-	  precondition.add(new Literal((AtomicSentence) pospred));
+/*	  precondition.add(new Literal((AtomicSentence) pospred));
 	  precondition.add(new Literal((AtomicSentence) boardPredicate)); // The board predicate is added to the precondition
 	  precondition.add(new Literal((AtomicSentence) typePred)); // The type predicate is moved in position before the reachable predicate
-	  if (attackPredicate != null)
+*/	  if (attackPredicate != null) {
 		  precondition.add(new Literal((AtomicSentence) attackPredicate));
-	  if (attackPredicate == null)
+		  precondition.add(new Literal((AtomicSentence) pospred));
+		  precondition.add(new Literal((AtomicSentence) boardPredicate)); // The board predicate is added to the precondition
+		  precondition.add(new Literal((AtomicSentence) typePred)); // The type predicate is moved in position before the reachable predicate
+		  effects.add(new Literal( (AtomicSentence)newPospred));
+		  //		effects.add(new Literal( (AtomicSentence)ownerPred));
+		  effects.add(new Literal( (AtomicSentence)typePred));
+	  }
+	  if (!attackFlag ) { // To prevent pawn attack position to become a reachable action schema OJN 31.05.24
 		  precondition.add(new Literal((AtomicSentence) reachablePredicate));
+		  precondition.add(new Literal((AtomicSentence) pospred));
+		  precondition.add(new Literal((AtomicSentence) boardPredicate)); // The board predicate is added to the precondition
+		  precondition.add(new Literal((AtomicSentence) typePred)); // The type predicate is moved in position before the reachable predicate
+		  effects.add(new Literal( (AtomicSentence)newPospred));
+		  //		effects.add(new Literal( (AtomicSentence)ownerPred));
+		  effects.add(new Literal( (AtomicSentence)typePred));
+	  }
 	  Predicate castlingPredicate = null;
 	  if (castlingTerms != null) {
 		  castlingPredicate = new Predicate(CASTLE,castlingTerms);
@@ -1619,12 +1662,14 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 	
 	  //		Literal notAt = new Literal(pospred, true);
 	  //		effects.add(notAt);
-	  effects.add(new Literal( (AtomicSentence)newPospred));
-	  //		effects.add(new Literal( (AtomicSentence)ownerPred));
-	  effects.add(new Literal( (AtomicSentence)typePred));
-	  ActionSchema movedAction = new ActionSchema(actionName,variables,precondition,effects);
+	  ActionSchema movedAction = null;
+	  if (!precondition.isEmpty()) {
+		  movedAction = new ActionSchema(actionName,variables,precondition,effects);
+		  actionSchemas.put(piecepos, movedAction);
+	  }
+	
 	  
-	  actionSchemas.put(piecepos, movedAction);
+
 	  //		schemas.add(movedAction);
 	  return movedAction;
   }
@@ -1895,9 +1940,11 @@ public Problem buildProblem(ChessActionImpl action) {
 		List<Literal> literals = new ArrayList();
 		List<String> attackablePos = new ArrayList<String>();
 		List<String> castlePos = new ArrayList<String>();
+		List<State> states = new ArrayList<State>();
 		boolean reachable = false; // added 25.05.24 - only one reachable fluent in initial state
 		for (Sentence s : folSentences) {
 			String symName = s.getSymbolicName();
+			List<Literal> localLiterals = new ArrayList();
 			if (symName.equals(OCCUPIES)) {
 				 ArrayList<Term> literalTerms = new ArrayList<>();
 				List<Term> terms = (List<Term>) s.getArgs();
@@ -1912,6 +1959,7 @@ public Problem buildProblem(ChessActionImpl action) {
 					Literal l = new Literal(new Predicate(symName, literalTerms));*/
 					Literal l = new Literal((AtomicSentence) s);
 					literals.add(l);
+					localLiterals.add(l);
 				}
 	
 			}
@@ -1945,8 +1993,9 @@ public Problem buildProblem(ChessActionImpl action) {
 					literalTerms.add(term);
 					literalTerms.add(ps);
 					Literal l = new Literal(new Predicate(symName, literalTerms));*/
-					Literal l = new Literal((AtomicSentence) s);
+/*					Literal l = new Literal((AtomicSentence) s);
 					literals.add(l);
+					localLiterals.add(l);*/
 					reachablePos.add(pos);
 					Constant posVar = new Constant(pos);
 					Constant pieceC = new Constant(p);
@@ -1959,10 +2008,14 @@ public Problem buildProblem(ChessActionImpl action) {
 					Predicate reachPredicate = new Predicate(REACHABLE,reachTerms);
 					Literal boards = new Literal((AtomicSentence)boardPredicate);
 					Literal reaches = new Literal((AtomicSentence)reachPredicate);
-					literals.add(boards); //Removed 7.05.24 OJN
+					literals.add(boards); 
+					localLiterals.add(boards);
+					if (!reachable)
+						localLiterals.add(reaches);
 					reachable = true;
 					if (pos.equals(newPos))
 						literals.add(reaches);
+					
 				}
 			}
 			if (symName.equals(PIECE)) { // Added new initial state fluent : The piece name as PIECE OJN 18.05.24
@@ -1973,6 +2026,7 @@ public Problem buildProblem(ChessActionImpl action) {
 				if (p.equals(piece)) {
 					Literal l = new Literal((AtomicSentence) s);
 					literals.add(l);
+					localLiterals.add(l);
 				}
 			} 
 			if (symName.equals(PIECETYPE)) {
@@ -1985,6 +2039,7 @@ public Problem buildProblem(ChessActionImpl action) {
 				if (p.equals(piece) && type.equals(typeofPiece)) {
 					Literal l = new Literal((AtomicSentence) s);
 					literals.add(l);
+					localLiterals.add(l);
 				}
 			}
 			if (symName.equals(BOARD)) {
@@ -1995,6 +2050,7 @@ public Problem buildProblem(ChessActionImpl action) {
 				if (p.equals(posName)) {
 					Literal l = new Literal((AtomicSentence) s);
 					literals.add(l);
+					localLiterals.add(l);
 				}
 			} //The board fluent is removed OJN 7.05.24
 			if (symName.equals(PAWNATTACK)) {
@@ -2014,6 +2070,7 @@ public Problem buildProblem(ChessActionImpl action) {
 					Predicate boardPredicate = new Predicate(BOARD,boardTerms);
 					Literal boards = new Literal((AtomicSentence)boardPredicate);
 					literals.add(boards);
+					localLiterals.add(boards);
 				}
 			}
 			if (symName.equals(CASTLE)) {
@@ -2040,9 +2097,19 @@ public Problem buildProblem(ChessActionImpl action) {
 					Literal boards = new Literal((AtomicSentence)boardPredicate);
 					literals.add(boards);
 					literals.add(reaches);
+					localLiterals.add(boards);
+					localLiterals.add(reaches);
 				}
 			}
-		}
+			State localState = null;
+			if (!localLiterals.isEmpty()) {
+				localState = new State(localLiterals);
+				states.add(localState);
+			}
+			initialStates.add(states);
+			states.clear();
+			reachable = false;
+		} // end for all sentences in knowledge base
 //		List<Literal>temp = addProtected(folSentences,reachablePos,piece); Removed protected sentences ojn 20.05.24
 //		literals.addAll(temp);
 //		List<Literal>attacktemp = addProtected(folSentences,attackablePos,piece);
