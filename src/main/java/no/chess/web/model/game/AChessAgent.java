@@ -497,6 +497,7 @@ public class AChessAgent extends KBAgent {
 		
 		ChessActionImpl naction = null;
 		ChessProblem problem = solver.planProblem((ArrayList<ChessActionImpl>) actions);
+		List<AgamePiece>  pieces = myPlayer.getMygamePieces();
 		if (problem != null) {
 			chessSearch = new ChessSearchAlgorithm(fw,writer);
 //			List<List<ActionSchema>> solution = solver.solveProblem(localAction);
@@ -509,11 +510,27 @@ public class AChessAgent extends KBAgent {
  * Must wait for the opponent move, first !! See section 11.2.2 p. 408	 		
  */
 			ActionSchema actionSchema = actionSchemas.get(0);
+			  List<Constant>solConstants = actionSchema.getConstants();
+			  String aName = null;
+			  for (Constant constant:solConstants) {
+				  writer.println(constant.getSymbolicName());
+				  String symName = constant.getSymbolicName();
+				  AgamePiece gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(symName)).findAny().orElse(null);
+				  if (gpiece != null) {
+					  aName = symName;
+					  break;
+				  }
+			  }
 
 			String nactionName = actionSchema.getName();
+			String chessName = null;
 			int nIndex = nactionName.indexOf("_");
-			String chessName = nactionName.substring(0, nIndex);
-			naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(chessName)).findAny().orElse(null);
+			if (nIndex != -1)
+				chessName = nactionName.substring(0, nIndex);
+			else
+				chessName = aName;
+			String newName = chessName;
+			naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(newName)).findAny().orElse(null);
 		}
 
 		for (ChessActionImpl action:actions) {

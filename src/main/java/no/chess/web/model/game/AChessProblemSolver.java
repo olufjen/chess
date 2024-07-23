@@ -36,6 +36,7 @@ import aima.core.logic.planning.Problem;
 import aima.core.logic.planning.State;
 import aima.core.logic.propositional.parsing.ast.ComplexSentence;
 import aima.core.logic.propositional.parsing.ast.Connective;
+import no.function.FunctionContect;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
 import no.games.chess.ChessPieceType;
@@ -1273,6 +1274,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 //      searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 //		Plan first schedule later
       String pieceKey = null;
+      List<AgamePiece>  pieces = myPlayer.getMygamePieces();
 /*
  * Added 10.12.22 
  * The APerceptor object checks for a percept action to see if it
@@ -1306,6 +1308,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 /*	  }else {
 		 pieceName = checkMovenumber(actions);*/
 	  }
+	  State goal = null;
+	  State initState = null;
 	  ActionSchema movedAction = actionSchemas.get(pieceName);
 	  if (movedAction != null) {
 		  String nactionName = movedAction.getName();
@@ -1340,11 +1344,12 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  String newPos = naction.getPossibleMove().getToPosition().getPositionName(); // Get newPos from Preferred position ??!!
 		  String newprefPos = naction.getPreferredPosition().getPositionName(); 
 		  writer.println("The new position and the preferred position and chosen position\n"+newPos+"\n"+newprefPos+"\n"+toPos.getPositionName());
-		  State initState = initStates.get(pieceName);
-		  State goal = goalStates.get(pieceName);
+		  initState = initStates.get(pieceName);
+		  goal = goalStates.get(pieceName);
 		  Set<ActionSchema> aSchemas =  new HashSet<ActionSchema>(actionSchemas.values());
 //		  problem = new ChessProblem(initState,goal,movedAction);
 		  problem = new ChessProblem(initState,goal,aSchemas);	
+		  FunctionContect fcon = new FunctionContect();
 /*		  for ( List<State> states:initialStates) {
 			  writer.println("The fluents of the alternative init states");
 			  for (State state:states) {
@@ -1404,7 +1409,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  ActionSchema toOccupy = KnowledgeBuilder.createOccupyaction();
 	  writer.println("The occupy action: ");
 	  writer.println(toOccupy.toString());
-	  writer.println("with variables");
+	  writer.println("with variables:");
 	  for (Term v:toOccupy.getVariables()) {
 		  writer.println(v.toString());
 	  }
@@ -1418,16 +1423,93 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		   occupyActions) {	 
 		  writer.println(primitiveAction.toString());
 	  }
+/*
+ * A procedure to create lifted action schemas: Which pieces can occupy a given position:	
+ * Here we should also return a lifted goal state  
+ */
 	  writer.println("Actions with d2");
-	  ActionSchema occupy = KnowledgeBuilder.createOccupyaction("d2");
+	  ActionSchema occupy = KnowledgeBuilder.createOccupyaction("d2",null,"d4",null); // Creates a lifted action schema
 	  writer.println(occupy.toString());
-	  List<ActionSchema> otherActions = KnowledgeBuilder.findApplicable(initStates,occupy);
+	  List<ActionSchema> otherActions = KnowledgeBuilder.findApplicable(initStates,occupy); // Returns propositionalized action schemas from the lifted action schemas
+	  Set<ActionSchema> otherSchemas =  new HashSet<ActionSchema>(otherActions);
+	
+	  State theInitState = null;
+      State theGoal = null;
 	  for (ActionSchema primitiveAction :
 		   otherActions) {	 
 		  writer.println(primitiveAction.toString());
 	  }
+	  List<State> allStates = new ArrayList<State>(initStates.values()); // All Init states from all available action schemas
+	  List<State> allGoals = new ArrayList<State>(goalStates.values()); // All goal states from all available action schemas
+/*
+ * A procedure to determine a possible initial state
+ */
+	  writer.println("New goal states - testing the result function");
+	  for (State state:allStates) { // For all the initial states:
+		  State agoalState = state.result(otherActions); // Given a list of propostionalized action schema the result function returns a goal state
+		  boolean found = state.getFluents().containsAll(agoalState.getFluents()); // Could any of the initial states entail the new goal state?
+		  if (!found) { // If not check if the new goal state entails the given goal state
+			  writer.println("A possible goal state not entailed by an init state");
+		      boolean agree = false;
+		      for (State goalstate:allGoals) {
+		    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());// A possible goal state entails the given goal state
+		    	  if (agree) {
+		    		  theGoal = goalstate;
+		    		  break;
+		    	  }
+		      }
+		      for (Literal literal :
+		    	  agoalState.getFluents()) {
+		    	 writer.println(literal.toString());
+		      } 
+		      writer.println("--");
+		      writer.println("And the init state is"); // This is then the current initial state
+		      for (Literal literal :
+		    	  state.getFluents()) {
+		    	 writer.println(literal.toString());
+		      } 		      
+		      if (agree) { // When this is true we have found the current init state
+		    	  writer.println("A possible goal state entails the given goal state");
+			      for (Literal literal :
+			    	  theGoal.getFluents()) {
+			    	 writer.println(literal.toString());
+			      }
+			      theInitState = state; // The initial state has been found
+		      }
+	//		  writer.println(agoalState.toString());  
+		  }else {
+			  writer.println("A possible init state");
+		      for (Literal literal :
+		    	  state.getFluents()) {
+		    	 writer.println(literal.toString());
+		      }
+		      writer.println("For this goal state");
+		      for (Literal literal :
+		    	  agoalState.getFluents()) {
+		    	 writer.println(literal.toString());
+		      }
+		      boolean agree = false;
+		      for (State goalstate:allGoals) {
+		    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());
+		    	  if (agree) {
+		    		  theGoal = goalstate;
+		    		  break;
+		    	  }
+		      }
+		     
+		      if (agree) { // Never found !!! ????
+		    	  writer.println("A possible goal state entails the given goal state in agreement with init state");
+			      for (Literal literal :
+			    	  theGoal.getFluents()) {
+			    	 writer.println(literal.toString());
+			      }
+		      }
+		  }
+	  }
+	  ChessProblem differentProblem = new ChessProblem(theInitState,theGoal,otherSchemas);
 	  ChessGraphPlanAlgorithm graphplan = new ChessGraphPlanAlgorithm(); // Added graphplan 8.3.23
-	  List<List<ActionSchema>> solutions = graphplan.graphPlan(problem);
+//	  List<List<ActionSchema>> solutions = graphplan.graphPlan(problem);
+	  List<List<ActionSchema>> solutions = graphplan.graphPlan(differentProblem);
 	  if (solutions != null && !solutions.isEmpty()) {
 		  for (List<ActionSchema> solutionschemas:solutions) {
 			  writer.println("Solutions from graphplan - levelled off at "+graphplan.getTheLevel());
@@ -1437,6 +1519,16 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 				  if (!solutionName.equals("No-op")) {
 					  theSolution = asolution;
 					  writer.println("The solution name "+solutionName+"\n"+asolution.toString());
+					  List<Constant>solConstants = theSolution.getConstants();
+					  for (Constant constant:solConstants) {
+						  writer.println(constant.getSymbolicName());
+						  String symName = constant.getSymbolicName();
+						  AgamePiece gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(symName)).findAny().orElse(null);
+						  if (gpiece != null) {
+							 
+							  break;
+						  }
+					  }
 				  }
 			  }
 		  }
@@ -1445,7 +1537,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  }
 
 	  writer.flush();
-	  return problem;
+//	  return problem;
+	  return differentProblem;
   }
   /**
  * searchProblem

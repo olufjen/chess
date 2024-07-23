@@ -2,6 +2,7 @@
 package no.chess.web.model.game;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -18,6 +19,7 @@ import aima.core.logic.fol.parsing.ast.Variable;
 import aima.core.logic.planning.ActionSchema;
 import aima.core.logic.planning.State;
 import aima.core.logic.planning.Utils;
+import no.function.FunctionContect;
 import no.games.chess.AbstractGamePiece.pieceType;
 
 /**
@@ -74,7 +76,8 @@ public class KnowledgeBuilder {
   private static String MAKESTRONG = "MAKESTRONG"; // Make a position strong
   
   private static List<Constant> allconstants= new ArrayList();
-  
+  // To make list of possible init states ??
+  private static String[] keys = new String[] {"startpos","piecename","newpos","piecetype"};
   
   public static String getPIECE() {
 	return PIECE;
@@ -414,54 +417,85 @@ public static void setAllconstants(List<Constant> allconstants) {
  * EFFECT: (occupies(byPiece,posx)
  * The action schema contains any number of variables
  * @param names - if parameters are given they are used as constants in preconditions or effects in the returned action schema
+ * The parameters must be given in the following order: Startpos, Piecename, Newpos, Piecetype, or null
  * @return A lifted action Schema
  */
 public static ActionSchema createOccupyaction(String... names) {
 	int nargs = names.length;
-	String apos = null;
-	Variable posname = new Variable("posx");
-	Constant givenPos = null;
-	Variable startPos = null;
-	Variable pieceName = new Variable("byPiece");
-	List<Term> othervariables = new ArrayList<Term>();
-	List<Term> totalvariables = new ArrayList<Term>();
-	List<Term> boardTerms = new ArrayList<Term>();
-	othervariables.add(pieceName);
-	totalvariables.add(pieceName);
+	int noofKeys = keys.length;
+	HashMap cparams = new HashMap<String,Constant>();
+	HashMap vparams = new HashMap<String,Variable>();
+	FunctionContect contex = new FunctionContect(); // Used to register and run functions
+/*	String apos = null;
+	Variable posname = new Variable("posx"); // The end position as a variable
+	Constant newPos = null; // The end position as a constant
+	Constant givenPos = null; // The start position as a Constant
+	Variable startPos = null; // The start position as a Variable
+	Variable pieceName = null; // The piece name as a variable
+	Constant namedPiece = null; //The piece name as a constant 
+	Variable typeofPiece = null; // The type of piece as a variable
+	Constant givenType = null; // THe type of piece as a constant
+	*/
+	List<Term> othervariables = new ArrayList<Term>(); // The list of Terms for the occupy predicate
+	List<Term> totalvariables = new ArrayList<Term>(); // The list of all terms
+	List<Term> boardTerms = new ArrayList<Term>(); // The list of terms for the board predicate
+	List<Term> variables = new ArrayList<Term>(); // The list of Terms for the reachable predicate and the occupy predicate in the Effect.
+	List<Term> typevariables = new ArrayList<Term>();// The list of Terms for the piecetype predicate
+	ANewposfunction newPosfunction = new ANewposfunction(variables);
+	AStartposfunction startPosfunction = new AStartposfunction(othervariables);
+	APiecetypefunction pieceTypefunction = new APiecetypefunction(typevariables);
+	ABoardtermFunction boardTermfunction = new ABoardtermFunction(boardTerms);
+	contex.register(keys[2], newPosfunction);
+	contex.register(keys[1], boardTermfunction);
+	contex.register(keys[0], startPosfunction);
+	contex.register(keys[3], pieceTypefunction);
+/*	pieceName = new Variable("byPiece");
+	typeofPiece = new Variable("type");*/
+
 	if (nargs > 0) {
-		apos = names[0];
-		givenPos = new Constant(apos);
-		othervariables.add(givenPos);
-		totalvariables.add(givenPos);
-		boardTerms.add(givenPos);
+		for (int i = 0;i<nargs;i++) {
+			AChessExecutor exec = null;
+			if (names[i] == null) {
+				exec = new AChessExecutor(i); // Creates a Variable Term
+				Variable var = (Variable)exec.execute();
+				vparams.put(keys[i], var);
+			}else {
+				exec = new AChessExecutor(names[i]); //Creates a Constant Term
+				Constant var = (Constant)exec.execute();
+				cparams.put(keys[i], var);
+			}
+
+		}
+		for (int i = 0;i<noofKeys;i++) {
+			contex.get(keys[i]).buildTerms(cparams, vparams);
+		}
+//		contex.get(keys[0]).buildTerms(cparams, vparams);
+		List<Term> thevariables = newPosfunction.getVariables();
+		totalvariables.add(othervariables.get(0));
+		totalvariables.add(othervariables.get(1));
+		totalvariables.add(typevariables.get(1));
+		totalvariables.add(variables.get(1));
+
 	}
 	if (nargs == 0) {
-		startPos = new Variable("posy");
-		othervariables.add(startPos);
-		totalvariables.add(startPos);
-		boardTerms.add(startPos);
+		for (int i = 0;i<noofKeys;i++) {
+			AChessExecutor exec = new AChessExecutor(i); // Creates a Variable Term
+			Variable var = (Variable)exec.execute();
+			vparams.put(keys[i], var);
+		}
+		for (int i = 0;i<noofKeys;i++) {
+			contex.get(keys[i]).buildTerms(cparams, vparams);
+		}
+/*		startPos = new Variable("posy");*/
+		totalvariables.add(othervariables.get(0));
+		totalvariables.add(othervariables.get(1));
+		totalvariables.add(typevariables.get(1));
+		totalvariables.add(variables.get(1));
+
 	}
 	List<Literal> precondition = new ArrayList();
 	List<Literal> effects = new ArrayList();
-	Variable typeofPiece = new Variable("type");
-	List<Term> variables = new ArrayList<Term>();
-
-	List<Term> typevariables = new ArrayList<Term>();
-
-
-	variables.add(pieceName);
-	variables.add(posname);
-	
-
-	typevariables.add(pieceName);
-	typevariables.add(typeofPiece);
-
 	String actionName = "occupypos";
-	//	  totalvariables.addAll(boardTerms);
-	
-	
-	totalvariables.add(typeofPiece);
-	totalvariables.add(posname);
 	Predicate firstposPredicate = new Predicate(OCCUPIES,othervariables); 
 	Predicate reachPredicate = new Predicate(REACHABLE,variables);
 	Predicate typePredicate = new Predicate(PIECETYPE,typevariables);
@@ -516,7 +550,6 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 			  makeProp(action, stateconstants, state, actions);
 			  stateconstants.remove(nofVar-1);
 		  }
-	
 		  stateconstants.clear();
 	  }
 	  return actions;
@@ -525,30 +558,30 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
   }
 	/**
 	 * makeProp
-	 * This method creates propostionalized action schemas given a lifted action schema
+	 * This method creates propositionalized action schemas given a lifted action schema
 	 * @param action - a lifted action schema
-	 * @param stateconstants - state constants to be used in the propostionalization
-	 * @param state - The state used to check if the propostionalized action schema is applicable
-	 * @param actions - The list of propostionalized action schemas that are applicable in this state
+	 * @param stateconstants - state constants to be used in the proposItionalization
+	 * @param state - The state used to check if the propositionalized action schema is applicable
+	 * @param actions - The list of propositionalized action schemas that are applicable in this state
 	 */
 	private static void makeProp(ActionSchema action,List<Constant> stateconstants,State state, List<ActionSchema> actions) {
-		  ActionSchema propAction = null;
-//		  if(noC >= nofVar) {
-			  propAction = action.getActionBySubstitution(stateconstants); // a propostionalized action schema
-			  boolean found = state.getFluents().containsAll(propAction.getPrecondition());//is applicable in state s if the precondition of the action is satisfied by s.
-			  boolean finnes = false;
-/*			  if (!actions.isEmpty()) {
+		ActionSchema propAction = null;
+		propAction = action.getActionBySubstitution(stateconstants); // a propositionalized action schema
+		boolean found = state.getFluents().containsAll(propAction.getPrecondition());//is applicable in state s if the precondition of the action is satisfied by s.
+		boolean finnes = false;
+		/*			  if (!actions.isEmpty()) {
 				  for (ActionSchema schema:actions) {
 					  finnes = schema.getPrecondition().containsAll(propAction.getPrecondition());
 					  if (finnes)
 						  break;
 				  }
 			  }*/
-			  if (found && !finnes) {
-				  actions.add(propAction);
-			  }
-//		  }
-/*		  else {
+		if (found && !finnes) {
+		
+			actions.add(propAction);
+		}
+		//		  }
+		/*		  else {
 			  actions.add(action);
 		  }*/
 	}
@@ -571,6 +604,7 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 		  return null;
 	  Function<String,String> f = (String s) -> line.substring(startindex,index);
 	  Function<String,String> ef = (String s) -> line.substring(index+1);
+//	  Function<String,String> xef = String::substring(index+1);
 	  if (startindex == -1)
 		  return extract(line,ef);
 	  else

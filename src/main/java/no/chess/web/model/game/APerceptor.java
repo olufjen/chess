@@ -1,9 +1,13 @@
 package no.chess.web.model.game;
 
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.AtomicSentence;
@@ -11,6 +15,7 @@ import aima.core.logic.fol.parsing.ast.Constant;
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
+import aima.core.logic.planning.ActionSchema;
 import aima.core.logic.planning.State;
 import no.chess.web.model.ChessPiece;
 import no.chess.web.model.Position;
@@ -95,6 +100,12 @@ public class APerceptor {
 	  private Predicate typePredicate = null;	// could be any defined predicate
 	  private List<String> mypieceNames = null; // The name of the pieces available to player
 	  private AgamePiece playerPiece = null; // A possible piece to use: which chess piece is applicable to the chosen state
+	  
+	  private PrintWriter writer =  null;
+	  private FileWriter fw =  null;
+	  private List<List> initialStates = null; // A list of initial states 
+	  private Map<String,State>initStates = null; // Contains all initial states for current move
+	  private Map<String,State>goalStates = null; // Contains all goal states for current move
 	  /*
 	   * In order to use any defined predicate, the predicates must have two terms
 	   */
@@ -380,5 +391,87 @@ public class APerceptor {
 			  }
 		  }
 	  }
+	public void createLiftedAction() {
+		  writer.println("Actions with d2");
+		  ActionSchema occupy = KnowledgeBuilder.createOccupyaction("d2",null,"d4",null); // Creates a lifted action schema
+		  writer.println(occupy.toString());
+		  List<ActionSchema> otherActions = KnowledgeBuilder.findApplicable(initStates,occupy); // Returns propositionalized action schemas from the lifted action schemas
+		  Set<ActionSchema> otherSchemas =  new HashSet<ActionSchema>(otherActions);
+		
+		  State theInitState = null;
+	      State theGoal = null;
+		  for (ActionSchema primitiveAction :
+			   otherActions) {	 
+			  writer.println(primitiveAction.toString());
+		  }
+		  List<State> allStates = new ArrayList<State>(initStates.values()); // All Init states from all available action schemas
+		  List<State> allGoals = new ArrayList<State>(goalStates.values()); // All goal states from all available action schemas
+	/*
+	 * A procedure to determine a possible initial state
+	 */
+		  writer.println("New goal states - testing the result function");
+		  for (State state:allStates) { // For all the initial states:
+			  State agoalState = state.result(otherActions); // Given a list of propostionalized action schema the result function returns a goal state
+			  boolean found = state.getFluents().containsAll(agoalState.getFluents()); // Could any of the initial states entail the new goal state?
+			  if (!found) { // If not check if the new goal state entails the given goal state
+				  writer.println("A possible goal state not entailed by an init state");
+			      boolean agree = false;
+			      for (State goalstate:allGoals) {
+			    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());// A possible goal state entails the given goal state
+			    	  if (agree) {
+			    		  theGoal = goalstate;
+			    		  break;
+			    	  }
+			      }
+			      for (Literal literal :
+			    	  agoalState.getFluents()) {
+			    	 writer.println(literal.toString());
+			      } 
+			      writer.println("--");
+			      writer.println("And the init state is"); // This is then the current initial state
+			      for (Literal literal :
+			    	  state.getFluents()) {
+			    	 writer.println(literal.toString());
+			      } 		      
+			      if (agree) { // When this is true we have found the current init state
+			    	  writer.println("A possible goal state entails the given goal state");
+				      for (Literal literal :
+				    	  theGoal.getFluents()) {
+				    	 writer.println(literal.toString());
+				      }
+				      theInitState = state; // The initial state has been found
+			      }
+		//		  writer.println(agoalState.toString());  
+			  }else {
+				  writer.println("A possible init state");
+			      for (Literal literal :
+			    	  state.getFluents()) {
+			    	 writer.println(literal.toString());
+			      }
+			      writer.println("For this goal state");
+			      for (Literal literal :
+			    	  agoalState.getFluents()) {
+			    	 writer.println(literal.toString());
+			      }
+			      boolean agree = false;
+			      for (State goalstate:allGoals) {
+			    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());
+			    	  if (agree) {
+			    		  theGoal = goalstate;
+			    		  break;
+			    	  }
+			      }
+			     
+			      if (agree) { // Never found !!! ????
+			    	  writer.println("A possible goal state entails the given goal state in agreement with init state");
+				      for (Literal literal :
+				    	  theGoal.getFluents()) {
+				    	 writer.println(literal.toString());
+				      }
+			      }
+			  }
+
+		  }
+	}
 
 }
