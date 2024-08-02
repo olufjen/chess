@@ -165,6 +165,8 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 	   * This method checks the FOL knowledge base for certain facts about the opponent's pieces.
 	   * These facts can be any of the available predicates in the FOL Domain (see the domain object)
 	   * The APlayer parameter must always be the opponent
+	   * @since 29.07.24
+	   * Using the occupies fact OBS!
 	 * @param pieceName
 	 * @param pos
 	 * @param fact
@@ -177,10 +179,13 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 		  AgamePiece piece = pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceName)).findAny().orElse(null);
 		  Constant pieceVariable = null;
 		  Variable pieceVar = null;
+		  boolean result = false;
+		  boolean tempResult = false;
 		  List<Term> reachableTerms = new ArrayList<Term>();
 		  if (piece != null && piece.isActive()) {
 			  pieceVariable = new Constant(pieceName);
 			  reachableTerms.add(pieceVariable);
+			  tempResult = pos.equals(piece.getMyPosition().getPositionName()) && fact.equals("occupies"); // OBS OJN 29.07.24
 		  }else if(piece == null) {
 			  pieceVar = new Variable(pieceName);
 			  reachableTerms.add(pieceVar);
@@ -190,8 +195,8 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 		  Predicate threatPredicate = new Predicate(fact,reachableTerms);
 //		  writer.println("Trying to prove\n"+threatPredicate.toString());
 		  InferenceResult backWardresult =  backWardChain.ask(this,threatPredicate);
-//		  boolean result = backWardresult.isTrue();
-		  boolean result = false;
+		  boolean backresult = backWardresult.isTrue();
+		
 //		  writer.println(InferenceResultPrinter.printInferenceResult(backWardresult));
 /*
  * Added 28.5.22:
@@ -217,6 +222,15 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 					  result = true;
 				  }
 			  }
+		  }
+		  if (!result && backresult) {
+			  result = backresult;
+			  writer.println("This predicate has no answer "+ backresult);
+			  writer.println(threatPredicate.toString());
+/*			  if (tempResult) {
+				  writeKnowledgebase();
+			  }*/
+
 		  }
 		  return result;
 		  

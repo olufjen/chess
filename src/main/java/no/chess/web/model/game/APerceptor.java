@@ -1,6 +1,8 @@
 package no.chess.web.model.game;
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +41,9 @@ import no.games.chess.ChessVariables;
  * This is recorded in the knowledge base in the form:
  * BISHOP(h7,g8) - which says that the position h7 is reachable from g8 by a BISHOP
  * See the method findReachable
+ * @since 24.07.24
+ * Creates a set of propositionalized action schemas from the lifted action schema
+ * These action schemas are used as a basis for problem solving see the method createLiftedActions
  * 
  */
 public class APerceptor {
@@ -79,6 +84,7 @@ public class APerceptor {
 	  private String POSSIBLETHREAT;
 	  private String POSSIBLEPROTECT; // All available positions for a piece are possibly protected by that piece
 	  private String POSSIBLEREACH; // All available positions for a piece are possibly reachable by that piece
+	  
 	  private APlayer myPlayer = null; // The player of the game
 	  private APlayer opponent = null; // The opponent of the game
 	  private ChessFolKnowledgeBase folKb = null; // The parent knowledge base
@@ -102,10 +108,18 @@ public class APerceptor {
 	  private AgamePiece playerPiece = null; // A possible piece to use: which chess piece is applicable to the chosen state
 	  
 	  private PrintWriter writer =  null;
+	  private String outputFileName =  "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\perceptor.txt";
 	  private FileWriter fw =  null;
 	  private List<List> initialStates = null; // A list of initial states 
 	  private Map<String,State>initStates = null; // Contains all initial states for current move
 	  private Map<String,State>goalStates = null; // Contains all goal states for current move
+	  
+	  private State initState = null; // initState found from lifted action schemas
+	  private State goalState = null; // goalState found from lifted action schemas
+	  private  List<ActionSchema> otherActions = null;// A list of propositionalized action schemas from the lifted action schema
+	  private Set<ActionSchema> otherSchemas = null; // A Set of propositionalized action schemas from the lifted action schema
+	  private List<State>propinitStates = null;// Init states for the set of propositionalized action schemas from the lifted action schema
+	  private List<State>propgoalStates = null;// Goal states for the set of propositionalized action schemas from the lifted action schema
 	  /*
 	   * In order to use any defined predicate, the predicates must have two terms
 	   */
@@ -142,6 +156,15 @@ public class APerceptor {
 		  precondition.add(new Literal((AtomicSentence) reachPredicate));
 		  precondition.add(new Literal((AtomicSentence)typePredicate));
 		  percept = new PerceptSchema("MOVE",variables,precondition);
+		  propinitStates = new ArrayList<State>();
+		  propgoalStates = new ArrayList<State>();
+		  try {
+			  fw = new FileWriter(outputFileName, true);
+		  } catch (IOException e1) {
+
+			  e1.printStackTrace();
+		  }
+		  writer = new PrintWriter(new BufferedWriter(fw));	
 	  }
 	  public void setPredicatenames() {
 		  ACTION = KnowledgeBuilder.getACTION();
@@ -178,10 +201,53 @@ public class APerceptor {
 		  POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
 	  }
 
+	  public List<ActionSchema> getOtherActions() {
+		  return otherActions;
+	  }
+	  public void setOtherActions(List<ActionSchema> otherActions) {
+		  this.otherActions = otherActions;
+	  }
+	  public Set<ActionSchema> getOtherSchemas() {
+		  return otherSchemas;
+	  }
+	  public void setOtherSchemas(Set<ActionSchema> otherSchemas) {
+		  this.otherSchemas = otherSchemas;
+	  }
+	  public State getInitState() {
+		  return initState;
+	  }
+	  public void setInitState(State initState) {
+		  this.initState = initState;
+	  }
+	  public State getGoalState() {
+		  return goalState;
+	  }
+	  public void setGoalState(State goalState) {
+		  this.goalState = goalState;
+	  }
+	  public List<List> getInitialStates() {
+		  return initialStates;
+	  }
+	  public void setInitialStates(List<List> initialStates) {
+		  this.initialStates = initialStates;
+	  }
+	  public Map<String, State> getGoalStates() {
+		  return goalStates;
+	  }
+	  public void setGoalStates(Map<String, State> goalStates) {
+		  this.goalStates = goalStates;
+	  }
 	  public OpponentAgent getAgent() {
 		  return agent;
 	  }
-	  public void setAgent(OpponentAgent agent) {
+	  
+	  public Map<String, State> getInitStates() {
+		return initStates;
+	}
+	public void setInitStates(Map<String, State> initStates) {
+		this.initStates = initStates;
+	}
+	public void setAgent(OpponentAgent agent) {
 		  this.agent = agent;
 	  }
 	  public APlayer getMyPlayer() {
@@ -391,15 +457,22 @@ public class APerceptor {
 			  }
 		  }
 	  }
-	public void createLiftedAction() {
-		  writer.println("Actions with d2");
-		  ActionSchema occupy = KnowledgeBuilder.createOccupyaction("d2",null,"d4",null); // Creates a lifted action schema
+
+	/**
+	 * createLiftedActions
+	 * This method creates lifted action schemas based on the names parameters
+	 * These lifted action schemas are propositionalized and then a possible initial state and goal state for a Problem is searched for.
+	 * @param names
+	 */
+	public void createLiftedActions(String... names) {
+		  writer.println("Actions with ");
+		  ActionSchema occupy = KnowledgeBuilder.createOccupyaction(names); // Creates a lifted action schema
 		  writer.println(occupy.toString());
-		  List<ActionSchema> otherActions = KnowledgeBuilder.findApplicable(initStates,occupy); // Returns propositionalized action schemas from the lifted action schemas
-		  Set<ActionSchema> otherSchemas =  new HashSet<ActionSchema>(otherActions);
+		  otherActions = KnowledgeBuilder.findApplicable(initStates,occupy); // Returns propositionalized action schemas from the lifted action schemas
+		  otherSchemas =  new HashSet<ActionSchema>(otherActions);
 		
-		  State theInitState = null;
-	      State theGoal = null;
+		  State theInitState = null; // A determined init state for the Problem
+	      State theGoal = null;		// A determined goalState for the Problem
 		  for (ActionSchema primitiveAction :
 			   otherActions) {	 
 			  writer.println(primitiveAction.toString());
@@ -419,20 +492,19 @@ public class APerceptor {
 			      for (State goalstate:allGoals) {
 			    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());// A possible goal state entails the given goal state
 			    	  if (agree) {
-			    		  theGoal = goalstate;
+			    		  theGoal = goalstate; // The goal state has been found
+			    		  propgoalStates.add(theGoal);
 			    		  break;
 			    	  }
 			      }
-			      for (Literal literal :
-			    	  agoalState.getFluents()) {
-			    	 writer.println(literal.toString());
-			      } 
-			      writer.println("--");
-			      writer.println("And the init state is"); // This is then the current initial state
-			      for (Literal literal :
-			    	  state.getFluents()) {
-			    	 writer.println(literal.toString());
-			      } 		      
+			      if (agree) {
+			    	  writer.println("Found the goal state");
+				      for (Literal literal :
+				    	  agoalState.getFluents()) {
+				    	 writer.println(literal.toString());
+				      } 
+			      }
+		      
 			      if (agree) { // When this is true we have found the current init state
 			    	  writer.println("A possible goal state entails the given goal state");
 				      for (Literal literal :
@@ -440,10 +512,17 @@ public class APerceptor {
 				    	 writer.println(literal.toString());
 				      }
 				      theInitState = state; // The initial state has been found
+				      propinitStates.add(theInitState);
+				      writer.println("--");
+				      writer.println("And the init state is"); // This is then the current initial state
+				      for (Literal literal :
+				    	  state.getFluents()) {
+				    	 writer.println(literal.toString());
+				      } 
 			      }
 		//		  writer.println(agoalState.toString());  
 			  }else {
-				  writer.println("A possible init state");
+/*				  writer.println("A possible init state");
 			      for (Literal literal :
 			    	  state.getFluents()) {
 			    	 writer.println(literal.toString());
@@ -452,7 +531,7 @@ public class APerceptor {
 			      for (Literal literal :
 			    	  agoalState.getFluents()) {
 			    	 writer.println(literal.toString());
-			      }
+			      }*/
 			      boolean agree = false;
 			      for (State goalstate:allGoals) {
 			    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());
@@ -472,6 +551,9 @@ public class APerceptor {
 			  }
 
 		  }
+		  initState = theInitState;
+		  goalState = theGoal;
+		  writer.flush();
 	}
 
 }

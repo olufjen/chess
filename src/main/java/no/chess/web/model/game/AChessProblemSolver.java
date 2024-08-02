@@ -139,8 +139,8 @@ public class AChessProblemSolver {
   private PlayGame game =  null;
   private APlayer myPlayer =  null;
   private APlayer opponent =  null;
-  private State initialState =  null;
-  private State goalState =  null;
+  private State initialState =  null; // Not used (pr. 25.07.24)
+  private State goalState =  null;// Not used (pr. 25.07.24)
   private State deferredInitial = null;
   private State deferredGoal = null;
   private Map<String,State>deferredGoalstates = null;
@@ -169,6 +169,7 @@ public class AChessProblemSolver {
   private String opponentKingPosition = null;
   private State chosenInitstate = null;
   private ActionSchema theSolution = null; // An action Schema chosen from the graphplan algorithm
+  private Set<ActionSchema> otherSchemas = null;// A Set of propositionalized action schemas from the lifted action schema. It is used for problem solving
 /*
  * theState represents the total initial state containing all the stateLiterals   
  */
@@ -976,6 +977,8 @@ public void fillthePerceptor(APerceptor thePerceptor) {
 	  thePerceptor.setAgent(opponentAgent);
 	  thePerceptor.setFolKb(folKb);
 	  thePerceptor.setLocalKb(localKb);
+	  thePerceptor.setInitStates(initStates);
+	  thePerceptor.setGoalStates(goalStates);
 }
   /**
    * checkMovenumber
@@ -999,6 +1002,10 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
 		  thePerceptor.findReachable(posin);
 		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
+		  thePerceptor.createLiftedActions(null,null,"d4",null);
+		  initialState = thePerceptor.getInitState();
+		  goalState = thePerceptor.getGoalState();
+		  otherSchemas = thePerceptor.getOtherSchemas();
 		  piecePos = pieceName + piecePos + "d4";
 		  if (thechosenState != null) {
 			  chosenInitstate = thechosenState;
@@ -1014,9 +1021,13 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
 		  thePerceptor.findReachable(posin);
 		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-		  folKb.checkFacts(pieceName, pos, REACHABLE, actions,positionList);
+//		  folKb.checkFacts(pieceName, pos, REACHABLE, actions,positionList);
 		  piecePos = pieceName + piecePos + "c4";
 		  writer.println("The percept schema "+thePerceptor.getPercept().toString());
+		  thePerceptor.createLiftedActions(null,null,"c4",null);
+		  initialState = thePerceptor.getInitState();
+		  goalState = thePerceptor.getGoalState();
+		  otherSchemas = thePerceptor.getOtherSchemas();
 		  if (thechosenState != null) {
 			  chosenInitstate = thechosenState;
 		  }
@@ -1031,6 +1042,10 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  thePerceptor.findReachable(posin);
 		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 		  piecePos = pieceName + piecePos + "c3";
+		  thePerceptor.createLiftedActions(null,null,"c3",null);
+		  initialState = thePerceptor.getInitState();
+		  goalState = thePerceptor.getGoalState();
+		  otherSchemas = thePerceptor.getOtherSchemas();// A Set of propositionalized action schemas from the lifted action schema
 		  if (thechosenState != null) {
 			  chosenInitstate = thechosenState;
 		  }
@@ -1045,8 +1060,12 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
 		  thePerceptor.findReachable(posin);
 		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-		  folKb.checkFacts(pieceName, posx, REACHABLE, actions,positionList);
+//		  folKb.checkFacts(pieceName, posx, REACHABLE, actions,positionList);
 		  piecePos = pieceName + piecePos + posx;
+		  thePerceptor.createLiftedActions(null,null,posx,KnowledgeBuilder.getKNIGHT());
+		  initialState = thePerceptor.getInitState();
+		  goalState = thePerceptor.getGoalState();
+		  otherSchemas = thePerceptor.getOtherSchemas();// A Set of propositionalized action schemas from the lifted action schema
 		  if (thechosenState != null) {
 			  chosenInitstate = thechosenState;
 		  }
@@ -1065,6 +1084,10 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  thePerceptor.findReachable(posin);
 			  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 			  piecePos = pieceName + piecePos + "h3";
+			  thePerceptor.createLiftedActions(null,null,"h3",KnowledgeBuilder.getPAWN()); // A piece at H3
+			  initialState = thePerceptor.getInitState();
+			  goalState = thePerceptor.getGoalState();
+			  otherSchemas = thePerceptor.getOtherSchemas();// A Set of propositionalized action schemas from the lifted action schema
 			  if (thechosenState != null) {
 				  chosenInitstate = thechosenState;
 			  }
@@ -1080,7 +1103,7 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 			  if (piece != null && piece.isActive()) {
 //				  if (folKb.checkThreats(pname, bpos, OCCUPIES,opponent)) {  // OBS What happens if a friendly piece occupies this position !!!???
 // The above call is unnecessary ??
-//				  pieceName = "WhitePawn3";
+				  pieceName = "WhitePawn3";
 				  String wpos = "d5";
 				  if (folKb.checkFacts(pieceName, wpos, PAWNATTACK, actions,positionList)) {
 					  posin = positions.get("d5");
@@ -1090,6 +1113,10 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 					  thePerceptor.findReachable(posin);
 					  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 					  piecePos = pieceName + piecePos + wpos;
+					  thePerceptor.createLiftedActions(null,null,wpos,KnowledgeBuilder.getPAWN()); // A piece at d5
+					  initialState = thePerceptor.getInitState();
+					  goalState = thePerceptor.getGoalState();
+					  otherSchemas = thePerceptor.getOtherSchemas();// A Set of propositionalized action schemas from the lifted action schema
 					  if (thechosenState != null) {
 						  chosenInitstate = thechosenState;
 					  }
@@ -1266,12 +1293,15 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  opponentAgent.setGoalStates(goalStates);
 	  String pieceName = null;
 	  ChessProblem problem = null;
+		
+	  State theInitState = null;
+      State theGoal = null;
+      
 	  String actionName = deferredMove(actions); // For castling
 	  // 11.07.22 Changes this to return piece name and possible position
 	  // This is the only call to checkMovenumber Changed the key pieceName
       pieceName = checkMovenumber(actions); // Returns a possible piecename A String A piecename pointer: The pieceName + "_" + PosName
 //      - a piece to be moved - calls the prepareAction method
-//      searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 //		Plan first schedule later
       String pieceKey = null;
       List<AgamePiece>  pieces = myPlayer.getMygamePieces();
@@ -1305,13 +1335,12 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  game.setDeferredGoalstates(deferredGoalstates);
 		  game.setDeferredGoal(deferredGoal);
 		  game.setDeferredInitial(deferredInitial);		
-/*	  }else {
-		 pieceName = checkMovenumber(actions);*/
 	  }
 	  State goal = null;
 	  State initState = null;
 	  ActionSchema movedAction = actionSchemas.get(pieceName);
-	  if (movedAction != null) {
+	  
+/*	  if (movedAction != null) {
 		  String nactionName = movedAction.getName();
 		  int nIndex = nactionName.indexOf("_");
 		  String chessName = nactionName.substring(0, nIndex);
@@ -1328,12 +1357,12 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		    	 writer.println(literal.toString());
 		      }		      
 		  }
- /*
+ 
   * The initial and goal states are determined here
   * given the name of the piece.
   * 10.12.22 The init state is determined by a percept schema
   * If the percept schema finds an init state then the chosenInitstate is not null.
- */
+ 
 
 		  writer.println("Chosen action Schema\n"+movedAction.toString());
 		  writer.println("Chessname for chess action "+chessName);
@@ -1350,7 +1379,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 //		  problem = new ChessProblem(initState,goal,movedAction);
 		  problem = new ChessProblem(initState,goal,aSchemas);	
 		  FunctionContect fcon = new FunctionContect();
-/*		  for ( List<State> states:initialStates) {
+		  for ( List<State> states:initialStates) {
 			  writer.println("The fluents of the alternative init states");
 			  for (State state:states) {
 			      for (Literal literal :
@@ -1358,16 +1387,16 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 			    	 writer.println(literal.toString());
 			      }
 			  }
-		  }*/
-/*
+		  }
+
  * The object variable theState contains all Literals of the current ChessState.
  * Then there are too many preconditions from the list of actionschemas that can be entailed by the initial state.
  * The initial state may contain more fluents than the precondition.		  
- */
+ 
 //		  problem = new ChessProblem(theState,goal,aSchemas);
-/*
+
  * The initial state and goal state is determined by the choice of piece		  
- */
+ 
 		  writer.println("The fluents of the init state");
 	      for (Literal literal :
 	    	  initState.getFluents()) {
@@ -1398,7 +1427,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		   }
 		  writer.println("Chosen action\n"+naction.getActionName());
 	  }
-
+*/
 	
 /*
  * Planning graphs p. 379.
@@ -1406,7 +1435,12 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * A0 contains ground actions that might be applicable in S0
  * S0 consists of nodes representing fluents that holds in S0	  
  */
-	  ActionSchema toOccupy = KnowledgeBuilder.createOccupyaction();
+
+/*
+ * Now part of APerceptor	  
+ */
+
+/*	  ActionSchema toOccupy = KnowledgeBuilder.createOccupyaction();
 	  writer.println("The occupy action: ");
 	  writer.println(toOccupy.toString());
 	  writer.println("with variables:");
@@ -1414,36 +1448,34 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  writer.println(v.toString());
 	  }
 	  List<ActionSchema> occupyActions = KnowledgeBuilder.findApplicable(initStates,toOccupy);
-/*	  writer.println("Constants of initial states");
+	  writer.println("Constants of initial states");
 	  for (Constant c:KnowledgeBuilder.getAllconstants()) {
 		  writer.println(c.getValue());
-	  }*/
+	  }
 	  
 	  for (ActionSchema primitiveAction :
 		   occupyActions) {	 
 		  writer.println(primitiveAction.toString());
 	  }
-/*
+
  * A procedure to create lifted action schemas: Which pieces can occupy a given position:	
  * Here we should also return a lifted goal state  
- */
+ 
 	  writer.println("Actions with d2");
 	  ActionSchema occupy = KnowledgeBuilder.createOccupyaction("d2",null,"d4",null); // Creates a lifted action schema
 	  writer.println(occupy.toString());
 	  List<ActionSchema> otherActions = KnowledgeBuilder.findApplicable(initStates,occupy); // Returns propositionalized action schemas from the lifted action schemas
-	  Set<ActionSchema> otherSchemas =  new HashSet<ActionSchema>(otherActions);
-	
-	  State theInitState = null;
-      State theGoal = null;
+	  otherSchemas =  new HashSet<ActionSchema>(otherActions);
+
 	  for (ActionSchema primitiveAction :
 		   otherActions) {	 
 		  writer.println(primitiveAction.toString());
 	  }
 	  List<State> allStates = new ArrayList<State>(initStates.values()); // All Init states from all available action schemas
 	  List<State> allGoals = new ArrayList<State>(goalStates.values()); // All goal states from all available action schemas
-/*
+
  * A procedure to determine a possible initial state
- */
+ 
 	  writer.println("New goal states - testing the result function");
 	  for (State state:allStates) { // For all the initial states:
 		  State agoalState = state.result(otherActions); // Given a list of propostionalized action schema the result function returns a goal state
@@ -1505,8 +1537,11 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 			      }
 		      }
 		  }
-	  }
-	  ChessProblem differentProblem = new ChessProblem(theInitState,theGoal,otherSchemas);
+	  }*/
+/*
+ *  End Now part of APerceptor	  
+*/	  
+	  ChessProblem differentProblem = new ChessProblem(initialState,goalState,otherSchemas);
 	  ChessGraphPlanAlgorithm graphplan = new ChessGraphPlanAlgorithm(); // Added graphplan 8.3.23
 //	  List<List<ActionSchema>> solutions = graphplan.graphPlan(problem);
 	  List<List<ActionSchema>> solutions = graphplan.graphPlan(differentProblem);

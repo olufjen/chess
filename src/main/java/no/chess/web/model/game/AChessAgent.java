@@ -35,6 +35,7 @@ import aima.core.logic.planning.Problem;
 import aima.core.logic.propositional.agent.KBAgent;
 import aima.core.logic.propositional.kb.KnowledgeBase;
 import aima.core.logic.propositional.kb.data.Clause;
+import aima.core.logic.propositional.parsing.ast.AtomicSentence;
 import aima.core.logic.propositional.parsing.ast.Sentence;
 import aima.core.util.datastructure.Pair;
 import no.chess.web.model.PlayGame;
@@ -315,6 +316,7 @@ public class AChessAgent extends KBAgent {
 	 * execute
 	 * The execute function creates the necessary inference procedures and the parent knowledge base based on the current percept: The ChessState object.
 	 * Once the knowledge base is in place, a Problemsolver is created.
+	 * It is called from the PlayGame object proposeMove method
 	 * (See the chess problem solver).  
 	 */
 	/* (non-Javadoc)
@@ -510,17 +512,19 @@ public class AChessAgent extends KBAgent {
  * Must wait for the opponent move, first !! See section 11.2.2 p. 408	 		
  */
 			ActionSchema actionSchema = actionSchemas.get(0);
-			  List<Constant>solConstants = actionSchema.getConstants();
-			  String aName = null;
-			  for (Constant constant:solConstants) {
-				  writer.println(constant.getSymbolicName());
-				  String symName = constant.getSymbolicName();
-				  AgamePiece gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(symName)).findAny().orElse(null);
-				  if (gpiece != null) {
-					  aName = symName;
-					  break;
-				  }
-			  }
+			List<Constant>solConstants = actionSchema.getConstants();
+
+
+			String aName = null;
+			for (Constant constant:solConstants) {
+				writer.println(constant.getSymbolicName());
+				String symName = constant.getSymbolicName();
+				AgamePiece gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(symName)).findAny().orElse(null);
+				if (gpiece != null) {
+					aName = symName;
+					break;
+				}
+			}
 
 			String nactionName = actionSchema.getName();
 			String chessName = null;
@@ -531,6 +535,27 @@ public class AChessAgent extends KBAgent {
 				chessName = aName;
 			String newName = chessName;
 			naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(newName)).findAny().orElse(null);
+			Position altPos = null;
+			List<Literal>effects = actionSchema.getEffects(); // Find alt. new position
+			for (Literal literal:effects) {
+				aima.core.logic.fol.parsing.ast.AtomicSentence sentence = literal.getAtomicSentence();
+				List<Term> effectterms = sentence.getArgs();
+				String posname = "";
+				Position  toPos = null;
+				for (Term effectTerm:effectterms) {
+					posname = effectTerm.getSymbolicName();
+					toPos = positions.get(posname);
+					if (toPos != null) {
+						altPos = toPos;
+						break;
+					}
+				}
+
+//				Position  toPos = (Position) positionList.stream().filter(c -> c.getPositionName().contains(posname)).findAny().orElse(null);
+			}
+			if (altPos != null) {
+				naction.setPreferredPosition(altPos);
+			}
 		}
 
 		for (ChessActionImpl action:actions) {
@@ -568,11 +593,12 @@ public class AChessAgent extends KBAgent {
 		castleAction = solver.getCastleAction();
 //		writer.println("The first order knowledge base");
 //		writer.println(folKb.toString());
+
 		folKb.writeKnowledgebase();
-		writer.flush();
 		chessDomain.printDomain();
 		strategyKB =  solver.getOpponentAgent().getLocalKb();
 		strategyKB.writeKnowledgebase();
+		writer.flush();
 		if (naction != null)
 			localAction = naction;
 		return localAction;
@@ -696,7 +722,6 @@ public class AChessAgent extends KBAgent {
 		Constant ownerVariable = new Constant(player.getNameOfplayer());
 		playerName = player.getNameOfplayer();
 		String predicate = "";
-
 		List<AgamePiece> pieces = player.getMygamePieces();
 		for (AgamePiece piece:pieces) {
 			if (piece.isActive()) {
@@ -706,6 +731,11 @@ public class AChessAgent extends KBAgent {
 				
 				ownerTerms.add(ownerVariable);
 				String name = piece.getMyPiece().getOntlogyName(); 
+				if (name.equals("BlackBishop1")) {
+					String xx = name;
+					xx = xx + piece.getMyPosition().getPositionName();
+				}
+					
 /*				if (name.equals("WhiteQueen")) {
 					writer.println("The white queen\n"+piece.toString());
 				}

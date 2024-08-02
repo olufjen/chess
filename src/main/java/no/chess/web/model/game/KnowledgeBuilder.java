@@ -569,13 +569,13 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 		propAction = action.getActionBySubstitution(stateconstants); // a propositionalized action schema
 		boolean found = state.getFluents().containsAll(propAction.getPrecondition());//is applicable in state s if the precondition of the action is satisfied by s.
 		boolean finnes = false;
-		/*			  if (!actions.isEmpty()) {
-				  for (ActionSchema schema:actions) {
-					  finnes = schema.getPrecondition().containsAll(propAction.getPrecondition());
-					  if (finnes)
-						  break;
-				  }
-			  }*/
+		if (!actions.isEmpty()) {
+			for (ActionSchema schema:actions) {
+				finnes = schema.getPrecondition().containsAll(propAction.getPrecondition());
+				if (finnes)
+					break;
+			}
+		}
 		if (found && !finnes) {
 		
 			actions.add(propAction);
