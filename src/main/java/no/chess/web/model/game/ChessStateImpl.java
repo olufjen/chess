@@ -31,7 +31,7 @@ import no.games.chess.GamePiece;
  * The current state represent the current node in a search tree. All the available actions to the state 
  * represent leaves in the search tree.
  * @since 25.08.20
- * The Chessstate interface extends the AIMA Percept interface
+ * The ChessState interface extends the AIMA Percept interface
  * @author oluf
  * @param <GameBoard> Represent the AIMA Gameboard
  *

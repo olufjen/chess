@@ -23,6 +23,8 @@ import no.games.chess.ChessAction;
 import no.games.chess.ChessFunctions;
 import no.games.chess.ChessPlayer;
 import no.games.chess.ChessState;
+import no.games.chess.GamePiece;
+import no.games.chess.PieceMove;
 
 /**
  * APlayer represent the implementation of a Chess player

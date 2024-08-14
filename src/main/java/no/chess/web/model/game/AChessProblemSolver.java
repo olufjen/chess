@@ -36,6 +36,8 @@ import aima.core.logic.planning.Problem;
 import aima.core.logic.planning.State;
 import aima.core.logic.propositional.parsing.ast.ComplexSentence;
 import aima.core.logic.propositional.parsing.ast.Connective;
+import aima.core.search.adversarial.AdversarialSearch;
+import aima.core.search.adversarial.IterativeDeepeningAlphaBetaSearch;
 import no.function.FunctionContect;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
@@ -45,7 +47,12 @@ import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
 import no.games.chess.planning.ChessProblem;
+import no.games.chess.planning.PlannerGame;
 import no.games.chess.planning.ChessGraphPlanAlgorithm;
+import no.games.chess.planning.ChessPlannerSearch;
+import no.games.chess.planning.PlannerState;
+import no.games.chess.planning.ChessPlannerAction;
+import no.games.chess.ChessPlayer;
 /**
  * AChessProblemSolver
  * This class is used to find best moves in the chess game through planning as described in chapter 10 and 11 of 
@@ -176,6 +183,9 @@ public class AChessProblemSolver {
   private List<Literal> stateLiterals = null;
   private State theState = null;
   
+  private ChessPlannerSearch search;
+  private AplannerGame plannerGame;
+  
   public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, ChessFolKnowledgeBase folKb, ChessDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
 		super();
 		this.stateImpl = stateImpl;
@@ -227,6 +237,7 @@ public class AChessProblemSolver {
 	    findOpponentKing();
 	    stateLiterals = new ArrayList<Literal>();
 	    theState = new State(stateLiterals);
+
   }
   /**
  * findOpponentKing
@@ -1296,7 +1307,13 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		
 	  State theInitState = null;
       State theGoal = null;
-      
+      //		AdversarialSearch<PlannerState, ChessPlannerAction> search; // FILL IN !!!! IterativeDeepeningAlphaBetaSearch
+      // Create the plannerGame first
+      IterativeDeepeningAlphaBetaSearch<PlannerState, ChessPlannerAction,ChessPlayer> search;
+      search = ChessPlannerSearch.createFor(plannerGame, 0.0, 1.0, 1); // Changed timer from 2 to 1.
+      search = (ChessPlannerSearch) search;
+      search.setLogEnabled(true);
+
 	  String actionName = deferredMove(actions); // For castling
 	  // 11.07.22 Changes this to return piece name and possible position
 	  // This is the only call to checkMovenumber Changed the key pieceName
