@@ -14,7 +14,9 @@ import no.games.chess.planning.PlannerState;
  * AplannerGame
  * This class is an extension of the AbstractPlannerGame which again is an implementation of the Game interface
  * described in the book Artificial Intelligence A Modern Approach (3rd Edition): page 165.
- * It is implemented as a ChessPlannerSearch which is an extension of IterativeDeepeningAlphaBetaSearch
+ * It is implemented as part of a ChessPlannerSearch which is an extension of IterativeDeepeningAlphaBetaSearch
+ * It is created by the Problem Solver when the planProblem method is called.
+ * It contains an Aplayer object and a PlannerState
  * @author oluf
  *
  */
@@ -22,6 +24,12 @@ public class AplannerGame extends AbstractPlannerGame {
 	private APlayer player;
 	private PlannerStateImpl plannerState;
 	
+	public AplannerGame(APlayer player, PlannerState plannerState) {
+		super();
+		this.player = player;
+		this.plannerState = (PlannerStateImpl) plannerState;
+	}
+
 	public APlayer getPlayer() {
 		return player;
 	}
@@ -52,8 +60,8 @@ public class AplannerGame extends AbstractPlannerGame {
 
 	@Override
 	public PlannerState getInitialState() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		return plannerState;
 	}
 
 	@Override
@@ -66,19 +74,20 @@ public class AplannerGame extends AbstractPlannerGame {
 	public ChessPlayer<GamePiece, PieceMove> getPlayer(PlannerState state) {
 		
 		PlannerStateImpl localState = (PlannerStateImpl) state;
-//		return localState.getPlayer();
 		return localState.getPlayerTomove();
 	}
 
 	@Override
 	public List<ChessPlannerAction> getActions(PlannerState state) {
 		PlannerStateImpl localState = (PlannerStateImpl) state;
-		return null;
+		return state.getActions();
 	}
 
 	@Override
 	public PlannerState getResult(PlannerState plannerState, ChessPlannerAction action) {
-		// TODO Auto-generated method stub
+		PlannerStateImpl localState = (PlannerStateImpl)plannerState;
+		ChessPlannerActionImpl localAction = (ChessPlannerActionImpl)action;
+	// 	Investigate this planner action to see how it changes the planner state in a favorable or negative way
 		return null;
 	}
 
@@ -90,8 +99,9 @@ public class AplannerGame extends AbstractPlannerGame {
 
 	@Override
 	public double analyzePieceandPosition(ChessPlannerAction action) {
-		// TODO Auto-generated method stub
-		return 0;
+		ChessPlannerActionImpl localAction = (ChessPlannerActionImpl)action;
+		return localAction.findactionValue().longValue();
+		
 	}
 
 }

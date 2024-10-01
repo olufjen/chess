@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.ToDoubleFunction;
 
 import aima.core.logic.fol.Connectors;
 import aima.core.logic.fol.domain.FOLDomain;
@@ -38,10 +39,13 @@ import aima.core.logic.propositional.parsing.ast.ComplexSentence;
 import aima.core.logic.propositional.parsing.ast.Connective;
 import aima.core.search.adversarial.AdversarialSearch;
 import aima.core.search.adversarial.IterativeDeepeningAlphaBetaSearch;
+import aima.core.search.framework.Node;
+import aima.core.search.framework.NodeExpander;
 import no.function.FunctionContect;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
 import no.games.chess.ChessPieceType;
+import no.games.chess.ChessPlayer;
 import no.games.chess.AbstractGamePiece.pieceType;
 import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
@@ -51,8 +55,12 @@ import no.games.chess.planning.PlannerGame;
 import no.games.chess.planning.ChessGraphPlanAlgorithm;
 import no.games.chess.planning.ChessPlannerSearch;
 import no.games.chess.planning.PlannerState;
+import no.games.chess.search.ChessNode;
+import no.games.chess.search.PlannerQueueBasedSearch;
+import no.games.chess.search.PlannerQueueSearch;
 import no.games.chess.planning.ChessPlannerAction;
-import no.games.chess.ChessPlayer;
+
+
 /**
  * AChessProblemSolver
  * This class is used to find best moves in the chess game through planning as described in chapter 10 and 11 of 
@@ -177,7 +185,8 @@ public class AChessProblemSolver {
   private State chosenInitstate = null;
   private ActionSchema theSolution = null; // An action Schema chosen from the graphplan algorithm
   private Set<ActionSchema> otherSchemas = null;// A Set of propositionalized action schemas from the lifted action schema. It is used for problem solving
-/*
+  private List<ActionSchema>otherSchemaList = null;// A list of propositionalized action schemas from the lifted action schema. It is used for problem solving
+ /*
  * theState represents the total initial state containing all the stateLiterals   
  */
   private List<Literal> stateLiterals = null;
@@ -1017,6 +1026,7 @@ public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
 		  initialState = thePerceptor.getInitState();
 		  goalState = thePerceptor.getGoalState();
 		  otherSchemas = thePerceptor.getOtherSchemas();
+		  otherSchemaList = thePerceptor.getOtherActions();
 		  piecePos = pieceName + piecePos + "d4";
 		  if (thechosenState != null) {
 			  chosenInitstate = thechosenState;
@@ -1304,22 +1314,29 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  opponentAgent.setGoalStates(goalStates);
 	  String pieceName = null;
 	  ChessProblem problem = null;
-		
+	
 	  State theInitState = null;
       State theGoal = null;
+ 	  String actionName = deferredMove(actions); // For castling
+	  // 11.07.22 Changes this to return piece name and possible position
+	  // This is the only call to checkMovenumber Changed the key pieceName
+      pieceName = checkMovenumber(actions); // Returns a possible piecename A String A piecename pointer: The pieceName + "_" + PosName
+//      - a piece to be moved - calls the prepareAction method
+//		Plan first schedule later
+      PlannerState plannerState = new PlannerStateImpl(myPlayer,actionSchemalist,otherSchemaList,noofMoves);
+      ChessPlannerAction plannerAction = plannerState.getAction();
+      plannerGame = new AplannerGame(myPlayer,plannerState);
       //		AdversarialSearch<PlannerState, ChessPlannerAction> search; // FILL IN !!!! IterativeDeepeningAlphaBetaSearch
       // Create the plannerGame first
       IterativeDeepeningAlphaBetaSearch<PlannerState, ChessPlannerAction,ChessPlayer> search;
       search = ChessPlannerSearch.createFor(plannerGame, 0.0, 1.0, 1); // Changed timer from 2 to 1.
       search = (ChessPlannerSearch) search;
       search.setLogEnabled(true);
-
-	  String actionName = deferredMove(actions); // For castling
-	  // 11.07.22 Changes this to return piece name and possible position
-	  // This is the only call to checkMovenumber Changed the key pieceName
-      pieceName = checkMovenumber(actions); // Returns a possible piecename A String A piecename pointer: The pieceName + "_" + PosName
-//      - a piece to be moved - calls the prepareAction method
-//		Plan first schedule later
+      NodeExpander exp = new NodeExpander();
+      PlannerQueueSearch queueSearch = new PlannerQueueSearch(exp);
+      ToDoubleFunction<Node<PlannerState, ChessPlannerAction>> h = KnowledgeBuilder.toDouble();
+      PlannerQueueBasedSearch queuebasedSearch = new PlannerQueueBasedSearch(queueSearch,plannerState,plannerAction,h);
+      
       String pieceKey = null;
       List<AgamePiece>  pieces = myPlayer.getMygamePieces();
 /*
@@ -1456,105 +1473,6 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 /*
  * Now part of APerceptor	  
  */
-
-/*	  ActionSchema toOccupy = KnowledgeBuilder.createOccupyaction();
-	  writer.println("The occupy action: ");
-	  writer.println(toOccupy.toString());
-	  writer.println("with variables:");
-	  for (Term v:toOccupy.getVariables()) {
-		  writer.println(v.toString());
-	  }
-	  List<ActionSchema> occupyActions = KnowledgeBuilder.findApplicable(initStates,toOccupy);
-	  writer.println("Constants of initial states");
-	  for (Constant c:KnowledgeBuilder.getAllconstants()) {
-		  writer.println(c.getValue());
-	  }
-	  
-	  for (ActionSchema primitiveAction :
-		   occupyActions) {	 
-		  writer.println(primitiveAction.toString());
-	  }
-
- * A procedure to create lifted action schemas: Which pieces can occupy a given position:	
- * Here we should also return a lifted goal state  
- 
-	  writer.println("Actions with d2");
-	  ActionSchema occupy = KnowledgeBuilder.createOccupyaction("d2",null,"d4",null); // Creates a lifted action schema
-	  writer.println(occupy.toString());
-	  List<ActionSchema> otherActions = KnowledgeBuilder.findApplicable(initStates,occupy); // Returns propositionalized action schemas from the lifted action schemas
-	  otherSchemas =  new HashSet<ActionSchema>(otherActions);
-
-	  for (ActionSchema primitiveAction :
-		   otherActions) {	 
-		  writer.println(primitiveAction.toString());
-	  }
-	  List<State> allStates = new ArrayList<State>(initStates.values()); // All Init states from all available action schemas
-	  List<State> allGoals = new ArrayList<State>(goalStates.values()); // All goal states from all available action schemas
-
- * A procedure to determine a possible initial state
- 
-	  writer.println("New goal states - testing the result function");
-	  for (State state:allStates) { // For all the initial states:
-		  State agoalState = state.result(otherActions); // Given a list of propostionalized action schema the result function returns a goal state
-		  boolean found = state.getFluents().containsAll(agoalState.getFluents()); // Could any of the initial states entail the new goal state?
-		  if (!found) { // If not check if the new goal state entails the given goal state
-			  writer.println("A possible goal state not entailed by an init state");
-		      boolean agree = false;
-		      for (State goalstate:allGoals) {
-		    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());// A possible goal state entails the given goal state
-		    	  if (agree) {
-		    		  theGoal = goalstate;
-		    		  break;
-		    	  }
-		      }
-		      for (Literal literal :
-		    	  agoalState.getFluents()) {
-		    	 writer.println(literal.toString());
-		      } 
-		      writer.println("--");
-		      writer.println("And the init state is"); // This is then the current initial state
-		      for (Literal literal :
-		    	  state.getFluents()) {
-		    	 writer.println(literal.toString());
-		      } 		      
-		      if (agree) { // When this is true we have found the current init state
-		    	  writer.println("A possible goal state entails the given goal state");
-			      for (Literal literal :
-			    	  theGoal.getFluents()) {
-			    	 writer.println(literal.toString());
-			      }
-			      theInitState = state; // The initial state has been found
-		      }
-	//		  writer.println(agoalState.toString());  
-		  }else {
-			  writer.println("A possible init state");
-		      for (Literal literal :
-		    	  state.getFluents()) {
-		    	 writer.println(literal.toString());
-		      }
-		      writer.println("For this goal state");
-		      for (Literal literal :
-		    	  agoalState.getFluents()) {
-		    	 writer.println(literal.toString());
-		      }
-		      boolean agree = false;
-		      for (State goalstate:allGoals) {
-		    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());
-		    	  if (agree) {
-		    		  theGoal = goalstate;
-		    		  break;
-		    	  }
-		      }
-		     
-		      if (agree) { // Never found !!! ????
-		    	  writer.println("A possible goal state entails the given goal state in agreement with init state");
-			      for (Literal literal :
-			    	  theGoal.getFluents()) {
-			    	 writer.println(literal.toString());
-			      }
-		      }
-		  }
-	  }*/
 /*
  *  End Now part of APerceptor	  
 */	  

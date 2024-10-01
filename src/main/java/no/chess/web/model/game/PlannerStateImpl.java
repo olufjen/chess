@@ -1,5 +1,6 @@
 package no.chess.web.model.game;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import aima.core.logic.planning.ActionSchema;
@@ -7,12 +8,42 @@ import no.games.chess.ChessPlayer;
 import no.games.chess.planning.ChessPlannerAction;
 import no.games.chess.planning.PlannerState;
 
+/**
+ * PlannerStateImpl
+ * This class represent the Planner State of the game.
+ * It contains a number of Planner Actions and Action Schemas, and the Player of the game.
+ * It is created by the Problem Solver when the planProblem method is called.
+ * @author oluf
+ *
+ */
 public class PlannerStateImpl implements PlannerState {
 	private APlayer player;
-	private List<ActionSchema> actionSchemas;
+	private List<ActionSchema> actionSchemas; // Ground action schemas from Chess Actions Each action schema has an initial and goal state CHECK!!
+	private List<ActionSchema>otherSchemaList = null;// A list of propositionalized action schemas from the lifted action schema. It is used for problem solving
 	private List<ChessPlannerAction> plannerActions;
 	private ChessPlannerAction plannerAction;
+	private int moveNr;
 	
+	public PlannerStateImpl(APlayer player, List<ActionSchema> actionSchemas,List<ActionSchema>otherSchemaList, int moveNr) {
+		super();
+		this.player = player;
+		this.actionSchemas = actionSchemas;
+		this.otherSchemaList = otherSchemaList;
+		this.moveNr = moveNr;
+		plannerActions = new ArrayList<ChessPlannerAction>();
+		createplannerActions();
+	}
+	private void createplannerActions() {
+		for (ActionSchema schema:actionSchemas) {
+			ChessPlannerAction plannerAction = new ChessPlannerActionImpl(schema,player, moveNr);
+			plannerActions.add(plannerAction);
+		}
+		for (ActionSchema schema:otherSchemaList) {
+			ChessPlannerAction plannerAction = new ChessPlannerActionImpl(schema,player, moveNr);
+			plannerActions.add(plannerAction);
+		}
+		plannerAction = plannerActions.get(0);
+	}
 	public List<ChessPlannerAction> getPlannerActions() {
 		return plannerActions;
 	}

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
 
 import aima.core.logic.fol.Connectors;
 import aima.core.logic.fol.kb.FOLKnowledgeBase;
@@ -19,8 +20,15 @@ import aima.core.logic.fol.parsing.ast.Variable;
 import aima.core.logic.planning.ActionSchema;
 import aima.core.logic.planning.State;
 import aima.core.logic.planning.Utils;
+import aima.core.search.framework.Node;
+import aima.core.search.framework.problem.ActionsFunction;
+import aima.core.search.framework.problem.ResultFunction;
+import aima.core.search.framework.problem.StepCostFunction;
 import no.function.FunctionContect;
 import no.games.chess.AbstractGamePiece.pieceType;
+import no.games.chess.planning.ChessPlannerAction;
+import no.games.chess.planning.PlannerState;
+import no.games.chess.search.ChessStepCostImpl;
 
 /**
  * KnowledgeBuilder
@@ -602,7 +610,7 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 	  int index = line.lastIndexOf(separator);
 	  if (index == -1)
 		  return null;
-	  Function<String,String> f = (String s) -> line.substring(startindex,index);
+	  Function<String,String> f = (String s) -> line.substring(startindex,index); // The implementation of the apply method of Function
 	  Function<String,String> ef = (String s) -> line.substring(index+1);
 //	  Function<String,String> xef = String::substring(index+1);
 	  if (startindex == -1)
@@ -610,5 +618,41 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 	  else
 		  return extract(line,f);
 
+  }
+  public static ToDoubleFunction<Node<PlannerState, ChessPlannerAction>> toDouble(){
+	  ToDoubleFunction<Node<PlannerState, ChessPlannerAction>> h = node -> node.getPathCost();
+	  return h;
+  }
+  /**
+ * ResultFunction<PlannerState, ChessPlannerAction>
+ * The resultfunction extends the BIFunction<S,A,S> interface with the signature (S,A) -> S (p. 53 Java 8)
+ * A description of what each action does; the formal name for this is the
+ * transition model, specified by a function RESULT(s, a) that returns the state
+ * that results from doing action a in state s. We also use the term successor
+ * to refer to any state reachable from a given state by a single action.
+ *
+ * @return
+ */
+  public static ResultFunction<PlannerState, ChessPlannerAction> aResultFunction(){
+	  ResultFunction<PlannerState, ChessPlannerAction> r = (s,a) -> a.findPlannerState(s);
+	  return r;
+  }
+  /**
+   * ActionsFunction<PlannerState, ChessPlannerAction>
+   * The ActionFunction extends the Function<S,A> interface with signature S -> A (p. 53 Java 8)
+   * Given a particular state s, ACTIONS(s) returns the set of actions that can be
+   * executed in s. We say that each of these actions is <b>applicable</b> in s.
+   *
+   * @param <S> The type used to represent states
+   * @param <A> The type of the actions to be used to navigate through the state space
+   * @return
+   */
+  public static ActionsFunction<PlannerState, ChessPlannerAction> anActionFunction(){
+	  ActionsFunction<PlannerState, ChessPlannerAction> a = s -> s.getActions();
+	  return a;
+  }
+  public static StepCostFunction<PlannerState, ChessPlannerAction> stepCost(){
+	  	StepCostFunction<PlannerState, ChessPlannerAction> step = new ChessStepCostImpl();
+	  return step;
   }
 }
