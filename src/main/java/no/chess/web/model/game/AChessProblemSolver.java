@@ -41,6 +41,9 @@ import aima.core.search.adversarial.AdversarialSearch;
 import aima.core.search.adversarial.IterativeDeepeningAlphaBetaSearch;
 import aima.core.search.framework.Node;
 import aima.core.search.framework.NodeExpander;
+import aima.core.search.framework.problem.ActionsFunction;
+import aima.core.search.framework.problem.ResultFunction;
+import aima.core.search.framework.problem.StepCostFunction;
 import no.function.FunctionContect;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
@@ -55,7 +58,9 @@ import no.games.chess.planning.PlannerGame;
 import no.games.chess.planning.ChessGraphPlanAlgorithm;
 import no.games.chess.planning.ChessPlannerSearch;
 import no.games.chess.planning.PlannerState;
+import no.games.chess.search.ChessGoalTest;
 import no.games.chess.search.ChessNode;
+import no.games.chess.search.ChessSearchProblem;
 import no.games.chess.search.PlannerQueueBasedSearch;
 import no.games.chess.search.PlannerQueueSearch;
 import no.games.chess.planning.ChessPlannerAction;
@@ -1332,10 +1337,33 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       search = ChessPlannerSearch.createFor(plannerGame, 0.0, 1.0, 1); // Changed timer from 2 to 1.
       search = (ChessPlannerSearch) search;
       search.setLogEnabled(true);
+/*
+ * The structure of queue search      
+ */
+      
       NodeExpander exp = new NodeExpander();
       PlannerQueueSearch queueSearch = new PlannerQueueSearch(exp);
       ToDoubleFunction<Node<PlannerState, ChessPlannerAction>> h = KnowledgeBuilder.toDouble();
       PlannerQueueBasedSearch queuebasedSearch = new PlannerQueueBasedSearch(queueSearch,plannerState,plannerAction,h);
+      ActionsFunction<PlannerState, ChessPlannerAction> af = KnowledgeBuilder.anActionFunction();
+      ResultFunction<PlannerState, ChessPlannerAction> rf = KnowledgeBuilder.aResultFunction();
+      ChessGoalTest<PlannerState> gt = KnowledgeBuilder.aGoaltest(plannerAction);
+      StepCostFunction<PlannerState, ChessPlannerAction> stepcost = KnowledgeBuilder.stepCost();
+      ChessSearchProblem searchProblem = new ChessSearchProblem(plannerState,af, rf, gt,stepcost,plannerState,plannerAction,plannerState.getActions());
+/*
+ * The following call generates the following set of calls:
+ *    1. The super .findstate
+ *    2. The queuesearch.findnode
+ *    3. The findnode method removes a node from frontier (The queue)
+ *    	calls the problem testSolution method with this node
+ *    	If the testSolution return true then findnode returns an optional node.
+ *    	If not the current node is expanded using the nodeexpander expand method.
+ *    	The expand method calls the problem getResult method, that must return a new state for the next node.
+ *    	This call is repeated for all available actions in the problem.
+ *    	The expand method returns a list of successors.  
+ */
+
+      Optional<PlannerState> astate = queuebasedSearch.findState(searchProblem);
       
       String pieceKey = null;
       List<AgamePiece>  pieces = myPlayer.getMygamePieces();
@@ -1545,7 +1573,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 				initStates.put(apiecepos, localinitialState);
 				goalStates.put(apiecepos, localgoalState);
 				ActionSchema movedAction = makeActionSchemas(pieceName, actionName, posName, newPos);
-				schemas.add(movedAction);
+				if (movedAction!= null)
+					schemas.add(movedAction);
 	//			AgamePiece gpiece =  action.getChessPiece();
 				for (Position apos:availablePos) {
 					String aposName = apos.getPositionName();
@@ -1558,7 +1587,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 						goalStates.put(piecepos, anothergoalstate);
 						ActionSchema anotherActionschema = makeActionSchemas(pieceName, piecepos, posName, aposName);
 //Parameters: Ontology name of piece, Ontology name of piece+ name of available position,name of occupied position,name of available position
-						schemas.add(anotherActionschema);
+						if (anotherActionschema!= null)
+							schemas.add(anotherActionschema);
 					}
 				}
 				if (typeofPiece.equals(PAWN)) {
@@ -1575,7 +1605,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 								initStates.put(piecepos, anotherinitialState);
 								goalStates.put(piecepos, anothergoalstate);
 								ActionSchema anotherActionschema = makeActionSchemas(pieceName, piecepos, posName, aposName);
-								schemas.add(anotherActionschema);
+								if (anotherActionschema!= null)
+									schemas.add(anotherActionschema);
 							}
 					 }
 				}

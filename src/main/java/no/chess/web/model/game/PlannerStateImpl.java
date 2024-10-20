@@ -105,7 +105,7 @@ public class PlannerStateImpl implements PlannerState {
 	@Override
 	public List<ChessPlannerAction> getActions() {
 		// TODO Auto-generated method stub
-		return null;
+		return getPlannerActions();
 	}
 
 	@Override
@@ -118,6 +118,11 @@ public class PlannerStateImpl implements PlannerState {
 	public void setAction(ChessPlannerAction action) {
 		// TODO Auto-generated method stub
 		
+	}
+	@Override
+	public boolean testEnd(ChessPlannerAction a) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

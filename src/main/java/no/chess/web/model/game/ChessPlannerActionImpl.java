@@ -116,4 +116,10 @@ public class ChessPlannerActionImpl implements ChessPlannerAction<ActionSchema> 
 		return null;
 	}
 
+	@Override
+	public PlannerState findPlannerState(PlannerState s) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

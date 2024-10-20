@@ -28,6 +28,7 @@ import no.function.FunctionContect;
 import no.games.chess.AbstractGamePiece.pieceType;
 import no.games.chess.planning.ChessPlannerAction;
 import no.games.chess.planning.PlannerState;
+import no.games.chess.search.ChessGoalTest;
 import no.games.chess.search.ChessStepCostImpl;
 
 /**
@@ -651,8 +652,22 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 	  ActionsFunction<PlannerState, ChessPlannerAction> a = s -> s.getActions();
 	  return a;
   }
+  /**
+   * StepCostFunction
+   * The stepcost object for search problem
+ * @return
+ */
   public static StepCostFunction<PlannerState, ChessPlannerAction> stepCost(){
-	  	StepCostFunction<PlannerState, ChessPlannerAction> step = new ChessStepCostImpl();
+	  StepCostFunction<PlannerState, ChessPlannerAction> step = new ChessStepCostImpl();
 	  return step;
+  }
+  /**
+   * aGoaltest
+   * The goal test, which determines whether a given state is a goal state
+ * @return a goaltest function
+ */
+  public static ChessGoalTest<PlannerState> aGoaltest(ChessPlannerAction a){
+	  ChessGoalTest<PlannerState>  g = s -> s.testEnd(a);
+	  return g;
   }
 }
