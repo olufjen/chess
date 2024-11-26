@@ -12,6 +12,7 @@ import no.games.chess.planning.PlannerState;
  * PlannerStateImpl
  * This class represent the Planner State of the game.
  * It contains a number of Planner Actions and Action Schemas, and the Player of the game.
+ * There is one Planner Action for every Action schema
  * It is created by the Problem Solver when the planProblem method is called.
  * @author oluf
  *
@@ -19,10 +20,12 @@ import no.games.chess.planning.PlannerState;
 public class PlannerStateImpl implements PlannerState {
 	private APlayer player;
 	private List<ActionSchema> actionSchemas; // Ground action schemas from Chess Actions Each action schema has an initial and goal state CHECK!!
+											// These are action schemas produced from all possible available chess actions.	
 	private List<ActionSchema>otherSchemaList = null;// A list of propositionalized action schemas from the lifted action schema. It is used for problem solving
-	private List<ChessPlannerAction> plannerActions;
-	private ChessPlannerAction plannerAction;
+	private List<ChessPlannerAction> plannerActions; // Contains the list of propositionalized action schemas from the lifted action schema
+	private ChessPlannerAction plannerAction; // The first entry of the list of plannerActions
 	private int moveNr;
+	private APerceptor thePerceptor = null;
 	
 	public PlannerStateImpl(APlayer player, List<ActionSchema> actionSchemas,List<ActionSchema>otherSchemaList, int moveNr) {
 		super();
@@ -33,9 +36,23 @@ public class PlannerStateImpl implements PlannerState {
 		plannerActions = new ArrayList<ChessPlannerAction>();
 		createplannerActions();
 	}
+	
+
+	public PlannerStateImpl(APlayer player, List<ActionSchema> actionSchemas, int moveNr, APerceptor thePerceptor) {
+		super();
+		this.player = player;
+		this.actionSchemas = actionSchemas;
+		this.moveNr = moveNr;
+		this.thePerceptor = thePerceptor;
+		plannerActions = new ArrayList<ChessPlannerAction>();
+	    otherSchemaList = thePerceptor.getOtherActions();
+		createplannerActions();
+	}
+
+
 	private void createplannerActions() {
 		for (ActionSchema schema:actionSchemas) {
-			ChessPlannerAction plannerAction = new ChessPlannerActionImpl(schema,player, moveNr);
+			ChessPlannerAction plannerAction = new ChessPlannerActionImpl(schema,player, moveNr, this);
 			plannerActions.add(plannerAction);
 		}
 		for (ActionSchema schema:otherSchemaList) {
@@ -75,9 +92,12 @@ public class PlannerStateImpl implements PlannerState {
 	public void setPlayer(APlayer player) {
 		this.player = player;
 	}
-
-
-
+	public List<ActionSchema> getOtherSchemaList() {
+		return otherSchemaList;
+	}
+	public void setOtherSchemaList(List<ActionSchema> otherSchemaList) {
+		this.otherSchemaList = otherSchemaList;
+	}
 	@Override
 	public double getUtility() {
 		// TODO Auto-generated method stub
@@ -98,31 +118,43 @@ public class PlannerStateImpl implements PlannerState {
 
 	@Override
 	public ChessPlannerAction getAction() {
-		// TODO Auto-generated method stub
-		return null;
+	
+		return this.plannerAction;
 	}
 
 	@Override
 	public List<ChessPlannerAction> getActions() {
-		// TODO Auto-generated method stub
-		return getPlannerActions();
+			return getPlannerActions();
 	}
 
 	@Override
 	public ActionSchema getActionSchema() {
-		// TODO Auto-generated method stub
+		
 		return null;
 	}
 
 	@Override
 	public void setAction(ChessPlannerAction action) {
-		// TODO Auto-generated method stub
+		this.plannerAction = action;
 		
 	}
+/**
+ * testEnd
+ * This is the active goal test function
+ * It determines whether a given state is a goal state
+ * A proposal:
+ * Use this function to 
+ * fill the otherSchemaList based on parameters like :
+ * The move number etc.
+ * Check the checkMovenumber function and the APerceptor
+ * Create other objects that implements PlannerState and ChessPlannerAction interfaces.
+ * Objects that can be returned with the node
+ * @return true if this is the goal state
+ */	
 	@Override
 	public boolean testEnd(ChessPlannerAction a) {
-		// TODO Auto-generated method stub
-		return false;
+		List<ActionSchema> schemas = a.getActionSchemas();
+		return true;
 	}
 
 }

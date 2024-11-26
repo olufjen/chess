@@ -35,6 +35,7 @@ public class ChessPlannerActionImpl implements ChessPlannerAction<ActionSchema> 
 	private String actionName;
 	private int moveNr;
 	private Double actionValue = null;
+	private PlannerState plannerState; // The plannerstate this action belongs to
 	
 	public ChessPlannerActionImpl(ActionSchema actionSchema, APlayer player, int moveNr) {
 		super();
@@ -44,7 +45,15 @@ public class ChessPlannerActionImpl implements ChessPlannerAction<ActionSchema> 
 		actionName = actionSchema.getName();
 		actionValue = new Double(0);
 	}
-
+	public ChessPlannerActionImpl(ActionSchema actionSchema, APlayer player, int moveNr, PlannerState state) {
+		super();
+		this.actionSchema = actionSchema;
+		this.player = player;
+		this.moveNr = moveNr;
+		actionName = actionSchema.getName();
+		actionValue = new Double(0);
+		this.plannerState = state;
+	}
 	@Override
 	public boolean isNoOp() {
 		// TODO Auto-generated method stub
@@ -59,8 +68,7 @@ public class ChessPlannerActionImpl implements ChessPlannerAction<ActionSchema> 
 
 	@Override
 	public List<ActionSchema> getActionSchemas() {
-		// TODO Auto-generated method stub
-		return null;
+			return actionSchemas;
 	}
 
 	public void setActionSchemas(List<ActionSchema> actionSchemas) {
@@ -104,11 +112,55 @@ public class ChessPlannerActionImpl implements ChessPlannerAction<ActionSchema> 
 		}
 		return actionValue;
 	}
+
+
+	public APlayer getPlayer() {
+		return player;
+	}
+
+	public void setPlayer(APlayer player) {
+		this.player = player;
+	}
+
+	public String getActionName() {
+		return actionName;
+	}
+
+	public void setActionName(String actionName) {
+		this.actionName = actionName;
+	}
+
+	public int getMoveNr() {
+		return moveNr;
+	}
+
+	public void setMoveNr(int moveNr) {
+		this.moveNr = moveNr;
+	}
+
+	public Double getActionValue() {
+		return actionValue;
+	}
+
+	public void setActionValue(Double actionValue) {
+		this.actionValue = actionValue;
+	}
+
+	public PlannerState getPlannerState() {
+		return plannerState;
+	}
+
+	public void setPlannerState(PlannerState plannerState) {
+		this.plannerState = plannerState;
+	}
+
 	/**
 	 * findPlannerState
 	 * This method attempt to determine the rank of an action schema by
-	 * analyzing the preconditions and effect
-	 * @return
+	 * analyzing the preconditions and effect.
+	 * A transition model, returning a state that results from performing action a. (See p. 67)
+	 * This method is called from the Chess Search Problem getResult and its result function.
+	 * @return a Planner State as a result of performing the specified action
 	 */
 	@Override
 	public PlannerState findPlannerState(ChessPlannerAction a) {
@@ -118,8 +170,14 @@ public class ChessPlannerActionImpl implements ChessPlannerAction<ActionSchema> 
 
 	@Override
 	public PlannerState findPlannerState(PlannerState s) {
-		// TODO Auto-generated method stub
-		return null;
+		List<ActionSchema> schemas = s.getActionSchemas();
+		boolean same = s == plannerState;
+		String name = null;
+		for ( ActionSchema schema : schemas) {
+			name = schema.getName();
+		}
+		
+		return plannerState;
 	}
 
 }

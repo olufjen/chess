@@ -95,7 +95,7 @@ public class APerceptor {
 	  private String types;	// CHESSTYPE predicate - could be any defined predicate
 	  private Variable pieceName;
 	  private Variable pieceType;
-	  private Position pos;
+	  private Position pos; // A position under investigation, a position of interest to reach/occupy 
 	  private Constant topos;
 	  private Constant typePiece;
 	  private List<Literal> precondition = null;
@@ -120,10 +120,41 @@ public class APerceptor {
 	  private Set<ActionSchema> otherSchemas = null; // A Set of propositionalized action schemas from the lifted action schema
 	  private List<State>propinitStates = null;// Init states for the set of propositionalized action schemas from the lifted action schema
 	  private List<State>propgoalStates = null;// Goal states for the set of propositionalized action schemas from the lifted action schema
-	  /*
+	  
+	  
+	  /**
+	   * This is the simple constructor of the perceptor
+	 * @param playerName
+	 */
+	public APerceptor(String playerName) {
+		  super();
+		  setPredicatenames();
+		  this.playerName = playerName;
+		  ChessVariables.setPlayerName(playerName);
+		  mypieceNames = new ArrayList<String>();
+		  propinitStates = new ArrayList<State>();
+		  propgoalStates = new ArrayList<State>();
+		  try {
+			  fw = new FileWriter(outputFileName, true);
+		  } catch (IOException e1) {
+
+			  e1.printStackTrace();
+		  }
+		  writer = new PrintWriter(new BufferedWriter(fw));	
+	  }
+	/*
 	   * In order to use any defined predicate, the predicates must have two terms
 	   */
-	  public APerceptor(Position posin,String reach,String type,String typeofPiece,String playerName) {
+	  /**
+	   * This constructor creates a percept schema as described in AIMA chapter 11 p. 416.
+	   * 
+	 * @param posin A position under investigation - of interest to reach/occupy
+	 * @param reach A predicate name
+	 * @param type The type predicate
+	 * @param typeofPiece
+	 * @param playerName
+	 */
+	public APerceptor(Position posin,String reach,String type,String typeofPiece,String playerName) {
 		  super();
 		  setPredicatenames();
 		  this.playerName = playerName;
@@ -360,7 +391,7 @@ public class APerceptor {
 	   * of the PAWN.
 	   * In the strategy knowledge base these facts are of the form: PAWN(e5,d4) and BISHOP(a7,d4)
 	   * The PAWN can strike e5 from d4 and theBISHOP can reach a7 from d4
-	 * @param position is the position under investigation (d4)
+	 * @param position is the position under investigation (d4) This position is only used for the strategy knowledge base
 	 */
 	public void findReachable(Position position) {
 		  List<AgamePiece> pieces = myPlayer.getMygamePieces();
@@ -382,11 +413,15 @@ public class APerceptor {
 	   * This method creates facts to the strategy and parent knowledge bases 
 	   * as described in the findReachable method.
 	 * @param piece The piece under investigation
-	 * @param position The position under investigation.
+	 * @param position The position under investigation. This position is only used for the strategy knowledge base. 
+	 * @since 25.11.24
+	 * The position may be null.
 	 */
 	private void createKnowledgefacts(AgamePiece piece,Position position) {
 		  ChessPiece chessPiece = piece.getMyPiece();
-		  String newPosname = position.getPositionName();
+		  String newPosname = null;
+		  if (position != null)
+			  newPosname = position.getPositionName();
 		  ABishop bishop = null;
 		  ARook rook = null;
 		  AKnight knight = null;
@@ -401,36 +436,48 @@ public class APerceptor {
 		  Position piecePosition = piece.getmyPosition();
 		  String piecePosname = piecePosition.getPositionName();
 		  if (piece.getMybishop() != null) {
-			  bishop = new ABishop(position,chessPiece);
-			  reachables = bishop.getLegalmoves();
+			  if (position != null) {
+				  bishop = new ABishop(position,chessPiece);
+				  reachables = bishop.getLegalmoves();
+			  }
 			  predicate = agent.getBISHOP();
 		  }
 		  if (piece.getMyrook() != null) {
-			  rook = new ARook(position,chessPiece);
-			  reachables = rook.getLegalmoves();
+			  if (position != null) {
+				  rook = new ARook(position,chessPiece);
+				  reachables = rook.getLegalmoves();
+			  }
 			  predicate = agent.getROOK();
 		  }
 		  if (piece.getMyKnight() != null) {
-			  knight = new AKnight(position,chessPiece);
-			  reachables = knight.getLegalmoves();
+			  if (position != null) {
+				  knight = new AKnight(position,chessPiece);
+				  reachables = knight.getLegalmoves(); 
+			  }
 			  predicate = agent.getKNIGHT();
 		  }
 		  if (piece.getMyqueen() != null) {
-			  queen = new AQueen(position,chessPiece);
-			  reachables = queen.getLegalmoves();
+			  if (position != null) {
+				  queen = new AQueen(position,chessPiece);
+				  reachables = queen.getLegalmoves();
+			  }
 			  predicate = agent.getQUEEN();
 		  }
 		  if (piece.getMyKing() != null) {
-			  king = new Aking(position,chessPiece);
-			  reachables = king.getLegalmoves();
+			  if (position != null) {
+				  king = new Aking(position,chessPiece);
+				  reachables = king.getLegalmoves();
+			  }
 			  predicate = agent.getKING();
 		  }	 
 		  if (piece.getMyPawn() != null) {
-			  pawn = new APawn(position,chessPiece);
-			  reachables = pawn.getAttackPositions();
+			  if (position != null) {
+				  pawn = new APawn(position,chessPiece);
+				  reachables = pawn.getAttackPositions();
+			  }
 			  predicate = agent.getPAWN();
 		  }
-		  if(reachables != null && !reachables.isEmpty()) {
+		  if(newPosname != null && reachables != null && !reachables.isEmpty()) {
 			  List<Position> reachablelist = new ArrayList<Position>(reachables.values());
 			  for (Position pos:reachablelist) {
 				  String posName = pos.getPositionName();
