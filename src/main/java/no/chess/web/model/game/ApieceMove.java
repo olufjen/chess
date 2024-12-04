@@ -40,6 +40,7 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 		blackMove = piece.checkBlack();
 		whiteMove = piece.checkWhite();
 		creation = "Created from gamepiece preferred position";
+		this.moveNotation = null;
 		
 	}
 
@@ -116,6 +117,6 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	}
 
 	public String toString() {
-		return "Move\nPiece "+piece.getMyPiece().getOntlogyName()+" From position "+fromPosition.toString()+"To position "+toPosition.toString()+" Move number "+moveNumber+" "+moveNotation+"Creation "+creation;
+		return "Move\nPiece "+piece.getMyPiece().getOntlogyName()+" From position "+fromPosition.getPositionName()+" To position "+toPosition.getPositionName()+" Move number "+moveNumber+" Notation "+moveNotation+" Creation "+creation;
 	}
 }

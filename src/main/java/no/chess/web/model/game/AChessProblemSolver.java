@@ -1023,17 +1023,14 @@ public void createPerceptor() {
 //	  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 	  //		  thePerceptor.createLiftedActions(null,null,"d4",null);
 	  checkOpponent("", (ArrayList<ChessActionImpl>) actions);
-	  // This call must be as part of the search strategy !!!
-	  thePerceptor.createLiftedActions(null,"WhiteKnight2","f3",null); // Creates the initial and goal states based on this action schema
-	  initialState = thePerceptor.getInitState();
-	  goalState = thePerceptor.getGoalState();
-	  otherSchemas = thePerceptor.getOtherSchemas();
-	  otherSchemaList = thePerceptor.getOtherActions();
+	  // The statements below must be as part of the search strategy !!!
+
   }
   /**
    * checkMovenumber
    * This method determine the first moves based on the queen gambit process
    * After the first 4 moves, the default part of the case statement then determines the next move 
+   * @since 26.11.24 Not in use
    * @param actions
    * @return A String A piecename pointer: The pieceName + "_" + PosName
    */
@@ -1363,7 +1360,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 //		otherSchemaList A list of propositionalized action schemas from the lifted action schema. It is used for problem solving      
 //      PlannerState plannerState = new PlannerStateImpl(myPlayer,actionSchemalist,otherSchemaList,noofMoves);
       createPerceptor();
-      PlannerState plannerState = new PlannerStateImpl(myPlayer,actionSchemalist,noofMoves,thePerceptor); // An alternative Plannerstate creator
+      PlannerState plannerState = new PlannerStateImpl(myPlayer,opponent,actionSchemalist,noofMoves,thePerceptor); // An alternative Plannerstate creator
       ChessPlannerAction plannerAction = plannerState.getAction();
 //      plannerGame = new AplannerGame(myPlayer,plannerState);
       //		AdversarialSearch<PlannerState, ChessPlannerAction> search; // FILL IN !!!! IterativeDeepeningAlphaBetaSearch
@@ -1412,6 +1409,11 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  */
 
       Optional<PlannerState> astate = queuebasedSearch.findState(searchProblem);
+//	  thePerceptor.createLiftedActions(null,"WhiteKnight2","f3",null); // Creates the initial and goal states based on this action schema
+	  initialState = thePerceptor.getInitState();
+	  goalState = thePerceptor.getGoalState();
+	  otherSchemas = thePerceptor.getOtherSchemas();
+	  otherSchemaList = thePerceptor.getOtherActions();
  /*
   * This astate object must contain the initial and goal states used when creating the ChessProblem used in the graphplan algorithm.     
   */

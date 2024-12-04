@@ -282,6 +282,7 @@ public class PlayGame {
 
 	/**
 	 * proposeMove
+	 * This is the main method of the PLayGame object. It is called whenever a move is made.
 	 * This method uses a chosen (aima) search algorithm to find the best next move
 	 * The search object is created every time this method is called
 	 * Find the name of the piece to be moved (web.model.ChessPiece)
@@ -490,7 +491,7 @@ public class PlayGame {
 //	    writer.println("After call to board.determineMove \n"+game.getBoardPic()); // OK 
 
 //		piece.setHeldPosition(position); // New position to the position to restore to removed olj 10.07.20 !!!
-		position.setUsedandRemoved(piece.getMyPiece()); // THe preferred position: Sets chesspiece to new position and also sets it in the removed list
+		position.setUsedandRemoved(piece.getMyPiece()); // The preferred position: Sets chesspiece to new position and also sets it in the removed list
 //		myFrontBoard.determineMove(oldPos, newPos, pieceName); // New fen is created based on this
 //		Position newPosition = myFrontBoard.findPostion(newPos);
 	
@@ -514,7 +515,9 @@ public class PlayGame {
 		APlayer myplayer = stateImpl.getMyPlayer();
 		checkCastling(stateImpl.getMyPlayer());
 		myplayer.showPieceactivity();
+		stateImpl.getOpponent().showPieceactivity();
 		moveStatistics(myplayer);
+		moveStatistics(stateImpl.getOpponent());
 		int index = movements.size();
 		ApieceMove lastMove = movements.get(index-1);
 		String moveNot = lastMove.getMoveNotation(); // OBS move notation is not set !!!
@@ -538,6 +541,11 @@ public class PlayGame {
 		 writer.println("Strategy Knowledge base after last move \n"+chessAgent.getStrategyKB().toString());
 		 writer.flush();
 	}
+	/**
+	 * moveStatistics
+	 * This method show move statistics so far in the game
+	 * @param myplayer
+	 */
 	private void moveStatistics(APlayer myplayer) {
 		List<AgamePiece> inactivePieces = myplayer.getInactivePieces();
 		List myPieces = myplayer.getMygamePieces();
@@ -546,7 +554,7 @@ public class PlayGame {
 		if (!inactivePieces.isEmpty()) {
 			writer.println("Inactive pieces for "+myplayer.getNameOfplayer());
 			for (AgamePiece piece:inactivePieces) {
-				String name = piece.getMyPiece().getFullName();
+				String name = piece.getMyPiece().getOntlogyName();
 				Integer theValue = piece.getMyValue();
 				int rankvalue = -1;
 				Integer rank = nameandRank.get(name);
@@ -557,7 +565,7 @@ public class PlayGame {
 		}
 
 		List<ApieceMove> movetotals = new ArrayList<ApieceMove>(myMoves.values());
-		 writer.println(" Moves so far");
+		 writer.println(" Moves so far for player "+ myplayer.getNameOfplayer());
 		for (ApieceMove thismove:movetotals) {
 			 writer.println(" Move "+thismove.toString());
 		}

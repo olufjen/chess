@@ -36,11 +36,11 @@ import no.games.chess.PieceMove;
  *
  * @param <P>
  */
-public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements ChessPlayer<AgamePiece,ApieceMove>{
+public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements ChessPlayer<AgamePiece,ApieceMove> {
 
-	private HashMap<String,AgamePiece> myPieces;
-	private HashMap<String,ApieceMove> myMoves;
-	private ApieceMove currentMove;
+	private HashMap<String,AgamePiece> myPieces;// At present empty 3.12.24
+	private HashMap<String,ApieceMove> myMoves; // Contains all the moves this player has made so far. The key is the algebraic notation
+	private ApieceMove currentMove;				// At present empty 3.12.24
 	private ArrayList<AgamePiece> mygamePieces;
 	private ArrayList<Piece> myontologyPieces;
 	private List<String> pieceNames; // The names of my ontology pieces
