@@ -42,6 +42,7 @@ public class ChessPiece extends ParentModel{
 	private String fullName =null; // This represent the full ontology name of the piece
 	private AgamePiece myPiece;
 	private String predicate = "none"; //The predicate used by this object
+	private String capturedName = null; // The ontology name of the latest captured piece (added 24.12.24)
 	public ChessPiece(String position, String color, String name,
 			String[] legalMoves) {
 		super();
@@ -70,6 +71,12 @@ public class ChessPiece extends ParentModel{
 
 	}
 	
+	public String getCapturedName() {
+		return capturedName;
+	}
+	public void setCapturedName(String capturedName) {
+		this.capturedName = capturedName;
+	}
 	public String getPredicate() {
 		return predicate;
 	}
@@ -158,6 +165,7 @@ public class ChessPiece extends ParentModel{
 	 */
 	public boolean acceptMove(String newPos, Position oldPosition,Position newPosition) {
 		ChessPiece opposingPiece = newPosition.getUsedBy();
+		capturedName = opposingPiece.getOntlogyName();
 		boolean accept = false;
 		if (blackPiece == null && opposingPiece.getWhitePiece() == null) {
        	   	oldPosition.setUsedBy(); // The start position is emptied

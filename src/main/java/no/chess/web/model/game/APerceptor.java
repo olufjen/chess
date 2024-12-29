@@ -121,7 +121,13 @@ public class APerceptor {
 	  private List<State>propinitStates = null;// Init states for the set of propositionalized action schemas from the lifted action schema
 	  private List<State>propgoalStates = null;// Goal states for the set of propositionalized action schemas from the lifted action schema
 	  
-	  
+	  private Map<String,AgamePiece>possiblePieces = null; // Contains opponent pieces that can be taken
+	  private Map<String,Position>possiblePositions = null; // Contains the positions of these opponent pieces.	  
+	  private Map<String,AgamePiece>threatenedPieces = null; // Contains pieces that are threatened by the opponent
+	  private Map<String,Position>threadenedPositions = null; // Contains the positions of these pieces.
+	  private Map<String,ArrayList<AgamePiece>>protectors = null; // Contains pieces that protect other pieces. The key is the name of the piece that they protect.
+	  private Map<String,ArrayList<AgamePiece>>attackers = null; // Contains opponent pieces that can capture a piece. The key is the name of the piece that they can capture.
+
 	  /**
 	   * This is the simple constructor of the perceptor
 	 * @param playerName
@@ -232,7 +238,31 @@ public class APerceptor {
 		  POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
 	  }
 
-	  public List<ActionSchema> getOtherActions() {
+	  public Map<String, AgamePiece> getThreatenedPieces() {
+		return threatenedPieces;
+	}
+	public void setThreatenedPieces(Map<String, AgamePiece> threatenedPieces) {
+		this.threatenedPieces = threatenedPieces;
+	}
+	public Map<String, Position> getThreadenedPositions() {
+		return threadenedPositions;
+	}
+	public void setThreadenedPositions(Map<String, Position> threadenedPositions) {
+		this.threadenedPositions = threadenedPositions;
+	}
+	public Map<String, ArrayList<AgamePiece>> getProtectors() {
+		return protectors;
+	}
+	public void setProtectors(Map<String, ArrayList<AgamePiece>> protectors) {
+		this.protectors = protectors;
+	}
+	public Map<String, ArrayList<AgamePiece>> getAttackers() {
+		return attackers;
+	}
+	public void setAttackers(Map<String, ArrayList<AgamePiece>> attackers) {
+		this.attackers = attackers;
+	}
+	public List<ActionSchema> getOtherActions() {
 		  return otherActions;
 	  }
 	  public void setOtherActions(List<ActionSchema> otherActions) {
@@ -338,6 +368,33 @@ public class APerceptor {
 	public void setPlayerPiece(AgamePiece playerPiece) {
 		this.playerPiece = playerPiece;
 	}
+	
+	public Map<String, AgamePiece> getPossiblePieces() {
+		return possiblePieces;
+	}
+	public void setPossiblePieces(Map<String, AgamePiece> possiblePieces) {
+		this.possiblePieces = possiblePieces;
+	}
+	public Map<String, Position> getPossiblePositions() {
+		return possiblePositions;
+	}
+	public void setPossiblePositions(Map<String, Position> possiblePositions) {
+		this.possiblePositions = possiblePositions;
+	}
+	/**
+	 * checkOpponentthreat
+	 * This method returns a list of opponent pieces that threaten a given position
+	 * @param pieceName
+	 * @param pos
+	 * @param fact
+	 * @return a list of opponent pieces or null
+	 */
+	public List<AgamePiece> checkOpponentthreat(String pieceName,String pos,String fact){
+		boolean threats = folKb.checkThreats(pieceName, pos, fact, opponent);
+		if (!threats)
+			return null;
+		return folKb.getMovePieces();
+	}
 	/**
 	   * checkPercept
 	   * This method checks the generated percept action against all available initial states.
@@ -390,7 +447,7 @@ public class APerceptor {
 	   * piecetype(posa,posb) as: The parent knowledge base: PAWN(d4,d2). The PAWN can reach d4 from d2 and d2 is the current position 
 	   * of the PAWN.
 	   * In the strategy knowledge base these facts are of the form: PAWN(e5,d4) and BISHOP(a7,d4)
-	   * The PAWN can strike e5 from d4 and theBISHOP can reach a7 from d4
+	   * The PAWN can strike e5 from d4 and the BISHOP can reach a7 from d4
 	 * @param position is the position under investigation (d4) This position is only used for the strategy knowledge base
 	 */
 	public void findReachable(Position position) {
@@ -511,7 +568,7 @@ public class APerceptor {
 	 * These lifted action schemas are propositionalized and then a possible initial state and goal state for a Problem is searched for.
 	 * @param names
 	 */
-	public void createLiftedActions(String... names) {
+	public boolean createLiftedActions(String... names) {
 		  writer.println("Actions with ");
 		  ActionSchema occupy = KnowledgeBuilder.createOccupyaction(names); // Creates a lifted action schema
 		  writer.println(occupy.toString());
@@ -529,6 +586,7 @@ public class APerceptor {
 	/*
 	 * A procedure to determine a possible initial state
 	 */
+		  boolean rfound = true;
 		  writer.println("New goal states - testing the result function");
 		  for (State state:allStates) { // For all the initial states:
 			  State agoalState = state.result(otherActions); // Given a list of propostionalized action schema the result function returns a goal state
@@ -567,18 +625,23 @@ public class APerceptor {
 				    	 writer.println(literal.toString());
 				      } 
 			      }
+			      if (!agree) {
+			    	  writer.println("==No goal state or init state found== returning "+found);
+			      }
+			      rfound = found;
 		//		  writer.println(agoalState.toString());  
 			  }else {
-/*				  writer.println("A possible init state");
+				  writer.println("No goal state found "+found);
+ /*			      for (Literal literal :
+			    	  state.getFluents()) {
+			    	 writer.println(literal.toString());
+			      }
+			      writer.println("For this goal state");*/
+				  writer.println("And the initial state is");
 			      for (Literal literal :
 			    	  state.getFluents()) {
 			    	 writer.println(literal.toString());
 			      }
-			      writer.println("For this goal state");
-			      for (Literal literal :
-			    	  agoalState.getFluents()) {
-			    	 writer.println(literal.toString());
-			      }*/
 			      boolean agree = false;
 			      for (State goalstate:allGoals) {
 			    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());
@@ -595,12 +658,15 @@ public class APerceptor {
 				    	 writer.println(literal.toString());
 				      }
 			      }
+//			      rfound = found;
+//			      break;
 			  }
 
 		  }
 		  initState = theInitState;
 		  goalState = theGoal;
 		  writer.flush();
+		  return rfound;
 	}
 
 }

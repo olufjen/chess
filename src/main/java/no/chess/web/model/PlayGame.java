@@ -719,8 +719,9 @@ public class PlayGame {
 		piece.produceLegalmoves(to);
 //		piece.getLegalmoves(to); // Create a new list of available position after move
 		ApieceMove pieceMove = new ApieceMove(piece,from, to, noofMoves, algebraicmove);
+		pieceMove.setCapturedName(piece.getMyPiece().getCapturedName());
 		pieceMove.setMoveNumber(noofMoves);
-		 writer.println("Creating piecemove "+pieceMove.toString());
+		writer.println("Creating piecemove "+pieceMove.toString());
 		movements.add(pieceMove);
 		piece.getMyMoves().add(pieceMove); // Add the move to the piece
 			

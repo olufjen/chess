@@ -688,7 +688,8 @@ public class AChessProblemSolver {
    * checkOpponent
    * This method finds which opponent pieces the active player can safely take.
    * The pieces found are placed in a Map called possiblePieces, and its position is placed in a Map called possiblePositions
-   * It is called from the checkMovenumber method
+   * It is called from the planProblem method
+   * The key for the maps is the ontology name of the piece
    * @since 15.03.21 Only pieces that are active are considered
    * @param fact
    * @param actions
@@ -1006,6 +1007,12 @@ public class AChessProblemSolver {
 	  thePerceptor.setLocalKb(localKb);
 	  thePerceptor.setInitStates(initStates);
 	  thePerceptor.setGoalStates(goalStates);
+	  thePerceptor.setPossiblePieces(possiblePieces);
+	  thePerceptor.setPossiblePositions(possiblePositions);
+	  thePerceptor.setAttackers(attackers);
+	  thePerceptor.setProtectors(protectors);
+	  thePerceptor.setThreadenedPositions(threadenedPositions);
+	  thePerceptor.setThreatenedPieces(threatenedPieces);
   }
   /**
  * createPerceptor
@@ -1022,7 +1029,7 @@ public void createPerceptor() {
 	  thePerceptor.findReachable(posin);
 //	  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
 	  //		  thePerceptor.createLiftedActions(null,null,"d4",null);
-	  checkOpponent("", (ArrayList<ChessActionImpl>) actions);
+//	  checkOpponent("", (ArrayList<ChessActionImpl>) actions);
 	  // The statements below must be as part of the search strategy !!!
 
   }
@@ -1349,6 +1356,9 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	
 	  State theInitState = null;
       State theGoal = null;
+      checkOpponent("", actions); //This method finds which opponent pieces the active player can safely take
+      checkoppoentThreat(THREATEN, actions); // This method find opponent pieces that threaten player's pieces, which pieces protect player's own pieces
+      // and opponents attacker pieces.
  	  String actionName = deferredMove(actions); // For castling
 	  // 11.07.22 Changes this to return piece name and possible position
 	  // This is the only call to checkMovenumber Changed the key pieceName

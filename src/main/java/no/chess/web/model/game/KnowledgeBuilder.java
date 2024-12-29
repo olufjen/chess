@@ -86,7 +86,8 @@ public class KnowledgeBuilder {
   
   private static List<Constant> allconstants= new ArrayList();
   // To make list of possible init states ??
-  private static String[] keys = new String[] {"startpos","piecename","newpos","piecetype"};
+  // 16.12.24 A new key is added: pawn. It is used to signal a pawn strike PAWNATTACK                                                                                                                                                                                                                                                                                       
+  private static String[] keys = new String[] {"startpos","piecename","newpos","piecetype","pawn"};
   
   public static String getPIECE() {
 	return PIECE;
@@ -425,8 +426,12 @@ public static void setAllconstants(List<Constant> allconstants) {
  * PRECONDITION: (REACHABLE(byPiece,posx)
  * EFFECT: (occupies(byPiece,posx)
  * The action schema contains any number of variables
- * @param names - if parameters are given they are used as constants in preconditions or effects in the returned action schema
- * The parameters must be given in the following order: Startpos, Piecename, Newpos, Piecetype, or null
+ * @since 16.12.24
+ * The precondition can also be PRECONDITION: (PAWNATTACK(byPiece,posx)
+ * This is selected by an additional names parameter called "pawn"
+ * @param names - if parameters are given they are used as Constants in preconditions or effects in the returned action schema
+ * The parameters must be given in the following order: Startpos, Piecename, Newpos, Piecetype, or null (and an additional parameter: pawn)
+ * If a parameter is null a Variable is created for this parameter
  * @return A lifted action Schema
  */
 public static ActionSchema createOccupyaction(String... names) {
@@ -443,7 +448,7 @@ public static ActionSchema createOccupyaction(String... names) {
 	Variable pieceName = null; // The piece name as a variable
 	Constant namedPiece = null; //The piece name as a constant 
 	Variable typeofPiece = null; // The type of piece as a variable
-	Constant givenType = null; // THe type of piece as a constant
+	Constant givenType = null; // The type of piece as a constant
 	*/
 	List<Term> othervariables = new ArrayList<Term>(); // The list of Terms for the occupy predicate
 	List<Term> totalvariables = new ArrayList<Term>(); // The list of all terms
@@ -454,13 +459,15 @@ public static ActionSchema createOccupyaction(String... names) {
 	AStartposfunction startPosfunction = new AStartposfunction(othervariables);
 	APiecetypefunction pieceTypefunction = new APiecetypefunction(typevariables);
 	ABoardtermFunction boardTermfunction = new ABoardtermFunction(boardTerms);
+	ApawnstrikeFunction pawnStrikefunction = new ApawnstrikeFunction(variables);
 	contex.register(keys[2], newPosfunction);
 	contex.register(keys[1], boardTermfunction);
 	contex.register(keys[0], startPosfunction);
 	contex.register(keys[3], pieceTypefunction);
+	contex.register(keys[4],pawnStrikefunction);
 /*	pieceName = new Variable("byPiece");
 	typeofPiece = new Variable("type");*/
-
+	String reach = REACHABLE;
 	if (nargs > 0) {
 		for (int i = 0;i<nargs;i++) {
 			AChessExecutor exec = null;
@@ -470,8 +477,14 @@ public static ActionSchema createOccupyaction(String... names) {
 				vparams.put(keys[i], var);
 			}else {
 				exec = new AChessExecutor(names[i]); //Creates a Constant Term
-				Constant var = (Constant)exec.execute();
-				cparams.put(keys[i], var);
+				Object tvar = exec.execute();
+				if (tvar instanceof Constant) {
+					Constant var = (Constant)tvar;
+					cparams.put(keys[i], var);
+				}
+				if (tvar instanceof String) {
+					reach = PAWNATTACK;
+				}
 			}
 
 		}
@@ -505,8 +518,16 @@ public static ActionSchema createOccupyaction(String... names) {
 	List<Literal> precondition = new ArrayList();
 	List<Literal> effects = new ArrayList();
 	String actionName = "occupypos";
+	Term type = typevariables.get(1);
+	Constant piecetype = null;
+/*	boolean pawn = false;
+	if (type instanceof Constant) {
+		piecetype = (Constant)type;
+		String typeName = piecetype.getSymbolicName();
+		pawn = typeName == PAWN;
+	}*/
 	Predicate firstposPredicate = new Predicate(OCCUPIES,othervariables); 
-	Predicate reachPredicate = new Predicate(REACHABLE,variables);
+	Predicate reachPredicate = new Predicate(reach,variables);
 	Predicate typePredicate = new Predicate(PIECETYPE,typevariables);
 	Predicate boardPredicate = new Predicate(BOARD,boardTerms);
 	precondition.add(new Literal((AtomicSentence)firstposPredicate));
@@ -569,7 +590,7 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 	 * makeProp
 	 * This method creates propositionalized action schemas given a lifted action schema
 	 * @param action - a lifted action schema
-	 * @param stateconstants - state constants to be used in the proposItionalization
+	 * @param stateconstants - state constants to be used in the propositionalization
 	 * @param state - The state used to check if the propositionalized action schema is applicable
 	 * @param actions - The list of propositionalized action schemas that are applicable in this state
 	 */

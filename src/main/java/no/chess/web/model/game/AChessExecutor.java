@@ -2,6 +2,7 @@ package no.chess.web.model.game;
 import java.util.HashMap;
 
 import aima.core.logic.fol.parsing.ast.Constant;
+import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
 import no.function.FunctionExecutor;
@@ -15,9 +16,11 @@ import no.function.FunctionExecutor;
 public class AChessExecutor implements FunctionExecutor {
 	private Constant c = null;
 	private Variable v = null;
+	private String predName = null;
 	private String name;
-	private String[] keys = new String[] {"startpos","piecename","newpos","piecetype"};
-	private String[] values = new String[] {"posy","byPiece","posx","type"};
+	private String pawn = "pawn";
+	private String[] keys = new String[] {"startpos","piecename","newpos","piecetype",""};
+	private String[] values = new String[] {"posy","byPiece","posx","type","pawn"};
 	private int val;
 	
 	public AChessExecutor() {
@@ -28,7 +31,10 @@ public class AChessExecutor implements FunctionExecutor {
 	public AChessExecutor(String name) {
 		super();
 		this.name = name;
-		c = new Constant(this.name);
+		if (name.equals(pawn))
+			predName = KnowledgeBuilder.getPAWNATTACK();
+		else
+			c = new Constant(this.name);
 	}
 	
 
@@ -49,6 +55,8 @@ public class AChessExecutor implements FunctionExecutor {
 			return c;
 		if (v != null)
 			return v;
+		if (predName != null)
+			return predName;
 		return null;
 	}
 

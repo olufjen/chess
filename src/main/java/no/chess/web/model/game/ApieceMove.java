@@ -21,7 +21,8 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	private Position fromPosition;
 	private Position toPosition; // This is the preferred position created by the preferredMove processor
 	private List<Position> preferredPositions = null; // This list contains all preferred positions as found by preferred move Processor
-	private AgamePiece piece;
+	private AgamePiece piece; // The piece that made the move
+	private String capturedName = null; // The ontology name of the captured piece with this move (if any) (added 24.12.24)
 	private String creation = "";
 	private boolean blackMove = false;
 	private boolean whiteMove = false;
@@ -61,6 +62,14 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 		creation = "Created with from and to position";
 	}
 
+
+	public String getCapturedName() {
+		return capturedName;
+	}
+
+	public void setCapturedName(String capturedName) {
+		this.capturedName = capturedName;
+	}
 
 	public List<Position> getPreferredPositions() {
 		return preferredPositions;
@@ -117,6 +126,6 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	}
 
 	public String toString() {
-		return "Move\nPiece "+piece.getMyPiece().getOntlogyName()+" From position "+fromPosition.getPositionName()+" To position "+toPosition.getPositionName()+" Move number "+moveNumber+" Notation "+moveNotation+" Creation "+creation;
+		return "Move\nPiece "+piece.getMyPiece().getOntlogyName()+" From position "+fromPosition.getPositionName()+" To position "+toPosition.getPositionName()+" Move number "+moveNumber+" Notation "+moveNotation+" Creation "+creation+"\nMove notation "+moveNotation+" Captured piece "+capturedName;
 	}
 }
