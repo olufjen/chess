@@ -282,7 +282,7 @@ public class PlayGame {
 
 	/**
 	 * proposeMove
-	 * This is the main method of the PLayGame object. It is called whenever a move is made.
+	 * This is the main method of the PlayGame object. It is called whenever a move is made.
 	 * This method uses a chosen (aima) search algorithm to find the best next move
 	 * The search object is created every time this method is called
 	 * Find the name of the piece to be moved (web.model.ChessPiece)
@@ -331,13 +331,13 @@ public class PlayGame {
 		chessAgent = null;
 		chessAgent = new AChessAgent(kb,localAction,this);
 //		chessAgent.execute(currentState); // Creates new knowledge for the knowledge base
-		localAction = (ChessActionImpl) chessAgent.execute(currentState); // Creates new knowledge for the knowledge base and determines the next move.
+		localAction = (ChessActionImpl) chessAgent.execute(currentState); // ****** Creates new knowledge for the knowledge base and determines the next move.
 // The next move is in the returned local action.		
 		
 /*		if (localAction != newAction)
 			newAction = localAction;*/
 		
-		ApieceMove chosenMove = localAction.getPossibleMove();
+		ApieceMove chosenMove = localAction.getPossibleMove(); // ******
 
 		Position movPos = chosenMove.getToPosition();
 		APlayer playerTomove = stateImpl.getMyPlayer();
@@ -346,7 +346,7 @@ public class PlayGame {
 		if (playerTomove.getPlayerName() == playerTomove.getBlackPlayer()) {
 			writer.println("Wrong player "+playerTomove.getPlayerName());
 		}
-		currentState.setAction(localAction);
+		currentState.setAction(localAction); //******
 /*		currentState.setAction(newAction); // Set state action to action to be performed
 */
 //		String a = newAction.toString();
@@ -378,14 +378,14 @@ public class PlayGame {
 			
 			
 		}*/
-		stateImpl.setChosenMove(chosenMove);
-	
+		stateImpl.setChosenMove(chosenMove); // *******
+		
 //		AgamePiece piece = (AgamePiece) newAction.getChessPiece();
-		AgamePiece piece = (AgamePiece) localAction.getChessPiece();
+		AgamePiece piece = (AgamePiece) localAction.getChessPiece(); // ******
 /*
  * Keeps track of move numbers and the number of moves		
  */
-		piece.setNofMoves(0);
+		piece.setNofMoves(0); // *****
 
 		if (!piece.isActive()) {
 			writer.println("Chosen action has a passive piece "+ piece.toString() );
@@ -446,7 +446,7 @@ public class PlayGame {
 //			position.returnPiece();
 			piecePos = piece.getMyPosition();
 		}else {
-			writer.println(" == Gamepieces are not the same "+piece.toString()+"\n"+"In position "+position.toString()+"\n");
+			writer.println(" == Gamepiece to move\n"+piece.toString()+"\n"+"In position "+position.toString()+"\n");
 			// This indicate an opponent piece that must be removed in case position is occupied !!!
 			// 31.01 2020 Removes also black Knight !!!
 			if (activeGamePiece != null) {
@@ -509,15 +509,21 @@ public class PlayGame {
 		
 //	    writer.println("After call to game.movepiece \n"+game.getBoardPic());
 		
-		createMove(piece,oldPosition, position);
+		ApieceMove move = createMove(piece,oldPosition, position); // Here we must update the knowledge bases.
+		String not = move.getMoveNotation();
 	    piece.giveNewdirections(); // Calculates nw,ne,sw,se for bishop and queen Added 03.06.21
 		HashMap<String,ApieceMove> myMoves = stateImpl.getMyPlayer().getMyMoves();
+		myMoves.put(not, move);
 		APlayer myplayer = stateImpl.getMyPlayer();
 		checkCastling(stateImpl.getMyPlayer());
 		myplayer.showPieceactivity();
 		stateImpl.getOpponent().showPieceactivity();
 		moveStatistics(myplayer);
 		moveStatistics(stateImpl.getOpponent());
+		chessAgent.updateKnowledge(); // Must update knowledge bases after last move
+/*
+ * At the end of statistics: We must update the FOL knowledge bases with the latest move !!		
+ */
 		int index = movements.size();
 		ApieceMove lastMove = movements.get(index-1);
 		String moveNot = lastMove.getMoveNotation(); // OBS move notation is not set !!!
@@ -696,7 +702,7 @@ public class PlayGame {
 	 * @param from The from Position
 	 * @param to The to Position
 	 */
-	public void createMove(AgamePiece piece,Position from,Position to) {
+	public ApieceMove createMove(AgamePiece piece,Position from,Position to) {
 		int noofMoves = 0;
 		String algebraicmove = "";
 		ArrayList<ChessMoves> moves = myFrontBoard.getChessMoves();
@@ -724,7 +730,7 @@ public class PlayGame {
 		writer.println("Creating piecemove "+pieceMove.toString());
 		movements.add(pieceMove);
 		piece.getMyMoves().add(pieceMove); // Add the move to the piece
-			
+		return pieceMove;	
 	}
 	/**
 	 * clearMoves

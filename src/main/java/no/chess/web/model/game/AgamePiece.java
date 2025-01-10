@@ -725,6 +725,7 @@ public class AgamePiece extends AbstractGamePiece<Position> implements ChessPiec
 	 * determinFriendPosition
 	 * This method puts a friendly position in the friendly list.
 	 * A friendly position is a position occupied by a friendly piece
+	 * @since 08.01.25 Added friend positions for pawn
 	 * @param pos
 	 */
 	public void determinFriendPosition(Position pos) {
@@ -749,6 +750,11 @@ public class AgamePiece extends AbstractGamePiece<Position> implements ChessPiec
 		if (myType == pieceType.KNIGHT) {
 			String name = pos.getPositionName();
 			HashMap<String,Position> friendly = myKnight.getFriendPositions();
+			friendly.put(name, pos);
+		}
+		if (myType == pieceType.PAWN) {
+			String name = pos.getPositionName();
+			HashMap<String,Position> friendly = myPawn.getFriendPositions();
 			friendly.put(name, pos);
 		}
 	}

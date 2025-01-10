@@ -118,14 +118,20 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		Aking king = null;
 		tempList = new ArrayList<>();
 		ChessPieceType pieceType = p.getChessType();
+		boolean pawnType = false;
 		if (pieceType instanceof APawn) {
+			String rName = p.getMyPiece().getOntlogyName();
+			List<Position>aposes = new ArrayList<Position>(p.getAttackPositions().values());
+
+			if (rName.equals("WhitePawn3")) {
+				writer.println("Removed before");
+				for (Position ps:removedPositions) {
+					writer.println(ps.toString());
+				}
+			}			
 			pn = (APawn) pieceType;
 			tempList = pn.checkPawnremovals(availablePositions, removedPositions);
-//			String rName = p.getMyPiece().getOntlogyName();
-/*			if (rName.equals("WhitePawn4")) {
-				writer.println("The white pawn");
-				writer.println("Piece "+p.toString());
-			}*/
+			pawnType = true;
 		}
 		if (pieceType instanceof ABishop) {
 			b = (ABishop) pieceType;
@@ -381,7 +387,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			String posName = temp.getPositionName();
 //			logText.append(posName+"\n");
 			Position posinTable =  (Position) removedPositions.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null); // Do not put position in removed table if it is there already
-			if (posinTable == null) {
+			if (posinTable == null && !pawnType) {
 				writer.println("Added removed position "+temp.toString()+" For "+name);
 				removedPositions.add(temp);
 			}

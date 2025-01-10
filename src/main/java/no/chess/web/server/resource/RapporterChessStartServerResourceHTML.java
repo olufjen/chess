@@ -767,7 +767,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  */
 
     	boolean findTilgjengelig = tilgjengeligPos.equals("til");
-   	    chessPiece = chessBoard.findPiece(oldPos,piece);
+   	    chessPiece = chessBoard.findPiece(oldPos,piece); // Name of piece (String object from user) to a chess piece !!!
    	   	AgamePiece movedPiece = chessPiece.getMyPiece();
    	    String fen = chessBoard.createFen();
    	    System.out.println("Piece name "+chessPiece.getOntlogyName()+" Finding available positions "+findTilgjengelig);
@@ -923,7 +923,8 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	 	availablePosNames = new ArrayList<String>();
 		 	availablePosNames.add("yy");
    	 }
- /*  	 dataModel.put(fenPosid,fen);
+ /*  The below code has been replaced by call to produceTemplate	
+	dataModel.put(fenPosid,fen);
    	 SimpleScalar pieceMoved = new SimpleScalar(piece);
    	 SimpleScalar movedTo = new SimpleScalar(snewPosition);
    	 SimpleScalar movedfrom = new SimpleScalar(soldPosition);

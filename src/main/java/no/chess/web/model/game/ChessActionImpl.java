@@ -74,6 +74,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		type = chessPiece.getPieceType();
 		this.availablePositions = getActions(); // The positionRemoved are also created and filled. They are positions occupied by other pieces owned by the player
 		String name = this.chessPiece.getMyPiece().getPieceName();
+		name = name + this.chessPiece.getColor();
 		pn = this.chessPiece.getMyPosition().getIntRow()*10;
 		pny = this.chessPiece.getMyPosition().getIntColumn();
 		Integer prn = new Integer(pn+pny);
@@ -465,8 +466,13 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 								System.out.println("=== Opponent removed === "+position.toString());
 							}
 						}
-						if (type == type.PAWN)
-							positionRemoved.add(position);
+						if (type == type.PAWN) { //  If position is in the list of attackPositions then do not remove it !!!
+							ArrayList<Position> attackPos = new ArrayList<Position>(chessPiece.getAttackPositions().values());
+							String name = pos.getPositionName();
+							Position posinTable =  (Position) attackPos.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
+							if (posinTable == null)
+								positionRemoved.add(position);
+						}
 					}
 				}
 			}

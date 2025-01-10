@@ -16,6 +16,8 @@ import no.games.chess.GamePiece;
  * This class represent the Pawn chesspiece 
  * It implements the method legalMoves for the Pawn 
  * @since 14.10.20 Positions available for attack is added
+ * @since Jan 2025 : Attack positions are added to available positions. See createAttackposition
+ * The HashMap friendPositions are added
  * @author oluf
  * @param <P>
  *
@@ -28,8 +30,9 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	private int[][] reachablesqueres;
 	private String[][] reachablepiecePosition;
 	private HashMap<String,Position> newPositions; // contains positions reachable by the piece 
-	private HashMap<String,Position> attackPositions; // contains positions that can be attacked by the piece 
+	private HashMap<String,Position> attackPositions; // contains positions that can be attacked by the piece The key is the position name
 	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
+	private HashMap<String,Position> friendPositions; // Represent positions occupied by friendly pieces
 	private int size = 8;
 	private String color;
 	private ChessPiece myPiece;
@@ -51,6 +54,7 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		friendPositions = new HashMap<String,Position>();
 	}
 
 
@@ -76,6 +80,7 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		friendPositions = new HashMap<String,Position>();
 		getLegalmoves(myPosition);
 	}
 
@@ -93,12 +98,23 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 				reachablepiecePosition[i][j] = null;
 			}
 		}
+		friendPositions = new HashMap<String,Position>();
 		getLegalmoves(myPosition);
 	}
 
 
 	public static String getChesstype() {
 		return chessType;
+	}
+
+
+	public HashMap<String, Position> getFriendPositions() {
+		return friendPositions;
+	}
+
+
+	public void setFriendPositions(HashMap<String, Position> friendPositions) {
+		this.friendPositions = friendPositions;
 	}
 
 
@@ -291,17 +307,22 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	 * checkPawnremovals
 	 * This method moves the removed list to the processor's removed list
 	 * @since 01.02.22 Added a removed position at start
+	 * @since 08.01.25 Attack positions must be considered as part of available positions
 	 * @param availablePositions
 	 * @param removedPositions
 	 * @return
 	 */
 	public List<Position> checkPawnremovals(List<Position>availablePositions,List<Position>removedPositions){
 		List<Position> removedList = new ArrayList();
+		List<Position> attack = new ArrayList(attackPositions.values());
 		boolean pawnColor = localColor == pieceColor.WHITE;
 		XYLocation loc =  myPosition.getXyloc();
 		int y = loc.getYCoOrdinate();
 		if(removedPositions != null && !removedPositions.isEmpty()) {
 			Position rem = removedPositions.get(0);
+			String name = rem.getPositionName();
+			Position attackPos =  (Position) attack.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
+			boolean inT = attackPos == null; // If the removed position is not part of attack positions !!!!
 			if (pawnColor && y == 1) {
 				blocked = true;
 			}
@@ -309,7 +330,7 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 				blocked = true;
 			}
 			for (Position pos:availablePositions) {
-				if (pos != rem) {
+				if (inT && pos != rem) {
 					removedList.add(pos);
 				}
 			}
@@ -320,6 +341,7 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 	/**
 	 * createattackPosition
 	 * This method creates a new chess position based on a XYLocation
+	 * @since Jan 2025 : Attack positions are added to available positions
 	 * @param newPositions
 	 * @param x
 	 * @param y
@@ -328,6 +350,7 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 //		XYLocation newloc = new XYLocation(x,y);
 		Position newPosxyp = new Position(newloc,false,null);
 		attackPositions.put(newPosxyp.getPositionName(), newPosxyp);
+		newPositions.put(newPosxyp.getPositionName(), newPosxyp);
 	}
 	public HashMap<String,Position> getNewPositions() {
 		return newPositions;

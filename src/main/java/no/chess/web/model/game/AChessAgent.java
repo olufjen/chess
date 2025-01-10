@@ -398,8 +398,8 @@ public class AChessAgent extends KBAgent {
 		QuantifiedSentence qSentence = new QuantifiedSentence("FORALL",variables,folPredicate);
 		folKb.tell(qSentence); // Returned to code 28.02.23
 		createConnected("player", "y", "x");
-		String s1 = "occupies(o,px)^occupies(pi,py)";
-		String s2 = "MOVE(pi,pz)";
+//		String s1 = "occupies(o,px)^occupies(pi,py)";
+//		String s2 = "MOVE(pi,pz)";
 	//	KnowledgeBuilder.parseSentence(s1,s2,folKb);
 		
 /*		List<Term> ownerTerms = new ArrayList<Term>();
@@ -604,6 +604,30 @@ public class AChessAgent extends KBAgent {
 		return localAction;
 //		return super.execute(state);
 	}
+	/**
+	 * updateKnowledge
+	 * This method updates the knowledge base after the latest move.
+	 * But first we must empty the knowledge base!
+	 */
+	public void updateKnowledge() {
+		folKb.clear(); // Empty the knowledge base
+		actions = stateImpl.getActions(); // creates new actions !!!
+		opponentActions = this.stateImpl.getActions(opponent); // These are the opponent's actions
+		noofMoves = game.getMovements().size();
+		String playerName = stateImpl.getMyPlayer().getNameOfplayer();
+		makeRules(myPlayer,"g1","c1"); // tells the FOL knowledgebase rules about how to capture opponent pieces
+		for (Position pos:positionList) {
+			pos.setFriendlyPosition(false);
+		}
+		makeRules(opponent,"g8","c8"); // tells the FOL knowledgebase rules about how to capture opponent pieces
+		setOpponentpieces(opponent);//creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
+		clearFriends(myPlayer);
+		clearFriends(opponent);
+		createConnected("player", "y", "x");
+		emptyPositions = game.getNotusedPositionlist();
+		makeSentences(stateImpl.getMyPlayer()); //
+		makeSentences(stateImpl.getOpponent()); //
+	}
 	
 	/**
 	 * createConnected
@@ -731,10 +755,10 @@ public class AChessAgent extends KBAgent {
 				
 				ownerTerms.add(ownerVariable);
 				String name = piece.getMyPiece().getOntlogyName(); 
-				if (name.equals("BlackBishop1")) {
+/*				if (name.equals("BlackBishop1")) {
 					String xx = name;
 					xx = xx + piece.getMyPosition().getPositionName();
-				}
+				}*/
 					
 /*				if (name.equals("WhiteQueen")) {
 					writer.println("The white queen\n"+piece.toString());

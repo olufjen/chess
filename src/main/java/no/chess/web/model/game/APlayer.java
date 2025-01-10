@@ -334,6 +334,7 @@ public void checkPreferredPosition(ChessAction action) {
 	 */
 	public Position calculatePreferredPosition(AgamePiece piece, ChessActionImpl action) {
 		String name = piece.getMyPiece().getPieceName();
+		name = name + piece.getColor();
 		int pn = piece.getMyPosition().getIntRow();
 		Integer prn = new Integer(pn);
 		PreferredMoveProcessor pr = new PreferredMoveProcessor(prn,name);

@@ -22,7 +22,7 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	private Position toPosition; // This is the preferred position created by the preferredMove processor
 	private List<Position> preferredPositions = null; // This list contains all preferred positions as found by preferred move Processor
 	private AgamePiece piece; // The piece that made the move
-	private String capturedName = null; // The ontology name of the captured piece with this move (if any) (added 24.12.24)
+	private String capturedName = "none"; // The ontology name of the captured piece with this move (if any) (added 24.12.24)
 	private String creation = "";
 	private boolean blackMove = false;
 	private boolean whiteMove = false;
