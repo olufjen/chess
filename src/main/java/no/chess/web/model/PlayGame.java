@@ -520,7 +520,7 @@ public class PlayGame {
 		stateImpl.getOpponent().showPieceactivity();
 		moveStatistics(myplayer);
 		moveStatistics(stateImpl.getOpponent());
-		chessAgent.updateKnowledge(); // Must update knowledge bases after last move
+//		chessAgent.updateKnowledge(); // Must update knowledge bases after last move ??
 /*
  * At the end of statistics: We must update the FOL knowledge bases with the latest move !!		
  */

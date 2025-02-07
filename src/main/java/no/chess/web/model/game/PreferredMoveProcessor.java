@@ -240,7 +240,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 					}
 				}
 			}*/
-		}
+		} // End instance of queen
 		
 		if (pieceType instanceof AKnight) {
 			kn = (AKnight) pieceType;

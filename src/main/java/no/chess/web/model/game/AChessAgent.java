@@ -737,7 +737,8 @@ public class AChessAgent extends KBAgent {
 	 * @since 07.04.21 Castling rules are added
 	 * @since 14.08.21 The chesstypes KING,QUEEN,ROOK, etc are unary relations
 	 * @since 18.01.22 Added possible reach and possible protect facts
-	 * param t
+	 * @since 23.01.25 Even if position is removed this position is protected by pawn and under pawn attack
+	 *
 	 */
 	public void makeRules(APlayer player,String castleone,String castle2) {
 //		APlayer player= stateImpl.getMyPlayer();
@@ -815,7 +816,7 @@ public class AChessAgent extends KBAgent {
 				}
 				boolean pawnattack = false;
 				if (attackPositions != null && !attackPositions.isEmpty())
-					pawnattack = true;
+					pawnattack = true; // This is a pawn
 				if (availablePositions != null && !availablePositions.isEmpty()) {
 //					chessDomain.addPredicate(REACHABLE);
 					for (Position pos:availablePositions){
@@ -883,6 +884,10 @@ public class AChessAgent extends KBAgent {
 										castleTerms.add(castleConstant);
 										Predicate castlePredicate = new Predicate(CASTLE,castleTerms);
 										folKb.tell(castlePredicate);
+										writer.println("Made a CASTLE predicate for "+name+" and position "+cPosname);
+										writer.flush();
+/*										writer.println(folKb.toString());
+										folKb.writeKnowledgebase();*/
 									}
 								}
 							}
@@ -891,7 +896,7 @@ public class AChessAgent extends KBAgent {
 				}
 				if (pawnattack) {
 					for (Position pos:attackPositions){
-						if(!piece.checkRemoved(pos)) {
+//						if(!piece.checkRemoved(pos)) { OJN 23.01.25 Even if position is removed this position is protected and under pawn attack
 							String position = pos.getPositionName();
 							Constant protectorVariable = new Constant(name);
 							Constant protectedVariable = new Constant(position);
@@ -904,7 +909,7 @@ public class AChessAgent extends KBAgent {
 							folKb.tell(pawnAttack);
 							chessDomain.addConstant(position);
 //							kb.tellCaptureRules(t, position, name);
-						}
+//						}
 				 	}
 				}
 			}

@@ -121,8 +121,8 @@ public class APerceptor {
 	  private List<State>propinitStates = null;// Init states for the set of propositionalized action schemas from the lifted action schema
 	  private List<State>propgoalStates = null;// Goal states for the set of propositionalized action schemas from the lifted action schema
 	  
-	  private Map<String,AgamePiece>possiblePieces = null; // Contains opponent pieces that can be taken
-	  private Map<String,Position>possiblePositions = null; // Contains the positions of these opponent pieces.	  
+	  private Map<String,AgamePiece>possiblePieces = null; // Contains opponent pieces that can be taken. New key: name of piece of player + position of the piece that can be taken
+	  private Map<String,Position>possiblePositions = null; // Contains the positions of these opponent pieces. New key: name of piece of player + position of the piece that can be taken	  
 	  private Map<String,AgamePiece>threatenedPieces = null; // Contains pieces that are threatened by the opponent
 	  private Map<String,Position>threadenedPositions = null; // Contains the positions of these pieces.
 	  private Map<String,ArrayList<AgamePiece>>protectors = null; // Contains pieces that protect other pieces. The key is the name of the piece that they protect.
@@ -579,7 +579,7 @@ public class APerceptor {
 	      State theGoal = null;		// A determined goalState for the Problem
 		  for (ActionSchema primitiveAction :
 			   otherActions) {	 
-			  writer.println(primitiveAction.toString());
+			  writer.println(primitiveAction.toString()); // This is the propositionalized action schema fra the lifted action schema
 		  }
 		  List<State> allStates = new ArrayList<State>(initStates.values()); // All Init states from all available action schemas
 		  List<State> allGoals = new ArrayList<State>(goalStates.values()); // All goal states from all available action schemas
@@ -594,7 +594,7 @@ public class APerceptor {
 			  if (!found) { // If not check if the new goal state entails the given goal state
 				  writer.println("A possible goal state not entailed by an init state");
 			      boolean agree = false;
-			      for (State goalstate:allGoals) {
+			      for (State goalstate:allGoals) { // All goal states from all available action schemas
 			    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());// A possible goal state entails the given goal state
 			    	  if (agree) {
 			    		  theGoal = goalstate; // The goal state has been found
@@ -623,7 +623,8 @@ public class APerceptor {
 				      for (Literal literal :
 				    	  state.getFluents()) {
 				    	 writer.println(literal.toString());
-				      } 
+				      }
+//				      break; //  OBS: This causes error !!!!!! Added 4.02.25 No need to search further when initial and goal states are found?
 			      }
 			      if (!agree) {
 			    	  writer.println("==No goal state or init state found== returning "+found);
@@ -631,7 +632,7 @@ public class APerceptor {
 			      rfound = found;
 		//		  writer.println(agoalState.toString());  
 			  }else {
-				  writer.println("No goal state found "+found);
+				  writer.println("No Goal state found "+found);
  /*			      for (Literal literal :
 			    	  state.getFluents()) {
 			    	 writer.println(literal.toString());
@@ -662,7 +663,7 @@ public class APerceptor {
 //			      break;
 			  }
 
-		  }
+		  } // End for all initial states
 		  initState = theInitState;
 		  goalState = theGoal;
 		  writer.flush();

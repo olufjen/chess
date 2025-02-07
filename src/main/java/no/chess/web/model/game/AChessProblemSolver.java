@@ -526,6 +526,8 @@ public class AChessProblemSolver {
    * @param actions
    * @since 11.03.22 This method is reworked
    * The threatenedPieces threadenedPositions are filled if there are any threats
+   * @since Jan 25 
+   * This method is called from the planProblem method
    */
   public void checkoppoentThreat(String fact,ArrayList<ChessActionImpl> actions) {
 	  List<AgamePiece> opponentpieces = opponent.getMygamePieces();
@@ -689,8 +691,9 @@ public class AChessProblemSolver {
    * This method finds which opponent pieces the active player can safely take.
    * The pieces found are placed in a Map called possiblePieces, and its position is placed in a Map called possiblePositions
    * It is called from the planProblem method
-   * The key for the maps is the ontology name of the piece
+   * The key for the maps is the ontology name of the piece of the player
    * @since 15.03.21 Only pieces that are active are considered
+   * @since 14.01.25 The key to the map entries changed to name of piece of player + position of the piece that can be taken
    * @param fact
    * @param actions
    * @return
@@ -712,6 +715,7 @@ public class AChessProblemSolver {
 		  if (piece.isActive()) {
 			  for (AgamePiece mypiece:myPieces) { // For all my pieces: Can this piece reach the opponent's position?
 				  String name = mypiece.getMyPiece().getOntlogyName();
+				  String keyName = name + posName; // New key for map entries 
 				  pieceType type = mypiece.getPieceType();
 				  boolean reachable = false;
 				  boolean pawn = false;
@@ -719,8 +723,9 @@ public class AChessProblemSolver {
 				  if (type  == type.PAWN) {
 					  pawn = folKb.checkpieceFacts("y",name, posName, PAWNATTACK);
 					  if (pawn) {
-						  possiblePieces.put(name, piece);
-						  possiblePositions.put(name, position);
+						  possiblePieces.put(keyName, piece);
+						  possiblePositions.put(keyName, position);
+						  writer.println("The pawn can take a piece with key: "+keyName+"\n"+piece.getMyPiece().getOntlogyName());
 					  }
 				  }
 				  if (type  != type.PAWN) {
@@ -728,17 +733,17 @@ public class AChessProblemSolver {
 					  if (reachable) {
 						  pieceProtected = folKb.checkpieceFacts("x",name,posName,PROTECTED);
 						  if (pieceProtected) {
-							  possiblePieces.put(name, piece);
-							  possiblePositions.put(name, position);
-							  writer.println("Piece is protected and safe to take with : "+name+"\n"+piece.getMyPiece().getOntlogyName());
+							  possiblePieces.put(keyName, piece);
+							  possiblePositions.put(keyName, position);
+							  writer.println("Piece is protected and safe to take with : "+keyName+"\n"+piece.getMyPiece().getOntlogyName());
 						  }
 					  }
 				  }
 				  boolean threat = folKb.checkThreats("x", posName, THREATEN,opponent);
 				  if (!threat && reachable && !pieceProtected) {
-					  possiblePieces.put(name, piece);
-					  possiblePositions.put(name, position);
-					  writer.println("Piece is safe to take with : "+name+"\n"+piece.getMyPiece().getOntlogyName());
+					  possiblePieces.put(keyName, piece);
+					  possiblePositions.put(keyName, position);
+					  writer.println("Piece is safe to take with : "+keyName+"\n"+piece.getMyPiece().getOntlogyName());
 				  }
 
 			  }
@@ -1356,6 +1361,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	
 	  State theInitState = null;
       State theGoal = null;
+	  opponentAgent.probepossibilities(actions, myPlayer); // Creates entries to the strategy knowledge base. This call is moved from the prepareAction method
       checkOpponent("", actions); //This method finds which opponent pieces the active player can safely take
       checkoppoentThreat(THREATEN, actions); // This method find opponent pieces that threaten player's pieces, which pieces protect player's own pieces
       // and opponents attacker pieces.
@@ -1459,6 +1465,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  game.setDeferredGoalstates(deferredGoalstates);
 		  game.setDeferredGoal(deferredGoal);
 		  game.setDeferredInitial(deferredInitial);		
+		  writer.println("Deferred action (castling found) "+actionName);
 	  }
 	  State goal = null;
 	  State initState = null;
@@ -1622,6 +1629,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 				String newPos = action.getPossibleMove().getToPosition().getPositionName(); // Get newPos from Preferred position ??!!
 //				String newPos = action.getPreferredPosition().getPositionName(); !!!
 				String pieceName = action.getChessPiece().getMyPiece().getOntlogyName(); // Ontology name of piece
+
 				Position position = action.getChessPiece().getHeldPosition();
 				if (position == null) {
 					position = action.getChessPiece().getMyPosition();
@@ -1631,12 +1639,27 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 // OJN 28.05.24: To return a list of init states for this piece:				
 				State localinitialState = buildInitialstate(pieceName,posName,newPos);// Ontology name of piece, name of occupied position
 				State localgoalState = buildGoalstate(action);
+				if (pieceName.equals("WhiteKing")) {
+					writer.println("=== Creating action schema for ==== "+pieceName);
+					writer.println("Goal state for "+pieceName);
+					for (Literal literal :
+						localgoalState.getFluents()) {
+						writer.println(literal.toString());
+					}
+					writer.println("Init state for "+pieceName);
+					for (Literal literal :
+						localinitialState.getFluents()) {
+						writer.println(literal.toString());
+					}
+				}
 				String apiecepos = pieceName+"_"+newPos;
 				initStates.put(apiecepos, localinitialState);
 				goalStates.put(apiecepos, localgoalState);
 				ActionSchema movedAction = makeActionSchemas(pieceName, actionName, posName, newPos);
 				if (movedAction!= null)
 					schemas.add(movedAction);
+				else
+					writer.println("No action schema for "+pieceName);
 	//			AgamePiece gpiece =  action.getChessPiece();
 				for (Position apos:availablePos) {
 					String aposName = apos.getPositionName();
@@ -1946,7 +1969,14 @@ public Problem buildProblem(ChessActionImpl action) {
   }
 
 
-  public State buildGoalstate(ChessActionImpl action) {
+/**
+ * buildGoalstate
+ * This method builds a goal state based on a ChessAction
+ * It is called from the method searchProblem
+ * @param action
+ * @return
+ */
+public State buildGoalstate(ChessActionImpl action) {
 		String pieceName = action.getChessPiece().getMyPiece().getOntlogyName();
 		String toPos = "";
 		if (action.getPossibleMove() == null) {
@@ -2076,7 +2106,7 @@ public Problem buildProblem(ChessActionImpl action) {
 
   /**
    * buildInitialstate
-   * THis method creates an initial state for a problem 
+   * This method creates an initial state for a problem 
    * with a given piece name and posname
    * @since 09.08.22
    * The object variable theState contains all Literals of the initial state
@@ -2273,7 +2303,9 @@ public Problem buildProblem(ChessActionImpl action) {
 //		literals.addAll(attacktemp);
 //		literals.addAll(castletemp);
 		stateLiterals.addAll(literals);
-		return initState = new State(literals);
+		initState = new State(literals);
+		
+		return initState;
 		
   }
 
