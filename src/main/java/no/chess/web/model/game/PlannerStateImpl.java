@@ -32,7 +32,8 @@ public class PlannerStateImpl implements PlannerState {
 	private APlayer player;
 	private APlayer opponent;
 	private String forCastlingKey = "o-o";
-	private String playerName = "WHITE"; // PLayer is white and opponent is black
+	private boolean castling = false;// This flag is true when castling is performed
+	private String playerName = "WHITE"; // Player is white and opponent is black
 	private String kingPos = "e1";
 	private String whiteKing = "WhiteKing";
 	private String whiteRook = "WhiteRook2"; // For short castling
@@ -47,6 +48,7 @@ public class PlannerStateImpl implements PlannerState {
 	private PrintWriter writer =  null;
 	private FileWriter fw =  null;
 	private String[] liftedKey = new String[5]; // A String array used as a parameter set for a lifted action
+	private String[] rookcastlingKey = new String[5]; // A String array used as a parameter set for a lifted action for a rook castling
 	private ThePeas peas = null;
 	public PlannerStateImpl(APlayer player,APlayer opponent, List<ActionSchema> actionSchemas,List<ActionSchema>otherSchemaList, int moveNr) {
 		super();
@@ -71,6 +73,15 @@ public class PlannerStateImpl implements PlannerState {
 	}
 	
 
+	/**
+	 * This is the preferred constructor
+	 * The PlannerState is created by the Chess Problem Solver in the planProblem method
+	 * @param player
+	 * @param opponent
+	 * @param actionSchemas
+	 * @param moveNr
+	 * @param thePerceptor
+	 */
 	public PlannerStateImpl(APlayer player,APlayer opponent, List<ActionSchema> actionSchemas, int moveNr, APerceptor thePerceptor) {
 		super();
 		this.player = player;
@@ -110,6 +121,22 @@ public class PlannerStateImpl implements PlannerState {
 
 		plannerAction = plannerActions.get(0);
 	}
+	
+	/**
+	 * isCastling
+	 * When castling is performed
+	 * @return true when castling is performed
+	 */
+	public boolean isCastling() {
+		boolean flag = castling;
+		castling = false;
+		return flag;
+	}
+	public void setCastling(boolean castling) {
+		this.castling = castling;
+	}
+
+
 	public List<ChessPlannerAction> getPlannerActions() {
 		return plannerActions;
 	}
@@ -325,19 +352,57 @@ public class PlannerStateImpl implements PlannerState {
 			String posName = pos.getPositionName();
 			writer.println("Test for castling with "+pieceName+ " Position "+keyName+" Predicate "+fact);
 			canCastle = thePerceptor.getFolKb().checkpieceFacts("y", pieceName, keyName, fact);
-			if (canCastle && thisactivity <= 0 && posName.equals(kingPos)) {
+			if (canCastle && thisactivity <= 0 && posName.equals(kingPos)) { // If this is the case then first create an executable case for the rook
 				writer.println("Castling can take place for "+pieceName+ " to castle position "+castlePos.get(keyName)+" Predicate "+fact+" Flag "+canCastle);
 				writer.flush();
 				int rank = 0;
 //				String algebraicKey = "o-o";
 				castlingKey[0]= posName;
 				castlingKey[1] = pieceName;
-				castlingKey[2] = "e2"; // Should be keyName
+				castlingKey[2] = keyName; // Should be keyName
 				castlingKey[3] = pieceType;
-				peas.addExecutable(forCastlingKey, rank, castlingKey);
+				castlingKey[4] = "castle";
+				String kingCastleKey = KnowledgeBuilder.getKingCastleKey();
+//				peas.addExecutable(kingCastleKey, rank, castlingKey);
+				String rookName = whiteRook;
+				createCastlingRook(rookName);
+				peas.addExecutable(forCastlingKey, rank, rookcastlingKey);
+				castling = true; // This is the only time this flag is set true
 			}
 		}
 		return canCastle;
+	}
+	/**
+	 * createCastlingRook
+	 * This method creates the necessary lifted and ground action schemas for the rook movement when castling
+	 * 
+	 */
+	public void createCastlingRook(String pieceName) {
+		AgamePiece piece = player.getChosenPiece(pieceName);
+		Position pos = piece.getMyPosition();
+		String posName = pos.getPositionName();
+		String pieceType = piece.getNameType();
+		rookcastlingKey[0] = posName;
+		rookcastlingKey[1] = pieceName;
+		HashMap<String,Position> castlePos = piece.getCastlePositions();
+		Set<String> posCastle = castlePos.keySet();
+		String keyName = null;
+		for (String key:posCastle ) {
+//			writer.println("Castle position key "+key);
+			keyName = key;
+			break;
+		}	
+		rookcastlingKey[2] = keyName; // Should be keyName
+		rookcastlingKey[3] = pieceType;
+	}
+	public void performKingCastling() {
+		String kingCastleKey = KnowledgeBuilder.getKingCastleKey();
+//		liftedKey = peas.selectExecwithKey(kingCastleKey);
+		liftedKey = peas.selectExecwithKey(forCastlingKey);
+		writer.println("Castling: Making king castling with: "+liftedKey[0]+" "+liftedKey[1]+" "+liftedKey[2]+" "+liftedKey[3]+" "+liftedKey[4]+" ");
+		writer.flush();
+		boolean flag = thePerceptor.createLiftedActions(liftedKey);	
+		this.otherSchemaList = thePerceptor.getOtherActions(); // The propositionalized action schemas
 	}
 /**
  * testEnd
@@ -348,7 +413,7 @@ public class PlannerStateImpl implements PlannerState {
  * fill the otherSchemaList based on parameters as shown 
  * in the PEAS tables 
  * Lifted action schemas are created with parameters in the following order:
- * Startpos, Piecename, Newpos, Piecetype, or null. A fifth parameter "pawn" is added signaling a pawn strike.
+ * Startpos, Piecename, Newpos, Piecetype, or null. A fifth parameter "pawn" is added signaling a pawn strike, or "castle" signaling castling with king
  * Lifted action schemas represent goal formulations.
  * Create other objects that implements PlannerState and ChessPlannerAction interfaces.
  * Objects that can be returned with the node
@@ -369,7 +434,8 @@ public class PlannerStateImpl implements PlannerState {
 		selectFlag = selectStrategy(); // true if still in opening phase
 		boolean castling = checkCastling();
 		if (castling) {
-			liftedKey = peas.selectExecutable();
+			String kingCastleKey = KnowledgeBuilder.getKingCastleKey();
+			liftedKey = peas.selectExecwithKey(forCastlingKey);
 			writer.println("Castling: Making a lifted action with: "+liftedKey[0]+" "+liftedKey[1]+" "+liftedKey[2]+" "+liftedKey[3]+" "+liftedKey[4]+" ");
 			writer.flush();
 			flag = thePerceptor.createLiftedActions(liftedKey);
@@ -388,7 +454,7 @@ public class PlannerStateImpl implements PlannerState {
 			}*/
 			writer.println("selectStrategy: Making a lifted action with: "+liftedKey[0]+" "+liftedKey[1]+" "+liftedKey[2]+" "+liftedKey[3]+" "+liftedKey[4]+" ");
 			writer.flush();
-			flag = thePerceptor.createLiftedActions(liftedKey);
+			flag = thePerceptor.createLiftedActions(liftedKey);// Creates the initial and goal states based on this action schema
 		}else if(!castling){
 			writer.println("Making a lifted action with: "+notations[move]+" and move number "+move);
 			String[] param = peas.selectPerformance(notations[move]);
@@ -408,10 +474,10 @@ public class PlannerStateImpl implements PlannerState {
 			writer.println("Failure: Making a lifted action with: "+notations[7]);
 			writer.flush();
 			String[]param = peas.selectPerformance(notations[7]);
-			flag = thePerceptor.createLiftedActions(param);
+			flag = thePerceptor.createLiftedActions(param);// Creates the initial and goal states based on this action schema
 		}
 		this.otherSchemaList = thePerceptor.getOtherActions(); // The propositionalized action schemas
 		return true;
 	}
-
+	
 }

@@ -89,6 +89,7 @@ public class PlayGame {
 	private AgamePiece lastPiece = null; // last piece moved by player 
 	private Position oldPosition = null;
 	private Position newPosition = null; 
+	private ApieceMove castleMove = null;
 	
 	public PlayGame(HashMap<String, Position> positions,ChessBoard frontBoard)   {
 		super();
@@ -295,7 +296,7 @@ public class PlayGame {
 	 */
 	public void proposeMove() {
 
-
+		castleMove = null;
 		currentState = game.getInitialState();
 		ChessStateImpl stateImpl = (ChessStateImpl) currentState;
 		activeState = stateImpl;
@@ -509,13 +510,21 @@ public class PlayGame {
 		
 //	    writer.println("After call to game.movepiece \n"+game.getBoardPic());
 		
-		ApieceMove move = createMove(piece,oldPosition, position); // Here we must update the knowledge bases.
-		String not = move.getMoveNotation();
+		ApieceMove move = null; //createMove(piece,oldPosition, position); // Here we must update the knowledge bases ?????
 	    piece.giveNewdirections(); // Calculates nw,ne,sw,se for bishop and queen Added 03.06.21
 		HashMap<String,ApieceMove> myMoves = stateImpl.getMyPlayer().getMyMoves();
-		myMoves.put(not, move);
 		APlayer myplayer = stateImpl.getMyPlayer();
-		checkCastling(stateImpl.getMyPlayer());
+		String newNot = checkCastling(stateImpl.getMyPlayer());
+		String not = null; // Algebraic notation
+		if (newNot != null) {
+			not = newNot;
+			myMoves.put(not, castleMove);
+		}
+		if (newNot == null) {
+			move = createMove(piece,oldPosition, position);
+			not = move.getMoveNotation();
+			myMoves.put(not, move);
+		}
 		myplayer.showPieceactivity();
 		stateImpl.getOpponent().showPieceactivity();
 		moveStatistics(myplayer);
@@ -581,12 +590,15 @@ public class PlayGame {
 	 * checkCastling
 	 * This method checks if the chess agent contains a castling action
 	 * If that is the case, the method ensures that the rook is moved to the correct castling position
+	 * @since 29.03.25 Return String: The algebraic notation for castling or null 
 	 * @param player
+	 * @return String: The algebraic notation for castling or null
 	 */
-	private void checkCastling(APlayer player) {
+	private String checkCastling(APlayer player) {
+		String moveNot = null;
 		ChessActionImpl localAction = (ChessActionImpl) chessAgent.getCastleAction();
 		if (localAction != null) {
-			AgamePiece king = player.getChosenPiece("WhiteKing");
+			AgamePiece king = player.getChosenPiece("WhiteKing"); // Only with player as white player
 			if (king != null)
 				writer.println("King castling: "+king.toString());
 			AgamePiece castle = localAction.getChessPiece();
@@ -600,16 +612,18 @@ public class PlayGame {
    	    		String castleName = castle.getName();
    	    		if (castlePos != null) {
    	    			toPos = castlePos.getPositionName();
-   	    			createMove(castle,castlePosfrom, castlePos);
+   	    			castleMove = createMove(castle,castlePosfrom, castlePos);
    	    			myFrontBoard.determineMove(fromPos, toPos, castleName); // Determine if move is legal
    	    			castle.setNofMoves(0);
    	    			castle.setMyPosition(castlePos);
    	    			castle.produceLegalmoves(castlePos);
    	    			player.calculatePreferredPosition(castle, localAction);
+   	    			moveNot = "o-o";
    	    		}
    	    		
    	    	}
 		}
+		return moveNot;
 	}
 	/**
 	 * verifyAction

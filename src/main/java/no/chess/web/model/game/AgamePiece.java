@@ -48,7 +48,7 @@ public class AgamePiece extends AbstractGamePiece<Position> implements ChessPiec
 	private pieceColor localColor;
 	private ChessPieceType chessType = null;
 	private HashMap<String,Position> ontologyPositions; // Represent the ontology positions
-	private HashMap<String,Position> reacablePositions;
+	private HashMap<String,Position> reacablePositions; // All reachable positions for piece
 	private HashMap<String,Position> bishopPositions; // Are only valid for queen
 	private HashMap<String,Position> attackPositions; // Are only valid for type pawn
 	private HashMap<String,Position> castlePositions; // Are only valid for king and rook

@@ -675,7 +675,7 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 	 * These actions also represent the leaves of the new node, which is represented by the state.
 	 * (See page 162 and 170 of the AIMA book)
 	 * These actions contain an AgamePiece and its available (reachable) positions and a possible move.
-	 * Only active pieces is involved in producing new actions.
+	 * Only active pieces are involved in producing new actions.
 	 * Each action also calculates which reachable positions are occupied by other pieces belonging to the same player.
 	 * @since 13.11.2019 Only active pieces are considered
 	 * @return

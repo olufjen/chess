@@ -1365,7 +1365,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       checkOpponent("", actions); //This method finds which opponent pieces the active player can safely take
       checkoppoentThreat(THREATEN, actions); // This method find opponent pieces that threaten player's pieces, which pieces protect player's own pieces
       // and opponents attacker pieces.
- 	  String actionName = deferredMove(actions); // For castling
+ //	  String actionName = deferredMove(actions); // For castling removed 28.02.25
 	  // 11.07.22 Changes this to return piece name and possible position
 	  // This is the only call to checkMovenumber Changed the key pieceName
 //      pieceName = checkMovenumber(actions); // Returns a possible piecename A String A piecename pointer: The pieceName + "_" + PosName
@@ -1393,7 +1393,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * The structure of queue search:    
  *   
  */
-      
+      PlannerStateImpl localPlanner = (PlannerStateImpl)plannerState;
       NodeExpander exp = new NodeExpander();
       PlannerQueueSearch queueSearch = new PlannerQueueSearch(exp);
       ToDoubleFunction<Node<PlannerState, ChessPlannerAction>> h = KnowledgeBuilder.toDouble(); // The evaluation function
@@ -1435,13 +1435,56 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
   */
       String pieceKey = null;
       List<AgamePiece>  pieces = myPlayer.getMygamePieces();
+      if(localPlanner.isCastling()) {
+ //   	  localPlanner.PerformKingCastling();
+    	  String kingpieceName = "WhiteKing";
+    	  String kingPos = "e1";
+    	  State goal = null;
+    	  State initstate = null;
+		  String castlePos = "g1";
+		  String piecepos = kingpieceName+"_"+castlePos;
+		  typeofPiece = KING;
+		  moveName = "kingmove";
+		  ActionSchema kingAction = makeActionSchemas(kingpieceName, piecepos, kingPos,castlePos);
+		  writer.println("The King castle action check");
+		  writer.println(kingAction.toString());
+		  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(kingpieceName)).findAny().orElse(null);
+		  castleAction = naction;
+		  Position toCastlePos = positions.get(castlePos);
+		  castleAction.setPreferredPosition(toCastlePos);
+		  goal = buildGoalstate(kingpieceName,castlePos);
+		  String bishopName = "WhiteBishop2";// Rewrite: must find player's bishop
+		  String fpos = "f1";
+		  String toPos = "d3";
+		  typeofPiece = BISHOP;
+		  moveName = "bishopmove";
+		  initstate = buildInitialstate(bishopName,fpos, toPos);
+		  deferredInitial = initstate;
+		  deferredGoal = goal;
+		  deferredGoalstates.put(kingpieceName, goal);
+		  game.setDeferredGoalstates(deferredGoalstates);
+		  game.setDeferredGoal(deferredGoal);
+		  game.setDeferredInitial(deferredInitial);	
+		  if (deferredInitial != null && deferredGoal != null) {
+			  writer.println("Castling - Deferred initial and goal states\n");
+		      for (Literal literal :
+		    	  deferredInitial.getFluents()) {
+		    	 writer.println(literal.toString());
+		      }
+		      writer.println("Castling - Deferred goal state\n");
+		      for (Literal literal :
+		    	  deferredGoal.getFluents()) {
+		    	 writer.println(literal.toString());
+		      }		      
+		  }
+      }
 /*
  * Added 10.12.22 
  * The APerceptor object checks for a percept action to see if it
  * is applicable in an initial state s. That is if the precondition of the percept action is satisfied by s.
  * Then s is the returned chosenInitstate      
  */
-      if (chosenInitstate != null) {
+      if (chosenInitstate != null) { // This structure is never executed !!
           for (Map.Entry<String,State> entry:initStates.entrySet()) {
         	  State thisState = entry.getValue();
         	  String theKey = entry.getKey();
@@ -1455,7 +1498,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
         	  }
           }
       }
-
+/* removed 28.02.25
 	  if (actionName != null && !pieceName.equals(actionName)) {
 		  pieceName = actionName;
 		  deferredKey = null;
@@ -1470,7 +1513,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  State goal = null;
 	  State initState = null;
 	  ActionSchema movedAction = actionSchemas.get(pieceName);
-	  
+	  removed 28.02.25*/
+      
 /*	  if (movedAction != null) {
 		  String nactionName = movedAction.getName();
 		  int nIndex = nactionName.indexOf("_");
@@ -1566,13 +1610,6 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * A0 contains ground actions that might be applicable in S0
  * S0 consists of nodes representing fluents that holds in S0	  
  */
-
-/*
- * Now part of APerceptor	  
- */
-/*
- *  End Now part of APerceptor	  
-*/	  
 	  ChessProblem differentProblem = new ChessProblem(initialState,goalState,otherSchemas);
 	  ChessGraphPlanAlgorithm graphplan = new ChessGraphPlanAlgorithm(); // Added graphplan 8.3.23
 //	  List<List<ActionSchema>> solutions = graphplan.graphPlan(problem);

@@ -23,6 +23,10 @@ public class Aking extends AbstractGamePiece<Position>  implements ChessPieceTyp
 
 	private pieceType localType = pieceType.KING;
 	private static final String chessType = "KING"; // A class variable
+	private static final String castleNeighbore = "f1"; // Castling neighbor position east
+	private static final String castleNeighborw = "d1";	// Castling neighbor position west
+	private static final String castlepose = "g1"; // Castling position east
+	private static final String castleposw = "c1";	// Castling position west
 	private pieceColor localColor;
 	private int[][] reachablesqueres;
 	private String[][] reachablepiecePosition;
@@ -370,6 +374,43 @@ public class Aking extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			}
 		}
 
+	}
+	/**
+	 * checkRemovals
+	 * This method returns a list of castle positions if they are not removed.
+	 * @param availablePositions
+	 * @param removedPositions
+	 * @return a list of available castle positions
+	 */
+	public List<Position> checkRemovals(List<Position>availablePositions,List<Position>removedPositions){
+		List<Position> castlelist = new ArrayList<Position>(castlePositions.values());
+		List<Position> availableCastlePositions = new ArrayList<Position>();
+/*		Position kingneighbore = myPiece.getMyPiece().getReacablePositions().get(castleNeighbore);
+		String kingPosName = kingneighbore.getPositionName();
+		Position kingneighborw = myPiece.getMyPiece().getReacablePositions().get(castleNeighborw);
+		String kingPosNamew = kingneighborw.getPositionName();*/		
+		boolean naboTeste = false;
+		boolean naboTestw = false;		
+		Position neighbore = (Position) removedPositions.stream().filter(c -> c.getPositionName().contains(castleNeighbore)).findAny().orElse(null);
+		Position neighborw = (Position) removedPositions.stream().filter(c -> c.getPositionName().contains(castleNeighborw)).findAny().orElse(null);
+		if (neighbore == null)
+			naboTeste = true;
+		if (neighborw == null)
+			naboTestw = true;
+		for (Position castlePos:castlelist) {
+			String posName = castlePos.getPositionName();
+			Position removedPos = (Position) removedPositions.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
+			if (removedPos == null) {
+				availableCastlePositions.add(castlePos);
+				List<Position> availableList = myPiece.getMyPiece().getNewlistPositions();
+				Position thisPos = (Position) availableList.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
+				if (thisPos == null && posName.equals(castlepose) && naboTeste)
+					myPiece.getMyPiece().getNewlistPositions().add(castlePos);
+				if (thisPos == null && posName.equals(castleposw) && naboTestw)
+					myPiece.getMyPiece().getNewlistPositions().add(castlePos);
+			}
+		}
+		return availableCastlePositions;
 	}
 	@Override
 	public pieceColor getPieceColor() {

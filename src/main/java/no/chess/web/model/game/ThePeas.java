@@ -145,12 +145,16 @@ public class ThePeas {
 		Set<String> keys = sortedRanks.keySet();
 		String firstKey = null;
 	    for (String key:keys) {
-	    	writer.println("The sorted key"+key);
+	    	writer.println("The sorted selected key "+key);
 	    	firstKey = key;
 	    	break;
 	    }
 	    String[] returnValues = executable.get(firstKey);
 		writer.flush();
+		return returnValues;
+	}
+	public String[] selectExecwithKey(String key) {
+		String[] returnValues = executable.get(key);
 		return returnValues;
 	}
 	public String[] selectPerformance(String key) {

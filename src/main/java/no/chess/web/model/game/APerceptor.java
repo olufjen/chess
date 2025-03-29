@@ -566,7 +566,8 @@ public class APerceptor {
 	 * createLiftedActions
 	 * This method creates lifted action schemas based on the names parameters
 	 * These lifted action schemas are propositionalized and then a possible initial state and goal state for a Problem is searched for.
-	 * @param names
+	 * @param names. These are given in the following order:
+	 * Startpos, Piecename, Newpos, Piecetype, or null. A fifth parameter "pawn" is added signaling a pawn strike.
 	 */
 	public boolean createLiftedActions(String... names) {
 		  writer.println("Actions with ");
@@ -579,7 +580,7 @@ public class APerceptor {
 	      State theGoal = null;		// A determined goalState for the Problem
 		  for (ActionSchema primitiveAction :
 			   otherActions) {	 
-			  writer.println(primitiveAction.toString()); // This is the propositionalized action schema fra the lifted action schema
+			  writer.println(primitiveAction.toString()); // This is the propositionalized action schema from the lifted action schema
 		  }
 		  List<State> allStates = new ArrayList<State>(initStates.values()); // All Init states from all available action schemas
 		  List<State> allGoals = new ArrayList<State>(goalStates.values()); // All goal states from all available action schemas

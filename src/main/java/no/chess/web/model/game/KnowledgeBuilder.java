@@ -83,13 +83,22 @@ public class KnowledgeBuilder {
   private static String OCCUPY = "OCCUPY"; // Move to occupy a position
   private static String PROTECT = "PROTECT"; // Move to protect a position
   private static String MAKESTRONG = "MAKESTRONG"; // Make a position strong
-  
+  private static String kingCastleKey = "o-ok"; // The key to King's Castling
   private static List<Constant> allconstants= new ArrayList();
   // To make list of possible init states ??
   // 16.12.24 A new key is added: pawn. It is used to signal a pawn strike PAWNATTACK                                                                                                                                                                                                                                                                                       
   private static String[] keys = new String[] {"startpos","piecename","newpos","piecetype","pawn"};
   
-  public static String getPIECE() {
+  
+  public static String getKingCastleKey() {
+	return kingCastleKey;
+}
+
+public static void setKingCastleKey(String kingCastleKey) {
+	KnowledgeBuilder.kingCastleKey = kingCastleKey;
+}
+
+public static String getPIECE() {
 	return PIECE;
   }
 
@@ -427,10 +436,10 @@ public static void setAllconstants(List<Constant> allconstants) {
  * EFFECT: (occupies(byPiece,posx)
  * The action schema contains any number of variables
  * @since 16.12.24
- * The precondition can also be PRECONDITION: (PAWNATTACK(byPiece,posx)
+ * The precondition can also be PRECONDITION: (PAWNATTACK(byPiece,posx) or CASTLE(king,posx)
  * This is selected by an additional names parameter called "pawn"
  * @param names - if parameters are given they are used as Constants in preconditions or effects in the returned action schema
- * The parameters must be given in the following order: Startpos, Piecename, Newpos, Piecetype, or null (and an additional parameter: pawn)
+ * The parameters must be given in the following order: Startpos, Piecename, Newpos, Piecetype, or null (and an additional string parameter: pawn, or castle)
  * If a parameter is null a Variable is created for this parameter
  * @return A lifted action Schema
  */
@@ -483,7 +492,11 @@ public static ActionSchema createOccupyaction(String... names) {
 					cparams.put(keys[i], var);
 				}
 				if (tvar instanceof String) {
-					reach = PAWNATTACK;
+					String tpar = (String)tvar;
+					if (tpar.equals("pawn"))
+						reach = PAWNATTACK;
+					if (tpar.equals("castle"))
+						reach = CASTLE;
 				}
 			}
 

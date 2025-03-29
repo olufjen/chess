@@ -119,10 +119,18 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		tempList = new ArrayList<>();
 		ChessPieceType pieceType = p.getChessType();
 		boolean pawnType = false;
+		if (pieceType instanceof Aking) {
+			king = (Aking) pieceType; // Check if a castling position is not removed
+			writer.println("Checking castle positions");
+			List<Position> availableCastlePositions = king.checkRemovals(availablePositions,removedPositions);
+			if (availableCastlePositions != null && !availableCastlePositions.isEmpty()) {
+				availablePositions.addAll(availableCastlePositions);
+				writer.println("Castle positions available");
+			}
+		}
 		if (pieceType instanceof APawn) {
 			String rName = p.getMyPiece().getOntlogyName();
-			List<Position>aposes = new ArrayList<Position>(p.getAttackPositions().values());
-
+//			List<Position>aposes = new ArrayList<Position>(p.getAttackPositions().values());
 			if (rName.equals("WhitePawn3")) {
 				writer.println("Removed before");
 				for (Position ps:removedPositions) {
@@ -191,198 +199,12 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			checkOpponentRemoved(opponentRemoved,from, tempList,availablePositions);
 			int pcol = from.getIntColumn();
 			int prow = from.getIntRow();
-// THis is to be removed:			
-/*			for (Position removedPos:bishopRemoved) {
-//			for (Position removedPos:bishopRemoved) { // OBS: The removed positions must be separated: bishop positions and rook positions
-				int row = removedPos.getIntRow();
-				int col = removedPos.getIntColumn();
-				String pName = removedPos.getPositionName();
-				if (pName.equals("c2") || pName.equals("e2")) {
-					System.out.println("Pos !!! "+pName);
-				}
-				checkBishopnwest(queenbishopPositions, tempList, removedPos, p);
-				checkBishopneast(queenbishopPositions, tempList, removedPos, p);
-				checkBishopseast(queenbishopPositions, tempList, removedPos, p);
-				checkBishopswest(queenbishopPositions, tempList, removedPos, p);
-				
-				for (Position availablePos:queenbishopPositions) {
-					int arow = availablePos.getIntRow();
-					int acol = availablePos.getIntColumn();
-					if (col < pcol && arow >= row && acol <= col) { // <= OBS !! OLJ 10.03.21
-						tempList.add(availablePos);
-
-					}
-					if (col < pcol && arow < row && acol < col) {
-						tempList.add(availablePos);
-					}
-					if (col > pcol && arow >= row && acol >= col) { // >= OBS !! OLJ 10.03.21
-						tempList.add(availablePos);
-					}
-				}
-			}
-			for (Position removedPos:removedPositions) {
-				int row = removedPos.getIntRow();
-				int col = removedPos.getIntColumn();
-				for (Position availablePos:queenscastlePositions) {
-					int arow = availablePos.getIntRow();
-					int acol = availablePos.getIntColumn();
-					if (prow < row && pcol == col && arow >= row && acol == col) {
-						tempList.add(availablePos);
-					}
-					if (prow > row && pcol == col && arow <= row && acol == col) {
-						tempList.add(availablePos);
-					}
-					if (pcol< col && prow == row && acol <= col && arow == row) { //Horizontal to right
-						tempList.add(availablePos);
-					}
-					if (pcol> col && prow == row && acol <= col && arow == row) { //Horizontal to left
-						tempList.add(availablePos);
-					}
-				}
-			}*/
 		} // End instance of queen
 		
 		if (pieceType instanceof AKnight) {
 			kn = (AKnight) pieceType;
 		}
 
-/*
- * If the chess piece is a rook, a bishop, a pawn or a queen
- * then remove all positions in path that are occupied by friendly pieces:
- * OLJ 09.09.20: This is only correct for rook
- * 
- */
-/*		if (b != null || r != null || qt != null || pn != null) {
-			String pName = p.getMyPiece().getOntlogyName();
-			writer.println("Checking additional removals For "+pName);
-			if (tempList == null)
-				tempList = new ArrayList<>();
-			int pcol = from.getIntColumn();
-			int prow = from.getIntRow();
-			for (Position removedPos:removedPositions) {
-				int row = removedPos.getIntRow();
-				int col = removedPos.getIntColumn();
-				for (Position availablePos:availablePositions) {
-					int arow = availablePos.getIntRow();
-					int acol = availablePos.getIntColumn();
-					String posName = availablePos.getPositionName();
-					Position posinTable =  (Position) tempList.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null); // Do not put position in removed table if it is there already
-					if (posinTable == null) { //This is added 08.08.21
-						if ((r != null || pn != null ) && prow < row && pcol == col && arow > row && acol == col) { // not applicable when from row > row
-							tempList.add(availablePos);
-						}
-						if ((r != null || pn != null ) && prow > row && pcol == col && arow < row && acol == col) { // Not applicable when the from row < row
-							tempList.add(availablePos);
-						}
-						if (r != null && pcol< col && prow == row && acol <= col && arow == row) { //Horizontal to right
-							tempList.add(availablePos);
-						}
-						if (r != null && pcol> col && prow == row && acol <= col && arow == row) { //Horizontal to left
-							tempList.add(availablePos);
-						}
-					}
-
-
- * Check for bishop	OBS OBS Check again The queen option removed !!!!			
- 
-					if ((b != null ) && col < pcol && arow > row && acol < col) {
-						tempList.add(availablePos);
-					}
-					if ((b != null ) && col < pcol && arow < row && acol < col) {
-						tempList.add(availablePos);
-					}
-					if ((b != null ) && col > pcol && arow < row && acol > col) {
-						tempList.add(availablePos);
-					}
-					if ((b != null ) && col > pcol && arow > row && acol > col) { // OBS !!!
-						tempList.add(availablePos);
-					}
-					if (b != null && arow < row && acol >= col) {
-						tempList.add(availablePos);
-					}
-
-				}
-				if (b != null) {
-					checkBishopnwest(availablePositions, tempList, removedPos, p);
-					checkBishopneast(availablePositions, tempList, removedPos, p);
-					checkBishopseast(availablePositions, tempList, removedPos, p);
-					checkBishopswest(availablePositions, tempList, removedPos, p);
-				}
-
-			}
-			if (b != null || qt != null) {
-				checkOpponentRemoved(opponentRemoved,from, tempList,availablePositions);
-			}
-			for (Position removedPos:opponentRemoved) {
-				int row = removedPos.getIntRow();
-				int col = removedPos.getIntColumn();
-				for (Position availablePos:availablePositions) {
-					int arow = availablePos.getIntRow();
-					int acol = availablePos.getIntColumn();
-					String posName = availablePos.getPositionName();
-					Position posinTable =  (Position) tempList.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null); // Do not put position in removed table if it is there already
-					if (posinTable == null) { //This is added 08.08.21
-						if ((r != null || pn != null ) && prow < row && pcol == col && arow > row && acol == col) { // not applicable when from row > row
-							tempList.add(availablePos);
-						}
-						if ((r != null || pn != null ) && prow > row && pcol == col && arow < row && acol == col) { // Not applicable when the from row < row
-							tempList.add(availablePos);
-						}
-						if (r != null && pcol< col && prow == row && acol < col && arow == row) { //Horizontal to right
-							tempList.add(availablePos);
-						}
-						if (r != null && pcol> col && prow == row && acol < col && arow == row) { //Horizontal to left
-							tempList.add(availablePos);
-						}
-					}
-
-
- * Check for bishop	OBS OBS Check again The queen option removed !!!!			
- 
-					if ((b != null ) && col < pcol && arow > row && acol < col) {
-						tempList.add(availablePos);
-					}
-					if ((b != null ) && col < pcol && arow < row && acol < col) {
-						tempList.add(availablePos);
-					}
-					if ((b != null ) && col > pcol && arow < row && acol > col) {
-						tempList.add(availablePos);
-					}
-					if ((b != null ) && col > pcol && arow > row && acol > col) { // OBS !!!
-						tempList.add(availablePos);
-					}
-					if (b != null && arow < row && acol >= col) {
-						tempList.add(availablePos);
-					}
-
-				}
-				if (b != null) {
-					writer.println("Checking opponent removals For "+pName+" "+removedPos.toString());
-					checkBishopnwest(availablePositions, tempList, removedPos, p);
-					checkBishopneast(availablePositions, tempList, removedPos, p);
-					checkBishopseast(availablePositions, tempList, removedPos, p);
-					checkBishopswest(availablePositions, tempList, removedPos, p);
-
-				}
-
-			}
-
-			for (Position temp:tempList) {
-				String posName = temp.getPositionName();
-//				logText.append(posName+"\n");
-				Position posinTable =  (Position) removedPositions.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null); // Do not put position in removed table if it is there already
-				if (posinTable == null) {
-					writer.println("Added removed position "+temp.toString()+" For "+name);
-					removedPositions.add(temp);
-				}
-	
-			}
-//			tempList = null;
-//			p.setRemovedPositions(removedPositions); Must always set the removed positions for all pieces. olj 24.02.21
-		}*/
-/*
- * End of removals !!!		
- */
 		for (Position temp:tempList) {
 			String posName = temp.getPositionName();
 //			logText.append(posName+"\n");
@@ -394,6 +216,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 
 		}		
 		p.setRemovedPositions(removedPositions);
+		
 /*		if (kn != null) {
 			
 		}*/
@@ -411,24 +234,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 				preferredPositions.add(availablePos);
 			}
 		}
-/*		if (qt != null) {
-			for (Position availablePos:availablePositions) {
-				boolean available = true;
-				for (Position removedPos:bishopRemoved) {
-					if (removedPos.getPositionName().equals(availablePos.getPositionName())) {
-						available = false;
-//						writer.println("Removed position "+removedPos.toString());
-						break;
-					}
-
-				}
-				if (available) {
-					preferredPositions.add(availablePos);
-				}
-			}
-		}*/
-
-		if (preferredPositions.isEmpty()) {
+		if (preferredPositions.isEmpty()) { // The list of preferred positions are all available positions that are not removed
 			p.setPreferredPositions(null);
 			writer.println("No preferred position\n"+"piece: "+p.toString());
 			writer.close();
@@ -568,12 +374,6 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 	 * @param tempList
 	 */
 	public void checkOpponentRemoved(List<Position> removedPositions,Position heldPosition,List<Position> tempList,List<Position> availablePos) {
-//		List<Integer>remlocs = new ArrayList();
-//		List<Position> directionNorthRemoved = new ArrayList();
-		
-
-
-//		Position pos = removedPositions.get(0);
 		Position pos = availablePos.get(0);
 		// For all such directions:
 		List<Position>directionNorthRemoved = removedPositions.stream().filter(p -> pos.getNorthDirection() == p.getMydirection()).collect(Collectors.toList());
