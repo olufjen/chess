@@ -42,6 +42,7 @@ import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
 import no.games.chess.ChessPieceType;
 import no.games.chess.AbstractGamePiece.pieceType;
+import no.games.chess.ChessAction;
 import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
@@ -91,6 +92,7 @@ public class AChessAgent extends KBAgent {
 	private FOLGamesFCAsk forwardChain;
 	private FOLGamesBCAsk backwardChain;
 	private InferenceProcedure infp;
+	private List<ChessAction> allActions = null;
 	private List <ChessActionImpl> actions = null;
 	private List <ChessActionImpl> opponentActions = null;
 	private String knowledgeFilename = "knowledgebase.txt";
@@ -191,6 +193,7 @@ public class AChessAgent extends KBAgent {
 	    writer = new PrintWriter(new BufferedWriter(fw));	
 		this.localAction = localAction;
 		actions = new ArrayList<ChessActionImpl>();
+		allActions = new ArrayList<ChessAction>();
 		opponentPieces = new ArrayList<String>();
 		positionList = game.getPositionlist();
 		for (Position pos:positionList) {
@@ -331,7 +334,13 @@ public class AChessAgent extends KBAgent {
 		Predicate mKing = new Predicate("king",terms);*/
 		myPlayer = stateImpl.getMyPlayer();
 		opponent = stateImpl.getOpponent();
-		actions = stateImpl.getActions(); // creates new actions !!!
+		allActions = stateImpl.getActions(); // creates new actions !!!
+		for (ChessAction action:allActions) { //*** Added 23.05.25 olj
+			ChessActionImpl localAction =(ChessActionImpl) action;
+			actions.add(localAction);
+		}
+//		actions.add((ChessActionImpl) allActions); //*** Added 23.05.25 olj
+		myPlayer.setActions(allActions);
 		kb.setStateImpl(stateImpl);
 		
 		forwardChain = new FOLGamesFCAsk(); // A Forward Chain inference procedure see p. 332
@@ -498,6 +507,9 @@ public class AChessAgent extends KBAgent {
 		} This has been turned off OLJ 25.5.21*/
 		
 		ChessActionImpl naction = null;
+		/*
+		 * Returns a problem containing an initial and goal state, and a set of Action Schemas.
+		 */
 		ChessProblem problem = solver.planProblem((ArrayList<ChessActionImpl>) actions);
 		List<AgamePiece>  pieces = myPlayer.getMygamePieces();
 		if (problem != null) {
@@ -515,7 +527,7 @@ public class AChessAgent extends KBAgent {
 			List<Constant>solConstants = actionSchema.getConstants();
 
 
-			String aName = null;
+			String aName = null; // Name to be used to find the chessAction that the actionSchema corresponds to
 			for (Constant constant:solConstants) {
 				writer.println(constant.getSymbolicName());
 				String symName = constant.getSymbolicName();
@@ -533,7 +545,7 @@ public class AChessAgent extends KBAgent {
 				chessName = nactionName.substring(0, nIndex);
 			else
 				chessName = aName;
-			String newName = chessName;
+			String newName = chessName; // Name to be used to find the chessAction that the actionSchema corresponds to
 			naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(newName)).findAny().orElse(null);
 			Position altPos = null;
 			List<Literal>effects = actionSchema.getEffects(); // Find alt. new position

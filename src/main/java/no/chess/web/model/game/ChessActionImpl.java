@@ -63,7 +63,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private List<Position> otherprotectedPositions  = null;
 	private String actionName;
 	private Double evaluationValue = null; // An evaluation value for the action. It is produced by the ActionProcessor
-	
+	private boolean moveFlag = false; // True when a move is possible
 	public ChessActionImpl(HashMap<String, Position> positions, AgamePiece chessPiece,APlayer player, APlayer opponent) {
 		super();
 		this.positions = positions;
@@ -81,11 +81,23 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		PreferredMoveProcessor pr = new PreferredMoveProcessor(prn,name);
 		myProcessor = pr;
 		possibleMove = ChessFunctions.processChessgame(this,chessPiece, pr); // The processor can be replaced by a lambda expression?
-		if (possibleMove != null)
+		if (possibleMove != null) {
 			preferredPosition = possibleMove.getToPosition();
+			moveFlag = true;
+		}
 //		preferredPosition = player.calculatePreferredPosition(chessPiece,this);      
 		player.getHeldPositions().add(pr.getHeldPosition()); // This is the position held by the piece under consideration
 		actionName = this.chessPiece.getMyPiece().getOntlogyName();
+	}
+
+
+	public boolean isMoveFlag() {
+		return moveFlag;
+	}
+
+
+	public void setMoveFlag(boolean moveFlag) {
+		this.moveFlag = moveFlag;
 	}
 
 

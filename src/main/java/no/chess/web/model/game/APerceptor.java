@@ -567,7 +567,7 @@ public class APerceptor {
 	 * This method creates lifted action schemas based on the names parameters
 	 * These lifted action schemas are propositionalized and then a possible initial state and goal state for a Problem is searched for.
 	 * @param names. These are given in the following order:
-	 * Startpos, Piecename, Newpos, Piecetype, or null. A fifth parameter "pawn" is added signaling a pawn strike.
+	 * Startpos, Piecename, Newpos, Piecetype, or null. A fifth parameter "pawn" is added signaling a pawn strike, or "castle" to signal a castling
 	 */
 	public boolean createLiftedActions(String... names) {
 		  writer.println("Actions with ");
@@ -639,19 +639,19 @@ public class APerceptor {
 			    	 writer.println(literal.toString());
 			      }
 			      writer.println("For this goal state");*/
-				  writer.println("And the initial state is");
+				  writer.println("And the next initial state is");
 			      for (Literal literal :
 			    	  state.getFluents()) {
 			    	 writer.println(literal.toString());
 			      }
 			      boolean agree = false;
-			      for (State goalstate:allGoals) {
+/*			      for (State goalstate:allGoals) {
 			    	  agree = agoalState.getFluents().containsAll(goalstate.getFluents());
 			    	  if (agree) {
 			    		  theGoal = goalstate;
 			    		  break;
 			    	  }
-			      }
+			      } OJN 8.04.25 Do not test possible goal states here !!!*/
 			     
 			      if (agree) { // Never found !!! ????
 			    	  writer.println("A possible goal state entails the given goal state in agreement with init state");

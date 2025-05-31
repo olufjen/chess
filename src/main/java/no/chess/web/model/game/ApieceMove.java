@@ -26,7 +26,9 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	private String creation = "";
 	private boolean blackMove = false;
 	private boolean whiteMove = false;
-
+	private boolean plannedMove = false;
+	private boolean executedMove = false;
+	
 
 	public ApieceMove(Position toPosition, AgamePiece piece) {
 		super();
@@ -42,7 +44,8 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 		whiteMove = piece.checkWhite();
 		creation = "Created from gamepiece preferred position";
 		this.moveNotation = null;
-		
+		plannedMove = true;
+		executedMove = false;
 	}
 
 	public ApieceMove(AgamePiece piece,Position fromPosition, Position toPosition,int movenr,String moveNotation) {
@@ -58,10 +61,27 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 			this.moveNotation = moveNotation+"x";
 			moveNumber--;
 		}
-
+		plannedMove = false;;
+		executedMove = true;
 		creation = "Created with from and to position";
 	}
 
+
+	public boolean isPlannedMove() {
+		return plannedMove;
+	}
+
+	public void setPlannedMove(boolean plannedMove) {
+		this.plannedMove = plannedMove;
+	}
+
+	public boolean isExecutedMove() {
+		return executedMove;
+	}
+
+	public void setExecutedMove(boolean executedMove) {
+		this.executedMove = executedMove;
+	}
 
 	public String getCapturedName() {
 		return capturedName;

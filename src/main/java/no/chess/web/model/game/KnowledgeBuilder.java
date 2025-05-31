@@ -38,6 +38,9 @@ import no.games.chess.search.ChessStepCostImpl;
  * @since 18.01.22
  * Added two more knowledge base facts: POSSIBLEPROTECT, POSSIBLEREACH
  * All available positions for a piece are possible to protect or possible to reach
+ * @since April 2024
+ * Added two methods: createOccupyAction - crates an lifted action schema
+ * findApplicable - a method that returns possible applicable action schemas given a lifted action schema
  * @author oluf
  * 
  */
@@ -434,10 +437,10 @@ public static void setAllconstants(List<Constant> allconstants) {
  * Action ("occupy_pos",posx,byPiece)
  * PRECONDITION: (REACHABLE(byPiece,posx)
  * EFFECT: (occupies(byPiece,posx)
- * The action schema contains any number of variables
+ * The action schema may contain any number of variables, and so is a lifted action schema
  * @since 16.12.24
  * The precondition can also be PRECONDITION: (PAWNATTACK(byPiece,posx) or CASTLE(king,posx)
- * This is selected by an additional names parameter called "pawn"
+ * This is selected by an additional names parameter called "pawn" or "castle".
  * @param names - if parameters are given they are used as Constants in preconditions or effects in the returned action schema
  * The parameters must be given in the following order: Startpos, Piecename, Newpos, Piecetype, or null (and an additional string parameter: pawn, or castle)
  * If a parameter is null a Variable is created for this parameter
@@ -556,6 +559,8 @@ public static ActionSchema createOccupyaction(String... names) {
    * findApplicable
    * This method returns a list of applicable action schemas
    * given an action schema containing variables
+   * The method is called from the perceptor
+   * This method makes use of theprivate method makeprop
  * @param initStates a set of ground initial states
  * @param action The lifted action schema (with variables)
  * @return a list of propositionalized action schemas that are applicable
@@ -623,10 +628,6 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 		
 			actions.add(propAction);
 		}
-		//		  }
-		/*		  else {
-			  actions.add(action);
-		  }*/
 	}
   public  static String extract(String s,Function <String,String> f){
 	  return f.apply(s);

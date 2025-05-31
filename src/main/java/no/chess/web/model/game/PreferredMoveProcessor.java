@@ -247,7 +247,10 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			}
 		}
 		if (preferredPosition == null) {
-			preferredPosition = preferredPositions.get(0);
+			preferredPosition = preferredPositions.get(0); // For white pawns, this statement causes white pawn's preferred position to be an attack position.
+			if (pawnType) {
+				preferredPosition = pn.checkAttacks(availablePositions);
+			}
 		}
 		ApieceMove move = new ApieceMove(preferredPosition,p);	
 		move.setPreferredPositions(preferredPositions);
@@ -255,7 +258,7 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 		resetDirections(removedPositions);
 		writer.println("Move: "+move.toString()+"\n"+"piece: "+p.toString());
 		writer.close();
-	return move;
+		return move;
 	}
 
 

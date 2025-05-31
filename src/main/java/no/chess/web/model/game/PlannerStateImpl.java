@@ -11,9 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import aima.core.logic.planning.ActionSchema;
 import no.chess.web.model.Position;
+import no.games.chess.ChessAction;
 import no.games.chess.ChessPlayer;
 import no.games.chess.planning.ChessPlannerAction;
 import no.games.chess.planning.PlannerState;
@@ -43,6 +45,8 @@ public class PlannerStateImpl implements PlannerState {
 	private List<ChessPlannerAction> plannerActions; // Contains the list of propositionalized action schemas from the lifted action schema
 	private ChessPlannerAction plannerAction; // The first entry of the list of plannerActions
 	private int moveNr;
+	private int noofplayerActions = 0;
+	private int noofopponentActions = 0;
 	private APerceptor thePerceptor = null;
 	private String outputFileName =  "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\planning.txt";
 	private PrintWriter writer =  null;
@@ -58,7 +62,6 @@ public class PlannerStateImpl implements PlannerState {
 		this.otherSchemaList = otherSchemaList;
 		this.moveNr = moveNr;
 		plannerActions = new ArrayList<ChessPlannerAction>();
-		createplannerActions();
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {
@@ -66,10 +69,17 @@ public class PlannerStateImpl implements PlannerState {
 			e1.printStackTrace();
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));	
+		createplannerActions();
+
+
 	    if (liftedKey == null || Arrays.stream(liftedKey).allMatch(Objects::isNull)) {
 	    	writer.println("liftedkey is empty");
 	    }
-	    
+	    List<ChessAction> opponentActions = opponent.getActions();
+	    writer.println("Available opponent actions");
+	    for (ChessAction opponentAction:opponentActions) {
+	    	writer.println(opponentAction.toString());
+	    }
 	}
 	
 
@@ -90,27 +100,58 @@ public class PlannerStateImpl implements PlannerState {
 		this.moveNr = moveNr;
 		this.thePerceptor = thePerceptor;
 		plannerActions = new ArrayList<ChessPlannerAction>();
-
-		createplannerActions();
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {
 
 			e1.printStackTrace();
 		}
+
 	    writer = new PrintWriter(new BufferedWriter(fw));	
+
+		createplannerActions();
+
 	    writer.println("Planning");
 	    if (liftedKey == null || Arrays.stream(liftedKey).allMatch(Objects::isNull)) {
 	    	writer.println("liftedkey is empty");
 	    }
+/*
+ * Statistics:	    
+ */
+	    List<ChessAction> opponentActions = opponent.getActions();
+	    List<ChessAction> playerActions = player.getActions();
+	    int noofplayeractions = playerActions.size();
+	    int opponenttotals = opponentActions.size();
+	    List<ChessAction> activplayerActions =  (List<ChessAction>) playerActions.stream().filter(c -> ((ChessActionImpl) c).isMoveFlag()).collect(Collectors.toList());
+	    writer.println("Available opponent actions");
+		List<ChessAction> activActions =  (List<ChessAction>) opponentActions.stream().filter(c -> ((ChessActionImpl) c).isMoveFlag()).collect(Collectors.toList());
+
+	    for (ChessAction opponentAction:activActions) {
+	    	ChessActionImpl localAction = (ChessActionImpl)opponentAction;
+	    	writer.println(localAction.toString());
+	    	writer.println("----");
+	    	noofopponentActions++;
+	    }
+	    writer.println("Sum opponent "+noofopponentActions+" Totals "+opponenttotals);
+	    writer.println("Available player actions");
+	    for (ChessAction playerAction:activplayerActions) {
+	    	ChessActionImpl localAction = (ChessActionImpl)playerAction;
+	    	writer.println(localAction.toString());
+	    	writer.println("----");
+	    	noofplayerActions++;
+	    }
+	    int noofschemas = plannerActions.size();
+	    writer.println("Sum "+noofplayerActions+" Totals "+noofplayeractions+" Schemas "+noofschemas);
 	    writer.flush();
 	}
 
 
 	private void createplannerActions() {
+		writer.println("Player's action schemas");
 		for (ActionSchema schema:actionSchemas) {
 			ChessPlannerAction plannerAction = new ChessPlannerActionImpl(schema,player, moveNr, this);
 			plannerActions.add(plannerAction);
+			writer.println("Action schema "+schema.getName());
 		}
 		if (otherSchemaList != null) {
 			for (ActionSchema schema:otherSchemaList) {
@@ -244,7 +285,7 @@ public class PlannerStateImpl implements PlannerState {
 		List<AgamePiece> opponentPieces = opponent.getMygamePieces();
 		List<AgamePiece> myPieces = player.getMygamePieces();
 		List<AgamePiece> listPieces = new ArrayList<AgamePiece>(pieces.values());
-		if (pieces != null && !pieces.isEmpty()) {// Opponent pieces that can be taken
+		if (pieces != null && !pieces.isEmpty()) { // Opponent pieces that can be taken
 			for (AgamePiece piece:listPieces) {
 				String opposName = piece.getmyPosition().getPositionName();
 				for (AgamePiece mypiece:myPieces) {
@@ -259,7 +300,7 @@ public class PlannerStateImpl implements PlannerState {
 //						opval = oppPiece.getMyValue().intValue();
 						pieceType = mypiece.getNameType();
 						writer.println("Opponent piece found from map key: "+nameKey);
-						writer.println("Opponent piece "+oppPiece.toString());
+						writer.println("Opponent piece "+oppPiece.getMyPiece().getOntlogyName() + " at position"+pos.getPositionName());
 					}
 					if (pos != null) {
 						posName = pos.getPositionName();
@@ -355,6 +396,7 @@ public class PlannerStateImpl implements PlannerState {
 			if (canCastle && thisactivity <= 0 && posName.equals(kingPos)) { // If this is the case then first create an executable case for the rook
 				writer.println("Castling can take place for "+pieceName+ " to castle position "+castlePos.get(keyName)+" Predicate "+fact+" Flag "+canCastle);
 				writer.flush();
+				piece.setCastlingMove(true);
 				int rank = 0;
 //				String algebraicKey = "o-o";
 				castlingKey[0]= posName;
@@ -365,6 +407,7 @@ public class PlannerStateImpl implements PlannerState {
 				String kingCastleKey = KnowledgeBuilder.getKingCastleKey();
 //				peas.addExecutable(kingCastleKey, rank, castlingKey);
 				String rookName = whiteRook;
+				player.getChosenPiece(rookName).setCastlingMove(true);
 				createCastlingRook(rookName);
 				peas.addExecutable(forCastlingKey, rank, rookcastlingKey);
 				castling = true; // This is the only time this flag is set true
@@ -435,7 +478,7 @@ public class PlannerStateImpl implements PlannerState {
 		boolean castling = checkCastling();
 		if (castling) {
 			String kingCastleKey = KnowledgeBuilder.getKingCastleKey();
-			liftedKey = peas.selectExecwithKey(forCastlingKey);
+			liftedKey = peas.selectExecwithKey(forCastlingKey); // Moves the castle 
 			writer.println("Castling: Making a lifted action with: "+liftedKey[0]+" "+liftedKey[1]+" "+liftedKey[2]+" "+liftedKey[3]+" "+liftedKey[4]+" ");
 			writer.flush();
 			flag = thePerceptor.createLiftedActions(liftedKey);
@@ -455,7 +498,7 @@ public class PlannerStateImpl implements PlannerState {
 			writer.println("selectStrategy: Making a lifted action with: "+liftedKey[0]+" "+liftedKey[1]+" "+liftedKey[2]+" "+liftedKey[3]+" "+liftedKey[4]+" ");
 			writer.flush();
 			flag = thePerceptor.createLiftedActions(liftedKey);// Creates the initial and goal states based on this action schema
-		}else if(!castling){
+		}else if(!castling && selectFlag){
 			writer.println("Making a lifted action with: "+notations[move]+" and move number "+move);
 			String[] param = peas.selectPerformance(notations[move]);
 			newPos = param[2];

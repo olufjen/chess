@@ -375,7 +375,7 @@ public class AchessGame extends AbstractChessGame{
 		boolean same = false;		
 		ChessPiece chessPiece = to.getUsedBy();
 		
-		if (chessPiece != null) {
+/*		if (chessPiece != null) {   This block is not necessary		OJN 1.04.25 The new position is set by the chessboard determineMove method. 
 			AgamePiece otherPiece = chessPiece.getMyPiece();
 			if (otherPiece == piece) {
 				writer.println("Same piece occupies from and to position "+source+" "+piece.toString()+"\n Position: "+to.toString());
@@ -383,7 +383,7 @@ public class AchessGame extends AbstractChessGame{
 			}
 				
 		}
-		
+		*/
 		
 		if (heldPosition == null)
 			heldPosition = piece.getmyPosition();

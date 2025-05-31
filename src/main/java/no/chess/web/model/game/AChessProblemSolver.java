@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.ToDoubleFunction;
 
@@ -39,6 +40,7 @@ import aima.core.logic.propositional.parsing.ast.ComplexSentence;
 import aima.core.logic.propositional.parsing.ast.Connective;
 import aima.core.search.adversarial.AdversarialSearch;
 import aima.core.search.adversarial.IterativeDeepeningAlphaBetaSearch;
+import aima.core.search.framework.Metrics;
 import aima.core.search.framework.Node;
 import aima.core.search.framework.NodeExpander;
 import aima.core.search.framework.problem.ActionsFunction;
@@ -1350,7 +1352,7 @@ public void createPerceptor() {
  * @return
  */
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
-	  this.actions = actions;
+	  this.actions = actions; // All chess actions available to player
 	  opponentAgent.setPlayeractions(actions);
 	  actionSchemalist = searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
 // The maps initStates and goalStates are also filled.	
@@ -1425,6 +1427,10 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  */
 
       Optional<PlannerState> astate = queuebasedSearch.findState(searchProblem);
+      Metrics metric = queueSearch.getMetrics();
+      Queue<Node<PlannerState, ChessPlannerAction>> front = queueSearch.getFrontier();
+      
+// The optional astate object refers to the same object as plannerState and localPlanner       
 //	  thePerceptor.createLiftedActions(null,"WhiteKnight2","f3",null); // Creates the initial and goal states based on this action schema
 	  initialState = thePerceptor.getInitState();
 	  goalState = thePerceptor.getGoalState();
@@ -1446,7 +1452,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  typeofPiece = KING;
 		  moveName = "kingmove";
 		  ActionSchema kingAction = makeActionSchemas(kingpieceName, piecepos, kingPos,castlePos);
-		  writer.println("The King castle action check");
+		  writer.println("The King castle action check - ");
 		  writer.println(kingAction.toString());
 		  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(kingpieceName)).findAny().orElse(null);
 		  castleAction = naction;
@@ -1497,7 +1503,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
         		  }
         	  }
           }
-      }
+      }// The above structure is never executed !!
 /* removed 28.02.25
 	  if (actionName != null && !pieceName.equals(actionName)) {
 		  pieceName = actionName;

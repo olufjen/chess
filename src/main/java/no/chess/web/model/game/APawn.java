@@ -339,6 +339,25 @@ public class APawn extends AbstractGamePiece<Position>  implements ChessPieceTyp
 		return removedList;
 	}
 	/**
+	 * checkAttacks
+	 * This method returns a preferred position that is not an attack position
+	 * @return
+	 */
+	public Position checkAttacks(List<Position>availablePositions){
+		List<Position> attack = new ArrayList(attackPositions.values());
+		Position returnpos = null;
+		for (Position pos:availablePositions) {
+			String name = pos.getPositionName();
+			Position attackPos =  (Position) attack.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
+			if (attackPos == null) {
+				returnpos = pos;
+				break;
+			}
+		}
+		
+		return returnpos;
+	}
+	/**
 	 * createattackPosition
 	 * This method creates a new chess position based on a XYLocation
 	 * @since Jan 2025 : Attack positions are added to available positions
