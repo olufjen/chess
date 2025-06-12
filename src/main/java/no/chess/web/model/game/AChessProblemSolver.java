@@ -1402,6 +1402,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 /*
  * PlannerQueueBasedSearch - an implementation of an informed search strategy described in chapter 3.5 p. 92
  * The general approach is called best first search. 
+ * This type of search explores available paths from an initial state to a goal state
  * Is it possible to use this search mechanism to find
  * 1. which position to occupy with what piece?
  * 2. which piece to move to a certain position?
@@ -1745,7 +1746,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
   }
   /**
  * makeActionSchemas
- * THis method creates an action schema based on a chess action.
+ * This method creates an action schema based on a chess action.
  * @param pieceName Name of piece
  * @param actionName Name of action (pieceName+"_"+toPosit
  * @param posName Starting position of piece

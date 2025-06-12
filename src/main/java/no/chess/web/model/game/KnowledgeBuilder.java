@@ -30,6 +30,8 @@ import no.games.chess.planning.ChessPlannerAction;
 import no.games.chess.planning.PlannerState;
 import no.games.chess.search.ChessGoalTest;
 import no.games.chess.search.ChessStepCostImpl;
+import no.games.chess.search.nondeterministic.GameAction;
+import no.games.chess.search.nondeterministic.GameState;
 
 /**
  * KnowledgeBuilder
@@ -704,5 +706,20 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
   public static ChessGoalTest<PlannerState> aGoaltest(ChessPlannerAction a){
 	  ChessGoalTest<PlannerState>  g = s -> s.testEnd(a);
 	  return g;
+  }
+  
+  /**
+   * ActionsFunction<GameState, GameAction>
+   * The ActionFunction extends the Function<S,A> interface with signature S -> A (p. 53 Java 8)
+   * Given a particular state s, ACTIONS(s) returns the set of actions that can be
+   * executed in s. We say that each of these actions is <b>applicable</b> in s.
+   *
+   * @param <S> The type used to represent states
+   * @param <A> The type of the actions to be used to navigate through the state space
+   * @return
+   */
+  public static ActionsFunction<GameState, GameAction> gameActionFunction(){
+	  ActionsFunction<GameState, GameAction> a = s -> s.getActions();
+	  return a;
   }
 }
