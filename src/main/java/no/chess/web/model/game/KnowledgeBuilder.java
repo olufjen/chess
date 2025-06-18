@@ -32,6 +32,7 @@ import no.games.chess.search.ChessGoalTest;
 import no.games.chess.search.ChessStepCostImpl;
 import no.games.chess.search.nondeterministic.GameAction;
 import no.games.chess.search.nondeterministic.GameState;
+import no.games.chess.search.nondeterministic.NonDetermineResultFunction;
 
 /**
  * KnowledgeBuilder
@@ -709,6 +710,8 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
   }
   
   /**
+   * gameActionFunction
+   * This action function is related to the action function described in chapter 4.
    * ActionsFunction<GameState, GameAction>
    * The ActionFunction extends the Function<S,A> interface with signature S -> A (p. 53 Java 8)
    * Given a particular state s, ACTIONS(s) returns the set of actions that can be
@@ -722,4 +725,18 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 	  ActionsFunction<GameState, GameAction> a = s -> s.getActions();
 	  return a;
   }
+  /**
+   * nondeterminGoaltest
+   *This is a nondeterministic goal test function Chapter 4 AIMA book
+   * The goal test, which determines whether a given state is a goal state
+ * @return a nondeterminGoaltest function
+ */
+  public static ChessGoalTest<GameState> nondeterminGoaltest(GameAction a){
+	  ChessGoalTest<GameState>  g = s -> s.testEnd(a);
+	  return g;
+  }
+  // The resultfunction is not a functional interface
+/*  public static NonDetermineResultFunction<GameState,GameAction> nonDetermineRsltFunction(GameState state,GameAction action){
+	  return NonDetermineResultFunction<GameState,GameAction> r = action -> action.getStates();
+  }*/
 }

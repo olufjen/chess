@@ -65,6 +65,8 @@ import no.games.chess.search.ChessNode;
 import no.games.chess.search.ChessSearchProblem;
 import no.games.chess.search.PlannerQueueBasedSearch;
 import no.games.chess.search.PlannerQueueSearch;
+import no.games.chess.search.nondeterministic.AndOrChessSearch;
+import no.games.chess.search.nondeterministic.GameState;
 import no.games.chess.planning.ChessPlannerAction;
 
 
@@ -184,6 +186,7 @@ public class AChessProblemSolver {
   private List <ChessActionImpl> actions = null;
   private ChessActionImpl castleAction = null;
   private List<ActionSchema> actionSchemalist = null; // The list of actionschemas produced by the searchProblem method (Check the Map actionSchemas)
+  private List<GameState> gameStateList = null; // The list of GameState states. Represent the population of GameState OJN June 25 
   private OpponentAgent opponentAgent = null;
   private AgamePiece chosenPiece = null; // Is only set in the checkoppoentThreat method
   private Position chosenPosition = null;// Is only set in the checkoppoentThreat method
@@ -232,6 +235,7 @@ public class AChessProblemSolver {
 	    setPredicatenames();
 	    actionSchemas = new HashMap<String,ActionSchema>();
 	    actionSchemalist = new ArrayList<ActionSchema>();
+	    gameStateList = new ArrayList<GameState>();
 	    initialStates = new ArrayList<List>();
 	    initStates = new HashMap<String,State>(); 
 	    goalStates = new HashMap<String,State>();
@@ -1354,7 +1358,7 @@ public void createPerceptor() {
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  this.actions = actions; // All chess actions available to player
 	  opponentAgent.setPlayeractions(actions);
-	  actionSchemalist = searchProblem(actions); // Builds an ActionSchema for every Chess Action. This is the planning phase
+	  actionSchemalist = searchProblem(actions); // Builds an ActionSchema and GameState for every Chess Action. This is the planning phase
 // The maps initStates and goalStates are also filled.	
 	  opponentAgent.setInitStates(initStates);
 	  opponentAgent.setGoalStates(goalStates);
@@ -1378,6 +1382,10 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 //		otherSchemaList A list of propositionalized action schemas from the lifted action schema. It is used for problem solving      
 //      PlannerState plannerState = new PlannerStateImpl(myPlayer,actionSchemalist,otherSchemaList,noofMoves);
       createPerceptor();
+      List<Sentence> sentences = folKb.getOriginalSentences();
+      for (GameState gameState:gameStateList) {
+    	 
+      }
       PlannerState plannerState = new PlannerStateImpl(myPlayer,opponent,actionSchemalist,noofMoves,thePerceptor); // An alternative Plannerstate creator
       ChessPlannerAction plannerAction = plannerState.getAction();
 //      plannerGame = new AplannerGame(myPlayer,plannerState);
@@ -1390,6 +1398,10 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       search = (ChessPlannerSearch) search;
       search.setLogEnabled(true);
       */
+ /*
+  * The structure for And or search chapter 4.     
+  */
+      AndOrChessSearch andorSearch = new AndOrChessSearch();
       
 /*
  * The structure of queue search:    
@@ -1659,6 +1671,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * With every action schema there is an init state and a goal state. These are held in the maps initStates and goalStates
  * @Since 17.12.21
  * Preconditions and Effects are populated with Constants, the given piecename, posname
+ * @since June 25 
+ * Creates a GameState list from actionschemas
  * @param actions
  * @return a List of ActionSchemas
  */
@@ -1673,7 +1687,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 				String newPos = action.getPossibleMove().getToPosition().getPositionName(); // Get newPos from Preferred position ??!!
 //				String newPos = action.getPreferredPosition().getPositionName(); !!!
 				String pieceName = action.getChessPiece().getMyPiece().getOntlogyName(); // Ontology name of piece
-
+				AgamePiece actionPiece = action.getChessPiece();
 				Position position = action.getChessPiece().getHeldPosition();
 				if (position == null) {
 					position = action.getChessPiece().getMyPosition();
@@ -1700,9 +1714,11 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 				initStates.put(apiecepos, localinitialState);
 				goalStates.put(apiecepos, localgoalState);
 				ActionSchema movedAction = makeActionSchemas(pieceName, actionName, posName, newPos);
-				if (movedAction!= null)
+				if (movedAction!= null) {
 					schemas.add(movedAction);
-				else
+					GameState gameState = new GameState(actionPiece,movedAction); // Added june 25 OJN
+					gameStateList.add(gameState);
+				}else
 					writer.println("No action schema for "+pieceName);
 	//			AgamePiece gpiece =  action.getChessPiece();
 				for (Position apos:availablePos) {
@@ -1716,8 +1732,11 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 						goalStates.put(piecepos, anothergoalstate);
 						ActionSchema anotherActionschema = makeActionSchemas(pieceName, piecepos, posName, aposName);
 //Parameters: Ontology name of piece, Ontology name of piece+ name of available position,name of occupied position,name of available position
-						if (anotherActionschema!= null)
+						if (anotherActionschema!= null) {
 							schemas.add(anotherActionschema);
+							GameState gameState = new GameState(actionPiece,anotherActionschema); // Added june 25 OJN
+							gameStateList.add(gameState);
+						}
 					}
 				}
 				if (typeofPiece.equals(PAWN)) {
@@ -1734,8 +1753,11 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 								initStates.put(piecepos, anotherinitialState);
 								goalStates.put(piecepos, anothergoalstate);
 								ActionSchema anotherActionschema = makeActionSchemas(pieceName, piecepos, posName, aposName);
-								if (anotherActionschema!= null)
+								if (anotherActionschema!= null) {
 									schemas.add(anotherActionschema);
+									GameState gameState = new GameState(actionPiece,anotherActionschema); // Added june 25 OJN
+									gameStateList.add(gameState);
+								}
 							}
 					 }
 				}
