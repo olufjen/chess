@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,7 +67,12 @@ import no.games.chess.search.ChessSearchProblem;
 import no.games.chess.search.PlannerQueueBasedSearch;
 import no.games.chess.search.PlannerQueueSearch;
 import no.games.chess.search.nondeterministic.AndOrChessSearch;
+import no.games.chess.search.nondeterministic.ChessPath;
+import no.games.chess.search.nondeterministic.GameAction;
 import no.games.chess.search.nondeterministic.GameState;
+import no.games.chess.search.nondeterministic.NonDetermineChessActionFunction;
+import no.games.chess.search.nondeterministic.NonDetermineResultFunction;
+import no.games.chess.search.nondeterministic.NondeterministicChessProblem;
 import no.games.chess.planning.ChessPlannerAction;
 
 
@@ -235,7 +241,7 @@ public class AChessProblemSolver {
 	    setPredicatenames();
 	    actionSchemas = new HashMap<String,ActionSchema>();
 	    actionSchemalist = new ArrayList<ActionSchema>();
-	    gameStateList = new ArrayList<GameState>();
+	    gameStateList = new LinkedList<GameState>();
 	    initialStates = new ArrayList<List>();
 	    initStates = new HashMap<String,State>(); 
 	    goalStates = new HashMap<String,State>();
@@ -1358,7 +1364,7 @@ public void createPerceptor() {
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  this.actions = actions; // All chess actions available to player
 	  opponentAgent.setPlayeractions(actions);
-	  actionSchemalist = searchProblem(actions); // Builds an ActionSchema and GameState for every Chess Action. This is the planning phase
+	  actionSchemalist = searchProblem(actions); // Builds an ActionSchema and GameStates for every Chess Action. This is the planning phase
 // The maps initStates and goalStates are also filled.	
 	  opponentAgent.setInitStates(initStates);
 	  opponentAgent.setGoalStates(goalStates);
@@ -1382,10 +1388,15 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 //		otherSchemaList A list of propositionalized action schemas from the lifted action schema. It is used for problem solving      
 //      PlannerState plannerState = new PlannerStateImpl(myPlayer,actionSchemalist,otherSchemaList,noofMoves);
       createPerceptor();
-      List<Sentence> sentences = folKb.getOriginalSentences();
-      for (GameState gameState:gameStateList) {
-    	 
+//      List<Sentence> sentences = folKb.getOriginalSentences();
+      writer.println("The population of gamestates");
+      for (GameState gameState:gameStateList) { // A population of GameStates
+    		 writer.println(gameState.toString());
       }
+      GameState initialGameState = gameStateList.get(0);
+      GameAction gameAction = initialGameState.getAction();
+      NonDetermineResultFunction ndeterRFN = new NonDetermineResultFunction (null,null,gameStateList);
+      
       PlannerState plannerState = new PlannerStateImpl(myPlayer,opponent,actionSchemalist,noofMoves,thePerceptor); // An alternative Plannerstate creator
       ChessPlannerAction plannerAction = plannerState.getAction();
 //      plannerGame = new AplannerGame(myPlayer,plannerState);
@@ -1398,10 +1409,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       search = (ChessPlannerSearch) search;
       search.setLogEnabled(true);
       */
- /*
-  * The structure for And or search chapter 4.     
-  */
-      AndOrChessSearch andorSearch = new AndOrChessSearch();
+
       
 /*
  * The structure of queue search:    
@@ -1442,6 +1450,18 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       Optional<PlannerState> astate = queuebasedSearch.findState(searchProblem);
       Metrics metric = queueSearch.getMetrics();
       Queue<Node<PlannerState, ChessPlannerAction>> front = queueSearch.getFrontier();
+/*
+ * For nondeterministic search chapter 4      
+ */
+      ChessGoalTest gameTest = KnowledgeBuilder.nondeterminGoaltest(gameAction);
+      NonDetermineChessActionFunction ndeterActionfn =new NonDetermineChessActionFunction();
+      NondeterministicChessProblem nondeterProblem = new NondeterministicChessProblem(initialGameState,ndeterActionfn,ndeterRFN,gameTest);
+      /*
+       * The structure for And or search chapter 4.     
+       */
+      AndOrChessSearch andorSearch = new AndOrChessSearch();
+      ChessPath path = new ChessPath();
+      andorSearch.andSearch(gameStateList, nondeterProblem,path );
       
 // The optional astate object refers to the same object as plannerState and localPlanner       
 //	  thePerceptor.createLiftedActions(null,"WhiteKnight2","f3",null); // Creates the initial and goal states based on this action schema

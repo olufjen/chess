@@ -31,7 +31,7 @@ public class MoveMent {
 	private List<Position> usedPositionlist;
 	private List<Position> notusedPositionlist;
 	private List<Position> availablePositionlist;
-	private List<Position> positionlist; // THe original HashMap of positions as a list
+	private List<Position> positionlist; // The original HashMap of positions as a list
 	
 	public MoveMent(NQueensBoard board, HashMap<String, Position> positions) {
 		super();

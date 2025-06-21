@@ -32,6 +32,7 @@ import no.games.chess.search.ChessGoalTest;
 import no.games.chess.search.ChessStepCostImpl;
 import no.games.chess.search.nondeterministic.GameAction;
 import no.games.chess.search.nondeterministic.GameState;
+import no.games.chess.search.nondeterministic.NonDetermineChessActionFunction;
 import no.games.chess.search.nondeterministic.NonDetermineResultFunction;
 
 /**
@@ -700,7 +701,7 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
 	  return step;
   }
   /**
-   * aGoaltest
+   * aGoaltest for the PlannerState
    * The goal test, which determines whether a given state is a goal state
  * @return a goaltest function
  */
@@ -722,7 +723,7 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
    * @return
    */
   public static ActionsFunction<GameState, GameAction> gameActionFunction(){
-	  ActionsFunction<GameState, GameAction> a = s -> s.getActions();
+	 ActionsFunction<GameState, GameAction> a = s -> s.getActions();
 	  return a;
   }
   /**
