@@ -327,7 +327,7 @@ public class AChessAgent extends KBAgent {
 	 */
 	@Override
 	public Action execute(Percept state) {
-		stateImpl = (ChessStateImpl)state;
+		stateImpl = (ChessStateImpl)state; // The aima.core.Percept interface is an empty interface
 //		Variable kingJohn = new Variable("John");
 /*		List<Term> terms = new ArrayList<Term>();
 		terms.add(kingJohn);

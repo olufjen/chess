@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import aima.core.logic.planning.ActionSchema;
+import no.games.chess.GamePiece;
 import no.chess.web.model.Position;
 import no.games.chess.ChessAction;
 import no.games.chess.ChessPlayer;
@@ -26,6 +27,8 @@ import no.games.chess.planning.PlannerState;
  * It contains a number of Planner Actions and Action Schemas, and the Player of the game.
  * There is one Planner Action for every Action schema
  * It is created by the Problem Solver when the planProblem method is called.
+ * It is used  together with PlannerQueueBasedSearch - an implementation of an informed search strategy described in chapter 3.5 p. 92
+ * 
  * @author oluf
  *
  */
@@ -307,8 +310,12 @@ public class PlannerStateImpl implements PlannerState {
 						algebraicKey = alName+"x"+posName;
 						writer.println("Opponent piece is at "+pos.getPositionName()+" and map key: "+nameKey);
 						String fact = KnowledgeBuilder.getTHREATEN();
-						List<AgamePiece> threatpieces = thePerceptor.checkOpponentthreat("x", posName, fact);
+						List<GamePiece> thepieces = thePerceptor.checkOpponentthreat("x", posName, fact);
+						List<AgamePiece> threatpieces = null; //new ArrayList<AgamePiece>();
 						int antThreat = 0;
+						if(thepieces != null) {
+							threatpieces = thepieces.stream().filter(AgamePiece.class::isInstance).map(AgamePiece.class::cast).collect(Collectors.toList());
+						}
 						if (threatpieces != null) { // If this is the case, find an alternative move !!!
 							for (AgamePiece threatpiece:threatpieces) {
 								writer.println("This position "+ posName + " is protected by opponent "+threatpiece.getMyPiece().getOntlogyName());
@@ -318,7 +325,11 @@ public class PlannerStateImpl implements PlannerState {
 
 						}
 						String pawnfact = KnowledgeBuilder.getPAWNATTACK();
-						List<AgamePiece> pawnpieces = thePerceptor.checkOpponentthreat("x", posName, pawnfact);
+						List<GamePiece> theotherpieces = thePerceptor.checkOpponentthreat("x", posName, pawnfact);
+						List<AgamePiece> pawnpieces = null; //new ArrayList<AgamePiece>();
+						if(theotherpieces != null) {
+							pawnpieces = theotherpieces.stream().filter(AgamePiece.class::isInstance).map(AgamePiece.class::cast).collect(Collectors.toList());
+						}
 						if (pawnpieces != null) {
 							for (AgamePiece pawnpiece:pawnpieces) {
 								writer.println("This position "+ posName + " is under pawn attack from opponent "+pawnpiece.getMyPiece().getOntlogyName());
@@ -486,7 +497,7 @@ public class PlannerStateImpl implements PlannerState {
 		}
 //		boolean keyflag = (liftedKey == null || Arrays.stream(liftedKey).allMatch(Objects::isNull));
 		if (!selectFlag) { //: SelectStrategy finished opening moves
-			liftedKey = peas.selectExecutable();
+			liftedKey = peas.selectExecutable(); // NO lifted keys when there are no opponent pieces to take ??!!
 			newPos = liftedKey[2];
 			String fact = KnowledgeBuilder.getTHREATEN();
 /*			List<AgamePiece> pieces = thePerceptor.checkOpponentthreat("x", newPos, fact);
@@ -503,8 +514,12 @@ public class PlannerStateImpl implements PlannerState {
 			String[] param = peas.selectPerformance(notations[move]);
 			newPos = param[2];
 			String fact = KnowledgeBuilder.getTHREATEN();
-			List<AgamePiece> pieces = thePerceptor.checkOpponentthreat("x", newPos, fact);
-			if (pieces != null) { // If this is the case, find an alternative move !!!
+			List<GamePiece> thepieces = thePerceptor.checkOpponentthreat("x", newPos, fact);
+			List<AgamePiece> pieces =  null; //new ArrayList<AgamePiece>();// If thepieces is null, pieces does not become empty !!
+			if(thepieces != null) {
+				pieces = thepieces.stream().filter(AgamePiece.class::isInstance).map(AgamePiece.class::cast).collect(Collectors.toList());
+			}
+			if (pieces != null && !pieces.isEmpty()) { // If this is the case, find an alternative move !!!
 				for (AgamePiece piece:pieces) {
 					writer.println("The position "+ newPos + " is threatened by "+piece.getMyPiece().getOntlogyName());
 				}

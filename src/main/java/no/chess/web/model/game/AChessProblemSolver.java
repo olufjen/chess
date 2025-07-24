@@ -68,6 +68,7 @@ import no.games.chess.search.PlannerQueueBasedSearch;
 import no.games.chess.search.PlannerQueueSearch;
 import no.games.chess.search.nondeterministic.AndOrChessSearch;
 import no.games.chess.search.nondeterministic.ChessPath;
+import no.games.chess.search.nondeterministic.ChessPlan;
 import no.games.chess.search.nondeterministic.GameAction;
 import no.games.chess.search.nondeterministic.GameState;
 import no.games.chess.search.nondeterministic.NonDetermineChessActionFunction;
@@ -1016,7 +1017,13 @@ public class AChessProblemSolver {
 
   }
 
-  public void fillthePerceptor(APerceptor thePerceptor) {
+  /**
+   * fillthePerceptor
+   * This method fills the perceptor with necessary information.
+   * 
+ * @param thePerceptor
+ */
+public void fillthePerceptor(APerceptor thePerceptor) {
 	  thePerceptor.setMyPlayer(myPlayer);
 	  thePerceptor.setOpponent(opponent);
 	  thePerceptor.setAgent(opponentAgent);
@@ -1392,10 +1399,13 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       writer.println("The population of gamestates");
       for (GameState gameState:gameStateList) { // A population of GameStates
     		 writer.println(gameState.toString());
+    		 gameState.setThePerceptor(thePerceptor);
       }
+/*
+ * How to define the initial state?      
+ */
       GameState initialGameState = gameStateList.get(0);
       GameAction gameAction = initialGameState.getAction();
-      NonDetermineResultFunction ndeterRFN = new NonDetermineResultFunction (null,null,gameStateList);
       
       PlannerState plannerState = new PlannerStateImpl(myPlayer,opponent,actionSchemalist,noofMoves,thePerceptor); // An alternative Plannerstate creator
       ChessPlannerAction plannerAction = plannerState.getAction();
@@ -1451,18 +1461,25 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       Metrics metric = queueSearch.getMetrics();
       Queue<Node<PlannerState, ChessPlannerAction>> front = queueSearch.getFrontier();
 /*
- * For nondeterministic search chapter 4      
+ * For nondeterministic search as described in chapter 4.3.2 and figure 4.11      
  */
-      ChessGoalTest gameTest = KnowledgeBuilder.nondeterminGoaltest(gameAction);
+      NonDetermineResultFunction ndeterRFN = new NonDetermineResultFunction (null,null,gameStateList); // No initial state and no initial action
+      ChessGoalTest<GameState> gameTest = KnowledgeBuilder.nondeterminGoaltest(gameAction);
       NonDetermineChessActionFunction ndeterActionfn =new NonDetermineChessActionFunction();
-      NondeterministicChessProblem nondeterProblem = new NondeterministicChessProblem(initialGameState,ndeterActionfn,ndeterRFN,gameTest);
+      NondeterministicChessProblem nondeterProblem = new NondeterministicChessProblem(null,ndeterActionfn,ndeterRFN,gameTest); // No step cost function !!
       /*
-       * The structure for And or search chapter 4.     
+       * The structure for And or search chapter 4.    
+       * A nondeterministic environment. It always starts with the andSearch 
        */
       AndOrChessSearch andorSearch = new AndOrChessSearch();
       ChessPath path = new ChessPath();
-      andorSearch.andSearch(gameStateList, nondeterProblem,path );
-      
+      ChessPlan aPlan = andorSearch.andSearch(gameStateList, nondeterProblem,path ); // A nondeterministic environment. It always starts with the andSearch 
+/*
+ * The population of gamestates ends up in the ifstatements of the plan !!
+ * 
+ */
+      writer.println("The plan - ");
+      writer.println(aPlan.toString());
 // The optional astate object refers to the same object as plannerState and localPlanner       
 //	  thePerceptor.createLiftedActions(null,"WhiteKnight2","f3",null); // Creates the initial and goal states based on this action schema
 	  initialState = thePerceptor.getInitState();

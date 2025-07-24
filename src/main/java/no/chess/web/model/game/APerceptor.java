@@ -22,8 +22,10 @@ import aima.core.logic.planning.State;
 import no.chess.web.model.ChessPiece;
 import no.chess.web.model.Position;
 import no.games.chess.planning.PerceptSchema;
+import no.games.chess.search.nondeterministic.ChessPercept;
 import no.games.chess.ChessPieceType;
 import no.games.chess.ChessVariables;
+import no.games.chess.GamePiece;
 
 /**
  * This class creates percept schemas 
@@ -46,7 +48,7 @@ import no.games.chess.ChessVariables;
  * These action schemas are used as a basis for problem solving see the method createLiftedActions
  * 
  */
-public class APerceptor {
+public class APerceptor implements ChessPercept {
 	/*
 	 * Predicate names	
 	 */
@@ -239,30 +241,30 @@ public class APerceptor {
 	  }
 
 	  public Map<String, AgamePiece> getThreatenedPieces() {
-		return threatenedPieces;
-	}
-	public void setThreatenedPieces(Map<String, AgamePiece> threatenedPieces) {
-		this.threatenedPieces = threatenedPieces;
-	}
-	public Map<String, Position> getThreadenedPositions() {
-		return threadenedPositions;
-	}
-	public void setThreadenedPositions(Map<String, Position> threadenedPositions) {
-		this.threadenedPositions = threadenedPositions;
-	}
-	public Map<String, ArrayList<AgamePiece>> getProtectors() {
-		return protectors;
-	}
-	public void setProtectors(Map<String, ArrayList<AgamePiece>> protectors) {
-		this.protectors = protectors;
-	}
-	public Map<String, ArrayList<AgamePiece>> getAttackers() {
-		return attackers;
-	}
-	public void setAttackers(Map<String, ArrayList<AgamePiece>> attackers) {
-		this.attackers = attackers;
-	}
-	public List<ActionSchema> getOtherActions() {
+		  return threatenedPieces;
+	  }
+	  public void setThreatenedPieces(Map<String, AgamePiece> threatenedPieces) {
+		  this.threatenedPieces = threatenedPieces;
+	  }
+	  public Map<String, Position> getThreadenedPositions() {
+		  return threadenedPositions;
+	  }
+	  public void setThreadenedPositions(Map<String, Position> threadenedPositions) {
+		  this.threadenedPositions = threadenedPositions;
+	  }
+	  public Map<String, ArrayList<AgamePiece>> getProtectors() {
+		  return protectors;
+	  }
+	  public void setProtectors(Map<String, ArrayList<AgamePiece>> protectors) {
+		  this.protectors = protectors;
+	  }
+	  public Map<String, ArrayList<AgamePiece>> getAttackers() {
+		  return attackers;
+	  }
+	  public void setAttackers(Map<String, ArrayList<AgamePiece>> attackers) {
+		  this.attackers = attackers;
+	  }
+	  public List<ActionSchema> getOtherActions() {
 		  return otherActions;
 	  }
 	  public void setOtherActions(List<ActionSchema> otherActions) {
@@ -389,11 +391,13 @@ public class APerceptor {
 	 * @param fact
 	 * @return a list of opponent pieces or null
 	 */
-	public List<AgamePiece> checkOpponentthreat(String pieceName,String pos,String fact){
+	public List<GamePiece> checkOpponentthreat(String pieceName,String pos,String fact){
 		boolean threats = folKb.checkThreats(pieceName, pos, fact, opponent);
 		if (!threats)
 			return null;
-		return folKb.getMovePieces();
+		List<AgamePiece> pieces = folKb.getMovePieces();
+		List<GamePiece> gamePieces = new ArrayList<GamePiece>(pieces);
+		return gamePieces;
 	}
 	/**
 	   * checkPercept
