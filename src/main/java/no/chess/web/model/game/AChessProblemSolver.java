@@ -193,7 +193,8 @@ public class AChessProblemSolver {
   private List <ChessActionImpl> actions = null;
   private ChessActionImpl castleAction = null;
   private List<ActionSchema> actionSchemalist = null; // The list of actionschemas produced by the searchProblem method (Check the Map actionSchemas)
-  private List<GameState> gameStateList = null; // The list of GameState states. Represent the population of GameState OJN June 25 
+  private List<GroundGameState> gameStateList = null; // The list of GameState states. Represent the population of GameState OJN June 25 
+  private List<GameState> thegameStateList = null;
   private OpponentAgent opponentAgent = null;
   private AgamePiece chosenPiece = null; // Is only set in the checkoppoentThreat method
   private Position chosenPosition = null;// Is only set in the checkoppoentThreat method
@@ -242,7 +243,8 @@ public class AChessProblemSolver {
 	    setPredicatenames();
 	    actionSchemas = new HashMap<String,ActionSchema>();
 	    actionSchemalist = new ArrayList<ActionSchema>();
-	    gameStateList = new LinkedList<GameState>();
+	    gameStateList = new LinkedList<GroundGameState>();
+	    thegameStateList = new LinkedList<GameState>();
 	    initialStates = new ArrayList<List>();
 	    initStates = new HashMap<String,State>(); 
 	    goalStates = new HashMap<String,State>();
@@ -1397,12 +1399,17 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       createPerceptor();
 //      List<Sentence> sentences = folKb.getOriginalSentences();
       writer.println("The population of gamestates");
-      for (GameState gameState:gameStateList) { // A population of GameStates
-    		 writer.println(gameState.toString());
-    		 gameState.setThePerceptor(thePerceptor);
+      for (GroundGameState gameState:gameStateList) { // A population of GameStates
+    	  gameState.setThePerceptor(thePerceptor);
+    	  gameState.setOpponent(opponent);
+    	  gameState.setPlayer(myPlayer);
+    	  gameState.setMoveNr(noofMoves);
+    	  gameState.setStatestatistics();
+    	  writer.println(gameState.toString());
       }
+      thegameStateList.addAll(gameStateList);
 /*
- * How to define the initial state?      
+ * How to define the initial state?   At present not in use OJN 05.08.25   
  */
       GameState initialGameState = gameStateList.get(0);
       GameAction gameAction = initialGameState.getAction();
@@ -1463,30 +1470,34 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 /*
  * For nondeterministic search as described in chapter 4.3.2 and figure 4.11      
  */
-      NonDetermineResultFunction ndeterRFN = new NonDetermineResultFunction (null,null,gameStateList); // No initial state and no initial action
+      NonDetermineResultFunction ndeterRFN = new NonDetermineResultFunction (null,null,thegameStateList); // No initial state and no initial action
       ChessGoalTest<GameState> gameTest = KnowledgeBuilder.nondeterminGoaltest(gameAction);
       NonDetermineChessActionFunction ndeterActionfn =new NonDetermineChessActionFunction();
       NondeterministicChessProblem nondeterProblem = new NondeterministicChessProblem(null,ndeterActionfn,ndeterRFN,gameTest); // No step cost function !!
       /*
        * The structure for And or search chapter 4.    
-       * A nondeterministic environment. It always starts with the andSearch 
+       * A nondeterministic environment. 
        */
       AndOrChessSearch andorSearch = new AndOrChessSearch();
       ChessPath path = new ChessPath();
-      ChessPlan aPlan = andorSearch.andSearch(gameStateList, nondeterProblem,path ); // A nondeterministic environment. It always starts with the andSearch 
+      Optional<ChessPlan> aPlan = andorSearch.search(nondeterProblem) ; // A nondeterministic environment. 
+      ChessPlan thisPlan = aPlan.isPresent() ? aPlan.get() : null;
 /*
  * The population of gamestates ends up in the ifstatements of the plan !!
- * 
+ * At present all game states are the goal state, so there is no plan
  */
       writer.println("The plan - ");
-      writer.println(aPlan.toString());
+      writer.println(thisPlan.toString());
 // The optional astate object refers to the same object as plannerState and localPlanner       
 //	  thePerceptor.createLiftedActions(null,"WhiteKnight2","f3",null); // Creates the initial and goal states based on this action schema
 	  initialState = thePerceptor.getInitState();
 	  goalState = thePerceptor.getGoalState();
 	  otherSchemas = thePerceptor.getOtherSchemas();
+/*
+ * The above states and schemas are necessary for creating the ChessProblem for the planning graph 	  
+ */
 	  otherSchemaList = thePerceptor.getOtherActions();
- /*
+ /* 
   * This astate object must contain the initial and goal states used when creating the ChessProblem used in the graphplan algorithm.     
   */
       String pieceKey = null;
@@ -1753,7 +1764,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 				ActionSchema movedAction = makeActionSchemas(pieceName, actionName, posName, newPos);
 				if (movedAction!= null) {
 					schemas.add(movedAction);
-					GameState gameState = new GameState(actionPiece,movedAction); // Added june 25 OJN
+					GroundGameState gameState = new GroundGameState(actionPiece,movedAction); // Added june 25 OJN Modified in july
 					gameStateList.add(gameState);
 				}else
 					writer.println("No action schema for "+pieceName);
@@ -1771,7 +1782,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 //Parameters: Ontology name of piece, Ontology name of piece+ name of available position,name of occupied position,name of available position
 						if (anotherActionschema!= null) {
 							schemas.add(anotherActionschema);
-							GameState gameState = new GameState(actionPiece,anotherActionschema); // Added june 25 OJN
+							GroundGameState gameState = new GroundGameState(actionPiece,anotherActionschema); // Added june 25 OJN
 							gameStateList.add(gameState);
 						}
 					}
@@ -1792,7 +1803,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 								ActionSchema anotherActionschema = makeActionSchemas(pieceName, piecepos, posName, aposName);
 								if (anotherActionschema!= null) {
 									schemas.add(anotherActionschema);
-									GameState gameState = new GameState(actionPiece,anotherActionschema); // Added june 25 OJN
+									GroundGameState gameState = new GroundGameState(actionPiece,anotherActionschema); // Added june 25 OJN
 									gameStateList.add(gameState);
 								}
 							}
