@@ -24,6 +24,8 @@ import aima.core.search.framework.Node;
 import aima.core.search.framework.problem.ActionsFunction;
 import aima.core.search.framework.problem.ResultFunction;
 import aima.core.search.framework.problem.StepCostFunction;
+import no.chess.ontology.BoardPosition;
+import no.chess.ontology.Taken;
 import no.function.FunctionContect;
 import no.games.chess.AbstractGamePiece.pieceType;
 import no.games.chess.planning.ChessPlannerAction;
@@ -408,6 +410,13 @@ public static void setAllconstants(List<Constant> allconstants) {
 		  return KING;
 	  }	
 	  return null;
+  }
+  public static BoardPosition convertToBoardPosition(Taken taken) {
+      // Example: You would extract the relevant information from 'taken' to create a 'BoardPosition'
+      // For instance, if 'Taken' has a 'getPosition()' method that returns a 'BoardPosition':
+      // return taken.getPosition();
+  	BoardPosition boardPos = taken;
+      return boardPos; // Placeholder for actual conversion logic
   }
 
   /**

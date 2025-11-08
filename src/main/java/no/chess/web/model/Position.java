@@ -2,12 +2,14 @@ package no.chess.web.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
+import java.util.stream.Collectors;
 
 import org.protege.owl.codegeneration.inference.CodeGenerationInference;
 import org.semanticweb.owlapi.model.IRI;
@@ -22,7 +24,9 @@ import no.chess.ontology.BoardPosition;
 import no.chess.ontology.Piece;
 import no.chess.ontology.Taken;
 import no.chess.ontology.WhiteBoardPosition;
+import no.chess.ontology.impl.DefaultBoardPosition;
 import no.chess.ontology.impl.DefaultWhitePiece;
+import no.chess.web.model.game.KnowledgeBuilder;
 
 /*import no.basis.felles.semanticweb.chess.BlackBoardPosition;
 import no.basis.felles.semanticweb.chess.BlackPiece;
@@ -472,6 +476,15 @@ public class Position extends ParentModel {
 			}
 		} 
 	}
+    // This method needs to be implemented based on how a Taken object can be converted to a BoardPosition
+	/*
+	 * private BoardPosition convertToBoardPosition(Taken taken) { // Example: You
+	 * would extract the relevant information from 'taken' to create a
+	 * 'BoardPosition' // For instance, if 'Taken' has a 'getPosition()' method that
+	 * returns a 'BoardPosition': // return taken.getPosition(); BoardPosition
+	 * boardPos = taken; return boardPos; // Placeholder for actual conversion logic
+	 * }
+	 */
 	/**
 	 * checkPieceOccupation
 	 * This method checks if an individual piece occupies correct position.
@@ -480,7 +493,17 @@ public class Position extends ParentModel {
 	 */
 	public void checkPieceOccupation(Piece piece){
 		if (piece.getOccupies() != null){
-			HashSet<BoardPosition> whitePosset = (HashSet<BoardPosition>) piece.getOccupies();
+//			HashSet<BoardPosition> occupies = ((HashSet<BoardPosition>) piece.getOccupies());
+			Collection<? extends Taken> takenPieces = piece.getOccupies();
+	        // Convert the collection of Taken objects to a HashSet of BoardPosition objects
+	        HashSet<BoardPosition> boardPositions = takenPieces.stream()
+	                .map(KnowledgeBuilder::convertToBoardPosition) // Apply a mapping function
+	                .collect(Collectors.toCollection(HashSet::new));
+
+
+	        HashSet<BoardPosition> whitePosset = boardPositions;
+			
+//			HashSet<BoardPosition> whitePosset = occupies;
 			Iterator<BoardPosition> whitePosIterator =  whitePosset.iterator(); // Empty after move???!!
 			while(whitePosIterator.hasNext()){
 				BoardPosition whitePos = whitePosIterator.next();

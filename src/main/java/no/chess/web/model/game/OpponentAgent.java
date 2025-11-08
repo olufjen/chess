@@ -363,8 +363,10 @@ public class OpponentAgent {
 				myPieceNames.add(pieceName);
 			}
 		}
+		List<ChessActionImpl> myActions = new ArrayList<ChessActionImpl>();
 		for (ChessAction action:actions) {
 			ChessActionImpl localAction = (ChessActionImpl) action;
+			myActions.add(localAction);
 			ApieceMove move = localAction.getPossibleMove();
 			AgamePiece piece = localAction.getChessPiece();
 			String pieceName = piece.getMyPiece().getOntlogyName();
@@ -383,8 +385,8 @@ public class OpponentAgent {
 				}
 			}
 		}
-		List<ChessActionImpl> myActions = new ArrayList();
-		myActions.addAll((Collection<? extends ChessActionImpl>) actions);
+
+//		myActions.addAll((Collection<? extends ChessActionImpl>) actions);
 		probepossibilities(myActions, myPlayer);
 	}
 	/**
