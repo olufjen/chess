@@ -1,9 +1,9 @@
 package no.chess.web.server.resource;
 
-
-import org.restlet.resource.ServerResource;
-
 import no.chess.web.control.SessionAdmin;
+import no.chess.web.control.SessionAdminImpl;
+
+
 
 
 /**
@@ -12,9 +12,9 @@ import no.chess.web.control.SessionAdmin;
  * @author oluf
  *
  */
-public class ProsedyreServerResource extends ServerResource {
+public abstract class ProsedyreServerResource  {
 
-	protected SessionAdmin sessionAdmin = null;
+	protected final SessionAdminImpl sessionAdmin = new SessionAdminImpl();
 
 	
 	
@@ -24,11 +24,8 @@ public class ProsedyreServerResource extends ServerResource {
 	
 	
 
-	public SessionAdmin getSessionAdmin() {
+	public SessionAdminImpl getSessionAdmin() {
 		return sessionAdmin;
-	}
-	public void setSessionAdmin(SessionAdmin sessionAdmin) {
-		this.sessionAdmin = sessionAdmin;
 	}
 
 	public String[] getSessionParams() {

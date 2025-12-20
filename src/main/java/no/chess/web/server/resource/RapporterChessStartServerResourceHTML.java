@@ -1,5 +1,12 @@
 package no.chess.web.server.resource;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,6 +17,7 @@ import java.util.stream.Stream;
 
 import no.basic.ontology.model.OntologyModel;
 import no.chess.ontology.BlackBoardPosition;
+import no.chess.web.control.SessionAdminImpl;
 import no.chess.web.model.ChessBoard;
 import no.chess.web.model.ChessMoves;
 import no.chess.web.model.ChessPiece;
@@ -21,21 +29,9 @@ import no.chess.web.model.QueensEnvironment;
 import no.chess.web.model.game.APlayer;
 import no.chess.web.model.game.AgamePiece;
 import no.chess.web.model.game.ApieceMove;
+import no.chess.web.view.FreemarkerView;
 
-import org.restlet.Request;
-import org.restlet.Response;
-import org.restlet.data.Disposition;
-import org.restlet.data.Form;
-import org.restlet.data.LocalReference;
-import org.restlet.data.MediaType;
-import org.restlet.data.Parameter;
-import org.restlet.data.Reference;
-import org.restlet.ext.freemarker.TemplateRepresentation;
-import org.restlet.representation.FileRepresentation;
-import org.restlet.representation.Representation;
-import org.restlet.resource.ClientResource;
-import org.restlet.resource.Get;
-import org.restlet.resource.Post;
+import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.ontology.OntClass;
@@ -52,16 +48,35 @@ import aima.core.search.csp.Domain;
 import aima.core.search.csp.Variable;
 import aima.core.search.csp.examples.NQueensCSP;
 import aima.core.util.datastructure.XYLocation;
+import freemarker.template.Configuration;
 import freemarker.template.SimpleScalar;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.MessageBodyWriter;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @author olj
  *  Denne resursen er knyttet til startsiden i
  *  Sjakkspillet
  */
+@Component // <-- Forteller Spring at dette er en bønne
+@Path("/chess") // <-- Må være på klassen for /api/skjema 
 public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 
-	
 	private String delMelding = "delmelding";
 	private String meldeTxtId = "melding";
 	private String passordCheck = "none";
@@ -88,8 +103,12 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 
 	private List<Position> availableMoves = null;
 	private List<String>availablePosNames = null;
-	
-	
+
+	public RapporterChessStartServerResourceHTML() {
+		super();
+
+	}
+
 	public String getTilgjengeligPos() {
 		return tilgjengeligPos;
 	}
@@ -278,12 +297,29 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	 * vise et sjakkbrett. Den blir utført når nettsiden "Sjakk" starter opp.
 	 * @return
 	 */
-	@Get
-	public Representation getChess() {
+    @GET
+    @Produces(MediaType.TEXT_HTML)
+	public Response  getChess(@Context HttpServletRequest request) {
 
-	     Reference reference = new Reference(getReference(),"..").getTargetRef();
-	     Request request = getRequest();
-	     Map<String, Object> dataModel = new HashMap<String, Object>();
+   // 	Response rep = null;
+    	String siden = "chess/startside.html";
+		/*
+		 * try { // OBS: Må peke til der index.html ligger relativt til Context-roten.
+		 * // Hvis index.html ligger i roten av webapp-mappen: URI location = new
+		 * URI("../../chess/startside.html"); rep =
+		 * Response.temporaryRedirect(location).build(); } catch (Exception e) { return
+		 * Response.serverError().entity("Feil ved lasting av skjema: " +
+		 * e.getMessage()).build(); }
+		 */
+    	
+    
+		/*
+		 * Reference reference = new Reference(getReference(),"..").getTargetRef(); //
+		 * org.restlet.data Request request = getRequest(); // Tidligere kall til
+		 * org.restlet.resource.ServerResource !!
+		 */
+//    	HttpSession session = (HttpSession) request.getSession(true);
+         Map<String, Object> dataModel = new HashMap<String, Object>();
 	
 //	     establishMoves();
 	     String meldingsText = " ";
@@ -324,19 +360,27 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 		
 //		 SimpleScalar pwd = new SimpleScalar(passordCheck);
 //		 dataModel.put(displayPassord,pwd);
-	     LocalReference pakke = LocalReference.createClapReference(LocalReference.CLAP_CLASS,
-                 "/chess");
-	    
-	     LocalReference localUri = new LocalReference(reference);
-	
-// Denne client resource forholder seg til src/main/resource katalogen !!!	
-	     ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-
-	        Representation pasientkomplikasjonFtl = clres2.get();
-
-	        TemplateRepresentation  templatemapRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-	                MediaType.TEXT_HTML);
-		 return templatemapRep;
+   	 	
+   	 	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+			/*
+			 * LocalReference pakke =
+			 * LocalReference.createClapReference(LocalReference.CLAP_CLASS, "/chess"); //
+			 * org.restlet.data
+			 * 
+			 * LocalReference localUri = new LocalReference(reference);
+			 * 
+			 * // Denne client resource forholder seg til src/main/resource katalogen !!!
+			 * ClientResource clres2 = new
+			 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+			 * "/chess/startside.html")); //org.restlet.resource
+			 * 
+			 * Representation pasientkomplikasjonFtl = clres2.get();
+			 * 
+			 * TemplateRepresentation templatemapRep = new
+			 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+			 * MediaType.TEXT_HTML); // org.restlet.representation
+			 */
+   	 	 return Response.ok(view).build();
 	
 	}
 	
@@ -351,15 +395,35 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
      * @param form
      * @return
      */
-    @Post
-    public Representation storeChess(Form form) {
-    	TemplateRepresentation  templateRep = null;
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_HTML) // Returnerer HTML som bekreftelse
+    public Response storeChess(
+    		@FormParam("startBtnx") Boolean restartGame,
+    		@FormParam("ontBtnx") Boolean ontology,
+    		@FormParam("printBtnx") Boolean printOntology,
+    		@FormParam("relBtnx") Boolean  reload,
+    		@FormParam("qBtnx") Boolean query,
+    		@FormParam("fileinput") Boolean  fileselect,
+    		@FormParam("ontologyinput") Boolean ontlogyselect,
+    		@FormParam("printgame") Boolean printGame,
+    		@FormParam("eightqueen") Boolean  eightqueen,
+      		@FormParam("playgame") Boolean achessGame,
+      		@FormParam("btnfind") Boolean  findPiece,
+      		@FormParam("posisjon") String posisjon,
+    		@FormParam("piece") String piece,
+    		@FormParam("startposisjon") String startposisjon,
+    		@FormParam("tilgjengeligpos") String tilgjengeligpos,   		
+      		@Context HttpServletRequest request) {
+    	
+//    	TemplateRepresentation  templateRep = null;
  	    Map<String, Object> dataModel = new HashMap<String, Object>();
- 	    Request request = getRequest();
+ 	   String siden = "../../chess/startside.html";
+// 	    Request request = getRequest();
  	   boolean noMove = false;
-    	if(form == null){
-    		invalidateSessionobjects();
-    	}
+		/*
+		 * if(form == null){ invalidateSessionobjects(); }
+		 */
 /*	     String[] legalMoves = {"a3","a4"};
 	     ChessPiece whitePawn1 = new ChessPiece(newPos,"w","wP",legalMoves);
 	     whitePawn1.setValue(1);*/
@@ -367,40 +431,41 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	      	dataModel.put(popupId, popup);
     	String[] legalMoves = {"",""};
     	ChessPiece chessPiece = null;
-    	availablePosNames = null;
+ //   	availablePosNames = null;
     	availableMoves = null;
-    	ChessBoard chessBoard = (ChessBoard)sessionAdmin.getSessionObject(request, chessBoardsession);
+    	ChessBoard chessBoard = (ChessBoard)sessionAdmin.getSessionObject(request , chessBoardsession);
     	PlayGame game = (PlayGame)sessionAdmin.getSessionObject(request, gameboardSession); // If the game object is null, then the user has not chosen to play a game yet.
 	    moves = chessBoard.getMoves();
 	    blackMoves = chessBoard.getBlackMoves();
 	    chessMoves = chessBoard.getChessMoves();
 	    availableMoves = new ArrayList<Position>();
-    	Parameter restartGame = form.getFirst("startBtnx"); // Bruker oppgir å starte på nytt
-    	Parameter ontology = form.getFirst("ontBtnx"); // User wants ontology position on chessboard
-    	Parameter printOntology = form.getFirst("printBtnx"); // User wants ontology printed
-    	Parameter reload = form.getFirst("relBtnx"); // User wants to reload ontology from file
-    	Parameter query = form.getFirst("qBtnx"); // User wants to query ontology 
-    	Parameter fileselect = form.getFirst("fileinput"); // User has selected a file
-      	Parameter ontlogyselect = form.getFirst("ontologyinput"); // User has selected an ontology file file
-    	Parameter printGame = form.getFirst("printgame"); // User has selected to print the game
-    	Parameter eightqueen = form.getFirst("eightqueen"); // User has selected to solve the eight queen problem
-    	Parameter achessGame = form.getFirst("playgame"); // User has selected to play a game of chess
-    	Parameter findPiece = form.getFirst("btnfind"); // User has moved mouse over a piece
-    	if (printGame != null) {
+//    	Parameter restartGame = form.getFirst("startBtnx"); // Bruker oppgir å starte på nytt
+//    	Parameter ontology = form.getFirst("ontBtnx"); // User wants ontology position on chessboard
+//    	Parameter printOntology = form.getFirst("printBtnx"); // User wants ontology printed
+//    	Parameter reload = form.getFirst("relBtnx"); // User wants to reload ontology from file
+//    	Parameter query = form.getFirst("qBtnx"); // User wants to query ontology 
+//    	Parameter fileselect = form.getFirst("fileinput"); // User has selected a file
+//      	Parameter ontlogyselect = form.getFirst("ontologyinput"); // User has selected an ontology file file
+//    	Parameter printGame = form.getFirst("printgame"); // User has selected to print the game
+//    	Parameter eightqueen = form.getFirst("eightqueen"); // User has selected to solve the eight queen problem
+//    	Parameter achessGame = form.getFirst("playgame"); // User has selected to play a game of chess
+//    	Parameter findPiece = form.getFirst("btnfind"); // User has moved mouse over a piece
+    	if (printGame != null && printGame) {
 //         	chessBoard.findMoves(gameMoves);
 //	     	int nolines = gameMoves.size();
 //	     	String mov = (String)gameMoves.get(13)+gameMoves.get(14)+gameMoves.get(15);
-			Representation representation = null;
-			Response response = getResponse(); 
+//			Representation representation = null;
+//			Response response = getResponse(); 
     		chessMoves = chessBoard.getChessMoves();
     		String pdfFile = "";
     		try {
 				pdfFile = printGame(chessMoves);
-				representation = new FileRepresentation(pdfFile, MediaType.APPLICATION_PDF); 
-			    Disposition disposition = representation.getDisposition();
-			    disposition.setType(disposition.TYPE_ATTACHMENT);
-			    disposition.setFilename("game" + ".pdf"); 
-			    response.setEntity(representation); 
+				/*
+				 * representation = new FileRepresentation(pdfFile, MediaType.APPLICATION_PDF);
+				 * Disposition disposition = representation.getDisposition();
+				 * disposition.setType(disposition.TYPE_ATTACHMENT);
+				 * disposition.setFilename("game" + ".pdf"); response.setEntity(representation);
+				 */
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -420,33 +485,36 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
          	dataModel.put(rulesKey,chessRules);
          	dataModel.put(movesKey, chessMoves);
          	//  	 	dataModel.put(blackmovesKey, blackMoves);
-
+         	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+         	return Response.ok(view).build();
          	//		 dataModel.put(pawnId,whitePawn1);
-         	ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-         	Representation pasientkomplikasjonFtl = clres2.get();
-         	templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-         			MediaType.TEXT_HTML);	
-
-
-
-         	return templateRep;
+			/*
+			 * ClientResource clres2 = new
+			 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+			 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
+			 * clres2.get(); templateRep = new
+			 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+			 * MediaType.TEXT_HTML);
+			 * 
+			 * 
+			 * 
+			 * return templateRep;
+			 */
     	}
-    	if (ontlogyselect != null && !ontlogyselect.getValue().isEmpty()) {// This parameter is always created: Why?!!
+    	if (ontlogyselect != null && ontlogyselect) {// This parameter is always created: Why?!!
        		String fileName = "";
     		String rep = "\\";
     		String newRep = "\\\\";
     		String user = "olj";
     		String newUser = "bruker";
     		System.out.println("ontlogy selected");
-    		for (Parameter entry : form) {
-    			if (entry.getValue() != null && !(entry.getValue().equals("")) && entry.getName().equals("ontologyinput")){
-    					System.out.println(entry.getName() + "=" + entry.getValue());
-    					fileName = entry.getValue();
-    					fileName = fileName.replace(rep, newRep);
-    					fileName = fileName.replace(user, newUser);
-    					System.out.println(fileName);
-    			}
-    		}
+			/*
+			 * for (Parameter entry : form) { if (entry.getValue() != null &&
+			 * !(entry.getValue().equals("")) && entry.getName().equals("ontologyinput")){
+			 * System.out.println(entry.getName() + "=" + entry.getValue()); fileName =
+			 * entry.getValue(); fileName = fileName.replace(rep, newRep); fileName =
+			 * fileName.replace(user, newUser); System.out.println(fileName); } }
+			 */
     		 sessionAdmin.setSessionObject(request,fileName, ontologyKey);
     		 chessBoard = null;
     		 chessBoard = new ChessBoard(fileName);
@@ -460,41 +528,43 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	     chessMoves = chessBoard.getChessMoves();
     		 dataModel.put(pieceId,simple );
     		 dataModel.put(displayKey, chessPosition);
-
-    	     Reference reference = new Reference(getReference(),"..").getTargetRef();
-       	 	dataModel.put(rulesKey,chessRules);
-       	 	dataModel.put(movesKey, chessMoves);
-
-    	     LocalReference pakke = LocalReference.createClapReference(LocalReference.CLAP_CLASS,
-                     "/chess");
-    	    
-    	     LocalReference localUri = new LocalReference(reference);
-
-    // Denne client resource forholder seg til src/main/resource katalogen !!!	
-    	     ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-
-    	        Representation pasientkomplikasjonFtl = clres2.get();
-
-    	        TemplateRepresentation  templatemapRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-    	                MediaType.TEXT_HTML);
-    		 return templatemapRep;
+        	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+         	return Response.ok(view).build();
+			/*
+			 * Reference reference = new Reference(getReference(),"..").getTargetRef();
+			 * dataModel.put(rulesKey,chessRules); dataModel.put(movesKey, chessMoves);
+			 * 
+			 * LocalReference pakke =
+			 * LocalReference.createClapReference(LocalReference.CLAP_CLASS, "/chess");
+			 * 
+			 * LocalReference localUri = new LocalReference(reference);
+			 * 
+			 * // Denne client resource forholder seg til src/main/resource katalogen !!!
+			 * ClientResource clres2 = new
+			 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+			 * "/chess/startside.html"));
+			 * 
+			 * Representation pasientkomplikasjonFtl = clres2.get();
+			 * 
+			 * TemplateRepresentation templatemapRep = new
+			 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+			 * MediaType.TEXT_HTML); return templatemapRep;
+			 */
     	}
-    	if (fileselect != null && !fileselect.getValue().isEmpty()) { // This parameter is always created: Why?!!
+    	if (fileselect != null && fileselect) { // This parameter is always created: Why?!!
     		String fileName = "";
     		String rep = "\\";
     		String newRep = "\\\\";
     		String user = "olj";
     		String newUser = "bruker";
     		System.out.println("fileselect");
-    		for (Parameter entry : form) {
-    			if (entry.getValue() != null && !(entry.getValue().equals("")) && entry.getName().equals("fileinput")){
-    					System.out.println(entry.getName() + "=" + entry.getValue());
-    					fileName = entry.getValue();
-    					fileName = fileName.replace(rep, newRep);
-    					fileName = fileName.replace(user, newUser);
-    					System.out.println(fileName);
-    			}
-    		}
+			/*
+			 * for (Parameter entry : form) { if (entry.getValue() != null &&
+			 * !(entry.getValue().equals("")) && entry.getName().equals("fileinput")){
+			 * System.out.println(entry.getName() + "=" + entry.getValue()); fileName =
+			 * entry.getValue(); fileName = fileName.replace(rep, newRep); fileName =
+			 * fileName.replace(user, newUser); System.out.println(fileName); } }
+			 */
 //    		fileName = "C:\\Users\\olj\\Google Drive\\privat\\ontologies\\chessgames\\brill\\brill.pgn";
 //    		fileName = "c:\\\\ullern\\\\acem\\\\radio\\\\translist.txt";
 //    		chessBoard.getGameFile().setFilePath("c:\\ullern\\acem\\radio\\translist.txt");
@@ -519,16 +589,21 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	 	dataModel.put(rulesKey,chessRules);
     		dataModel.put(movesKey, chessMoves);
 //      	 	dataModel.put(blackmovesKey, blackMoves);
-
+       	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+        	return Response.ok(view).build();
      //		 dataModel.put(pawnId,whitePawn1);
-    	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-            Representation pasientkomplikasjonFtl = clres2.get();
-            templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-                    MediaType.TEXT_HTML);	
-
-
-
-        	return templateRep;
+		/*
+		 * ClientResource clres2 = new
+		 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+		 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
+		 * clres2.get(); templateRep = new
+		 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+		 * MediaType.TEXT_HTML);
+		 * 
+		 * 
+		 * 
+		 * return templateRep;
+		 */
     	}
     	if (query != null){
     		chessBoard.queryOntology();
@@ -536,16 +611,21 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     		//   	     System.out.println(fen);
     		dataModel.put(fenPosid,fen);
     		sessionAdmin.setSessionObject(request,chessBoard, chessBoardsession);
-
+       	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+        	return Response.ok(view).build();
      //		 dataModel.put(pawnId,whitePawn1);
-    	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-            Representation pasientkomplikasjonFtl = clres2.get();
-            templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-                    MediaType.TEXT_HTML);	
-        	return templateRep;   
+		/*
+		 * ClientResource clres2 = new
+		 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+		 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
+		 * clres2.get(); templateRep = new
+		 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+		 * MediaType.TEXT_HTML); return templateRep;
+		 */
     	}    	
-    	if (reload != null){
-    		sessionAdmin.getSession(request,chessBoardsession).invalidate();
+    	if (reload != null && reload){
+    		request.getSession().invalidate();
+//    		sessionAdmin.getSession(request,chessBoardsession).invalidate();
     		chessBoard = null;
     		String fileName = null;
    	     	SimpleScalar simple = new SimpleScalar(piece);
@@ -566,28 +646,38 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     		//   	     System.out.println(fen);
     		dataModel.put(fenPosid,fen);
     		sessionAdmin.setSessionObject(request,chessBoard, chessBoardsession);
+         	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+         	return Response.ok(view).build();
 
      //		 dataModel.put(pawnId,whitePawn1);
-    	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-            Representation pasientkomplikasjonFtl = clres2.get();
-            templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-                    MediaType.TEXT_HTML);	
-        	return templateRep;   
+		/*
+		 * ClientResource clres2 = new
+		 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+		 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
+		 * clres2.get(); templateRep = new
+		 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+		 * MediaType.TEXT_HTML); return templateRep;
+		 */
     	}
-    	if (printOntology != null){
+    	if (printOntology != null && printOntology){
     	 chessBoard.printOntology();	
    	     String fen = chessBoard.createFen();
    	     System.out.println(fen);
    	     dataModel.put(fenPosid,fen);
+      	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+     	return Response.ok(view).build();
 
  //		 dataModel.put(pawnId,whitePawn1);
-	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-        Representation pasientkomplikasjonFtl = clres2.get();
-        templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-                MediaType.TEXT_HTML);	
-    	return templateRep;    		
+	/*
+	 * ClientResource clres2 = new
+	 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+	 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
+	 * clres2.get(); templateRep = new
+	 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+	 * MediaType.TEXT_HTML); return templateRep;
+	 */	
     	}
-    	if (ontology != null){ // User want ontology position on board
+    	if (ontology != null && ontology){ // User want ontology position on board
     		chessBoard.createChessontlogyPosition();
     		String fen = chessBoard.createFen();
 
@@ -601,17 +691,22 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     		List<ChessRules> chessRules = chessBoard.getChessRules();
     		dataModel.put(rulesKey,chessRules);
     		dataModel.put(movesKey, chessMoves);
+         	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+         	return Response.ok(view).build();
 //    		dataModel.put(blackmovesKey, blackMoves);
     		/*      	 	dataModel.put(rulesKey,chessBoard.getExeRules());
        	 	dataModel.put(rulelabelKey, chessBoard.getExeLabels());*/
     		//		 dataModel.put(pawnId,whitePawn1);
-    		ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-    		Representation pasientkomplikasjonFtl = clres2.get();
-    		templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-    				MediaType.TEXT_HTML);	
-    		return templateRep;
+			/*
+			 * ClientResource clres2 = new
+			 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+			 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
+			 * clres2.get(); templateRep = new
+			 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+			 * MediaType.TEXT_HTML); return templateRep;
+			 */
     	}
-    	if (restartGame != null){
+    	if (restartGame != null && restartGame){
     		chessBoard.createStartPosition();
       	     String fen = chessBoard.createFen();
        	     System.out.println(fen);
@@ -627,14 +722,19 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 //      	 	dataModel.put(blackmovesKey, blackMoves);
     		 dataModel.put(displayKey, chessPosition);
        	 	dataModel.put(pieceId,pieceMoved );
+         	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+         	return Response.ok(view).build();
      //		 dataModel.put(pawnId,whitePawn1);
-    	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-            Representation pasientkomplikasjonFtl = clres2.get();
-            templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-                    MediaType.TEXT_HTML);	
-        	return templateRep;
+		/*
+		 * ClientResource clres2 = new
+		 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+		 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
+		 * clres2.get(); templateRep = new
+		 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+		 * MediaType.TEXT_HTML); return templateRep;
+		 */
     	}
-    	if (eightqueen != null) { // User wants to solve the eight queen problem  
+    	if (eightqueen != null && eightqueen) { // User wants to solve the eight queen problem  
 //      		chessBoard.clearChessBoard();
       		EightQueenProblem queenProblem = new EightQueenProblem();
       		queenProblem.prepare();
@@ -669,17 +769,22 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 //     	 	dataModel.put(blackmovesKey, blackMoves);
    		 dataModel.put(displayKey, chessPosition);
       	 	dataModel.put(pieceId,pieceMoved );
+         	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+         	return Response.ok(view).build();
     //		 dataModel.put(pawnId,whitePawn1);
-   	    ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-           Representation pasientkomplikasjonFtl = clres2.get();
-           templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-                   MediaType.TEXT_HTML);	
-       	return templateRep;
+	/*
+	 * ClientResource clres2 = new
+	 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+	 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
+	 * clres2.get(); templateRep = new
+	 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+	 * MediaType.TEXT_HTML); return templateRep;
+	 */
     	}
 /*
  *     	 User wants to play a game of chess
  */
-    	if (achessGame != null) { // User wants to play a game of chess
+    	if (achessGame != null && achessGame) { // User wants to play a game of chess
     		chessBoard.createChessontlogyPosition();
     		if (game == null) {
     			game = new PlayGame(chessBoard.getPositions(),chessBoard); // Creates start position based on ontology start position
@@ -702,10 +807,11 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
   	    	snewPosition = game.getNewPosition().getPositionName();
    	    	soldPosition = game.getOldPosition().getPositionName();
    	    	String fen = chessBoard.createFen();
-    		return produceTemplate(dataModel,fen,chessBoard);
+   	    	
+    		return produceTemplate(siden,dataModel,fen,chessBoard);
     	}
     	if (findPiece != null) {   		// User has marked a piece formSubmit('btnfind');
-    		collectParameters(form);
+    		collectParameters(posisjon, piece, startposisjon, tilgjengeligpos);
         	if (newPos == null || newPos.equals("")){
         		newPos = "a2";
         	}
@@ -731,10 +837,10 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
       	    		availablePosNames.add(pos.getPositionName());
       	    	}
         	 }
-            return produceTemplate(dataModel,fen,chessBoard);
+            return produceTemplate(siden,dataModel,fen,chessBoard);
     	}
    // Opponent Player has moved a piece	
-    	collectParameters(form); // This call replaces the structure below:
+   		collectParameters(posisjon, piece, startposisjon, tilgjengeligpos); // This call replaces the structure below:
 /*    	for (Parameter entry : form) {
 			if (entry.getValue() != null && !(entry.getValue().equals(""))){
 					System.out.println(entry.getName() + "=" + entry.getValue());
@@ -950,38 +1056,36 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
         	redirectTemporary(page);
         }*/
 
-        return produceTemplate(dataModel,fen,chessBoard);
+        return produceTemplate(siden,dataModel,fen,chessBoard);
     }
     /**
      * collectParameters
      * This method collects all parameters entered by user
      * @param form, the form containing all parameters 
      */
-    private void collectParameters(Form form){
-    	for (Parameter entry : form) {
-    		if (entry.getValue() != null && !(entry.getValue().equals(""))){
-    			System.out.println(entry.getName() + "=" + entry.getValue());
-    			if (entry.getName().equals("piece"))
-    				piece = entry.getValue();
-    			if (entry.getName().equals("posisjon"))
-    				newPos = entry.getValue();
-    			if (entry.getName().equals("startposisjon"))
-    				oldPos = entry.getValue();
-    			if (entry.getName().equals("tilgjengeligpos"))
-    				tilgjengeligPos = entry.getValue();
-    		}
-    	}
+    private void collectParameters(String posisjon, String mpiece, String startposisjon, String tilgjengeligpos){
+    	
+    	if(posisjon != null)
+    		newPos = posisjon;
+    	if(mpiece != null)
+    		piece = mpiece;
+    	if(startposisjon != null)
+    		oldPos = startposisjon;
+    	if(tilgjengeligpos != null)
+    		tilgjengeligPos = tilgjengeligpos;
+ 
     }
     /**
      * produceTemplate
      * This method produces the template used by Restlet
+     * @since december 2025 returns the Response used by Jakarta.ws
      * @param dataModel
      * @param fen
      * @param chessBoard
      * @return
      */
-    private TemplateRepresentation produceTemplate(Map<String,Object> dataModel,String fen,ChessBoard chessBoard) {
-    	TemplateRepresentation  templateRep = null;
+    private Response produceTemplate(String siden,Map<String,Object> dataModel,String fen,ChessBoard chessBoard) {
+//    	TemplateRepresentation  templateRep = null;
       	 dataModel.put(fenPosid,fen);
        	 SimpleScalar pieceMoved = new SimpleScalar(piece);
        	 SimpleScalar movedTo = new SimpleScalar(snewPosition);
@@ -999,11 +1103,16 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
        	 //  	 	dataModel.put(blackmovesKey, blackMoves);
 
        	 //		 dataModel.put(pawnId,whitePawn1);
-       	 ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-       	 Representation pasientkomplikasjonFtl = clres2.get();
-       	 templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-       			 MediaType.TEXT_HTML);	
-    	return templateRep;
+      	 FreemarkerView view = new FreemarkerView(siden, dataModel);
+     	return Response.ok(view).build();
+		/*
+		 * ClientResource clres2 = new
+		 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
+		 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
+		 * clres2.get(); templateRep = new
+		 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
+		 * MediaType.TEXT_HTML); return templateRep;
+		 */
     }
     /**
      * castleMove
@@ -1047,4 +1156,5 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
        	return castlePos;
     	
     }
+
 }

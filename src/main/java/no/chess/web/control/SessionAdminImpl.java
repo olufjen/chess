@@ -1,45 +1,23 @@
 package no.chess.web.control;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
-import org.restlet.Request;
-import org.restlet.ext.servlet.ServletUtils;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 /**
- * Denne klassen administerer session objekter for Restlet Resurser 
+ * Denne klassen administerer session objekter for Resurser 
  * @author olj
+ * @since December 2025
+ * Reworked fo use of jakarta
  *
  */
-public class SessionAdminImpl implements SessionAdmin {
+public class SessionAdminImpl {
 	private String[]sessionParams;
 	
 	public SessionAdminImpl() {
 		super();
 		  System.out.println("SessionAdmin felles started");
-	}
-
-	@Override
-	public Object getSessionObject(Request request,String idKey) {
-	     HttpServletRequest req = ServletUtils.getRequest(request);
-	     HttpSession session = req.getSession();
-	     Object result = session.getAttribute(idKey);
-		return result;
-	}
-
-	@Override
-	public void setSessionObject(Request request, Object o, String idKey) {
-		  HttpServletRequest req = ServletUtils.getRequest(request);
-		  HttpSession session = req.getSession();
-		  session.setAttribute(idKey, o);
-
-	}
-
-	@Override
-	public HttpSession getSession(Request request, String idKey) {
-		HttpServletRequest req = ServletUtils.getRequest(request);
-		HttpSession session = req.getSession();
-		return session;
 	}
 
 	public String[] getSessionParams() {
@@ -49,6 +27,20 @@ public class SessionAdminImpl implements SessionAdmin {
 	public void setSessionParams(String[] sessionParams) {
 		this.sessionParams = sessionParams;
 	}
-	
+
+	public Object getSessionObject(HttpServletRequest request,String idKey) {
+		  HttpSession session = request.getSession(true);
+          Object sessionObject = (Integer) session.getAttribute(idKey);
+		return sessionObject;
+	}
+	public void setSessionObject(HttpServletRequest request,Object o,String idKey) {
+		  HttpSession session = request.getSession(true);
+		  session.setAttribute(idKey, o);
+	}
+	public HttpSession getSession(HttpServletRequest request) {
+		  HttpSession session = request.getSession(true);
+		  return session;
+	}
+
 
 }

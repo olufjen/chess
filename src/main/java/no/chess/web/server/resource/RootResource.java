@@ -1,5 +1,5 @@
 package no.chess.web.server.resource;
-import org.restlet.resource.Get;
+
 
 /**
  * Root resource.
@@ -11,7 +11,7 @@ public interface RootResource {
      * 
      * @return The root representation.
      */
-    @Get
+
     public String represent();
 
 }
