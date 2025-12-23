@@ -29,7 +29,7 @@
     <script src="https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.0.6-development-only.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js" ></script>
 
-<title>Chessboard using Pure CSS and HTML Min versjon May 2019 </title>
+<title>Chessboard using Pure CSS and HTML Min versjon December 2025 </title>
 <style type="text/css">
 .chessboard {
     width: 640px;
@@ -72,6 +72,11 @@
   </header>
 <div class="container">
 <nav id="nav">
+<input type="hidden" name="playgame" id="hiddenPlaygame" value="false">
+<input type="hidden" name="ontBtnx" id="hiddenontBtnx" value="false">
+<input type="hidden" name="startBtnx" id="hiddenstartBtnx" value="false">
+<input type="hidden" name="printgame" id="hiddenprintgame" value="false">
+<input type="hidden" name="eightqueen" id="hiddeneightqueen" value="false">
     <ul id="navigation">
         <li><a href="javascript:void(0);" onclick="formSubmit('startBtnx');" title="Creates the chess start position" class="first">Home</a></li>
         <li><a href="#">Chess games &raquo;</a>
@@ -132,6 +137,27 @@
 //	 alert("formsubmit "+button);
 	var clickbutton = "#"+button;
 	console.log( "Form submit "+clickbutton );
+    switch(button) {
+    case 'playgame':
+        // Setter verdien til true før skjemaet sendes
+        $('#hiddenPlaygame').val("true");
+        console.log( "Form submit hidden playgame true " );
+        break;
+        
+    case 'printgame':
+        $('#hiddenPlaygame').val("false");
+        $('#hiddenprintgame').val("true");
+        break;
+
+    case 'btnmove':
+        // Bruker har valgt en brikke
+        console.log("En brikke valgt...");
+        break;
+
+    default:
+        console.warn("Ingen spesifikk logikk for: " + buttonId);
+}
+
  $(clickbutton).click();
 };
 //--------------------
