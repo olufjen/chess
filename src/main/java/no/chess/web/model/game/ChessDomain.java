@@ -28,12 +28,14 @@ import aima.core.logic.fol.domain.FOLDomain;
  *
  */
 public class ChessDomain extends FOLDomain {
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\domainmodel.txt";
+	private String outputFileName = "domainmodel.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
 	
 	public ChessDomain() {
 		super();
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog+outputFileName;
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {
@@ -46,6 +48,8 @@ public class ChessDomain extends FOLDomain {
 
 	public ChessDomain(FOLDomain toCopy) {
 		super(toCopy);
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog+outputFileName;
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {
@@ -57,6 +61,8 @@ public class ChessDomain extends FOLDomain {
 
 	public ChessDomain(Set<String> constants, Set<String> functions, Set<String> predicates) {
 		super(constants, functions, predicates);
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog+outputFileName;
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {

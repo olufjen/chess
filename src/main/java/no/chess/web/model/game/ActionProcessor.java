@@ -45,7 +45,7 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 	private Position strikePosition = null;
 	private boolean black = false;
 	private boolean white = false;
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\";
+	private String outputFileName = "";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
 	private Integer processNumber;
@@ -61,6 +61,8 @@ public class ActionProcessor implements ChessProcessor<ChessActionImpl,PlayGame,
 	public ActionProcessor(Integer processNumber, String pname) {
 		super();
 		this.processNumber = processNumber;
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog+outputFileName;
 		String pNumber = processNumber.toString();
 		outputFileName = outputFileName + "ontpositions"+pname +".txt";
 		try {

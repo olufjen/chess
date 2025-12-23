@@ -148,7 +148,7 @@ public class APerformance {
 	private OpponentAgent agent;
 	private String opponentKingPosition = null;
 	private List <ChessActionImpl> playeractions = null; // all actions available to player
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\performance.txt";
+	private String outputFileName = "performance.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
 	
@@ -189,6 +189,8 @@ public class APerformance {
 		canlosePieces = new HashMap(); // pieces that can be lost to opponent
 		possibleStates = new ArrayList(); // Possible init states for which produced percept schemas are applicable.
 		setPredicatenames();
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog+outputFileName;
 		playerName = this.myPlayer.getNameOfplayer();
 		try {
 			fw = new FileWriter(outputFileName, true);

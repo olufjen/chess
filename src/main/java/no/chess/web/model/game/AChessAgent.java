@@ -96,7 +96,7 @@ public class AChessAgent extends KBAgent {
 	private List <ChessActionImpl> actions = null;
 	private List <ChessActionImpl> opponentActions = null;
 	private String knowledgeFilename = "knowledgebase.txt";
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\chessAgent.txt";
+	private String outputFileName = "chessAgent.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
 	private PlayGame game = null;
@@ -154,6 +154,8 @@ public class AChessAgent extends KBAgent {
 	
 	public AChessAgent(ChessKnowledgeBase KB, ChessActionImpl localAction) {
 		super(KB);
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog+outputFileName;
 		this.kb = (ChessKnowledgeBase)KB;
 		try {
 			fw = new FileWriter(outputFileName, true);
@@ -182,6 +184,8 @@ public class AChessAgent extends KBAgent {
 	 */
 	public AChessAgent(ChessKnowledgeBase KB,ChessActionImpl localAction,PlayGame game) {
 		super(KB);
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog+outputFileName;
 		this.game = game;
 		this.kb = (ChessKnowledgeBase)KB;
 		try {

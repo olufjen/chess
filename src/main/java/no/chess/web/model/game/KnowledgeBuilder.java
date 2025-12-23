@@ -97,8 +97,19 @@ public class KnowledgeBuilder {
   // To make list of possible init states ??
   // 16.12.24 A new key is added: pawn. It is used to signal a pawn strike PAWNATTACK                                                                                                                                                                                                                                                                                       
   private static String[] keys = new String[] {"startpos","piecename","newpos","piecetype","pawn"};
+  // THe pointer to the file catalog
+  private static String fileCatalog = "G:\\Min disk\\privat\\ontologies\\analysis\\";
   
   
+
+  public static String getFileCatalog() {
+	return fileCatalog;
+}
+
+  public static void setFileCatalog(String fileCatalog) {
+	KnowledgeBuilder.fileCatalog = fileCatalog;
+  }
+
   public static String getKingCastleKey() {
 	return kingCastleKey;
 }

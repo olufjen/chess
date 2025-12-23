@@ -40,7 +40,7 @@ public class GroundGameState extends GameState {
 	private int noofplayerinactive = 0;
 	private int noofopponentinactive = 0;
 	private APerceptor thePerceptor = null;
-	private String outputFileName =  "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\gamestate";
+	private String outputFileName =  "gamestate";
 	private PrintWriter writer =  null;
 	private FileWriter fw =  null;
 	private ThePeas peas = null;
@@ -56,12 +56,13 @@ public class GroundGameState extends GameState {
 	 */
 	public GroundGameState(AgamePiece gamePiece, ActionSchema actionSchema) {
 		super(gamePiece, actionSchema);
+		String catalog = KnowledgeBuilder.getFileCatalog();
 	    statePiece = (AgamePiece) this.gamePiece;
 	    pieceName = statePiece.getMyPiece().getOntlogyName();
 	    posName = statePiece.getmyPosition().getPositionName();
 //	    stateId = pieceName+"_"+posName;
 	    stateId = this.actionSchema.getName() + "_" + posName;
-	    String filename = outputFileName + pieceName + ".txt";
+	    String filename = catalog + outputFileName + pieceName + ".txt";
 		try {
 			fw = new FileWriter(filename, true);
 		} catch (IOException e1) {

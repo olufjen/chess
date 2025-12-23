@@ -22,7 +22,7 @@ import no.chess.web.model.ChessMoves;
  * @author oluf
  *
  */
-public class ChessServerResource extends SessionServerResource {
+public abstract class ChessServerResource extends SessionServerResource {
 
 
 	protected String moveId = "move";

@@ -30,7 +30,7 @@ public class SessionAdminImpl {
 
 	public Object getSessionObject(HttpServletRequest request,String idKey) {
 		  HttpSession session = request.getSession(true);
-          Object sessionObject = (Integer) session.getAttribute(idKey);
+          Object sessionObject = session.getAttribute(idKey);
 		return sessionObject;
 	}
 	public void setSessionObject(HttpServletRequest request,Object o,String idKey) {

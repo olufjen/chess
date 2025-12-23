@@ -110,7 +110,7 @@ public class APerceptor implements ChessPercept {
 	  private AgamePiece playerPiece = null; // A possible piece to use: which chess piece is applicable to the chosen state
 	  
 	  private PrintWriter writer =  null;
-	  private String outputFileName =  "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\perceptor.txt";
+	  private String outputFileName =  "perceptor.txt";
 	  private FileWriter fw =  null;
 	  private List<List> initialStates = null; // A list of initial states 
 	  private Map<String,State>initStates = null; // Contains all initial states for current move
@@ -142,6 +142,8 @@ public class APerceptor implements ChessPercept {
 		  mypieceNames = new ArrayList<String>();
 		  propinitStates = new ArrayList<State>();
 		  propgoalStates = new ArrayList<State>();
+			String catalog = KnowledgeBuilder.getFileCatalog();
+			outputFileName = catalog+outputFileName;
 		  try {
 			  fw = new FileWriter(outputFileName, true);
 		  } catch (IOException e1) {
@@ -197,6 +199,8 @@ public class APerceptor implements ChessPercept {
 		  percept = new PerceptSchema("MOVE",variables,precondition);
 		  propinitStates = new ArrayList<State>();
 		  propgoalStates = new ArrayList<State>();
+			String catalog = KnowledgeBuilder.getFileCatalog();
+			outputFileName = catalog+outputFileName;
 		  try {
 			  fw = new FileWriter(outputFileName, true);
 		  } catch (IOException e1) {

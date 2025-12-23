@@ -58,13 +58,15 @@ public class AchessGame extends AbstractChessGame{
 	private APlayer playerTomove;
 	private int pn = 1;
 	private List<ApieceMove> movements; // Movements made during the game
-	private ChessBoard myFrontBoard; // The front chessboard to display board and pieces
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\analysis.txt";
+	private ChessBoard myFrontBoard; // The front chessboard to display board and pieces 
+	private String outputFileName = "analysis.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
 	
 	public AchessGame(int size,HashMap<String, Position> positions,ChessBoard frontBoard) {
 		super(size);
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog+outputFileName;
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {

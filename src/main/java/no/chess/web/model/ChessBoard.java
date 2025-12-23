@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.protege.owl.codegeneration.WrappedIndividual;
-import org.restlet.Request;
 import org.semanticweb.owlapi.io.OWLObjectRenderer;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
@@ -542,14 +541,15 @@ public class ChessBoard extends ParentModel {
         		break;
         	pos++;
         }
+    
         SQWRLQueryEngine queryEngine = chessModel.getQueryEngine();
         SQWRLResult result = null;
-        try {
-			result = queryEngine.runSQWRLQuery(exeLabels.get(pos), exeRules.get(pos));
-		} catch (SQWRLException | SWRLParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        if (queryEngine != null) {
+        	try { result = queryEngine.runSQWRLQuery(exeLabels.get(pos),
+        			exeRules.get(pos)); }
+        	catch (SQWRLException | SWRLParseException e) { // TODO  Auto-generated catch block
+        		e.printStackTrace(); }
+        }
         try {
 			if (result != null) {
 //				System.out.println(exeLabels.get(pos) + ": " + result.toString());

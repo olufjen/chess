@@ -34,7 +34,7 @@ import no.games.chess.fol.FOLGamesBCAsk;
 public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\";
+	private String outputFileName = "";
 	private String fileName ="";
 	private FOLGamesBCAsk backWardChain;
 	private String PAWN;
@@ -49,8 +49,9 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	
 	public ChessFolKnowledgeBase(ChessDomain domain, InferenceProcedure inferenceProcedure) {
 		super(domain, inferenceProcedure);
+		String catalog = KnowledgeBuilder.getFileCatalog();
 		fileName = "tempknowledgebase.txt";
-		outputFileName = outputFileName+this.fileName;
+		outputFileName = catalog+outputFileName+this.fileName;
 		movePieces = new ArrayList<AgamePiece>();
 		try {
 			fw = new FileWriter(outputFileName, true);
@@ -64,8 +65,9 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	}
 	public ChessFolKnowledgeBase(ChessDomain domain, InferenceProcedure inferenceProcedure,String fileName) {
 		super(domain, inferenceProcedure);
+		String catalog = KnowledgeBuilder.getFileCatalog();
 		this.fileName = fileName;
-		outputFileName = outputFileName+this.fileName;
+		outputFileName = catalog+outputFileName+this.fileName;
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {

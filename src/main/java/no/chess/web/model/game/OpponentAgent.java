@@ -47,7 +47,7 @@ public class OpponentAgent {
 	private ChessActionImpl localAction = null;
 	private List <ChessAction> actions = null; // All actions available to the opponent of the game
 	private List <ChessActionImpl> playeractions = null; // all actions available to player
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\opponent.txt";
+	private String outputFileName = "opponent.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
 	private PlayGame game = null;
@@ -116,6 +116,7 @@ public class OpponentAgent {
     
 	public OpponentAgent(ChessStateImpl stateImpl, PlayGame game, APlayer myPlayer, APlayer opponent,ChessFolKnowledgeBase folKb,ChessDomain chessDomain) {
 		super();
+		String catalog = KnowledgeBuilder.getFileCatalog();
 		this.stateImpl = stateImpl;
 		this.game = game;
 		this.myPlayer = myPlayer; // myPlayer is the opponent
@@ -132,6 +133,7 @@ public class OpponentAgent {
 		protectedPositions = new HashMap<String,Position>(); //Which positions are protected by opponent
 		positionKeys = new ArrayList<String>();// The key for positions that are reachable
 		myPieceNames = new ArrayList<String>(); // A list of opponent pieces that are active
+		outputFileName = catalog + outputFileName;
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {

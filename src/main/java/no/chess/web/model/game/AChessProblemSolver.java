@@ -141,7 +141,7 @@ public class AChessProblemSolver {
    */
   private String moveName;
   private String theCastling = "castlingmove";
-  private String outputFileName =  "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\problem.txt";
+  private String outputFileName =  "problem.txt";
   private ChessStateImpl stateImpl =  null;
   private ChessActionImpl localAction =  null;
   private ChessKnowledgeBase kb =  null;
@@ -233,6 +233,8 @@ public class AChessProblemSolver {
 		playSide = playerName.substring(0,5);
 		noofMoves = game.getMovements().size();
 		graphPlan = new GraphPlanAlgorithm();
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog+outputFileName;
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {

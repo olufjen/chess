@@ -39,7 +39,7 @@ import no.games.chess.ChessProcessor;
  */
 public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,AgamePiece, ApieceMove> {
 
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\";
+	private String outputFileName = "";
 	private PrintWriter writer = null;
 	private Integer processNumber; // The process number is created by the piece's introw*10 + intcolumn position
 	private FileWriter fw = null;
@@ -48,10 +48,11 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 	private List<Position> bishopRemoved = null; // This list contains removed positions for the queen in bishop movements
 	public PreferredMoveProcessor(Integer processNumber,String pname) {
 		super();
+		String catalog = KnowledgeBuilder.getFileCatalog();
 		this.processNumber = processNumber;
 //		this.processNumber = processNumber;
 		String pNumber = processNumber.toString();
-		outputFileName = outputFileName + "preferredmove"+pname + pNumber+".txt";
+		outputFileName = catalog + outputFileName + "preferredmove"+pname + pNumber+".txt";
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {

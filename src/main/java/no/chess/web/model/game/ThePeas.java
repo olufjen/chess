@@ -29,7 +29,7 @@ import no.function.FunctionContect;
 public class ThePeas {
 	private final static String[] notations = {"d4","e4","c4","Nf3","Nc3","e3","Bd3","Rf1","h3"}; // These are the first six moves. (to Bd3)
 	// It represent a start strategy. They represent the chess algebraic notation.
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\peas.txt";
+	private String outputFileName = "peas.txt";
 	private PrintWriter writer =  null;
 	private FileWriter fw =  null;
 	private APlayer player;
@@ -45,6 +45,7 @@ public class ThePeas {
 	private Function<String,String[]> f; // This function picks a chosen entry from the Map performance
 	public ThePeas(APlayer player, APlayer opponent, int moveNr) {
 		super();
+		String catalog = KnowledgeBuilder.getFileCatalog();
 		this.player = player;
 		this.opponent = opponent;
 		this.movNr = moveNr;
@@ -53,6 +54,7 @@ public class ThePeas {
 		executable = new HashMap<String,String[]>();
 		rankValues = new HashMap<String,Integer>();
 		contex = new FunctionContect();
+		outputFileName = catalog + outputFileName;
 		boolean flag = moveNr/2 < 8; // Signals the first 5 opening moves
 		try {
 			fw = new FileWriter(outputFileName, true);

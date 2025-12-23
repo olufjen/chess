@@ -30,6 +30,7 @@ import no.chess.web.model.game.ApieceMove;
 import no.chess.web.model.game.ChessActionImpl;
 import no.chess.web.model.game.ChessKnowledgeBase;
 import no.chess.web.model.game.ChessStateImpl;
+import no.chess.web.model.game.KnowledgeBuilder;
 import no.games.chess.ChessAction;
 import no.games.chess.ChessAlphaBetaSearch;
 import no.games.chess.ChessSearch;
@@ -77,7 +78,7 @@ public class PlayGame {
 	private ChessBoard myFrontBoard;
 	private ChessState currentState;
 	private List<ApieceMove> movements;
-	private String outputFileName = "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\positions.txt";
+	private String outputFileName = "positions.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
 	private ChessStateImpl activeState; // Is the active state of the game; a node in the game tree
@@ -108,6 +109,8 @@ public class PlayGame {
 		game.setMovements(movements);
 		fw = null;
 		writer = null;
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog+outputFileName;
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {

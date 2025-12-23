@@ -51,7 +51,7 @@ public class PlannerStateImpl implements PlannerState {
 	private int noofplayerActions = 0;
 	private int noofopponentActions = 0;
 	private APerceptor thePerceptor = null;
-	private String outputFileName =  "C:\\Users\\bruker\\Google Drive\\privat\\ontologies\\analysis\\planning.txt";
+	private String outputFileName =  "planning.txt";
 	private PrintWriter writer =  null;
 	private FileWriter fw =  null;
 	private String[] liftedKey = new String[5]; // A String array used as a parameter set for a lifted action
@@ -59,12 +59,14 @@ public class PlannerStateImpl implements PlannerState {
 	private ThePeas peas = null;
 	public PlannerStateImpl(APlayer player,APlayer opponent, List<ActionSchema> actionSchemas,List<ActionSchema>otherSchemaList, int moveNr) {
 		super();
+		String catalog = KnowledgeBuilder.getFileCatalog();
 		this.player = player;
 		this.opponent = opponent;
 		this.actionSchemas = actionSchemas;
 		this.otherSchemaList = otherSchemaList;
 		this.moveNr = moveNr;
 		plannerActions = new ArrayList<ChessPlannerAction>();
+		outputFileName = catalog + outputFileName;
 		try {
 			fw = new FileWriter(outputFileName, true);
 		} catch (IOException e1) {
@@ -97,6 +99,8 @@ public class PlannerStateImpl implements PlannerState {
 	 */
 	public PlannerStateImpl(APlayer player,APlayer opponent, List<ActionSchema> actionSchemas, int moveNr, APerceptor thePerceptor) {
 		super();
+		String catalog = KnowledgeBuilder.getFileCatalog();
+		outputFileName = catalog + outputFileName;
 		this.player = player;
 		this.opponent = opponent;
 		this.actionSchemas = actionSchemas;

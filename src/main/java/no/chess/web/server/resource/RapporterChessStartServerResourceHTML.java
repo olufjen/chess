@@ -399,17 +399,17 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_HTML) // Returnerer HTML som bekreftelse
     public Response storeChess(
-    		@FormParam("startBtnx") Boolean restartGame,
-    		@FormParam("ontBtnx") Boolean ontology,
-    		@FormParam("printBtnx") Boolean printOntology,
-    		@FormParam("relBtnx") Boolean  reload,
-    		@FormParam("qBtnx") Boolean query,
-    		@FormParam("fileinput") Boolean  fileselect,
-    		@FormParam("ontologyinput") Boolean ontlogyselect,
-    		@FormParam("printgame") Boolean printGame,
-    		@FormParam("eightqueen") Boolean  eightqueen,
-      		@FormParam("playgame") Boolean achessGame,
-      		@FormParam("btnfind") Boolean  findPiece,
+    		@FormParam("startBtnx") String restartGame,
+    		@FormParam("ontBtnx") String ontology,
+    		@FormParam("printBtnx") String printOntology,
+    		@FormParam("relBtnx") String  reload,
+    		@FormParam("qBtnx") String query,
+    		@FormParam("fileinput") String  fileselect,
+    		@FormParam("ontologyinput") String ontlogyselect,
+    		@FormParam("printgame") String printGame,
+    		@FormParam("eightqueen") String  eightqueen,
+      		@FormParam("playgame") String achessGame,
+      		@FormParam("btnmove") String  findPiece,
       		@FormParam("posisjon") String posisjon,
     		@FormParam("piece") String piece,
     		@FormParam("startposisjon") String startposisjon,
@@ -418,9 +418,10 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	
 //    	TemplateRepresentation  templateRep = null;
  	    Map<String, Object> dataModel = new HashMap<String, Object>();
- 	   String siden = "../../chess/startside.html";
+ 	   String siden = "chess/startside.html";
 // 	    Request request = getRequest();
  	   boolean noMove = false;
+ 
 		/*
 		 * if(form == null){ invalidateSessionobjects(); }
 		 */
@@ -450,7 +451,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 //    	Parameter eightqueen = form.getFirst("eightqueen"); // User has selected to solve the eight queen problem
 //    	Parameter achessGame = form.getFirst("playgame"); // User has selected to play a game of chess
 //    	Parameter findPiece = form.getFirst("btnfind"); // User has moved mouse over a piece
-    	if (printGame != null && printGame) {
+    	if (printGame != null) {
 //         	chessBoard.findMoves(gameMoves);
 //	     	int nolines = gameMoves.size();
 //	     	String mov = (String)gameMoves.get(13)+gameMoves.get(14)+gameMoves.get(15);
@@ -501,7 +502,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 			 * return templateRep;
 			 */
     	}
-    	if (ontlogyselect != null && ontlogyselect) {// This parameter is always created: Why?!!
+    	if (ontlogyselect != null && !ontlogyselect.equals("")) {// This parameter is always created: Why?!!
        		String fileName = "";
     		String rep = "\\";
     		String newRep = "\\\\";
@@ -551,7 +552,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 			 * MediaType.TEXT_HTML); return templatemapRep;
 			 */
     	}
-    	if (fileselect != null && fileselect) { // This parameter is always created: Why?!!
+    	if (fileselect != null && !fileselect.equals("")) { // This parameter is always created: Why?!!
     		String fileName = "";
     		String rep = "\\";
     		String newRep = "\\\\";
@@ -623,7 +624,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 		 * MediaType.TEXT_HTML); return templateRep;
 		 */
     	}    	
-    	if (reload != null && reload){
+    	if (reload != null){
     		request.getSession().invalidate();
 //    		sessionAdmin.getSession(request,chessBoardsession).invalidate();
     		chessBoard = null;
@@ -659,7 +660,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 		 * MediaType.TEXT_HTML); return templateRep;
 		 */
     	}
-    	if (printOntology != null && printOntology){
+    	if (printOntology != null){
     	 chessBoard.printOntology();	
    	     String fen = chessBoard.createFen();
    	     System.out.println(fen);
@@ -677,7 +678,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	 * MediaType.TEXT_HTML); return templateRep;
 	 */	
     	}
-    	if (ontology != null && ontology){ // User want ontology position on board
+    	if (ontology != null){ // User want ontology position on board
     		chessBoard.createChessontlogyPosition();
     		String fen = chessBoard.createFen();
 
@@ -706,7 +707,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 			 * MediaType.TEXT_HTML); return templateRep;
 			 */
     	}
-    	if (restartGame != null && restartGame){
+    	if (restartGame != null){
     		chessBoard.createStartPosition();
       	     String fen = chessBoard.createFen();
        	     System.out.println(fen);
@@ -734,7 +735,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 		 * MediaType.TEXT_HTML); return templateRep;
 		 */
     	}
-    	if (eightqueen != null && eightqueen) { // User wants to solve the eight queen problem  
+    	if (eightqueen != null) { // User wants to solve the eight queen problem  
 //      		chessBoard.clearChessBoard();
       		EightQueenProblem queenProblem = new EightQueenProblem();
       		queenProblem.prepare();
@@ -784,7 +785,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 /*
  *     	 User wants to play a game of chess
  */
-    	if (achessGame != null && achessGame) { // User wants to play a game of chess
+    	if (achessGame != null) { // User wants to play a game of chess
     		chessBoard.createChessontlogyPosition();
     		if (game == null) {
     			game = new PlayGame(chessBoard.getPositions(),chessBoard); // Creates start position based on ontology start position
@@ -841,20 +842,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	}
    // Opponent Player has moved a piece	
    		collectParameters(posisjon, piece, startposisjon, tilgjengeligpos); // This call replaces the structure below:
-/*    	for (Parameter entry : form) {
-			if (entry.getValue() != null && !(entry.getValue().equals(""))){
-					System.out.println(entry.getName() + "=" + entry.getValue());
-					if (entry.getName().equals("piece"))
-						piece = entry.getValue();
-					if (entry.getName().equals("posisjon"))
-						newPos = entry.getValue();
-					if (entry.getName().equals("startposisjon"))
-						oldPos = entry.getValue();
-					if (entry.getName().equals("tilgjengeligpos"))
-						tilgjengeligPos = entry.getValue();
-			}
-			
-    	}*/
+
     	if (newPos == null || newPos.equals("")){
     		newPos = "a2";
     	}
@@ -1030,31 +1018,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 		 	availablePosNames.add("yy");
    	 }
  /*  The below code has been replaced by call to produceTemplate	
-	dataModel.put(fenPosid,fen);
-   	 SimpleScalar pieceMoved = new SimpleScalar(piece);
-   	 SimpleScalar movedTo = new SimpleScalar(snewPosition);
-   	 SimpleScalar movedfrom = new SimpleScalar(soldPosition);
-   	 SimpleScalar chessPosition = new SimpleScalar(position);
-   	 dataModel.put(newPosId,movedTo );
-   	 dataModel.put(oldPosId,movedfrom );
-   	 dataModel.put(displayKey, chessPosition);
-   	 dataModel.put(pieceId,pieceMoved );
-   	 establishRules(chessBoard);
-   	 //		dataModel.put(pieceId,simple );
-   	 dataModel.put(rulesKey,chessRules);
-   	 dataModel.put(movesKey, chessMoves);
-   	 dataModel.put(availableKey, availablePosNames);
-   	 //  	 	dataModel.put(blackmovesKey, blackMoves);
-
-   	 //		 dataModel.put(pawnId,whitePawn1);
-   	 ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-   	 Representation pasientkomplikasjonFtl = clres2.get();
-   	 templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-   			 MediaType.TEXT_HTML);	
-   	 String page = "../chess/test.html";*/
-   	 /*         if (noMove) {
-        	redirectTemporary(page);
-        }*/
+*/
 
         return produceTemplate(siden,dataModel,fen,chessBoard);
     }
@@ -1105,14 +1069,6 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
        	 //		 dataModel.put(pawnId,whitePawn1);
       	 FreemarkerView view = new FreemarkerView(siden, dataModel);
      	return Response.ok(view).build();
-		/*
-		 * ClientResource clres2 = new
-		 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
-		 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
-		 * clres2.get(); templateRep = new
-		 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-		 * MediaType.TEXT_HTML); return templateRep;
-		 */
     }
     /**
      * castleMove
