@@ -540,7 +540,8 @@ public class PlayGame {
 		ApieceMove lastMove = movements.get(index-1);
 		String moveNot = lastMove.getMoveNotation(); // OBS move notation is not set !!!
 		myMoves.put(moveNot, lastMove); // For castling: must have different move notation
-		Integer moveNumber = new Integer(lastMove.getMoveNumber());
+//		Integer moveNumber = new Integer(lastMove.getMoveNumber());
+		Integer moveNumber = Integer.valueOf(lastMove.getMoveNumber());
 		piece.getMoveNumbers().add(moveNumber);
 //		checkCastling(stateImpl.getMyPlayer()); The call to checkCastling is moved 07.10.22
 		stateImpl.switchActivePlayer(); // 16.04.20 After a move, must switch active player

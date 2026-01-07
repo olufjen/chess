@@ -5,7 +5,9 @@ import org.springframework.stereotype.Component;
 
 import jakarta.ws.rs.ApplicationPath;
 import jakarta.ws.rs.core.Application;
-
+/*
+ * Denne klassen er  fra test av spring boot
+ */
 
 @Component // Forteller Spring å behandle denne som en Bean
 @ApplicationPath("/api")

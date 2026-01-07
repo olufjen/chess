@@ -13,24 +13,28 @@ import jakarta.ws.rs.core.Application;
 
 /**
  * Subklasse av jakarta.ws.rs.core.Application
- * Definerer rotstien for alle REST-tjenester i applikasjonen. Alle JAX-RS-ressurser vil starte med denne stien. /api
+ * Definerer rotstien for alle REST-tjenester i applikasjonen. Alle JAX-RS-ressurser vil starte med denne stien. /restapi
+ * DEn definerer og setter opp alle definerte beans @component som singletons
+ * 
  */
 @ApplicationPath("/restapi") 
 public class ResteasyConfig extends Application {
 
     //Statisk felt som holdes av JAX-RS Application.
-	// Dette er en Spring bean
+	// Dette er definerte Spring beans
     private static SkjemaResurs skjemaResursSingleton;
-    private static FreemarkerMessageBodyWriter freemarkerWriterSingleton; // MessageBodyWriter er en Provider
-    private static RapporterChessStartServerResourceHTML chessStarterServer;
+    private static FreemarkerMessageBodyWriter freemarkerWriterSingleton; // MessageBodyWriter er en Provider og benyttes for Freemarker
+    private static RapporterChessStartServerResourceHTML chessStarterServer; // For dialog med bruker
     private static SpringContextInjector springcontextInjector;
     private static RestletApplikasjon restletApplication;
-    // Kalt av SpringContextInjector
+/* 
+ * Alle set rutinene er kalt av SpringContextInjector
+ */
     public static void setSkjemaResursSingleton(SkjemaResurs instance) {
         skjemaResursSingleton = instance;
         System.out.println("Singleton Skjema Resurs bean injisert til RestEasyConfig extends Application");
-        String message = skjemaResursSingleton.getMessage();
-        System.out.println("Melding fra bean "+message);
+//        String message = skjemaResursSingleton.getMessage();
+//        System.out.println("Melding fra bean "+message);
     }
 
 	public static void setRestletApplication(RestletApplikasjon restletApplication) {
@@ -64,11 +68,12 @@ public class ResteasyConfig extends Application {
 
 
 	/**
-     * getSingletons() kaller NÅ ikke lenger context.getBean().
+     * getSingletons()
+     * Returnerer alle definerte beans
      */
     @Override
     public Set<Object> getSingletons() {
-    	System.out.println("Test singletons i RestEasyConfig");
+    	System.out.println("Henter singletons i RestEasyConfig");
         if (skjemaResursSingleton == null || freemarkerWriterSingleton == null) {
             throw new IllegalStateException("Alle obligatoriske singletons ble ikke satt av Spring/Context Injector.");
        }

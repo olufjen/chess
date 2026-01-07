@@ -131,7 +131,8 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
  * Must calculate a utility value for each action OLJ 7.08.20
  */
 		for (ChessAction myAction: actions) {
-			Integer pNumber = new Integer(pn);
+//			Integer pNumber = new Integer(pn);
+			Integer pNumber = Integer.valueOf(pn);
 			ChessActionImpl localAction = (ChessActionImpl) myAction;
 //			localAction.set
 			AgamePiece piece = (AgamePiece) localAction.getChessPiece();

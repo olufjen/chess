@@ -86,6 +86,7 @@ public class KnowledgeBuilder {
   private static String POSSIBLETHREAT = "POSSIBLETHREAT"; // All available positions for a piece are possibly threatened by that piece
   private static String POSSIBLEPROTECT = "POSSIBLEPROTECT"; // All available positions for a piece are possibly protected by that piece
   private static String POSSIBLEREACH = "POSSIBLEREACH"; // All available positions for a piece are possibly reachable by that piece
+  private static String HOMESQARE = "HOMESQUARE"; // Predicate name for home square
 /*
  * Additional predicate names  
  */
@@ -101,6 +102,14 @@ public class KnowledgeBuilder {
   private static String fileCatalog = "G:\\Min disk\\privat\\ontologies\\analysis\\";
   
   
+
+  public static String getHOMESQARE() {
+	return HOMESQARE;
+}
+
+  public static void setHOMESQARE(String hOMESQARE) {
+	HOMESQARE = hOMESQARE;
+  }
 
   public static String getFileCatalog() {
 	return fileCatalog;

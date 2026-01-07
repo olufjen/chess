@@ -250,7 +250,8 @@ public class AgamePiece extends AbstractGamePiece<Position> implements ChessPiec
 	public void setOntologyPositions(HashMap<String, Position> ontologyPositions) {
 		this.ontologyPositions = ontologyPositions;
 		determinePieceType();
-		myValue = new Integer(getValue());
+//		myValue = new Integer(getValue());
+		myValue = Integer.valueOf(getValue());
 	}
 
 	public Integer getMyValue() {

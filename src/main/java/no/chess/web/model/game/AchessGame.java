@@ -580,7 +580,8 @@ public class AchessGame extends AbstractChessGame{
 		}
 		builder.append("Analyzing action: "+action.toString()+"\n");
 		
-		Integer pNumber = new Integer(pn);
+//		Integer pNumber = new Integer(pn);
+		Integer pNumber = Integer.valueOf(pn);
 		pn++;
 		AgamePiece piece = (AgamePiece) action.getChessPiece();
 		String name = piece.getMyPiece().getPieceName();

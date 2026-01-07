@@ -19,7 +19,9 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 import jakarta.ws.rs.ext.Provider;
 import no.chess.web.view.FreemarkerView;
-
+/*
+ * Dette er en bean for Freemarker rammeverket
+ */
 
 @Component // <-- Forteller Spring at dette er en bønne
 @Provider // Registrerer denne klassen som en JAX-RS utvidelse

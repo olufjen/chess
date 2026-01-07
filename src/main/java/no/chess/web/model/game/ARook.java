@@ -390,7 +390,8 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			XYLocation remloc = removed.getXyloc();
 			int ry = remloc.getYCoOrdinate();
 			int ydiff = y - ry;//Math.abs(y-ry);
-			Integer sumDif = new Integer(Math.abs(ydiff));
+//			Integer sumDif = new Integer(Math.abs(ydiff));
+			Integer sumDif = Integer.valueOf(Math.abs(ydiff));
 			if (ydiff < 0) {
 				removed.setSumNorth(ydiff);
 				removed.setSumDif(sumDif);
@@ -401,7 +402,8 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			}
 			int rx = remloc.getXCoOrdinate();
 			int xdiff = x - rx;
-			Integer sumdifx = new Integer(Math.abs(xdiff));
+//			Integer sumdifx = new Integer(Math.abs(xdiff));
+			Integer sumdifx = Integer.valueOf(Math.abs(xdiff));
 			if (xdiff < 0) {
 				removed.setSumWest(xdiff);
 				removed.setSumDif(sumdifx);
@@ -417,7 +419,8 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 			int rx = remloc.getXCoOrdinate();
 			int ry = remloc.getYCoOrdinate();
 			int ydiff = y - ry;//Math.abs(y-ry);
-			Integer sumDif = new Integer(Math.abs(ydiff));
+//			Integer sumDif = new Integer(Math.abs(ydiff));
+			Integer sumDif = Integer.valueOf(Math.abs(ydiff));
 			if (ydiff < 0) {
 				avail.setSumNorth(ydiff);
 				avail.setSumDif(sumDif);
@@ -427,7 +430,8 @@ public class ARook extends AbstractGamePiece<Position>  implements ChessPieceTyp
 				avail.setSumDif(sumDif);
 			}
 			int xdiff = x - rx;
-			Integer sumdifx = new Integer(Math.abs(xdiff));
+//			Integer sumdifx = new Integer(Math.abs(xdiff));
+			Integer sumdifx = Integer.valueOf(Math.abs(xdiff));
 			if (xdiff < 0) {
 				avail.setSumWest(xdiff);
 				avail.setSumDif(sumdifx);

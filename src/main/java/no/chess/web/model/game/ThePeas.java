@@ -103,7 +103,8 @@ public class ThePeas {
 	 */
 	public void addExecutable(String key,int rank,String... names) {
 		executable.put(key, names);
-		rankValues.put(key,new Integer(rank));
+		rankValues.put(key,Integer.valueOf(rank));
+
 	}
 	public void checkMoves(APlayer theplayer) {
 		ArrayList<AgamePiece> pieces = theplayer.getMygamePieces();

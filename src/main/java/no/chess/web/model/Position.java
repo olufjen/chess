@@ -67,7 +67,7 @@ public class Position extends ParentModel {
 	private WhiteBoardPosition whiteBoardPosition = null;
 	private HashSet<Piece> pieces;
 	private XYLocation xyloc = null; // Represents the XYLocation of a aima board
-	private Integer sumDif = new Integer(0); // A distance indicator in a set of removed positions (See the PreferredMove processor)
+	private Integer sumDif = Integer.valueOf(0); // A distance indicator in a set of removed positions (See the PreferredMove processor)
 	private int sumNorth = 0; //Is greater than 0 if position is north of current position
 	private int sumSouth = 0;//Is greater than 0 if position is south of current position
 	private int sumEast = 0; //Is greater than 0 if position is east of current position

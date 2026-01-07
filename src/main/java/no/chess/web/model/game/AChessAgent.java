@@ -69,7 +69,8 @@ import no.games.chess.planning.ChessSearchAlgorithm;
  * If preferred position is occupied by opponent
  * If the opponent piece is protected
  * If the preferred position is a center position
- * 
+ * @since 05.01.26
+ * Creating more rules to the knowledge base
  * @author oluf
  *
  */
@@ -108,7 +109,7 @@ public class AChessAgent extends KBAgent {
 	private List<String> opponentPieces = null;
 	private AChessProblemSolver solver = null;
 	private ChessSearchAlgorithm chessSearch = null;
-	private int noofMoves = 0;
+	private int noofMoves = 0; // settes fra game.getMovements().size() fra execute function
 	
 	private String ACTION;
 	private String PROTECTED;
@@ -345,7 +346,7 @@ public class AChessAgent extends KBAgent {
 		}
 //		actions.add((ChessActionImpl) allActions); //*** Added 23.05.25 olj
 		myPlayer.setActions(allActions);
-		kb.setStateImpl(stateImpl);
+//		kb.setStateImpl(stateImpl);
 		
 		forwardChain = new FOLGamesFCAsk(); // A Forward Chain inference procedure see p. 332
 		backwardChain = new FOLGamesBCAsk(); // A backward Chain inference procedure see p. 337
@@ -355,11 +356,11 @@ public class AChessAgent extends KBAgent {
 //		folKb.tell(mKing);
 		// Moved to behind makerules !! 20.11.21
 //		setOpponentpieces(opponent);//creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
-		kb.setOpponentPieces(opponentPieces);
+//		kb.setOpponentPieces(opponentPieces);
 		noofMoves = game.getMovements().size();
 		String playerName = stateImpl.getMyPlayer().getNameOfplayer();
-		Sentence playSentence = kb.newSymbol(kb.TOPLAY+playerName, noofMoves);
-		kb.tell(playSentence);
+//		Sentence playSentence = kb.newSymbol(kb.TOPLAY+playerName, noofMoves);
+//		kb.tell(playSentence);
 	
 		makeRules(myPlayer,"g1","c1"); // tells the FOL knowledgebase rules about how to capture opponent pieces
 		for (Position pos:positionList) {
@@ -407,9 +408,9 @@ public class AChessAgent extends KBAgent {
 		terms.add(pieceVariable);
 		terms.add(posVariable);
 		
-		Predicate folPredicate = new Predicate(chessPr,terms);  // The folPredicate is OWNER
-		QuantifiedSentence qSentence = new QuantifiedSentence("FORALL",variables,folPredicate);
-		folKb.tell(qSentence); // Returned to code 28.02.23
+		Predicate folPredicate = new Predicate(chessPr,terms);  // The folPredicate is POSSIBLEPROTECT
+//		QuantifiedSentence qSentence = new QuantifiedSentence("FORALL",variables,folPredicate); // A single sentence including FORALL
+//		folKb.tell(qSentence); // Returned to code 28.02.23 REplaced, see createConnected
 		createConnected("player", "y", "x");
 //		String s1 = "occupies(o,px)^occupies(pi,py)";
 //		String s2 = "MOVE(pi,pz)";
@@ -576,7 +577,8 @@ public class AChessAgent extends KBAgent {
 
 		for (ChessActionImpl action:actions) {
 			if (action.getActionValue() == null) {
-				action.setActionValue(new Integer(0));
+//				action.setActionValue(new Integer(0));
+				action.setActionValue(Integer.valueOf(0));
 			}
 		}
 /*		List<Integer> sortedActions = actions.stream().sorted(Comparator.comparing(ChessActionImpl::getActionValue)).map(ChessActionImpl::getActionValue)
@@ -648,7 +650,12 @@ public class AChessAgent extends KBAgent {
 	/**
 	 * createConnected
 	 * This method creates rules to the fol knowledge base 
-	 * @since 18.05.21 The Owner predicate is removed from the rules.
+	 * These rules are of the form:
+	 * ((REACHABLE(x,y) AND occupies(enemy_piece, y)) => ATTACK_MOVE(x,y))
+	 * @since 18.05.21
+	 * The Owner predicate is removed from the rules.
+	 * @since 07.01.26
+	 * This function is enhanced to be able to create any type of quantified rule.
 	 * @param name
 	 * @param pos
 	 * @param piece
@@ -661,6 +668,11 @@ public class AChessAgent extends KBAgent {
 		Variable otherPiece = new Variable("p");
 		Variable posVariable = new Variable(pos);
 		Variable newPosition = new Variable("z");
+		List<Variable> variables = new ArrayList<Variable>();
+		variables.add(pieceVariable);
+		variables.add(posVariable);
+		variables.add(newPosition);
+		variables.add(otherPiece);
 		ownerTerms.add(ownerVariable);
 		ownerTerms.add(pieceVariable);
 		Predicate ownerPredicate = new Predicate(OWNER,ownerTerms);
@@ -681,10 +693,11 @@ public class AChessAgent extends KBAgent {
 		ConnectedSentence reachableandprotectedSentence = new ConnectedSentence(Connectors.AND,reachablePredicate,protectedPredicate);
 		Predicate safemovePredicate = new Predicate(SAFEMOVE,moveTerms);
 		ConnectedSentence goal = new ConnectedSentence(Connectors.IMPLIES,reachableandprotectedSentence,move);
+		QuantifiedSentence qSentence = new QuantifiedSentence("FORALL",variables,goal); // A single qualified sentence including FORALL
 /*		ConnectedSentence protectedGoal = new ConnectedSentence(Connectors.IMPLIES,goal,safemovePredicate);
 		ConnectedSentence canAndSafe = new ConnectedSentence(Connectors.AND,movePredicate,safemovePredicate);
 		ConnectedSentence safeTomove = new ConnectedSentence(Connectors.IMPLIES,canAndSafe,move);*/
-		folKb.tell(goal);
+		folKb.tell(qSentence);
 //		folKb.tell(protectedGoal);
 //		folKb.tell(safeTomove);
 		List<Term> typeTerms = new ArrayList<Term>();
@@ -694,9 +707,10 @@ public class AChessAgent extends KBAgent {
 		Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
 		Predicate pawnMove = new Predicate(PAWNMOVE,reachableTerms);
 //		ConnectedSentence pawnSentence = new ConnectedSentence(Connectors.AND,ownerPredicate,typePredicate);
-		ConnectedSentence pawnReachable = new ConnectedSentence(Connectors.AND,typePredicate,reachablePredicate);
+		ConnectedSentence pawnReachable = new ConnectedSentence(Connectors.AND,typePredicate,reachablePredicate); // *** Add FORALL ****
 		ConnectedSentence pawnmove = new ConnectedSentence(Connectors.IMPLIES,pawnReachable,pawnMove);
-		folKb.tell(pawnmove);
+		QuantifiedSentence qpawn = new QuantifiedSentence("FORALL",variables,pawnmove); // A single qualified sentence including FORALL
+		folKb.tell(qpawn);
 
 		}
 	/**
@@ -873,7 +887,7 @@ public class AChessAgent extends KBAgent {
 								folKb.tell(threatenPredicate);
 							}*/
 							chessDomain.addConstant(position);
-							if (type == type.KING && castlePositions != null) {
+							if (type == type.KING && castlePositions != null) { // Must be simplified
 								List<Position> removedKing = piece.getRemovedPositions();
 								for (Position cpos: castlePositions) {
 									String cPosname = cpos.getPositionName();
@@ -999,6 +1013,7 @@ public class AChessAgent extends KBAgent {
 	 * makeOpponentsentences
 	 * This method creates simple facts about the current state of of the opponent:
 	 * The opponent pieces and their positions to the propositional knowledge base.
+	 * @since ? Not in use
 	 * @param opponent
 	 */
 	public void makeOpponentsentences(APlayer opponent,int t) {
@@ -1142,6 +1157,7 @@ public class AChessAgent extends KBAgent {
 	/* (non-Javadoc)
 	 * This method is used to make sentences for propositional logic
 	 * @see aima.core.logic.propositional.agent.KBAgent#makeActionSentence(aima.core.agent.Action, int)
+	 * @since ?? Not in use
 	 */
 	@Override
 	public Sentence makeActionSentence(Action action, int t) {

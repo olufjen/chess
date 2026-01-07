@@ -18,10 +18,6 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 @Component // ✅ MÅ VÆRE PÅ Forteller Spring Boot å behandle denne klassen som en Spring Bean. Dette gjør at Spring kan opprette og administrere objektet, og injisere det i RESTEasy-rammeverket.
 @WebListener // <--- LEGG TIL DENNE!
 public class SpringContextInjector implements ServletContextListener {
-    // ✅ Nå injiserer Spring Contexten direkte
-	   // ✅ Spring injiserer denne før contextInitialized kalles.
- //   @Autowired
-//    private ApplicationContext springContext; // Fra org.springframework.context.
 
     @Override
     public void contextInitialized(ServletContextEvent event) {

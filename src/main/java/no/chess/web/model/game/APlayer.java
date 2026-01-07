@@ -337,7 +337,8 @@ public void checkPreferredPosition(ChessAction action) {
 		String name = piece.getMyPiece().getPieceName();
 		name = name + piece.getColor();
 		int pn = piece.getMyPosition().getIntRow();
-		Integer prn = new Integer(pn);
+//		Integer prn = new Integer(pn);
+		Integer prn = Integer.valueOf(pn);
 		PreferredMoveProcessor pr = new PreferredMoveProcessor(prn,name);
 		ApieceMove move = ChessFunctions.processChessgame(action,piece,pr); // The processor can be replaced by a lambda expression
 		Position preferredPosition = null;
@@ -366,7 +367,8 @@ public void checkPreferredPosition(ChessAction action) {
 		for (AgamePiece piece:mygamePieces ) {
 			String name = piece.getMyPiece().getPieceName();
 			int pn = piece.getMyPosition().getIntRow();
-			Integer prn = new Integer(pn);
+//			Integer prn = new Integer(pn);
+			Integer prn = Integer.valueOf(pn);
 			OpponentMoveProcessor op = new OpponentMoveProcessor(prn,name);
 			ApieceMove move = ChessFunctions.processChessgame(this, piece,op);
 			currentMove = move;

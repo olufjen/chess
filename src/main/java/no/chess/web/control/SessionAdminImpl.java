@@ -9,7 +9,7 @@ import jakarta.servlet.http.HttpSession;
  * Denne klassen administerer session objekter for Resurser 
  * @author olj
  * @since December 2025
- * Reworked fo use of jakarta
+ * Reworked for use of jakarta
  *
  */
 public class SessionAdminImpl {

@@ -106,7 +106,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 
 	public RapporterChessStartServerResourceHTML() {
 		super();
-
+		  System.out.println("RapporterChessStartServerResourceHTML felles started");
 	}
 
 	public String getTilgjengeligPos() {
@@ -668,15 +668,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
       	 FreemarkerView view = new FreemarkerView(siden, dataModel);
      	return Response.ok(view).build();
 
- //		 dataModel.put(pawnId,whitePawn1);
-	/*
-	 * ClientResource clres2 = new
-	 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
-	 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
-	 * clres2.get(); templateRep = new
-	 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-	 * MediaType.TEXT_HTML); return templateRep;
-	 */	
+
     	}
     	if (ontology != null){ // User want ontology position on board
     		chessBoard.createChessontlogyPosition();
@@ -694,18 +686,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     		dataModel.put(movesKey, chessMoves);
          	 FreemarkerView view = new FreemarkerView(siden, dataModel);
          	return Response.ok(view).build();
-//    		dataModel.put(blackmovesKey, blackMoves);
-    		/*      	 	dataModel.put(rulesKey,chessBoard.getExeRules());
-       	 	dataModel.put(rulelabelKey, chessBoard.getExeLabels());*/
-    		//		 dataModel.put(pawnId,whitePawn1);
-			/*
-			 * ClientResource clres2 = new
-			 * ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,
-			 * "/chess/startside.html")); Representation pasientkomplikasjonFtl =
-			 * clres2.get(); templateRep = new
-			 * TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-			 * MediaType.TEXT_HTML); return templateRep;
-			 */
+
     	}
     	if (restartGame != null){
     		chessBoard.createStartPosition();
@@ -974,7 +955,8 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
  
    	    	lastMove.setMoveNotation(moveNot);
    	    	myMoves.put(moveNot, lastMove);
- 	    	Integer noofMoves = new Integer(lastMove.getMoveNumber());
+ //	    	Integer noofMoves = new Integer(lastMove.getMoveNumber());
+   	    	Integer noofMoves = Integer.valueOf(lastMove.getMoveNumber());
  			movedPiece.getMoveNumbers().add(noofMoves);
   	    	movedPiece.produceLegalmoves(newPosition); // Added 23.06.20 produces new available positions for the moved piece
   	    	movedPiece.giveNewdirections();// Calculates nw,ne,sw,se for bishop and queen Added 03.06.21

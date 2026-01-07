@@ -30,9 +30,10 @@ import no.games.chess.ChessPieceType;
  * Based on the facts known by the chess state rules are created and used to find the next best move for the player.
  * The knowledge base uses the Davis putnam algorithm for backward chaining to answer question like:
  * What shall I do now?. What is the best move now?
- *   
+ * @since ??
+ * The propositional knowledge base is not in use  
  * @author Oluf
- *
+ * @deprecated
  */
 public class ChessKnowledgeBase extends KnowledgeBase {
 

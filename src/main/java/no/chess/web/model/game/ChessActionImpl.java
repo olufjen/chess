@@ -77,7 +77,8 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		name = name + this.chessPiece.getColor();
 		pn = this.chessPiece.getMyPosition().getIntRow()*10;
 		pny = this.chessPiece.getMyPosition().getIntColumn();
-		Integer prn = new Integer(pn+pny);
+//		Integer prn = new Integer(pn+pny);
+		Integer prn = Integer.valueOf(pn+pny);
 		PreferredMoveProcessor pr = new PreferredMoveProcessor(prn,name);
 		myProcessor = pr;
 		possibleMove = ChessFunctions.processChessgame(this,chessPiece, pr); // The processor can be replaced by a lambda expression?

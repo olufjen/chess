@@ -348,7 +348,8 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 			int ry = remloc.getYCoOrdinate();
 			int diffx = Math.abs(x-rx);
 			int diffy = Math.abs(y-ry);
-			Integer sumDif = new Integer(diffx+diffy);
+//			Integer sumDif = new Integer(diffx+diffy);
+			Integer sumDif = Integer.valueOf(diffx+diffy);
 			removed.setSumDif(sumDif);
 			remlocs.add(sumDif);
 			remlocMaps.put(removed.getMydirection(), sumDif);
@@ -361,7 +362,8 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 			int ry = remloc.getYCoOrdinate();
 			int diffx = Math.abs(x-rx);
 			int diffy = Math.abs(y-ry);
-			Integer sumDif = new Integer(diffx+diffy);
+//			Integer sumDif = new Integer(diffx+diffy);
+			Integer sumDif = Integer.valueOf(diffx+diffy);
 			avail.setSumDif(sumDif);
 			remlocs.add(sumDif);
 			remlocMaps.put(avail.getMydirection(), sumDif);
@@ -461,7 +463,8 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 			XYLocation remloc = removed.getXyloc();
 			int ry = remloc.getYCoOrdinate();
 			int ydiff = y - ry;//Math.abs(y-ry);
-			Integer sumDif = new Integer(Math.abs(ydiff));
+//			Integer sumDif = new Integer(Math.abs(ydiff));
+			Integer sumDif = Integer.valueOf(Math.abs(ydiff));
 			if (ydiff < 0) {
 				removed.setSumNorth(ydiff);
 				removed.setSumDif(sumDif);
@@ -472,7 +475,8 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 			}
 			int rx = remloc.getXCoOrdinate();
 			int xdiff = x - rx;
-			Integer sumdifx = new Integer(Math.abs(xdiff));
+//			Integer sumdifx = new Integer(Math.abs(xdiff));
+			Integer sumdifx = Integer.valueOf(Math.abs(xdiff));
 			if (xdiff < 0) {
 				removed.setSumWest(xdiff);
 				removed.setSumDif(sumdifx);
@@ -488,7 +492,8 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 			int rx = remloc.getXCoOrdinate();
 			int ry = remloc.getYCoOrdinate();
 			int ydiff = y - ry;//Math.abs(y-ry);
-			Integer sumDif = new Integer(Math.abs(ydiff));
+//			Integer sumDif = new Integer(Math.abs(ydiff));
+			Integer sumDif = Integer.valueOf(Math.abs(ydiff));
 			if (ydiff < 0) {
 				avail.setSumNorth(ydiff);
 				avail.setSumDif(sumDif);
@@ -498,7 +503,8 @@ public class AQueen extends AbstractGamePiece<Position>  implements ChessPieceTy
 				avail.setSumDif(sumDif);
 			}
 			int xdiff = x - rx;
-			Integer sumdifx = new Integer(Math.abs(xdiff));
+//			Integer sumdifx = new Integer(Math.abs(xdiff));
+			Integer sumdifx = Integer.valueOf(Math.abs(xdiff));
 			if (xdiff < 0) {
 				avail.setSumWest(xdiff);
 				avail.setSumDif(sumdifx);

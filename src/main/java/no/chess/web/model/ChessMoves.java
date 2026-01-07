@@ -63,7 +63,8 @@ public class ChessMoves {
 		this.moveNr = moveNr;
 	}
 	public String toString() {
-		Integer mn = new Integer(moveNr);
+//		Integer mn = new Integer(moveNr);
+		Integer mn = Integer.valueOf(moveNr);
 		
 		return mn.toString()+" "+whiteMove+ " "+blackMove;
 	}

@@ -269,7 +269,8 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 			int ry = remloc.getYCoOrdinate();
 			int diffx = Math.abs(x-rx);
 			int diffy = Math.abs(y-ry);
-			Integer sumDif = new Integer(diffx+diffy);
+//			Integer sumDif = new Integer(diffx+diffy);
+			Integer sumDif = Integer.valueOf(diffx+diffy);
 			removed.setSumDif(sumDif);
 			remlocs.add(sumDif);
 			remlocMaps.put(removed.getMydirection(), sumDif);
@@ -282,7 +283,8 @@ public class ABishop extends AbstractGamePiece<Position>  implements ChessPieceT
 			int ry = remloc.getYCoOrdinate();
 			int diffx = Math.abs(x-rx);
 			int diffy = Math.abs(y-ry);
-			Integer sumDif = new Integer(diffx+diffy);
+//			Integer sumDif = new Integer(diffx+diffy);
+			Integer sumDif = Integer.valueOf(diffx+diffy);
 			avail.setSumDif(sumDif);
 			remlocs.add(sumDif);
 			remlocMaps.put(avail.getMydirection(), sumDif);

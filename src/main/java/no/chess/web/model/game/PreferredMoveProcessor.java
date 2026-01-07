@@ -437,7 +437,8 @@ public class PreferredMoveProcessor implements ChessProcessor<ChessActionImpl,Ag
 			int ry = remloc.getYCoOrdinate();
 			int diffx = Math.abs(x-rx);
 			int diffy = Math.abs(y-ry);
-			Integer sumDif = new Integer(diffx+diffy);
+//			Integer sumDif = new Integer(diffx+diffy);
+			Integer sumDif = Integer.valueOf(diffx+diffy);
 			removed.setSumDif(sumDif);
 
 //			remlocs.add(sumDif);
