@@ -924,28 +924,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 		 	availablePosNames.add("yy");
    	 }
  /*  The below code has been replaced by call to produceTemplate	
-	dataModel.put(fenPosid,fen);
-   	 SimpleScalar pieceMoved = new SimpleScalar(piece);
-   	 SimpleScalar movedTo = new SimpleScalar(snewPosition);
-   	 SimpleScalar movedfrom = new SimpleScalar(soldPosition);
-   	 SimpleScalar chessPosition = new SimpleScalar(position);
-   	 dataModel.put(newPosId,movedTo );
-   	 dataModel.put(oldPosId,movedfrom );
-   	 dataModel.put(displayKey, chessPosition);
-   	 dataModel.put(pieceId,pieceMoved );
-   	 establishRules(chessBoard);
-   	 //		dataModel.put(pieceId,simple );
-   	 dataModel.put(rulesKey,chessRules);
-   	 dataModel.put(movesKey, chessMoves);
-   	 dataModel.put(availableKey, availablePosNames);
-   	 //  	 	dataModel.put(blackmovesKey, blackMoves);
-
-   	 //		 dataModel.put(pawnId,whitePawn1);
-   	 ClientResource clres2 = new ClientResource(LocalReference.createClapReference(LocalReference.CLAP_CLASS,"/chess/startside.html"));
-   	 Representation pasientkomplikasjonFtl = clres2.get();
-   	 templateRep = new TemplateRepresentation(pasientkomplikasjonFtl,dataModel,
-   			 MediaType.TEXT_HTML);	
-   	 String page = "../chess/test.html";*/
+*/
    	 /*         if (noMove) {
         	redirectTemporary(page);
         }*/
