@@ -505,42 +505,48 @@ public class APerceptor implements ChessPercept {
 				  bishop = new ABishop(position,chessPiece);
 				  reachables = bishop.getLegalmoves();
 			  }
-			  predicate = agent.getBISHOP();
+//			  predicate = agent.getBISHOP();
+			  predicate = KnowledgeBuilder.getBISHOPMOVE();
 		  }
 		  if (piece.getMyrook() != null) {
 			  if (position != null) {
 				  rook = new ARook(position,chessPiece);
 				  reachables = rook.getLegalmoves();
 			  }
-			  predicate = agent.getROOK();
+//			  predicate = agent.getROOK();
+			  predicate = KnowledgeBuilder.getROOKMOVE();
 		  }
 		  if (piece.getMyKnight() != null) {
 			  if (position != null) {
 				  knight = new AKnight(position,chessPiece);
 				  reachables = knight.getLegalmoves(); 
 			  }
-			  predicate = agent.getKNIGHT();
+//			  predicate = agent.getKNIGHT();
+			  predicate = KnowledgeBuilder.getKNIGHTMOVE();
 		  }
 		  if (piece.getMyqueen() != null) {
 			  if (position != null) {
 				  queen = new AQueen(position,chessPiece);
 				  reachables = queen.getLegalmoves();
 			  }
-			  predicate = agent.getQUEEN();
+//			  predicate = agent.getQUEEN();
+			  predicate = KnowledgeBuilder.getQUEENMOVE();
 		  }
 		  if (piece.getMyKing() != null) {
 			  if (position != null) {
 				  king = new Aking(position,chessPiece);
 				  reachables = king.getLegalmoves();
 			  }
-			  predicate = agent.getKING();
+//			  predicate = agent.getKING();
+			  predicate = KnowledgeBuilder.getKINGMOVE();
 		  }	 
 		  if (piece.getMyPawn() != null) {
 			  if (position != null) {
 				  pawn = new APawn(position,chessPiece);
 				  reachables = pawn.getAttackPositions();
 			  }
-			  predicate = agent.getPAWN();
+//			  predicate = agent.getPAWN();
+			  predicate = KnowledgeBuilder.getPAWNMOVE();
 		  }
 		  if(newPosname != null && reachables != null && !reachables.isEmpty()) {
 			  List<Position> reachablelist = new ArrayList<Position>(reachables.values());

@@ -7,18 +7,25 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import aima.core.logic.fol.domain.FOLDomain;
 import aima.core.logic.fol.inference.InferenceProcedure;
 import aima.core.logic.fol.inference.InferenceResult;
+import aima.core.logic.fol.inference.proof.Proof;
 import aima.core.logic.fol.kb.FOLKnowledgeBase;
+import aima.core.logic.fol.parsing.FOLParser;
 import aima.core.logic.fol.parsing.ast.Constant;
 import aima.core.logic.fol.parsing.ast.Predicate;
+import aima.core.logic.fol.parsing.ast.Sentence;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
 import no.chess.web.model.Position;
 import no.games.chess.fol.BCGamesAskHandler;
+import no.games.chess.fol.FCGamesAskAnswerHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
+import no.games.chess.fol.FOLGamesFCAsk;
 
 /**
  * The  ChessFolKnowledgeBase is a subclass of the FOLKnowledgeBase.
@@ -94,6 +101,29 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 		pieceTypes.add(QUEEN);
 	}
 	
+	/**
+	 * checkNumberofparams
+	 * This method return the number of parameters for a given predicate
+	 * @param name
+	 * @return
+	 */
+	public int checkNumberofparams(String name) {
+		List<Sentence> sentences = this.getOriginalSentences();
+		int antPar = 0;
+		for (Sentence sentence:sentences) {
+			if( sentence instanceof Predicate) {
+				Predicate pred = (Predicate)sentence;
+				if (name.equals(pred.getPredicateName())){
+					antPar = pred.getTerms().size();
+					/*
+					 * if (name.equals("PAWN")) { System.out.println("The pawn found"); }
+					 */
+					break;
+				}
+			}
+		}
+		return antPar;
+	}
 	public List<AgamePiece> getMovePieces() {
 		return movePieces;
 	}
@@ -134,19 +164,19 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 		}
 		return foundType;
 	}
-/**
- * checkmyProtection
- * This method checks if a piece is protected by other pieces than by itself
- * @param pieceName
- * @param pos
- * @return true if it is protected
- */
-public boolean checkmyProtection(String pieceName,String pos,String predName,APlayer myPlayer) {
-	  List<AgamePiece> myPieces = myPlayer.getMygamePieces();
-	  boolean protectedpiece = false;
-	  for (AgamePiece piece:myPieces) {
-		  String name = piece.getMyPiece().getOntlogyName();
-		  if (!name.equals(pieceName)) {
+	/**
+	 * checkmyProtection
+	 * This method checks if a piece is protected by other pieces than by itself
+	 * @param pieceName
+	 * @param pos
+	 * @return true if it is protected
+	 */
+	public boolean checkmyProtection(String pieceName,String pos,String predName,APlayer myPlayer) {
+		List<AgamePiece> myPieces = myPlayer.getMygamePieces();
+		boolean protectedpiece = false;
+		for (AgamePiece piece:myPieces) {
+			String name = piece.getMyPiece().getOntlogyName();
+			if (!name.equals(pieceName)) {
 				Constant pieceVariable= new Constant(name);
 				Constant posVariable = new Constant(pos);
 				List<Term> reachableTerms = new ArrayList<Term>();
@@ -157,11 +187,71 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 				protectedpiece = backWardresult.isTrue();
 				if (protectedpiece)
 					return protectedpiece;
-		  }
-	  }
-	return protectedpiece;
-}
+			}
+		}
+		return protectedpiece;
+	}
+
+	/**
+	 * checkQuery
+	 * Asks a query to the knowledge base using backward chaining
+	 * @param stringQuery
+	 * @return a LIst of Strings containg term names
+	 */
+	public List<String> checkQuery(String stringQuery){
+		FOLParser parser = getParser();
+		Sentence query = parser.parse(stringQuery);
+		InferenceResult backWardresult =  backWardChain.ask(this,query);
+		BCGamesAskHandler handler = (BCGamesAskHandler)backWardresult;
+		List<HashMap<Variable, Term>> finals = handler.getFinalList();
+		int noofFinals = finals.size();
+		HashMap<Variable, Term> vars = null;
+		String termName = null;
+		List<String> termNames = new ArrayList<String>();
+		if (finals != null && !finals.isEmpty()) {
+			for (int i = 0;i<noofFinals;i++) {
+				vars = finals.get(i);
+				for (Variable v:vars.keySet()) {
+					if(!v.getSymbolicName().startsWith("v")) {
+						Term term = vars.get(v);
+						termName = term.getSymbolicName(); // What is the name of this object?
+						termNames.add(termName);
+					}
+				}
+			}
+		}
+		return termNames;
+	}
+	/**
+	 * forwardcheckQuery
+	 * Asks a query to the knowledge base using forward chaining
+	 * @param stringQuery
+	 * @return a List of stringa of given term names
+	 */
+	public List<String>forwardcheckQuery(String stringQuery){
+		FOLParser parser = getParser();
+		Sentence query = parser.parse(stringQuery);
 	
+		FOLGamesFCAsk forwardChain = (FOLGamesFCAsk) getInferenceProcedure();
+		InferenceResult forWardresult =  forwardChain.ask(this,query);
+		FCGamesAskAnswerHandler handler = (FCGamesAskAnswerHandler)forWardresult;
+		List<Proof> proofs = handler.getProofs();
+		String termName = null;
+		List<String> termNames = new ArrayList<String>();
+		for (Proof proof:proofs) {
+		    Map<Variable, Term> bindings = proof.getAnswerBindings();
+		    for (Variable var : bindings.keySet()) {
+		        // Ignorer interne variabler som v1, v2, v14 osv.
+		        if (!var.getSymbolicName().startsWith("v")) {
+					Term term =  bindings .get(var);
+					termName = term.getSymbolicName(); // What is the name of this object?
+					termNames.add(termName);
+		        }
+		    }
+
+		}
+		return termNames;
+	}
 	  /**
 	   * checkThreats
 	   * This method checks the FOL knowledge base for certain facts about the opponent's pieces.
@@ -472,5 +562,26 @@ public boolean checkmyProtection(String pieceName,String pos,String predName,APl
 			}
 		}
 		return termNames;
+	}
+	
+	/**
+	 * getFacts()
+	 * This method returns all facts from the kb
+	 * @return - A list of facts - Predicates from the kb
+	 */
+	public List<Predicate> getFacts(){
+	    List<Predicate> facts = new ArrayList<>();
+	    
+	    // getOriginalSentences() returnerer alle setninger som er lagt til 
+	    // eller utledet via tell() i kunnskapsbasen.
+	    for (Sentence s : getOriginalSentences()) {
+	        // Vi sjekker om setningen er et Predicate (f.eks. CONTROLCENTER(WhitePawn4, d4))
+	        // og ikke en regel (som f.eks. ConnectedSentence / Implication)
+	        if (s instanceof Predicate) {
+	            facts.add((Predicate) s);
+	        }
+	    }
+		return facts;
+		
 	}
 }

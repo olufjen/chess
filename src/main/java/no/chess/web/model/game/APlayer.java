@@ -54,6 +54,7 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 	private List<Position> preferredPositions;
 	private List<Position> heldPositions; // The list of positions held by the pieces belonging to the player
 	private List<AgamePiece> inactivePieces; // Contain a list of inactive pieces for this player
+	private List<AgamePiece> removedPieces;
 	
 	public APlayer(ArrayList<AgamePiece> mygamePieces) {
 		super();
@@ -65,8 +66,13 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 		myontologyPieces = new ArrayList<Piece>();
 		namesAndrank = new HashMap();
 		inactivePieces = new ArrayList<AgamePiece>();
+		removedPieces = new ArrayList<AgamePiece>();
+		showPieceactivity();
 	}
 
+	/**
+	 * Initial creator !!
+	 */
 	public APlayer() {
 		super();
 		mygamePieces = new ArrayList<AgamePiece>();
@@ -77,6 +83,8 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 		myontologyPieces = new ArrayList<Piece>();
 		namesAndrank = new HashMap();
 		inactivePieces = new ArrayList<AgamePiece>();
+		removedPieces = new ArrayList<AgamePiece>();
+		showPieceactivity();
 	}
 	public APlayer(player playerName) {
 		super();
@@ -89,6 +97,8 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 		myontologyPieces = new ArrayList<Piece>();
 		namesAndrank = new HashMap();
 		inactivePieces = new ArrayList<AgamePiece>();
+		removedPieces = new ArrayList<AgamePiece>();
+		showPieceactivity();
 	}
 	
 	public String getNameOfplayer() {
@@ -96,21 +106,31 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 	}
 	/**
 	 * showPieceactivity
-	 * This method produces a list of inactive pieces for the player
+	 * This method produces a list of inactive and removed pieces for the player
 	 * 
 	 */
 	public void showPieceactivity() {
 		inactivePieces.clear();
 		for (AgamePiece piece:mygamePieces) {
-			if (piece.isActive()) {
+			if (piece.isActive()) { // true if active on board
 				int thisactivity = piece.getMyMoves().size();
 				if (thisactivity <= 0) {
 					inactivePieces.add(piece);
 				}
+			}else { // Removed from board
+				removedPieces.add(piece);
 			}
 		}
 	}
 	
+	public List<AgamePiece> getRemovedPieces() {
+		return removedPieces;
+	}
+
+	public void setRemovedPieces(List<AgamePiece> removedPieces) {
+		this.removedPieces = removedPieces;
+	}
+
 	public HashMap<String, Integer> getNamesAndrank() {
 		return namesAndrank;
 	}

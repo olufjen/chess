@@ -130,7 +130,11 @@ public class AChessProblemSolver {
   private String POSSIBLETHREAT;
   private String POSSIBLEPROTECT; // All available positions for a piece are possibly protected by that piece
   private String POSSIBLEREACH; // All available positions for a piece are possibly reachable by that piece
-
+  private String CENTERSQUARE;
+  private String HOMESQUARE;
+  private String MINORPIECE;
+  private String CONTROLCENTER;
+  
   /**
    *  The type of piece under consideration
    */
@@ -193,8 +197,8 @@ public class AChessProblemSolver {
   private List <ChessActionImpl> actions = null;
   private ChessActionImpl castleAction = null;
   private List<ActionSchema> actionSchemalist = null; // The list of actionschemas produced by the searchProblem method (Check the Map actionSchemas)
-  private List<GroundGameState> gameStateList = null; // The list of GameState states. Represent the population of GameState OJN June 25 
-  private List<GameState> thegameStateList = null;
+//  private List<GroundGameState> gameStateList = null; // The list of GameState states. Represent the population of GameState OJN June 25 Removed 26.01.26
+//  private List<GameState> thegameStateList = null;
   private OpponentAgent opponentAgent = null;
   private AgamePiece chosenPiece = null; // Is only set in the checkoppoentThreat method
   private Position chosenPosition = null;// Is only set in the checkoppoentThreat method
@@ -245,8 +249,8 @@ public class AChessProblemSolver {
 	    setPredicatenames();
 	    actionSchemas = new HashMap<String,ActionSchema>();
 	    actionSchemalist = new ArrayList<ActionSchema>();
-	    gameStateList = new LinkedList<GroundGameState>();
-	    thegameStateList = new LinkedList<GameState>();
+//	    gameStateList = new LinkedList<GroundGameState>(); // Removed 26.01.26
+//	    thegameStateList = new LinkedList<GameState>();
 	    initialStates = new ArrayList<List>();
 	    initStates = new HashMap<String,State>(); 
 	    goalStates = new HashMap<String,State>();
@@ -326,6 +330,11 @@ public class AChessProblemSolver {
 		POSSIBLETHREAT = KnowledgeBuilder.getPOSSIBLETHREAT();
 		POSSIBLEPROTECT = KnowledgeBuilder.getPOSSIBLEPROTECT();
 		POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
+		
+		HOMESQUARE = KnowledgeBuilder.getHOMESQUARE();
+		MINORPIECE = KnowledgeBuilder.getMINORPIECE();
+		CENTERSQUARE = KnowledgeBuilder.getCENTERSQUARE();
+		CONTROLCENTER = KnowledgeBuilder.getCONTROLCENTER();
   }
   
 
@@ -495,42 +504,7 @@ public class AChessProblemSolver {
 		this.opponent = opponent;
   }
 
-  /**
-   * checkPossiblePieces
-   * This method checks the two Maps possiblePieces and possiblePositions
-   * to see if there are opponent pieces that can be taken
-   * The two Maps are filled by the call to the checkOpponent method
-   * It is called from the default part of the checkmovenumber method
-   * @return
-   * The name of the piece that can take this opponent piece
-   * It only returns a name if the opponent piece has a value greater or equal to the value of the active piece
-   */
-  public String checkPossiblePieces() {
-	  if (!possiblePieces.isEmpty() && !possiblePositions.isEmpty()) {
-		  List<AgamePiece> myPieces = myPlayer.getMygamePieces();
-		  for (AgamePiece piece:myPieces) {
-			  String name = piece.getMyPiece().getOntlogyName();
-			  int value = piece.getMyPiece().getValue();
-			  AgamePiece opponentPiece = possiblePieces.get(name);
-			  if (opponentPiece != null) {
-				  writer.println("Checking possible pieces "+" Found by "+name+"\n"+opponentPiece.toString());
-				  int oppValue = opponentPiece.getMyPiece().getValue();
-				  Position opponentPos = opponentPiece.getHeldPosition();
-				  opponentCatch = opponentPiece;
-				  if (opponentPos == null) {
-					  opponentPos = opponentPiece.getMyPosition();
-				  }
-				  opponentcatchPosition = opponentPos;
-				  if (oppValue >= value) {
-					  writer.println("Returns with piece "+name);
-					  return name; 
-				  }
-			  }
-
-		  }
-	  }
-	  return null;
-  }
+  
   
   /**
    * checkoppoentThreat
@@ -769,209 +743,6 @@ public class AChessProblemSolver {
 	  }
 
   }
-
-  /**
-   * prepareAction
-   * This method attempts to analyze the chess state and prepare for next move.
-   * It is called from the checkMovenumber method when the opening moves have been made.
-   * From the default case of checkmovenumber
-   * This method returns a piecename and position if the movement is in preparation for castling
-   * or if a piece is under threat. Otherwise it returns null
-   * @param actions
-   * @return
-   */
-  public String prepareAction( ArrayList<ChessActionImpl> actions) {
-	  String pname = null;
-	  String piecePos = "_";
-	  String pieceName = "";
-	  APerceptor thePerceptor = null;
-	  State thechosenState = null;
-	  Position posin = null;
-	  //	opponentAgent.probepossibilities(actions, myPlayer);
-	  //	opponentAgent.chooseStrategy(actions);
-	  checkoppoentThreat(THREATEN,actions); // fills the threatenedPieces and threatenedPositions if any. This is temporal information 
-	  //	String pieceName = "WhiteBishop2"; //Rewrite: Must find player's bishop
-
-	  posin = positions.get("d3");
-	  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
-	  fillthePerceptor(thePerceptor);
-	  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
-	  thePerceptor.findReachable(posin);
-	  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-	  //	  folKb.checkFacts(pieceName, pos, REACHABLE, actions,positionList);
-	  piecePos = pieceName + piecePos + "d3";
-
-	  String fpos = "f1"; // Must find player's bishop first position
-	  String toPos = "d3"; // and player's bishop destination
-	  boolean bishop = folKb.checkpieceFacts("y",pieceName,fpos,OCCUPIES); // Rook occupies f1 !!?? This is part of GOAL: Opening positions
-	  State goal = null;
-	  State initstate = null;
-	  if (bishop) {
-		  String name = pieceName; // Check to see if piecename has an action
-		  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(name)).findAny().orElse(null);
-		  if (naction != null) {
-			  AgamePiece piece = naction.getChessPiece();
-			  pieceType type = piece.getPieceType();
-			  determineType(type);
-			  goal = buildGoalstate(pieceName,toPos);
-			  List<Position> removed = piece.getRemovedPositions();
-			  Position pos =  (Position) removed.stream().filter(c -> c.getPositionName().contains(toPos)).findAny().orElse(null);
-			  if (pos != null) { // The bishop cannot be moved
-				  String pawnName = null;
-				  String pawnPos = "e2";
-				  boolean pawn = folKb.checkpieceFacts("y",pawnName,pawnPos,OCCUPIES);
-				  if (pawn) {
-					  typeofPiece = PAWN;
-					  moveName = "pawnmove";
-					  String newPos = "e3";
-					  initstate = buildInitialstate(pawnName, pawnPos,newPos);
-					  Position d2posin = positions.get("e3");
-					  APerceptor d2perceptor = new APerceptor(d2posin,REACHABLE,PIECETYPE,PAWN,playerName);
-					  fillthePerceptor(d2perceptor);
-					  State d2chosenState = d2perceptor.checkPercept(initStates); // A hash table of available init states.
-					  d2perceptor.findReachable(d2posin);
-					  pawnName = d2perceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-					  if (d2chosenState != null) {
-						  chosenInitstate = d2chosenState;
-					  }
-					  return pawnName+piecePos+"e3";
-				  }
-			  }else { // The bishop can be moved
-				  checkCastling(actions);
-				  boolean threat = folKb.checkThreats("x", "c4", THREATEN,opponent);
-				  //				boolean threat = true;
-				  String chosenPos = "c4";
-				  if (threat) { // Here we could also check b5
-					  folKb.checkFacts(pieceName, "d3", REACHABLE, actions,positionList);
-					  chosenPos = "d3";
-				  }
-				  Position d2posin = positions.get(chosenPos);
-				  APerceptor d2perceptor = new APerceptor(d2posin,REACHABLE,PIECETYPE,BISHOP,playerName);
-				  State d2chosenState = d2perceptor.checkPercept(initStates); // A hash table of available init states.
-				  if (d2chosenState != null) {
-					  chosenInitstate = d2chosenState;
-				  }
-				  return pieceName+piecePos+chosenPos;
-			  }
-		  }
-	  } // If not bishop Then if there are threatened pieces:
-	  AgamePiece chosen = opponentAgent.getPerformanceMeasure().getChosenPiece();
-	  Position chosenpos = opponentAgent.getPerformanceMeasure().getChosenPosition();
-	  if (chosenPiece != null && chosen != null && chosen.equals(chosenPiece)) {
-		  boolean takeKing = opponentAgent.getPerformanceMeasure().isCanTakeKing();
-		  if (takeKing) {
-			  writer.println("Prepareaction: The opponent king to be taken");
-			  List<ApieceMove>  movesofar = game.getMovements();
-			  // The last move in the list must be reversed, and the planned move must not be executed !!	    	
-			  writer.println("Moves so far ");
-			  for (ApieceMove  piecemove:movesofar) {
-				  writer.println(piecemove.toString());
-				  Position topos = piecemove.getToPosition();
-				  AgamePiece movePiece = piecemove.getPiece();
-				  Position movedPos = movePiece.getmyPosition();
-				  Position heldPos = movePiece.getHeldPosition();
-				  if (topos == heldPos && movedPos != topos) {
-					  writer.println(movePiece.toString());
-				  }
-
-			  }
-		  }
-		  String xName = chosenPiece.getMyPiece().getOntlogyName();
-		  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(xName)).findAny().orElse(null);
-		  naction.getPossibleMove().setToPosition(chosenpos); // Set new position
-		  naction.setPreferredPosition(chosenpos);
-		  writer.println("Prepareaction returns with "+ chosenPiece.getMyPiece().getOntlogyName() + " and alt. position "+chosenpos.getPositionName());
-		  return chosenPiece.getMyPiece().getOntlogyName()+piecePos+chosenpos.getPositionName();
-	  }
-	  if (chosenPiece != null && chosen != null && !chosen.equals(chosenPiece)) {
-		  writer.println("Prepareaction returns with "+ chosenPiece.getMyPiece().getOntlogyName() + " and " + chosen.getMyPiece().getOntlogyName());
-		  return chosenPiece.getMyPiece().getOntlogyName()+piecePos+chosenPosition.getPositionName();
-	  }
-	  // Find the best move and a protected position to move to.
-	  // For a possible strategy, see notes in compendium and notes on zenhub
-	  // Here we can pursue other GOALS:
-	  opponentAgent.probepossibilities(actions, myPlayer);
-	  opponentAgent.chooseStrategy(actions);
-	  writer.println("Prepareaction returns with no piece ");
-	  return null;
-  }
-  /**
-   * determineType
-   * This method determines and sets the ChessProblem piecetype
-   * It is used when the initial and goal states are created
-   * @param type
-   */
-  public void determineType(pieceType type) {	 
-	  if (type == type.PAWN) {
-		  typeofPiece = PAWN;
-		  moveName = "pawnmove";
-	  }
-	  if (type == type.BISHOP) {
-		  typeofPiece = BISHOP;
-		  moveName = "bishopmove";
-	  }		
-	  if (type == type.ROOK) {
-		  typeofPiece = ROOK;
-		  moveName = "rookmove";
-	  }			
-	  if (type == type.KNIGHT) {
-		  typeofPiece = KNIGHT;
-		  moveName = "knoghtmove";
-	  }
-	  if (type == type.QUEEN) {
-		  typeofPiece = QUEEN;
-		  moveName = "queenmove";
-	  }
-	  if (type == type.KING) {
-		  typeofPiece = KING;
-		  moveName = "kingmove";
-	  }	
-
-  }
-  /**
-   * checkCastling
-   * This method check if castling with the white king is possible
-   * @since 28.07.22
-   * If it is possible a King action Schema for castling is created
-   * @param actions
-   */
-  public void checkCastling(ArrayList<ChessActionImpl> actions) {
-	  String pieceName = "WhiteKing";
-	  String kingPos = "e1";
-	  State goal = null;
-	  State initstate = null;
-	  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(pieceName)).findAny().orElse(null);
-	  if (naction != null) {
-		  AgamePiece king = naction.getChessPiece();
-		  List<Position> removed = king.getRemovedPositions();
-		  String posName = "f1";
-		  Position pos =  (Position) removed.stream().filter(c -> c.getPositionName().contains(posName)).findAny().orElse(null);
-		  if (pos != null) {
-			  String bishopName = "WhiteBishop2";// Rewrite: must find player's bishop
-			  String fpos = "f1";
-			  String toPos = "d3";
-			  boolean bishop = folKb.checkpieceFacts("y",bishopName,fpos,OCCUPIES);
-			  if (bishop) {
-				  String castlePos = "g1";
-				  String piecepos = pieceName+"_"+castlePos;
-				  makeActionSchemas(pieceName, piecepos, kingPos,castlePos);
-				  typeofPiece = KING;
-				  moveName = "kingmove";
-				  goal = buildGoalstate(pieceName,castlePos);
-				  typeofPiece = BISHOP;
-				  moveName = "bishopmove";
-				  initstate = buildInitialstate(bishopName,fpos, toPos);
-				  deferredInitial = initstate;
-				  deferredGoal = goal;
-				  deferredGoalstates.put(pieceName, goal);
-				  game.setDeferredGoalstates(deferredGoalstates);
-				  game.setDeferredGoal(deferredGoal);
-				  game.setDeferredInitial(deferredInitial);		
-			  }
-		  }
-
-	  }
-  }
   /**
    * buildGoalstate
    * This method builds a goal state based on a chosen piece name and a chosen position name
@@ -1061,304 +832,9 @@ public void createPerceptor() {
 	  // The statements below must be as part of the search strategy !!!
 
   }
-  /**
-   * checkMovenumber
-   * This method determine the first moves based on the queen gambit process
-   * After the first 4 moves, the default part of the case statement then determines the next move 
-   * @since 26.11.24 Not in use
-   * @param actions
-   * @return A String A piecename pointer: The pieceName + "_" + PosName
-   */
-  public String checkMovenumber(ArrayList<ChessActionImpl> actions) {
-	  String pieceName = "";
-	  String piecePos = "_";
-	  thePerceptor = null;
-	  State thechosenState = null;
-	  Position posin = null;
-	  switch(noofMoves) {
-	  case 0:
-		  //		  pieceName = "WhitePawn4";
-		  posin = positions.get("d4");
-		  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
-		  fillthePerceptor(thePerceptor);
-		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
-		  thePerceptor.findReachable(posin);
-		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-		  //		  thePerceptor.createLiftedActions(null,null,"d4",null);
-		  thePerceptor.createLiftedActions(null,"WhiteKnight2","f3",null);
-		  initialState = thePerceptor.getInitState();
-		  goalState = thePerceptor.getGoalState();
-		  otherSchemas = thePerceptor.getOtherSchemas();
-		  otherSchemaList = thePerceptor.getOtherActions();
-		  piecePos = pieceName + piecePos + "d4";
-		  if (thechosenState != null) {
-			  chosenInitstate = thechosenState;
-		  }
-		  break;
-	  case 2:
-		  //		  pieceName = "WhitePawn3";
-		  String pos = "c4";
-		  //		  folKb.checkFacts(pieceName, pos, REACHABLE, actions,positionList);
-		  posin = positions.get("c4");
-		  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
-		  fillthePerceptor(thePerceptor);
-		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
-		  thePerceptor.findReachable(posin);
-		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-		  //		  folKb.checkFacts(pieceName, pos, REACHABLE, actions,positionList);
-		  piecePos = pieceName + piecePos + "c4";
-		  writer.println("The percept schema "+thePerceptor.getPercept().toString());
-		  thePerceptor.createLiftedActions(null,null,"c4",null);
-		  initialState = thePerceptor.getInitState();
-		  goalState = thePerceptor.getGoalState();
-		  otherSchemas = thePerceptor.getOtherSchemas();
-		  if (thechosenState != null) {
-			  chosenInitstate = thechosenState;
-		  }
-		  break;
-	  case 4:
-		  checkOpponent("", actions);
-		  //		  pieceName = "WhiteKnight1";
-		  posin = positions.get("c3");
-		  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
-		  fillthePerceptor(thePerceptor);
-		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
-		  thePerceptor.findReachable(posin);
-		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-		  piecePos = pieceName + piecePos + "c3";
-		  thePerceptor.createLiftedActions(null,null,"c3",null);
-		  initialState = thePerceptor.getInitState();
-		  goalState = thePerceptor.getGoalState();
-		  otherSchemas = thePerceptor.getOtherSchemas();// A Set of propositionalized action schemas from the lifted action schema
-		  if (thechosenState != null) {
-			  chosenInitstate = thechosenState;
-		  }
-		  break;
-	  case 6:
-		  checkOpponent("", actions);
-		  //		  pieceName = "WhiteKnight2";
-		  String posx = "f3";
-		  posin = positions.get("f3");
-		  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
-		  fillthePerceptor(thePerceptor);
-		  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
-		  thePerceptor.findReachable(posin);
-		  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-		  //		  folKb.checkFacts(pieceName, posx, REACHABLE, actions,positionList);
-		  piecePos = pieceName + piecePos + posx;
-		  thePerceptor.createLiftedActions(null,null,posx,KnowledgeBuilder.getKNIGHT());
-		  initialState = thePerceptor.getInitState();
-		  goalState = thePerceptor.getGoalState();
-		  otherSchemas = thePerceptor.getOtherSchemas();// A Set of propositionalized action schemas from the lifted action schema
-		  if (thechosenState != null) {
-			  chosenInitstate = thechosenState;
-		  }
-		  break;
-	  default:
-		  checkOpponent("", actions); // Result: A list of opponent pieces that can be taken possiblePieces and possiblePositions
-		  String blackpieceName = "BlackBishop1"; // Find opponent bishop
-		  String blackpos = "g4";
-		  if (folKb.checkThreats(blackpieceName, blackpos, OCCUPIES,opponent)) {
-			  //			  pieceName = "WhitePawn8"; // Result: This pawn is moved to h3. OBS change piecename to player's pawn 8
-			  //			  piecePos = pieceName + piecePos + "h3";
-			  posin = positions.get("h3");
-			  thePerceptor = new APerceptor(posin,REACHABLE,PIECETYPE,null,playerName);
-			  fillthePerceptor(thePerceptor);
-			  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
-			  thePerceptor.findReachable(posin);
-			  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-			  piecePos = pieceName + piecePos + "h3";
-			  thePerceptor.createLiftedActions(null,null,"h3",KnowledgeBuilder.getPAWN()); // A piece at H3
-			  initialState = thePerceptor.getInitState();
-			  goalState = thePerceptor.getGoalState();
-			  otherSchemas = thePerceptor.getOtherSchemas();// A Set of propositionalized action schemas from the lifted action schema
-			  if (thechosenState != null) {
-				  chosenInitstate = thechosenState;
-			  }
-			  break; // Black bishop at g4: If this is true then pawn at h2 is moved to h3
-		  }
-		  String pname = "x";
-		  String bpos = "d5";
-		  List<String> occupier = folKb.searchFacts(pname, bpos, OCCUPIES);
-		  if (!occupier.isEmpty()) {
-			  String pieceoccupier = occupier.get(0);
-			  List<AgamePiece> pieces = opponent.getMygamePieces();
-			  AgamePiece piece = pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().equals(pieceoccupier)).findAny().orElse(null);
-			  if (piece != null && piece.isActive()) {
-				  //				  if (folKb.checkThreats(pname, bpos, OCCUPIES,opponent)) {  // OBS What happens if a friendly piece occupies this position !!!???
-				  // The above call is unnecessary ??
-				  pieceName = "WhitePawn3";
-				  String wpos = "d5";
-				  if (folKb.checkFacts(pieceName, wpos, PAWNATTACK, actions,positionList)) {
-					  posin = positions.get("d5");
-					  thePerceptor = new APerceptor(posin,PAWNATTACK,PIECETYPE,PAWN,playerName);
-					  fillthePerceptor(thePerceptor);
-					  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
-					  thePerceptor.findReachable(posin);
-					  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-					  piecePos = pieceName + piecePos + wpos;
-					  thePerceptor.createLiftedActions(null,null,wpos,KnowledgeBuilder.getPAWN()); // A piece at d5
-					  initialState = thePerceptor.getInitState();
-					  goalState = thePerceptor.getGoalState();
-					  otherSchemas = thePerceptor.getOtherSchemas();// A Set of propositionalized action schemas from the lifted action schema
-					  if (thechosenState != null) {
-						  chosenInitstate = thechosenState;
-					  }
-					  break; // If this is true then the white pawn takes the opponent piece at d5
-				  }
-			  }
-		  }
-		  String kingName = opponentKing.getMyPiece().getOntlogyName();
-		  String kingPos = folKb.checkPosition(kingName, OCCUPIES);
-		  opponentKingPosition = kingPos;
-		  opponentAgent.setOpponentKingPosition(kingPos);
-		  writer.println("The opponent king is in "+kingPos);
+ 
 
-		  pieceName = checkPossiblePieces(); // Checks which opponent pieces that can be safely taken from the list of opponent pieces
-		  if (pieceName != null) { // An opponent piece can be taken
-			  Position opponentPos = possiblePositions.get(pieceName); // At this position
-			  if (opponentPos != null) {
-				  String name = pieceName;
-				  String oppPosName = opponentPos.getPositionName();
-				  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(name)).findAny().orElse(null);
-				  if (naction != null && naction.getPossibleMove() != null) {
-					  naction.getPossibleMove().setToPosition(opponentPos);
-					  naction.setPreferredPosition(opponentPos);
-					  String nameType = naction.getChessPiece().getNameType();
-					  ChessPieceType pieceType = naction.getChessPiece().getChessType();
-					  boolean pawn = pieceType instanceof APawn;
-					  String predicate = REACHABLE;
-					  if (pawn) {
-						  predicate = PAWNATTACK;
-					  }
-					  posin = positions.get(oppPosName);
-					  thePerceptor = new APerceptor(posin,predicate,PIECETYPE,nameType,playerName);
-					  fillthePerceptor(thePerceptor);
-					  thechosenState = thePerceptor.checkPercept(initStates); // A hash table of available init states.
-					  thePerceptor.findReachable(posin);
-					  pieceName = thePerceptor.getPlayerPiece().getMyPiece().getOntlogyName();
-					  piecePos = pieceName + piecePos + oppPosName;
-					  if (thechosenState != null) {
-						  chosenInitstate = thechosenState;
-					  }
-					  break;
-				  }else {
-					  writer.println("No action for "+pieceName);
-				  }
-			  }
-		  }
-		  writer.println("No pieces and positions to take");
-		  /*
-		   * Here we must find a safe move		  
-		   */
-		  pieceName = prepareAction(actions);
-		  if (pieceName != null)
-			  piecePos = pieceName;
-		  List<String> kingpieces = opponentAgent.findPiece(kingPos, REACHABLE);
-		  List<AgamePiece> catchers = new ArrayList();
-		  writer.println("The following pieces can reach "+kingPos);
-		  if (kingpieces != null && !kingpieces.isEmpty()) {
-			  String kingFromPos = "none";
-			  List<AgamePiece>mypieces = myPlayer.getMygamePieces();
-			  for (String name:kingpieces) {
-				  writer.println("Piece "+name);
-				  int l = name.length();
-				  String kingAttacker = name.substring(0,l-3);
-				  kingFromPos = name.substring(l-2);
-				  AgamePiece kingCatcher = (AgamePiece) mypieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(kingAttacker)).findAny().orElse(null);
-				  if (kingCatcher != null) {
-					  catchers.add(kingCatcher);
-				  }
-			  }
-			  int csize = catchers.size();
-			  if (!catchers.isEmpty()) {
-				  for (AgamePiece catcher:catchers )
-					  writer.println("A king catcher "+catcher.getMyPiece().getOntlogyName()+" From position "+kingFromPos);
-			  }
-		  }
-		  if (pieceName == null) { // prepareAction returns with no piece. There are no threats and castling is done
-			  writer.println("prepareAction returns with no piece. There are no threats and castling is done");
-			  AgamePiece chosen = opponentAgent.getPerformanceMeasure().getChosenPiece();
-			  Position chosenpos = opponentAgent.getPerformanceMeasure().getChosenPosition();
-			  boolean takeKing = opponentAgent.getPerformanceMeasure().isCanTakeKing();
-			  if (chosen != null && chosenpos != null) {
-				  pieceName = chosen.getMyPiece().getOntlogyName();
-				  String pchosenPosname = chosenpos.getPositionName();
-				  boolean possibleMove = folKb.checkFacts(pieceName, pchosenPosname, REACHABLE, actions,positionList);
-				  writer.println("Chosen piece from Opponent agent "+pieceName+ " and chosen position "+pchosenPosname);
-				  if (takeKing && possibleMove) {
-					  writer.println("The opponent king to be taken");
-				  }
-				  if (possibleMove)
-					  piecePos = pieceName + piecePos + pchosenPosname;
-			  }
-			  if (pieceName == null || piecePos.equals("_")) {// Chosen piece and chosen position is null
-				  pieceName = "WhitePawn1";
-				  writer.println("No chosen piece "+pieceName);
-				  piecePos = pieceName + piecePos + "a3";
-			  }
-		  }
-		  break;
-	  } // End switch
-	  //	  return pieceName;
-	  return  piecePos;
-  }
 
-  /**
-   * deferredMove
-   * This method checks if any deferred move has been set.
-   * If so, it returns the deferred key
-   * This is a special case for castling
-   * @param actions
-   * @return
-   */
-  public String deferredMove(ArrayList<ChessActionImpl> actions) {
-	  if (deferredKey == null) {
-		  return null;
-	  }
-	  String key = deferredKey;
-	  if (key.equals("WhiteKing")) {
-		  String posx = "g1";
-		  String plink = "_";
-		  folKb.checkFacts(key, posx, CASTLE, actions,positionList);
-		  List<AgamePiece> pieces = myPlayer.getMygamePieces();
-		  AgamePiece movedPiece = (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(key)).findAny().orElse(null);
-		  HashMap<String,Position> castlePos = movedPiece.getCastlePositions();
-		  Position toCastle = castlePos.get(posx);
-		  if (movedPiece != null && toCastle != null) {	
-			  AgamePiece castle = myPlayer.checkCastling(movedPiece, toCastle); // Returns the castle piece to do castling with
-			  String piecepos = key+"_"+posx;
-			  String kingPos = "e1";
-			  String toPos = "c1";
-			  typeofPiece = KING;
-			  moveName =  theCastling;;
-			  State localinitialState = buildInitialstate(key,kingPos,toPos);
-			  State localgoalState = buildGoalstate(key, posx);//buildGoalstate(action);
-			  initStates.put(piecepos, localinitialState);
-			  goalStates.put(piecepos, localgoalState);
-			  String castleName = castle.getMyPiece().getOntlogyName();
-			  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().contains(castleName)).findAny().orElse(null);
-			  Position toCastlePos = castle.getCastlePositions().get("f1");
-			  if (toCastlePos != null && naction != null && naction.getPossibleMove() != null) {
-				  naction.getPossibleMove().setToPosition(toCastlePos);
-				  naction.setPreferredPosition(toCastlePos);
-				  castleAction = naction;
-			  }
-			  if (castle != null) {
-				  castle.setCastlingMove(true);
-				  movedPiece.setCastlingMove(true);
-				  Position castlePosfrom = castle.getHeldPosition();
-				  if (castlePosfrom == null)
-					  castlePosfrom = castle.getMyPosition();
-			  }
-			  makeActionSchemas(key, piecepos, kingPos,posx);
-		  }
-		  return deferredKey+plink+posx; // This create castling		
-	  }
-
-	  return null;
-	  //	return deferredKey; This does not perform castling
-  }
   /**
  * planProblem
  * This is the main method of the ProblemSolver
@@ -1388,48 +864,26 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       checkOpponent("", actions); //This method finds which opponent pieces the active player can safely take
       checkoppoentThreat(THREATEN, actions); // This method find opponent pieces that threaten player's pieces, which pieces protect player's own pieces
       // and opponents attacker pieces.
- //	  String actionName = deferredMove(actions); // For castling removed 28.02.25
-	  // 11.07.22 Changes this to return piece name and possible position
-	  // This is the only call to checkMovenumber Changed the key pieceName
-//      pieceName = checkMovenumber(actions); // Returns a possible piecename A String A piecename pointer: The pieceName + "_" + PosName
-//      - a piece to be moved - calls the prepareAction method
-//		Plan first schedule later
-//		actionSchemalist The list of actionschemas produced by the searchProblem method (Check the Map actionSchemas)
-//		One action schema for every chess action.
-//		otherSchemaList A list of propositionalized action schemas from the lifted action schema. It is used for problem solving      
-//      PlannerState plannerState = new PlannerStateImpl(myPlayer,actionSchemalist,otherSchemaList,noofMoves);
       createPerceptor();
 //      List<Sentence> sentences = folKb.getOriginalSentences();
-      writer.println("The population of gamestates");
-      for (GroundGameState gameState:gameStateList) { // A population of GameStates
-    	  gameState.setThePerceptor(thePerceptor);
-    	  gameState.setOpponent(opponent);
-    	  gameState.setPlayer(myPlayer);
-    	  gameState.setMoveNr(noofMoves);
-    	  gameState.setStatestatistics();
-    	  writer.println(gameState.toString());
-      }
-      thegameStateList.addAll(gameStateList);
+//      writer.println("The population of gamestates");
+		/*
+		 * for (GroundGameState gameState:gameStateList) { // A population of GameStates
+		 * gameState.setThePerceptor(thePerceptor); gameState.setOpponent(opponent);
+		 * gameState.setPlayer(myPlayer); gameState.setMoveNr(noofMoves);
+		 * gameState.setStatestatistics(); writer.println(gameState.toString()); }
+		 * thegameStateList.addAll(gameStateList);
+		 */
 /*
  * How to define the initial state?   At present not in use OJN 05.08.25   
  */
-      GameState initialGameState = gameStateList.get(0);
-      GameAction gameAction = initialGameState.getAction();
-      
+/*
+ * GameState initialGameState = gameStateList.get(0); GameAction gameAction =
+ * initialGameState.getAction();
+ */
       PlannerState plannerState = new PlannerStateImpl(myPlayer,opponent,actionSchemalist,noofMoves,thePerceptor); // An alternative Plannerstate creator
       ChessPlannerAction plannerAction = plannerState.getAction();
-//      plannerGame = new AplannerGame(myPlayer,plannerState);
-      //		AdversarialSearch<PlannerState, ChessPlannerAction> search; // FILL IN !!!! IterativeDeepeningAlphaBetaSearch
-      // Create the plannerGame first
-      // This is the structure for the adversarial search as described in chapter 5 p. 161!!!
-/*      
-      IterativeDeepeningAlphaBetaSearch<PlannerState, ChessPlannerAction,ChessPlayer> search;
-      search = ChessPlannerSearch.createFor(plannerGame, 0.0, 1.0, 1); // Changed timer from 2 to 1.
-      search = (ChessPlannerSearch) search;
-      search.setLogEnabled(true);
-      */
 
-      
 /*
  * The structure of queue search:    
  *   
@@ -1466,16 +920,23 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  *    	The expand method returns a list of successor nodes.  
  */
 
+      /*
+       * The findState call returns with an initial and goal state in the perceptor to be used in the planning procedure below.
+       * The set of all available Action Schemas is held by the perceptor.
+       * These parameters are used to create the ChessProblem object to be used in the Graphplan procedures.
+       */
       Optional<PlannerState> astate = queuebasedSearch.findState(searchProblem);
       Metrics metric = queueSearch.getMetrics();
       Queue<Node<PlannerState, ChessPlannerAction>> front = queueSearch.getFrontier();
 /*
- * For nondeterministic search as described in chapter 4.3.2 and figure 4.11      
+ * For nondeterministic search as described in chapter 4.3.2 and figure 4.11 page 135     
  */
-      NonDetermineResultFunction ndeterRFN = new NonDetermineResultFunction (null,null,thegameStateList); // No initial state and no initial action
-      ChessGoalTest<GameState> gameTest = KnowledgeBuilder.nondeterminGoaltest(gameAction);
+      GroundGameState nondeterminState = new GroundGameState(myPlayer,opponent,noofMoves,thePerceptor,folKb,actionSchemalist,positionList); // When created also create the initial action
+      GroundGameAction gameAction  = (GroundGameAction) nondeterminState.createAction(); // creates an initial action
+      NonDetermineResultFunction ndeterRFN = new NonDetermineResultFunction (nondeterminState,gameAction); //
+      ChessGoalTest<GameState> gameTest = KnowledgeBuilder.nondeterminGoaltest(gameAction); //OBS no initial action?
       NonDetermineChessActionFunction ndeterActionfn =new NonDetermineChessActionFunction();
-      NondeterministicChessProblem nondeterProblem = new NondeterministicChessProblem(null,ndeterActionfn,ndeterRFN,gameTest); // No step cost function !!
+      NondeterministicChessProblem nondeterProblem = new NondeterministicChessProblem(nondeterminState,ndeterActionfn,ndeterRFN,gameTest); // No step cost function !!
       /*
        * The structure for And or search chapter 4.    
        * A nondeterministic environment. 
@@ -1487,9 +948,15 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 /*
  * The population of gamestates ends up in the ifstatements of the plan !!
  * At present all game states are the goal state, so there is no plan
+ * And the plan contains the GroundState with WhitePawn 6 - The first move
  */
-      writer.println("The plan - ");
-      writer.println(thisPlan.toString());
+      if (thisPlan != null) {
+   	    writer.println("The plan - ");
+        writer.println(thisPlan.toString());
+      }else {
+    	  writer.println("No plan - ");
+      }
+  
 // The optional astate object refers to the same object as plannerState and localPlanner       
 //	  thePerceptor.createLiftedActions(null,"WhiteKnight2","f3",null); // Creates the initial and goal states based on this action schema
 	  initialState = thePerceptor.getInitState();
@@ -1567,111 +1034,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
         	  }
           }
       }// The above structure is never executed !!
-/* removed 28.02.25
-	  if (actionName != null && !pieceName.equals(actionName)) {
-		  pieceName = actionName;
-		  deferredKey = null;
-		  deferredInitial = null;
-		  deferredGoal = null;
-		  deferredGoalstates.clear();
-		  game.setDeferredGoalstates(deferredGoalstates);
-		  game.setDeferredGoal(deferredGoal);
-		  game.setDeferredInitial(deferredInitial);		
-		  writer.println("Deferred action (castling found) "+actionName);
-	  }
-	  State goal = null;
-	  State initState = null;
-	  ActionSchema movedAction = actionSchemas.get(pieceName);
-	  removed 28.02.25*/
-      
-/*	  if (movedAction != null) {
-		  String nactionName = movedAction.getName();
-		  int nIndex = nactionName.indexOf("_");
-		  String chessName = nactionName.substring(0, nIndex);
-		  String posName = nactionName.substring(nIndex+1,nactionName.length());
-		  if (deferredInitial != null && deferredGoal != null) {
-			  writer.println("Deferred initial and goal states\n");
-		      for (Literal literal :
-		    	  deferredInitial.getFluents()) {
-		    	 writer.println(literal.toString());
-		      }
-		      writer.println("Deferred goal state\n");
-		      for (Literal literal :
-		    	  deferredGoal.getFluents()) {
-		    	 writer.println(literal.toString());
-		      }		      
-		  }
- 
-  * The initial and goal states are determined here
-  * given the name of the piece.
-  * 10.12.22 The init state is determined by a percept schema
-  * If the percept schema finds an init state then the chosenInitstate is not null.
- 
 
-		  writer.println("Chosen action Schema\n"+movedAction.toString());
-		  writer.println("Chessname for chess action "+chessName);
-		  ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(chessName)).findAny().orElse(null);
-		  writer.println("Chosen action "+naction.toString());
-		  List<Position>available = naction.getAvailablePositions();
-		  Position toPos = (Position) available.stream().filter(c -> c.getPositionName().equals(posName)).findAny().orElse(null);
-		  String newPos = naction.getPossibleMove().getToPosition().getPositionName(); // Get newPos from Preferred position ??!!
-		  String newprefPos = naction.getPreferredPosition().getPositionName(); 
-		  writer.println("The new position and the preferred position and chosen position\n"+newPos+"\n"+newprefPos+"\n"+toPos.getPositionName());
-		  initState = initStates.get(pieceName);
-		  goal = goalStates.get(pieceName);
-		  Set<ActionSchema> aSchemas =  new HashSet<ActionSchema>(actionSchemas.values());
-//		  problem = new ChessProblem(initState,goal,movedAction);
-		  problem = new ChessProblem(initState,goal,aSchemas);	
-		  FunctionContect fcon = new FunctionContect();
-		  for ( List<State> states:initialStates) {
-			  writer.println("The fluents of the alternative init states");
-			  for (State state:states) {
-			      for (Literal literal :
-			    	  state.getFluents()) {
-			    	 writer.println(literal.toString());
-			      }
-			  }
-		  }
-
- * The object variable theState contains all Literals of the current ChessState.
- * Then there are too many preconditions from the list of actionschemas that can be entailed by the initial state.
- * The initial state may contain more fluents than the precondition.		  
- 
-//		  problem = new ChessProblem(theState,goal,aSchemas);
-
- * The initial state and goal state is determined by the choice of piece		  
- 
-		  writer.println("The fluents of the init state");
-	      for (Literal literal :
-	    	  initState.getFluents()) {
-	    	 writer.println(literal.toString());
-	      }
-	      writer.println("The fluents of the goal state");
-	      for (Literal literal :
-	    	  goal.getFluents()) {
-	    	 writer.println(literal.toString());
-	      }      
-		  List<Constant> problemConstants = problem.getProblemConstants();
-		  writer.println("Problem constants - no of constants "+problemConstants.size());
-		  for (Constant c:problemConstants) {
-			  writer.println(c.toString());
-		  }
-		   List<ActionSchema> schemas =  problem.getGroundActions();
-		   int s = schemas.size();
-		   int listSize = actionSchemalist.size();
-		   writer.println("No of permuted primitive actions from problem "+s+" No of schemas in list (chessActions) "+listSize);
-		   writer.println("The ground actions in problem: ");
-		   for (ActionSchema primitiveAction :
-			   schemas) {
-			   writer.println(primitiveAction.toString());
-			   writer.println("The constants in action: "+primitiveAction.getName());
-			   for(Constant c : primitiveAction.getConstants()) {
-				   writer.println(c.toString());
-			   }
-		   }
-		  writer.println("Chosen action\n"+naction.getActionName());
-	  }
-*/
 	
 /*
  * Planning graphs p. 379.
@@ -1721,7 +1084,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * With every action schema there is an init state and a goal state. These are held in the maps initStates and goalStates
  * @Since 17.12.21
  * Preconditions and Effects are populated with Constants, the given piecename, posname
- * @since June 25 
+ * @since June 25 - OBS: Removed since 26.01.26 
  * Creates a GameState list from actionschemas
  * @param actions
  * @return a List of ActionSchemas
@@ -1766,8 +1129,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 				ActionSchema movedAction = makeActionSchemas(pieceName, actionName, posName, newPos);
 				if (movedAction!= null) {
 					schemas.add(movedAction);
-					GroundGameState gameState = new GroundGameState(actionPiece,movedAction); // Added june 25 OJN Modified in july
-					gameStateList.add(gameState);
+//					GroundGameState gameState = new GroundGameState(actionPiece,movedAction); // Added june 25 OJNRemoved as of 26.01.26
+//					gameStateList.add(gameState);
 				}else
 					writer.println("No action schema for "+pieceName);
 	//			AgamePiece gpiece =  action.getChessPiece();
@@ -1784,8 +1147,11 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 //Parameters: Ontology name of piece, Ontology name of piece+ name of available position,name of occupied position,name of available position
 						if (anotherActionschema!= null) {
 							schemas.add(anotherActionschema);
-							GroundGameState gameState = new GroundGameState(actionPiece,anotherActionschema); // Added june 25 OJN
-							gameStateList.add(gameState);
+							/*
+							 * GroundGameState gameState = new
+							 * GroundGameState(actionPiece,anotherActionschema); // Added june 25 OJN
+							 * Removed 26.01.26 gameStateList.add(gameState);
+							 */
 						}
 					}
 				}
@@ -1805,8 +1171,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 								ActionSchema anotherActionschema = makeActionSchemas(pieceName, piecepos, posName, aposName);
 								if (anotherActionschema!= null) {
 									schemas.add(anotherActionschema);
-									GroundGameState gameState = new GroundGameState(actionPiece,anotherActionschema); // Added june 25 OJN
-									gameStateList.add(gameState);
+//									GroundGameState gameState = new GroundGameState(actionPiece,anotherActionschema); // Added june 25 OJN Removed 26.01.26
+//									gameStateList.add(gameState);
 								}
 							}
 					 }
@@ -1820,7 +1186,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * makeActionSchemas
  * This method creates an action schema based on a chess action.
  * @param pieceName Name of piece
- * @param actionName Name of action (pieceName+"_"+toPosit
+ * @param actionName Name of action (pieceName+"_"+toPosit)
  * @param posName Starting position of piece
  * @param toPosit Available position to move to
  * @return
@@ -1968,123 +1334,6 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 	  //		schemas.add(movedAction);
 	  return movedAction;
   }
-  /**
-   * OBS: NOT USED
-   * solveProblem
-   * This method solves a Problem for a given ChessAction
-   * using the Graphplan algorithm. (see p. 383 chapter 10.3)
- * @param action
- * @return
- */
-public List<List<ActionSchema>> solveProblem(ChessActionImpl action) {
-		determineParameters(action);
-		Problem myProblem = buildProblem(action);
-		if (myProblem != null) {
-			List<List<ActionSchema>> solution = graphPlan.graphPlan(myProblem);
-			for (List<ActionSchema> la:solution){
-				for (ActionSchema as:la) {
-					writer.println(as.toString());
-				}
-			}
-			writer.flush();
-			return solution;
-		}
-
-		writer.flush();
-		return null;
-  }
-
-  /**
-   * OBS: NOT USED
- * @param action
- * @return
- */
-public Problem buildProblem(ChessActionImpl action) {
-		String pieceName = action.getChessPiece().getMyPiece().getOntlogyName();
-		AgamePiece apiece = action.getChessPiece();
-		ChessPieceType thepieceType = apiece.getChessType();
-//		if (thepieceType instanceof APawn) {
-		String actionName = action.getActionName();
-		Position position = action.getChessPiece().getHeldPosition();
-		if (position == null) {
-			position = action.getChessPiece().getMyPosition();
-		}
-		String posName = position.getPositionName();
-		initialState = buildInitialstate(pieceName,posName,posName);
-		goalState = buildGoalstate(action);
-		Variable piece = new Variable("piece");
-		Variable pos = new Variable("pos");
-		Variable toPos = new Variable("topos");
-		Constant type = new Constant(typeofPiece);
-//		Variable ownerVar = new Variable("owner");
-		Constant ownerVar = new Constant(playerName);
-		ArrayList variables = new ArrayList<Variable>(Arrays.asList(piece,pos,toPos));
-		List<Term> terms = new ArrayList<Term>();
-		List<Term> ownerterms = new ArrayList<Term>();
-		List<Term> newterms = new ArrayList<Term>();
-		List<Term> typeTerms = new ArrayList<Term>();
-		ownerterms.add(ownerVar);
-		ownerterms.add(piece);
-		terms.add(piece);
-		terms.add(pos);
-		newterms.add(piece);
-		newterms.add(toPos);
-		typeTerms.add(piece);
-		typeTerms.add(type);
-		Predicate reachablePredicate = new Predicate(REACHABLE,newterms);
-		Predicate typePred = new Predicate(PIECETYPE,typeTerms);
-		List<Literal> typeprecondition = new ArrayList();
-		List<Literal> typeeffects = new ArrayList();
-		Predicate pospred = new Predicate(OCCUPIES,terms);
-		Predicate ownerPred = new Predicate(OWNER,ownerterms);
-		Predicate newPospred = new Predicate(OCCUPIES,newterms);
-		typeprecondition.add(new Literal((AtomicSentence) typePred));
-		typeprecondition.add(new Literal((AtomicSentence) pospred));
-		typeprecondition.add(new Literal((AtomicSentence) reachablePredicate));
-		typeeffects.add(new Literal((AtomicSentence) typePred));
-		typeeffects.add(new Literal( (AtomicSentence)newPospred));
-		ActionSchema typeAction = new ActionSchema("type",variables,typeprecondition,typeeffects);
-		Literal notAt = new Literal(pospred, true);
-		writer.println("The type preconditions");
-		for (Literal f:typeprecondition) {
-			writer.println(f.toString());
-		}
-		writer.println("The type effects");
-		for (Literal f:typeeffects) {
-			writer.println(f.toString());
-		}
-		List<Literal> precondition = new ArrayList();
-		List<Literal> effects = new ArrayList();
-		precondition.add(new Literal((AtomicSentence) pospred));
-		precondition.add(new Literal((AtomicSentence) ownerPred));
-		effects.add(notAt);
-		effects.add(new Literal( (AtomicSentence)newPospred));
-		effects.add(new Literal( (AtomicSentence)ownerPred));
-		writer.println("The moved preconditions");
-		for (Literal f:precondition) {
-			writer.println(f.toString());
-		}
-		writer.println("The moved effects");
-		for (Literal f:effects) {
-			writer.println(f.toString());
-		}
-		ActionSchema movedAction = new ActionSchema(moveName,variables,precondition,effects);
-		List<Literal> initFluents = initialState.getFluents();
-		List<Literal> goalFluents = goalState.getFluents();
-		writer.println("The fluents of Initial state. They are nodes in S0");
-		for (Literal f:initFluents) {
-			writer.println(f.toString());
-		}
-		writer.println("The fluents the goal state");
-		for (Literal f:goalFluents) {
-			writer.println(f.toString());
-		}
-		return new Problem(initialState,goalState,typeAction,movedAction);
-//		}
-//	return null;
-  }
-
-
 /**
  * buildGoalstate
  * This method builds a goal state based on a ChessAction
@@ -2180,13 +1429,6 @@ public State buildGoalstate(ChessActionImpl action) {
 				break;
 		}
 		
-/*		String position = piece.getmyPosition().getPositionName();
-		List<Position> removedList = localAction.getPositionRemoved();
-		List<Position> availableList = localAction.getAvailablePositions();
-		ApieceMove move = localAction.getPossibleMove();
-		List<Position> preferredPositions = move.getPreferredPositions();
-		String toPos = move.getToPosition().getPositionName();
-		Position toPosition = move.getToPosition();*/
 		if (type == type.PAWN) {
 			typeofPiece = PAWN;
 			moveName = "pawnmove";
@@ -2412,48 +1654,10 @@ public State buildGoalstate(ChessActionImpl action) {
 			states.clear();
 			reachable = false;
 		} // end for all sentences in knowledge base
-//		List<Literal>temp = addProtected(folSentences,reachablePos,piece); Removed protected sentences ojn 20.05.24
-//		literals.addAll(temp);
-//		List<Literal>attacktemp = addProtected(folSentences,attackablePos,piece);
-//		List<Literal>castletemp = addProtected(folSentences,castlePos,piece);
-//		literals.addAll(attacktemp);
-//		literals.addAll(castletemp);
 		stateLiterals.addAll(literals);
 		initState = new State(literals);
 		
 		return initState;
 		
   }
-
-  /**
-   * addProtected
-   * This method adds protected literals to a state
-   * @param folSentences
-   * @param reachablePos
-   * @param piece
-   * @return
-   */
-  public List<Literal> addProtected(List<Sentence> folSentences, List<String> reachablePos, String piece) {
-		List<Literal> literals = new ArrayList();
-		List<AgamePiece> pieces = myPlayer.getMygamePieces();
-		for (Sentence s : folSentences) {
-			String symName = s.getSymbolicName();
-			if (symName.equals(PROTECTED)) {
-				List<Term> terms = (List<Term>) s.getArgs();
-				Term f = terms.get(0);
-				Term last = terms.get(1);
-				String p = f.getSymbolicName();
-				String pos = last.getSymbolicName();
-				AgamePiece gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(p)).findAny().orElse(null);
-				String posto = reachablePos.stream().filter(pos::equals).findAny().orElse(null);
-				if (!p.equals(piece) && posto != null && gpiece != null) {
-					Literal l = new Literal((AtomicSentence) s);
-					literals.add(l);
-				}
-			}
-		}
-		
-		return literals;
-  }
-
 }

@@ -47,7 +47,13 @@ import no.games.chess.search.nondeterministic.NonDetermineResultFunction;
  * @since April 2024
  * Added two methods: createOccupyAction - crates an lifted action schema
  * findApplicable - a method that returns possible applicable action schemas given a lifted action schema
+ * @since February 26
+ * Added the definition of the piecetype predicates
+
  * @author oluf
+
+ */
+/**
  * 
  */
 public class KnowledgeBuilder {
@@ -86,7 +92,21 @@ public class KnowledgeBuilder {
   private static String POSSIBLETHREAT = "POSSIBLETHREAT"; // All available positions for a piece are possibly threatened by that piece
   private static String POSSIBLEPROTECT = "POSSIBLEPROTECT"; // All available positions for a piece are possibly protected by that piece
   private static String POSSIBLEREACH = "POSSIBLEREACH"; // All available positions for a piece are possibly reachable by that piece
-  private static String HOMESQARE = "HOMESQUARE"; // Predicate name for home square
+  
+  private static String HOMESQUARE = "HOMESQUARE"; // Predicate name for home square
+  private static String MINORPIECE = "MINORPIECE"; // Predicate name to define a minor piece (bishop, knight)
+  private static String CENTERSQUARE = "CENTERSQUARE"; // Predicate to define center square
+  private static String CONTROLCENTER = "CONTROLCENTER"; //Predicate to control center
+ /* 
+  * Added 23.02.26 POssible piecemoves
+  */
+  private static String KNIGHTMOVE = "KNIGHTMOVE";
+  private static String BISHOPMOVE = "BISHOPMOVE";
+  private static String ROOKMOVE = "ROOKMOVE";
+  private static String KINGMOVE = "KINGMOVE";
+  private static String QUEENMOVE = "QUEENMOVE";
+  
+  
 /*
  * Additional predicate names  
  */
@@ -95,20 +115,103 @@ public class KnowledgeBuilder {
   private static String MAKESTRONG = "MAKESTRONG"; // Make a position strong
   private static String kingCastleKey = "o-ok"; // The key to King's Castling
   private static List<Constant> allconstants= new ArrayList();
+  private static List<String> piecetypePreds = new ArrayList(); // What predicates indicate a piecetype predicate?
   // To make list of possible init states ??
   // 16.12.24 A new key is added: pawn. It is used to signal a pawn strike PAWNATTACK                                                                                                                                                                                                                                                                                       
   private static String[] keys = new String[] {"startpos","piecename","newpos","piecetype","pawn"};
+  private static String[] centre = new String[] {"d4","d5","e4","e5"}; // THe center squares of the chess board
   // THe pointer to the file catalog
   private static String fileCatalog = "G:\\Min disk\\privat\\ontologies\\analysis\\";
   
   
 
-  public static String getHOMESQARE() {
-	return HOMESQARE;
+
+  public static List<String> getPiecetypePreds() {
+	return piecetypePreds;
 }
 
-  public static void setHOMESQARE(String hOMESQARE) {
-	HOMESQARE = hOMESQARE;
+  public static void setPiecetypePreds(List<String> piecetypePreds) {
+	KnowledgeBuilder.piecetypePreds = piecetypePreds;
+  }
+
+  public static String getKNIGHTMOVE() {
+	return KNIGHTMOVE;
+}
+
+  public static void setKNIGHTMOVE(String kNIGHTMOVE) {
+	KNIGHTMOVE = kNIGHTMOVE;
+  }
+
+  public static String getBISHOPMOVE() {
+	return BISHOPMOVE;
+  }
+
+  public static void setBISHOPMOVE(String bISHOPMOVE) {
+	BISHOPMOVE = bISHOPMOVE;
+  }
+
+  public static String getROOKMOVE() {
+	return ROOKMOVE;
+  }
+
+  public static void setROOKMOVE(String rOOKMOVE) {
+	ROOKMOVE = rOOKMOVE;
+  }
+
+  public static String getKINGMOVE() {
+	return KINGMOVE;
+  }
+
+  public static void setKINGMOVE(String kINGMOVE) {
+	KINGMOVE = kINGMOVE;
+  }
+
+  public static String getQUEENMOVE() {
+	return QUEENMOVE;
+  }
+
+  public static void setQUEENMOVE(String qUEENMOVE) {
+	QUEENMOVE = qUEENMOVE;
+  }
+
+  public static String getCONTROLCENTER() {
+	return CONTROLCENTER;
+}
+
+  public static void setCONTROLCENTER(String cONTROLCENTER) {
+	CONTROLCENTER = cONTROLCENTER;
+  }
+
+  public static String[] getCentre() {
+	return centre;
+}
+
+  public static void setCentre(String[] centre) {
+	KnowledgeBuilder.centre = centre;
+  }
+
+  public static String getCENTERSQUARE() {
+	return CENTERSQUARE;
+}
+
+  public static void setCENTERSQUARE(String cENTERSQUARE) {
+	CENTERSQUARE = cENTERSQUARE;
+  }
+
+  public static String getMINORPIECE() {
+	return MINORPIECE;
+}
+
+  public static void setMINORPIECE(String mINORPIECE) {
+	MINORPIECE = mINORPIECE;
+  }
+
+  public static String getHOMESQUARE() {
+	return HOMESQUARE;
+}
+
+  public static void setHOMESQUARE(String hOMESQUARE) {
+	HOMESQUARE = hOMESQUARE;
   }
 
   public static String getFileCatalog() {
@@ -372,38 +475,62 @@ public static String getPIECE() {
   }
   
   public static String getOCCUPY() {
-	return OCCUPY;
-}
+	  return OCCUPY;
+  }
 
-public static void setOCCUPY(String oCCUPY) {
-	OCCUPY = oCCUPY;
-}
+  public static void setOCCUPY(String oCCUPY) {
+	  OCCUPY = oCCUPY;
+  }
 
-public static String getPROTECT() {
-	return PROTECT;
-}
+  public static String getPROTECT() {
+	  return PROTECT;
+  }
 
-public static void setPROTECT(String pROTECT) {
-	PROTECT = pROTECT;
-}
+  public static void setPROTECT(String pROTECT) {
+	  PROTECT = pROTECT;
+  }
 
-public static String getMAKESTRONG() {
-	return MAKESTRONG;
-}
+  public static String getMAKESTRONG() {
+	  return MAKESTRONG;
+  }
 
-public static void setMAKESTRONG(String mAKESTRONG) {
-	MAKESTRONG = mAKESTRONG;
-}
+  public static void setMAKESTRONG(String mAKESTRONG) {
+	  MAKESTRONG = mAKESTRONG;
+  }
 
-public static List<Constant> getAllconstants() {
-	return allconstants;
-}
+  public static List<Constant> getAllconstants() {
+	  return allconstants;
+  }
 
-public static void setAllconstants(List<Constant> allconstants) {
-	KnowledgeBuilder.allconstants = allconstants;
-}
-
-/**
+  public static void setAllconstants(List<Constant> allconstants) {
+	  KnowledgeBuilder.allconstants = allconstants;
+  }
+  /**
+   * generatePieceTypePreds
+   * this method generates a set of predicates that descibes a game piece
+   */
+  public static void generatePieceTypePreds() {
+	  piecetypePreds.add(PIECE);
+	  piecetypePreds.add(MINORPIECE);
+	  piecetypePreds.add(QUEEN);
+	  piecetypePreds.add(BISHOP);
+	  piecetypePreds.add(KING);
+	  piecetypePreds.add(KNIGHT);
+	  piecetypePreds.add(PAWN);
+	  piecetypePreds.add(ROOK);
+  }
+  /**
+ * checkpieceTypepred
+ * This method checks if a given predicate is of a piecetype predicate
+ * @param pred - The predicate
+ * @return true if it is a piece type predicate
+ */
+public static boolean checkpieceTypepred(String pred) {
+	  String pieceConstant = piecetypePreds.stream().filter(pred::equals).findAny().orElse(null);
+	  boolean found = pieceConstant != null;
+	  return found;
+  }
+  /**
    * getPieceType
    * This method returns the string type of the piece
    * @param piece
@@ -593,7 +720,7 @@ public static ActionSchema createOccupyaction(String... names) {
    * This method returns a list of applicable action schemas
    * given an action schema containing variables
    * The method is called from the perceptor
-   * This method makes use of theprivate method makeprop
+   * This method makes use of the private method makeprop
  * @param initStates a set of ground initial states
  * @param action The lifted action schema (with variables)
  * @return a list of propositionalized action schemas that are applicable

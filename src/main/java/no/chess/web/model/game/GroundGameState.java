@@ -4,13 +4,14 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import aima.core.logic.fol.parsing.ast.Sentence;
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.planning.ActionSchema;
-
+import no.chess.web.model.Position;
 import no.games.chess.GamePiece;
 import no.games.chess.search.nondeterministic.ChessPercept;
 import no.games.chess.search.nondeterministic.GameAction;
@@ -19,11 +20,9 @@ import no.games.chess.search.nondeterministic.GameState;
 /**
  * GroundGameState
  * This is a subclass of the GameState.
- * A ground game state has an id consisting of the name of the piece and it position on the board.
- * A gamestate is created for every chess action and actions schema created in the searcProblem method.
- * It contains a game piece and a set of Game actions one of each of the types:
- * Myaction{CAPTUREPOS,MOVE,ATTACK,CAPTUREPIECE,PROTECTPOS,PROTECTPIECE,CASTLING;}
- * 
+ * Revised 26.01.26:
+ * A ground game state contains the FOLKnowledgebase representing the state of the game.
+ * An action schema is given the Name of action (pieceName+"_"+toPosit)
  * Lifted action schemas are created by the perceptor with parameters in the following order:
  * Startpos, Piecename, Newpos, Piecetype, or null. A fifth parameter "pawn" is added signaling a pawn strike, or "castle" signaling castling with king
  * Lifted action schemas represent goal formulations.
@@ -39,30 +38,33 @@ public class GroundGameState extends GameState {
 	private int noofopponentActions = 0;
 	private int noofplayerinactive = 0;
 	private int noofopponentinactive = 0;
+	private int noofLostpieces;
+	private int noofoppremovedPieces;
+	private int noofActions;
 	private APerceptor thePerceptor = null;
 	private String outputFileName =  "gamestate";
+	private String stateId;
 	private PrintWriter writer =  null;
 	private FileWriter fw =  null;
 	private ThePeas peas = null;
-	private String pieceName;
-	private String posName;
-	private String stateId;
-	private AgamePiece statePiece = null;
-	
+    private List<Position> positionList = null; // The original HashMap of positions as a list
+	private ChessFolKnowledgeBase knowledgeBase;// This represent the state of the game
+	private HashMap<String,ApieceMove> myMoves; 
+	private List<AgamePiece>myinactivePieces;
+	private HashMap<String,ApieceMove> oppMoves;
+	private List<AgamePiece>oppinactivePieces;
+	private List<AgamePiece> mylostPieces;
+	private List<AgamePiece> opponentremovedPieces;
+	private double heuristicScore; // Verdien beregnet ut fra fakta i KB
 	/**
-	 * Constructor used in the searchProblem method
+	 * Basic Constructor
 	 * @param gamePiece
 	 * @param actionSchema
 	 */
-	public GroundGameState(AgamePiece gamePiece, ActionSchema actionSchema) {
-		super(gamePiece, actionSchema);
+	public GroundGameState() {
+		super();
 		String catalog = KnowledgeBuilder.getFileCatalog();
-	    statePiece = (AgamePiece) this.gamePiece;
-	    pieceName = statePiece.getMyPiece().getOntlogyName();
-	    posName = statePiece.getmyPosition().getPositionName();
-//	    stateId = pieceName+"_"+posName;
-	    stateId = this.actionSchema.getName() + "_" + posName;
-	    String filename = catalog + outputFileName + pieceName + ".txt";
+	    String filename = catalog + outputFileName+".txt";
 		try {
 			fw = new FileWriter(filename, true);
 		} catch (IOException e1) {
@@ -73,24 +75,30 @@ public class GroundGameState extends GameState {
 
 	}
 
-	public GroundGameState(List<Sentence> pieceSentences, GamePiece<?> gamePiece, ActionSchema actionSchema,
-			ChessPercept thePerceptor) {
-		super(pieceSentences, gamePiece, actionSchema, thePerceptor);
-		// TODO Auto-generated constructor stub
-	}
-
-	public GroundGameState(AgamePiece gamePiece, ActionSchema actionSchema,APlayer player,APlayer opponent, int moveNr, APerceptor thePerceptor) {
-		super(gamePiece, actionSchema);
+	/**
+	 * The main Constructor
+	 * @param player - The player of the game
+	 * @param opponent - THe opponent of the game
+	 * @param moveNr - The current move number
+	 * @param thePerceptor
+	 * @param kb - Fol knowlwedge base representing the state of the game
+	 * @param actionSchemas These are all available action schemas for this state
+	 */
+	public GroundGameState(APlayer player,APlayer opponent, int moveNr, APerceptor thePerceptor, ChessFolKnowledgeBase kb,List<ActionSchema> actionSchemas,List<Position> positions) {
+		super();
 		this.player = player;
 		this.opponent = opponent;
 		this.moveNr = moveNr;
 		this.thePerceptor = thePerceptor;
-	    statePiece = (AgamePiece) this.gamePiece;
-	    pieceName = statePiece.getMyPiece().getOntlogyName();
-	    posName = statePiece.getmyPosition().getPositionName();
+		this.knowledgeBase = kb;
+		this.actionSchemas = actionSchemas;
+		this.positionList = positions;
+		noofActions = actionSchemas.size();
+		stateId = "S"+Integer.toString(moveNr);
+		String catalog = KnowledgeBuilder.getFileCatalog();
 //	    stateId = pieceName+"_"+posName;
-	    stateId = this.actionSchema.getName() + "_" + posName;
-	    String filename = outputFileName + pieceName + ".txt";
+//	    stateId = this.actionSchema.getName();
+	    String filename = catalog + outputFileName + ".txt";
 		try {
 			fw = new FileWriter(filename, true);
 		} catch (IOException e1) {
@@ -98,25 +106,65 @@ public class GroundGameState extends GameState {
 			e1.printStackTrace();
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));	
-//	    stateStatisics();
+	    actions = new ArrayList<GameAction>();
+	    produceActions();
+	    setStatestatistics();
+
+	}
+	/**
+	 * produceActions
+	 * This method produces a ground game action for every available action schema
+	 * 
+	 */
+	public void produceActions() {
+		List<AgamePiece> pieces = player.getMygamePieces();
+		for (ActionSchema actionSchema:actionSchemas) {
+			String name = actionSchema.getName();
+			String p = KnowledgeBuilder.extractString(name,'_',0);
+			AgamePiece gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(p)).findAny().orElse(null);
+			GroundGameAction gameAction = new GroundGameAction(gpiece,actionSchema,this);
+			actions.add(gameAction);
+		}
+	}
+	/**
+	 * checkKb
+	 * This method queries the FOL knowledge base
+	 * @param query THe query to ask the knowledge base
+	 * 
+	 */
+	public void checkKb(String query) {
+		List<AgamePiece> pieces = player.getMygamePieces();
+		writer.println("The query is "+query);
+		List<String> answer = knowledgeBase.checkQuery(query);
+//		List <String> forwardanswer = folKb.forwardcheckQuery(query);
+		AgamePiece gpiece = null;
+		Position pos = null;
+		for (String p: answer) {
+			writer.println("The backward chain object is "+p);
+			gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(p)).findAny().orElse(null);
+			pos = (Position) positionList.stream().filter(ps -> ps.getPositionName().contains(p)).findAny().orElse(null);
+			if (gpiece == null) {
+				
+			} 
+		}
+		/*
+		 * for (String p: forwardanswer) {
+		 * writer.println("The forward chain object is "+p); }
+		 */
 	}
 
-	public String getPieceName() {
-		return pieceName;
+	/**
+	 * createAction
+	 * This method creates an initial action based on the current state.
+	 * 
+	 * @return a Game action based on the current state
+	 */
+	public GameAction createAction() {
+		return actions.get(0);
 	}
-
-	public void setPieceName(String pieceName) {
-		this.pieceName = pieceName;
+	public List<GameAction> getActions(){
+		return null;
 	}
-
-	public String getPosName() {
-		return posName;
-	}
-
-	public void setPosName(String posName) {
-		this.posName = posName;
-	}
-
 	public String getStateId() {
 		return stateId;
 	}
@@ -125,13 +173,6 @@ public class GroundGameState extends GameState {
 		this.stateId = stateId;
 	}
 
-	public AgamePiece getStatePiece() {
-		return statePiece;
-	}
-
-	public void setStatePiece(AgamePiece statePiece) {
-		this.statePiece = statePiece;
-	}
 
 	public APlayer getPlayer() {
 		return player;
@@ -174,50 +215,71 @@ public class GroundGameState extends GameState {
 	}
 	public void stateStatisics() {
 		writer.println("Statistics for "+ stateId);
+		writer.println("Heuristic score "+heuristicScore);
 		writer.println("Total no of moves player "+noofplayerActions);
 		writer.println("Total no of inactive player pieces "+noofplayerinactive);
 		writer.println("Total no of moves opponent "+noofopponentActions);
 		writer.println("Total no of inactive opponent pieces "+noofopponentinactive);
-		List<ApieceMove> moves = statePiece.getMyMoves();
-		List<Literal> literals = this.actionSchema.getEffects();
-		writer.println("Effects ");
-		for (Literal l:literals) {
-			writer.println(l.toString());
-		}
-		writer.println("Moves ");
-		if (moves != null && !moves.isEmpty()) {
-			for(ApieceMove move:moves) {
-				writer.println(move.toString());
+		writer.println("Total no of lost player pieces "+noofLostpieces);
+		writer.println("Total no of taken opponent pieces "+noofoppremovedPieces);
+		writer.println("Total no of available actions "+noofActions);
+		if (this.actionSchema != null) {
+			List<Literal> literals = this.actionSchema.getEffects();
+			writer.println("Effects ");
+			for (Literal l:literals) {
+				writer.println(l.toString());
 			}
 		}
+		List<GameAction> groundActions = actions;
+		for (GameAction action:groundActions) {
+			GroundGameAction localAction = (GroundGameAction)action;
+			writer.println(localAction.toString());
+		}
+		
 		writer.println("********* end statistics **********");
 		writer.flush();
 	}
 	public void setStatestatistics() {
-		HashMap<String,ApieceMove> myMoves = player.getMyMoves();
-		List<AgamePiece>myinactivePieces = player.getInactivePieces();
-		HashMap<String,ApieceMove> oppMoves =opponent.getMyMoves();
-		List<AgamePiece>oppinactivePieces = opponent.getInactivePieces();
+		myMoves = player.getMyMoves();
+		myinactivePieces = player.getInactivePieces();
+		oppMoves = opponent.getMyMoves();
+		oppinactivePieces = opponent.getInactivePieces();
+		mylostPieces = player.getRemovedPieces();
+		opponentremovedPieces = opponent.getRemovedPieces();
+		noofLostpieces = mylostPieces.size();
+		noofoppremovedPieces = opponentremovedPieces.size();
 		noofplayerActions = myMoves.size();
 		noofopponentActions = oppMoves.size();
 		noofplayerinactive = myinactivePieces.size();
 		noofopponentinactive = oppinactivePieces.size();
+		evaluateScore();
 	    stateStatisics();	
 		
+	}
+	public void evaluateScore() {
+		int mypieces = player.getMygamePieces().size();
+		int opppieces = opponent.getMygamePieces().size();
+		int mydiff = mypieces - noofplayerinactive;
+		int oppdiff = opppieces - noofopponentinactive;
+	
+		heuristicScore = mydiff - oppdiff + noofoppremovedPieces - noofLostpieces;
 	}
 	/**
 	 * testEnd
 	 * This is the method used by the ChessGoalTest functional interface 
 	 * the testGoal method
 	 * A Game Action may return a set of GameStates, each of these states have a value.
+	 * If this method returns true then a chosen actionSchema is available together with its initial and goal states.
+	 * OBS 5.2.26 At present the action Parameter is the initial action
 	 * 
 	 * @param action Based on this action, is this the goal state?
 	 * @return true if this is the goal state. This results in an empty plan in the search tree
 	 */
 	@Override
 	public boolean testEnd(GameAction action) {
-		
-		return super.testEnd(action);
+		GroundGameAction localAction = (GroundGameAction)action;
+//		return super.testEnd(action);
+		return true;
 	}
 
 }

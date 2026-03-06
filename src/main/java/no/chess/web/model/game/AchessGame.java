@@ -80,7 +80,7 @@ public class AchessGame extends AbstractChessGame{
 		
 		piecesonBoard = new ArrayList();
 //		createStart();
-		tranferBoard(); // transfers piece positions to the aima chessboard
+		tranferBoard(); // transfers piece positions to the aima chessboard This is the only call to tranferBoard() !!!
 
 
 	}
@@ -219,6 +219,8 @@ public class AchessGame extends AbstractChessGame{
 	 * And it creates a white player and a black player with their available pieces and their available positions.
 	 * @since 01.09.20
 	 * The ontology pieces and their rank are collected for both players
+	 * @since 07.01.26
+	 * The home position of a piece added
 	 */
 	public void tranferBoard() {
 		usedPositionlist = (ArrayList<Position>) gameBoard.getUsedPositionlist();
@@ -244,6 +246,7 @@ public class AchessGame extends AbstractChessGame{
 			String pieceName = position.getUsedBy().getName();
 			ChessPiece piece = position.getUsedBy();
 			AgamePiece gamePiece = new AgamePiece(position,piece);
+			gamePiece.setHomePosition(position);
 			piece.setMyPiece(gamePiece);
 			gamePiece.setPredicate(piece.getPredicate());
 			gamePiece.setOntologyPositions(positions); // The hashmap of positions from the ontology
@@ -270,6 +273,8 @@ public class AchessGame extends AbstractChessGame{
  */
 		localwhitePlayer.collectOntlogyPieces();
 		localblackPlayer.collectOntlogyPieces();
+		localwhitePlayer.showPieceactivity(); // Added 2.02.26 For statictics
+		localblackPlayer.showPieceactivity();
 		builder.append("End transferBoard\n");
 		writer.println(getBoardPic());
 		writer.println(builder.toString());

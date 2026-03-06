@@ -41,6 +41,7 @@ import no.games.chess.GamePiece;
 /**
  * This class is implemented to run a game of chess
  * It is created when the user has selected to play a game of chess.
+ * It thgen becomes a session object 
  * It receives a HashMap of Positions with their chesspieces from the ontology
  * From this it creates
  * A list of used positions

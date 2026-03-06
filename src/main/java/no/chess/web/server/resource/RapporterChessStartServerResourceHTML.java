@@ -440,23 +440,9 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
 	    blackMoves = chessBoard.getBlackMoves();
 	    chessMoves = chessBoard.getChessMoves();
 	    availableMoves = new ArrayList<Position>();
-//    	Parameter restartGame = form.getFirst("startBtnx"); // Bruker oppgir å starte på nytt
-//    	Parameter ontology = form.getFirst("ontBtnx"); // User wants ontology position on chessboard
-//    	Parameter printOntology = form.getFirst("printBtnx"); // User wants ontology printed
-//    	Parameter reload = form.getFirst("relBtnx"); // User wants to reload ontology from file
-//    	Parameter query = form.getFirst("qBtnx"); // User wants to query ontology 
-//    	Parameter fileselect = form.getFirst("fileinput"); // User has selected a file
-//      	Parameter ontlogyselect = form.getFirst("ontologyinput"); // User has selected an ontology file file
-//    	Parameter printGame = form.getFirst("printgame"); // User has selected to print the game
-//    	Parameter eightqueen = form.getFirst("eightqueen"); // User has selected to solve the eight queen problem
-//    	Parameter achessGame = form.getFirst("playgame"); // User has selected to play a game of chess
-//    	Parameter findPiece = form.getFirst("btnfind"); // User has moved mouse over a piece
+
     	if (printGame != null) {
-//         	chessBoard.findMoves(gameMoves);
-//	     	int nolines = gameMoves.size();
-//	     	String mov = (String)gameMoves.get(13)+gameMoves.get(14)+gameMoves.get(15);
-//			Representation representation = null;
-//			Response response = getResponse(); 
+
     		chessMoves = chessBoard.getChessMoves();
     		String pdfFile = "";
     		try {

@@ -348,7 +348,8 @@ public class OpponentAgent {
 	 * This method creates facts about the opponent pieces to the local strategy knowledge base
 	 * This is done by calling the probePossibilities method
 	 * These facts are: which positions they occupy and where they can move to.
-	 * It is called when the opponent agent is created.                           
+	 * It is called when the opponent agent is created.    
+	 * @since 14.02.26 Removed the OPPONENTTO predicate to the Knowledge base                       
 	 */
 	public void defineFacts() {
 		Position heldPosition = null;
@@ -381,7 +382,7 @@ public class OpponentAgent {
 //					if (pos != null) {
 						if(!piece.checkRemoved(apos)) {
 							String posA = apos.getPositionName();
-							tellFacts(pieceName,posA,OPPONENTTO);
+//							tellFacts(pieceName,posA,OPPONENTTO); TREMOVED as of 14.02.26
 						}
 //					}
 				}
@@ -586,7 +587,7 @@ public class OpponentAgent {
 	 * REACHABLE(WhiteBishop2_c4,d5)
 	 * are created in the strategy KB. - From position c4, the bishop can reach d5.
 	 * The strategy KB represents possible moves one ply down.
-	 * It is called from the ChessProblemSolver prepareAction method
+	 * It is called from the ChessProblemSolver planProblem method
 	 * It is also called from the defineFact method when the opponent agent is created,
 	 * to create facts about the opponent pieces to the strategy knowledge base.
 	 * @param actions - The actions available to player

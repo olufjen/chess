@@ -72,6 +72,7 @@ public class AgamePiece extends AbstractGamePiece<Position> implements ChessPiec
 	private boolean castlingMove = false;
 	private Integer myValue = null; // This is the chess value of the piece represented as an Integer
 	private String nameType = null; // The name of the type of piece: PAWN,Queen etc
+	private Position homePosition = null; // THe home position of the pieces. Set when created
 	
 	public AgamePiece(Position myPosition) {
 		super();
@@ -103,6 +104,14 @@ public class AgamePiece extends AbstractGamePiece<Position> implements ChessPiec
 		
 	}
 	
+	public Position getHomePosition() {
+		return homePosition;
+	}
+
+	public void setHomePosition(Position homePosition) {
+		this.homePosition = homePosition;
+	}
+
 	public List<ApieceMove> getMyMoves() {
 		return myMoves;
 	}

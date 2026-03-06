@@ -22,6 +22,7 @@ import aima.core.logic.fol.inference.FOLFCAsk;
 import aima.core.logic.fol.inference.InferenceProcedure;
 import aima.core.logic.fol.inference.InferenceResult;
 import aima.core.logic.fol.inference.InferenceResultPrinter;
+import aima.core.logic.fol.inference.proof.Proof;
 import aima.core.logic.fol.kb.FOLKnowledgeBase;
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.ConnectedSentence;
@@ -144,6 +145,10 @@ public class AChessAgent extends KBAgent {
     private String POSSIBLETHREAT;
     private String POSSIBLEPROTECT; // All available positions for a piece are possibly protected by that piece
     private String POSSIBLEREACH; // All available positions for a piece are possibly reachable by that piece
+    private String CENTERSQUARE;
+    private String HOMESQUARE;
+    private String MINORPIECE;
+    private String CONTROLCENTER;
     
     private ChessActionImpl castleAction = null;
     
@@ -201,14 +206,17 @@ public class AChessAgent extends KBAgent {
 		allActions = new ArrayList<ChessAction>();
 		opponentPieces = new ArrayList<String>();
 		positionList = game.getPositionlist();
+
 		for (Position pos:positionList) {
 			pos.setFriendlyPosition(false);
 		}
 		positions = game.getPositions();
 		chessDomain = new ChessDomain();
 		setPredicatenames();
+		
 	}
 	  public void setPredicatenames() {
+		  KnowledgeBuilder.generatePieceTypePreds();
 			ACTION = KnowledgeBuilder.getACTION();
 			ATTACKED = KnowledgeBuilder.getATTACKED();
 			CANMOVE = KnowledgeBuilder.getCANMOVE();
@@ -241,6 +249,15 @@ public class AChessAgent extends KBAgent {
 			POSSIBLETHREAT = KnowledgeBuilder.getPOSSIBLETHREAT();
 			POSSIBLEPROTECT = KnowledgeBuilder.getPOSSIBLEPROTECT();
 			POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
+			
+			HOMESQUARE = KnowledgeBuilder.getHOMESQUARE();
+			MINORPIECE = KnowledgeBuilder.getMINORPIECE();
+			CENTERSQUARE = KnowledgeBuilder.getCENTERSQUARE();
+			CONTROLCENTER = KnowledgeBuilder.getCONTROLCENTER();
+			chessDomain.addPredicate(CONTROLCENTER);
+			chessDomain.addPredicate(CENTERSQUARE);
+			chessDomain.addPredicate(MINORPIECE);
+			chessDomain.addPredicate(HOMESQUARE);
 			chessDomain.addPredicate(OPPONENTTO);
 			chessDomain.addPredicate(POSSIBLETHREAT);
 			chessDomain.addPredicate(POSSIBLEPROTECT);
@@ -333,13 +350,10 @@ public class AChessAgent extends KBAgent {
 	@Override
 	public Action execute(Percept state) {
 		stateImpl = (ChessStateImpl)state; // The aima.core.Percept interface is an empty interface
-//		Variable kingJohn = new Variable("John");
-/*		List<Term> terms = new ArrayList<Term>();
-		terms.add(kingJohn);
-		Predicate mKing = new Predicate("king",terms);*/
 		myPlayer = stateImpl.getMyPlayer();
 		opponent = stateImpl.getOpponent();
 		allActions = stateImpl.getActions(); // creates new actions !!!
+		
 		for (ChessAction action:allActions) { //*** Added 23.05.25 olj
 			ChessActionImpl localAction =(ChessActionImpl) action;
 			actions.add(localAction);
@@ -353,15 +367,25 @@ public class AChessAgent extends KBAgent {
 //		folKb = new FOLKnowledgeBase(chessDomain);
 		folKb = new ChessFolKnowledgeBase(chessDomain, forwardChain,knowledgeFilename);
 		folKb.setBackWardChain(backwardChain);
-//		folKb.tell(mKing);
-		// Moved to behind makerules !! 20.11.21
-//		setOpponentpieces(opponent);//creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
-//		kb.setOpponentPieces(opponentPieces);
+		String[] cpos = KnowledgeBuilder.getCentre();
+		List<Term> centerTerms = new ArrayList<Term>();
+		List<Constant> centerConstants = new ArrayList<Constant>();
+		for (Position pos:positionList) {
+			for(String p:cpos) {
+				if (p.equals(pos.getPositionName())) {
+					Constant ct = new Constant(p);
+					centerConstants.add(ct);
+					centerTerms.addAll(centerConstants);
+					Predicate centerPred = new Predicate(CENTERSQUARE,centerTerms);
+					folKb.tell(centerPred);
+				}
+				centerConstants.clear();
+				centerTerms.clear();
+			}
+		}
 		noofMoves = game.getMovements().size();
 		String playerName = stateImpl.getMyPlayer().getNameOfplayer();
-//		Sentence playSentence = kb.newSymbol(kb.TOPLAY+playerName, noofMoves);
-//		kb.tell(playSentence);
-	
+
 		makeRules(myPlayer,"g1","c1"); // tells the FOL knowledgebase rules about how to capture opponent pieces
 		for (Position pos:positionList) {
 			pos.setFriendlyPosition(false);
@@ -411,69 +435,30 @@ public class AChessAgent extends KBAgent {
 		Predicate folPredicate = new Predicate(chessPr,terms);  // The folPredicate is POSSIBLEPROTECT
 //		QuantifiedSentence qSentence = new QuantifiedSentence("FORALL",variables,folPredicate); // A single sentence including FORALL
 //		folKb.tell(qSentence); // Returned to code 28.02.23 REplaced, see createConnected
-		createConnected("player", "y", "x");
+//		String asentence = "FORALL a b ((REACHABLE(a,b) AND CENTERSQUARE(b)) => CONTROLCENTER(a,b))";
+//		createConnected("player", "y", "x"); Not to be used. The defineRules method is used instead
+		createFact(MOVE, 2);
+		createFact(CONTROLCENTER,2);
+//		These calls create the unary relation of type BISHOP(piecename) etc. for all the player's pieces
+		makeSentences(stateImpl.getMyPlayer()); // 
+		makeSentences(stateImpl.getOpponent()); // 
+//		defineRules("FORALL", 1,PIECETYPE,MINORPIECE);
+		defineRules("FORALL", 3,REACHABLE,PROTECTED,MOVE);	
+		defineRules("FORALL",2,REACHABLE,CENTERSQUARE,CONTROLCENTER);
+		defineRules("FORALL",2,REACHABLE,PAWN,CENTERSQUARE,MOVE);
+//		AnswerHandler res = folKb.ask(asentence);
 //		String s1 = "occupies(o,px)^occupies(pi,py)";
 //		String s2 = "MOVE(pi,pz)";
 	//	KnowledgeBuilder.parseSentence(s1,s2,folKb);
-		
-/*		List<Term> ownerTerms = new ArrayList<Term>();
-		Variable ownerVariable = new Variable(playerName);
-		ownerTerms.add(ownerVariable);
-		ownerTerms.add(pieceVariable);
-		Predicate ownerPredicate = new Predicate(OWNER,ownerTerms);
-		List<Term> reachableTerms = new ArrayList<Term>();
-		reachableTerms.add(pieceVariable);
-		reachableTerms.add(posVariable);
-		Predicate reachablePredicate = new Predicate(REACHABLE,reachableTerms);
-		List<Term> moveTerms = new ArrayList<Term>();
-		moveTerms.add(pieceVariable);
-		moveTerms.add(posVariable);
-		Predicate movePredicate = new Predicate(MOVE,moveTerms);
-		*/
-		
-//		ConnectedSentence reachableSentence = new ConnectedSentence(Connectors.AND,ownerPredicate,reachablePredicate);
-//		ConnectedSentence goal = new ConnectedSentence(Connectors.IMPLIES,reachableSentence,movePredicate);
-//		folKb.tell(reachableSentence);
-
-
-//		writer.println(chessDomain.toString());
-//		result = folKb.ask(folPredicate);
-//		result = folKb.ask(qSentence); 
-
-//		fcResult = forwardChain.ask(folKb, folPredicate);
-
+		checkKb("CONTROLCENTER(a,b)");
+		checkKb("MOVE(a,b)");
 		Literal chessLiteral = new Literal(folPredicate);
 		List<Literal> allLiterals = new ArrayList<Literal>();
 		allLiterals.add(chessLiteral);
 		LinkedHashSet<Map<Variable, Term>> mapResult = (LinkedHashSet<Map<Variable, Term>>) folKb.fetch(allLiterals);
 		List<Map<Variable, Term>> listResults = mapResult.stream().collect(Collectors.toList());
 		results.add(result);
-//		results.add(fcResult);
-/*		for (String c:chessConstants) {
-//			String folSentence = chessPr+"("+c+"e1)";
-
 	
-			if (c.contains("White"))
-			  pieceVariable= new Variable(c);
-			if (!c.contains("White")&& !c.contains("Black"))
-				posVariable = new Variable(c);
-			if (posVariable != null && pieceVariable != null) {
-				terms.add(pieceVariable);
-				terms.add(posVariable);
-				Predicate folPredicate = new Predicate(chessPr,terms);
-				result = folKb.ask(folPredicate);
-			
-				results.add(result);
-			}
-
-		}*/
-		
-/*		for(InferenceResult res:results) {
-			writer.println(InferenceResultPrinter.printInferenceResult(res));
-			writer.println(res.toString());
-		}*/
-	
-		
 /*
  * To move this into makePerceptSentence ?		
  */
@@ -499,18 +484,6 @@ public class AChessAgent extends KBAgent {
  * Here we must ask the knowledge base what is the best action to perform:		
  */
 		String movnr = Integer.toString(noofMoves);
-/*		for (ChessActionImpl action:actions) {
-//			double evaluation = game.getGame().analyzePieceandPosition(action);
-			if (action.getPossibleMove()!= null && !action.isBlocked()) {
-
-				String aName = action.getActionName()+"_"+movnr;
-				action.setActionName(aName);
-//				kb.askPossibleAction(action, noofMoves);
-				askMove(myPlayer,action);
-			}
-
-		} This has been turned off OLJ 25.5.21*/
-		
 		ChessActionImpl naction = null;
 		/*
 		 * Returns a problem containing an initial and goal state, and a set of Action Schemas.
@@ -592,22 +565,7 @@ public class AChessAgent extends KBAgent {
 			}
 		}*/
 		StringBuilder builder = new StringBuilder();
-/*		builder.append("\nA CHESS Knowledge base\n");
-		writer.println(builder.toString());
-		List<Sentence> mySentences = kb.getSentences();
-		Set<Clause> myClauses = kb.asCNF();
-		for (Sentence sentence:mySentences) {
-			writer.println(sentence.toString());
-		}
-		for (Clause clause:myClauses) {
-			String def = "Not definite";
-			if (clause.isDefiniteClause())
-				def = "Definite";
-			writer.println(clause.toString()+" "+def );
-		}*/
-	
-//		Sentence sentence = makePerceptSentence(state, 0);
-//		KB.tell(sentence);
+
 		castleAction = solver.getCastleAction();
 //		writer.println("The first order knowledge base");
 //		writer.println(folKb.toString());
@@ -620,8 +578,39 @@ public class AChessAgent extends KBAgent {
 		if (naction != null)
 			localAction = naction;
 		return localAction;
-//		return super.execute(state);
+
 	}
+	public void checkKb(String query) {
+		writer.println("The query is "+query);
+		List<String> answer = folKb.checkQuery(query);
+//		List <String> forwardanswer = folKb.forwardcheckQuery(query);
+		for (String p: answer) {
+			writer.println("The backward chain object is "+p);
+		}
+		/*
+		 * for (String p: forwardanswer) {
+		 * writer.println("The forward chain object is "+p); }
+		 */
+	}
+	/**
+	 * createFact
+	 * THis method creates a single fact to the fol knowledge base with type variables
+	 * @param fact - name of fact
+	 * @param antvar - no of variables
+	 */
+	public void createFact(String fact, int antvar) {
+		String[] pvar = {"a","b","c","d","e"}; // Max 5 variables
+		List<Term> myTerms = new ArrayList<Term>();
+		List<Variable> variables = new ArrayList<Variable>();
+		for (int i=0;i<antvar;i++) {
+			Variable var = new Variable(pvar[i]);
+			variables.add(var);
+		}
+		myTerms.addAll(variables);
+		Predicate pred = new Predicate(fact,myTerms);
+		folKb.tell(pred);
+	}
+	
 	/**
 	 * updateKnowledge
 	 * This method updates the knowledge base after the latest move.
@@ -641,12 +630,100 @@ public class AChessAgent extends KBAgent {
 		setOpponentpieces(opponent);//creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
 		clearFriends(myPlayer);
 		clearFriends(opponent);
-		createConnected("player", "y", "x");
+//		createConnected("player", "y", "x");
 		emptyPositions = game.getNotusedPositionlist();
 		makeSentences(stateImpl.getMyPlayer()); //
 		makeSentences(stateImpl.getOpponent()); //
 	}
-	
+	/**
+	 * defineRules
+	 * This method defines rules to the parent knowledge base
+	 * OBS: Must define which variables are used in each defined predicate!!
+	 * @param qualifier  - The qualifier for the rule 
+	 * @param antVars - The number of variables for the rule - max 5
+	 * @param preds - The list of predicates for the rule
+	 */
+	public void defineRules(String qualifier,int antVars,String...preds) {
+		String[] pvar = {"a","b","c","d","e"}; // Max 5 variables
+		List<Term> predTerms = new ArrayList<Term>();
+		List<Variable> variables = new ArrayList<Variable>(); // Contains the number of Variables given by antVars
+		List<Predicate> predicates = new ArrayList<Predicate>();
+		int antPreds = preds.length;
+		List<Integer> antParam = new ArrayList<Integer>();
+		
+		for(String pr:preds) {
+			int ant = folKb.checkNumberofparams(pr);
+			Integer antP = Integer.valueOf(ant);
+			antParam.add(antP);
+		}
+		boolean single = antPreds<=2;
+		for (int i=0;i<antVars;i++) {
+			Variable varx = new Variable(pvar[i]);
+			variables.add(varx);
+		}
+//		predTerms.addAll(variables);
+		ConnectedSentence firstSentence = null;
+		ConnectedSentence finalSentence = null;
+		ConnectedSentence goal = null;
+		for(int i=0;i<antPreds;i++) {
+			String pr = preds[i];
+			int t = antParam.get(i).intValue();
+			boolean tpred = KnowledgeBuilder.checkpieceTypepred(pr); // What type of predicate?
+//			int diff = antVars-t;
+			if (i==0 || i==antPreds-1) {
+				for (int n=0;n<t;n++) {
+					if (tpred)
+						predTerms.add(variables.get(0));
+					else
+						predTerms.add(variables.get(n));
+				}
+			}else {
+				for (int n=t;n>0;n--) {
+					if (tpred)
+						predTerms.add(variables.get(0));
+					else
+						predTerms.add(variables.get(n));
+				}
+			}
+			Predicate pred = new Predicate(preds[i],predTerms);
+			predicates.add(pred);
+			predTerms.clear();
+		}
+		if(!single && antPreds == 3)
+			firstSentence = new ConnectedSentence(Connectors.AND,predicates.getFirst(),predicates.get(1));
+		if(!single && antPreds > 3) {
+			Predicate lastPred = predicates.getLast();
+			ConnectedSentence next = null;
+			List<ConnectedSentence> sentences = new ArrayList<ConnectedSentence>();
+//			firstSentence = new ConnectedSentence(Connectors.AND,predicates.getFirst(),predicates.get(1));
+			for (int i = 0;i<antPreds;i=i+2) {
+				if (predicates.get(i+1) == lastPred)
+					break;
+				next = new ConnectedSentence(Connectors.AND,predicates.get(i),predicates.get(i+1));
+				sentences.add(next);
+			}
+			
+			int cn = sentences.size();
+			if (cn == 1) {
+				finalSentence = new ConnectedSentence(Connectors.AND,sentences.get(0),predicates.get(2));
+			}
+			else {
+				for(int i = 0;i<cn;i=i+2) {  // OBS ????
+					finalSentence = new ConnectedSentence(Connectors.AND,sentences.get(i),sentences.get(i+1));
+				}
+			}
+
+		}
+		if(single)
+			goal = new ConnectedSentence(Connectors.IMPLIES,predicates.getFirst(),predicates.getLast());
+		else if (antPreds == 3)
+			goal = new ConnectedSentence(Connectors.IMPLIES,firstSentence,predicates.getLast());
+		else if  (antPreds > 3) {
+			goal = new ConnectedSentence(Connectors.IMPLIES,finalSentence,predicates.getLast());	
+		}
+		QuantifiedSentence qSentence = new QuantifiedSentence(qualifier,variables,goal); // A single qualified sentence including FORALL
+		folKb.tell(qSentence);
+	}
 	/**
 	 * createConnected
 	 * This method creates rules to the fol knowledge base 
@@ -656,6 +733,7 @@ public class AChessAgent extends KBAgent {
 	 * The Owner predicate is removed from the rules.
 	 * @since 07.01.26
 	 * This function is enhanced to be able to create any type of quantified rule.
+	 * 31.01.26 must be reworked or abandoned
 	 * @param name
 	 * @param pos
 	 * @param piece
@@ -762,12 +840,16 @@ public class AChessAgent extends KBAgent {
 	/**
 	 * makeRules
 	 * This method tells the FOL knowledgebase rules about how to capture opponent pieces
+	 * It also tells the FOL knowledge base basic facts about the player's pieces, their posditions and reachable positions 
 	 * It also tells the first order knowledge base and its domain fact about own pieces
 	 * @since 29.01.21 Only active pieces are considered
 	 * @since 07.04.21 Castling rules are added
 	 * @since 14.08.21 The chesstypes KING,QUEEN,ROOK, etc are unary relations
 	 * @since 18.01.22 Added possible reach and possible protect facts
 	 * @since 23.01.25 Even if position is removed this position is protected by pawn and under pawn attack
+	 * @since 08.01.26 Added predicate HOMESQUARE
+	 * @since 08.01.26 Added predicate MINORPIECE for Bishop and Knight
+	 * @since 02.03.26 If a position is occupied by a friend then it is not reachable.And if it is a pawn attack position, then it is not reachable 
 	 *
 	 */
 	public void makeRules(APlayer player,String castleone,String castle2) {
@@ -783,22 +865,13 @@ public class AChessAgent extends KBAgent {
 				List<Term> ownerTerms = new ArrayList<Term>();
 				List<Term> boardTerms = new ArrayList<Term>();
 				List<Term> playerTerms = new ArrayList<Term>();
-				
+				List<Term> homeTerms = new ArrayList<Term>();
 				ownerTerms.add(ownerVariable);
 				String name = piece.getMyPiece().getOntlogyName(); 
-/*				if (name.equals("BlackBishop1")) {
-					String xx = name;
-					xx = xx + piece.getMyPosition().getPositionName();
-				}*/
-					
-/*				if (name.equals("WhiteQueen")) {
-					writer.println("The white queen\n"+piece.toString());
-				}
-				if (name.contains("WhiteRook")) {
-					writer.println("The white rook "+name);
-					writer.println("Piece "+piece.toString());
-				}*/
+
 				String posName = piece.getmyPosition().getPositionName();
+				String homePos = piece.getHomePosition().getPositionName();
+				chessDomain.addConstant(homePos);
 				chessDomain.addConstant(posName);
 				chessDomain.addConstant(name);
 				chessDomain.addPredicate(piece.returnPredicate());
@@ -810,21 +883,25 @@ public class AChessAgent extends KBAgent {
 //				chessDomain.addConstant(predicate);
 				Constant pieceVariable = new Constant(name);
 				Constant posVariable = new Constant(posName);
+				Constant homeVariable = new Constant(homePos);
 				List<Term> terms = new ArrayList<Term>();
 				terms.add(pieceVariable);
 				terms.add(posVariable);
 				boardTerms.add(posVariable);
 				playerTerms.add(ownerVariable);
 				ownerTerms.add(pieceVariable);
+				homeTerms.add(pieceVariable);
+				homeTerms.add(homeVariable);
 				Predicate folPredicate = new Predicate(predicate,terms);
 				Predicate ownerPredicate = new Predicate(OWNER,ownerTerms);
 				Predicate playerPredicate = new Predicate(PLAYER,playerTerms);
 				Predicate boardPredicate = new Predicate(BOARD,boardTerms);
+				Predicate homePredicate = new Predicate(HOMESQUARE,homeTerms);
 				folKb.tell(folPredicate);
 				folKb.tell(ownerPredicate);
 				folKb.tell(boardPredicate);
 				folKb.tell(playerPredicate);
-			
+				folKb.tell(homePredicate);	
 				List<Term> typeTerms = new ArrayList<Term>();
 				typeTerms.add(pieceVariable);
 				String pieceType = KnowledgeBuilder.getPieceType(piece);
@@ -834,6 +911,12 @@ public class AChessAgent extends KBAgent {
 //				chessDomain.addConstant(pieceType);
 				Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
 				folKb.tell(typePredicate);
+				if (type == type.KNIGHT || type == type.BISHOP) {
+					List minorTerms = new ArrayList<Term>();
+					minorTerms.add(pieceVariable);
+					Predicate minorpred = new Predicate(MINORPIECE,minorTerms);
+					folKb.tell(minorpred);	
+				}
 				HashMap<String,Position> attackMap = piece.getAttackPositions();
 				List<Position> attackPositions = null;
 				if (attackMap != null)
@@ -881,7 +964,14 @@ public class AChessAgent extends KBAgent {
 								folKb.tell(protectorPredicate);
 //								kb.tellCaptureRules(t, position, name);
 							}
-							folKb.tell(reachablePredicate);
+							boolean pawnapos = false;
+							if (pawnattack) {
+								Position pawnpos =  (Position) attackPositions.stream().filter(c -> c.getPositionName().contains(position)).findAny().orElse(null);
+								pawnapos = pawnpos != null; // TRue if this is a pawn attack position
+							}
+							if (!piece.checkFriendlyPosition(pos) && !pawnapos) // Added 2.03.26 A position occupied by a friend is not reachable. And if it is a pawn attack position, then it is not reachable
+								folKb.tell(reachablePredicate);
+
 /*							if (player == opponent) {
 								Predicate threatenPredicate = new Predicate(THREATEN,protectedTerms);
 								folKb.tell(threatenPredicate);
@@ -1009,43 +1099,7 @@ public class AChessAgent extends KBAgent {
 		}		
 
 	}
-	/**
-	 * makeOpponentsentences
-	 * This method creates simple facts about the current state of of the opponent:
-	 * The opponent pieces and their positions to the propositional knowledge base.
-	 * @since ? Not in use
-	 * @param opponent
-	 */
-	public void makeOpponentsentences(APlayer opponent,int t) {
-		List<AgamePiece> pieces = opponent.getMygamePieces();
-		for (AgamePiece piece:pieces) {
-			String name = piece.getMyPiece().getOntlogyName();
-			String position = piece.getmyPosition().getPositionName();
-			piece.setPredicate(piece.getMyPiece().getPredicate());
-			Sentence sentence = kb.newSymbol(name+"_"+"AT"+position, t);
-			kb.tell(sentence);
-			HashMap<String,Position> reachablePositions = piece.getReacablePositions();
-			HashMap<String,Position> attackPositions = piece.getAttackPositions();
-			List<Position> piecePositions = null;
-			piecePositions = piece.getNewlistPositions();
-			if (attackPositions != null && !attackPositions.isEmpty()) {
-				piecePositions = new ArrayList(attackPositions.values());
-			}
 
-//			List<Position> piecePositions = new ArrayList(reachablePositions.values());
-			for (Position opponentposition:piecePositions) {
-				if (!piece.checkRemoved(opponentposition)) {
-					String pos = opponentposition.getPositionName();
-					Sentence attacksentence = kb.newSymbol(THREATEN+name+"_"+pos, t);
-					kb.tell(attacksentence);
-					Sentence protectSentence = kb.newSymbol(PROTECTED+name+"_"+pos, t);
-					kb.tell(protectSentence);
-				}
-			}
-
-		}
-		
-	}
 	/**
 	 * setOpponentpieces
 	 * This method creates knowledge about the opponent and its pieces to the first order knowledge base and its domain
@@ -1161,100 +1215,14 @@ public class AChessAgent extends KBAgent {
 	 */
 	@Override
 	public Sentence makeActionSentence(Action action, int t) {
-		ChessActionImpl thisAction = (ChessActionImpl) action;
-/*		double evaluation = game.getGame().analyzePieceandPosition(thisAction);
-		Double value = new Double(evaluation);
-		thisAction.setEvaluationValue(value);*/
-		String active = "NOMOV";
-		List<AgamePiece> attackedPieces = thisAction.getAttacked();
-		List<Position> protectedPositions = thisAction.getProtectedPositions();
-		List<Position> attackedPositions = thisAction.getAttackedPositions();
-		List<Position> otherprotectedPositions = thisAction.getOtherprotectedPositions();
-		if (attackedPieces != null) {
-			for (AgamePiece attackedPiece:attackedPieces) {
-				String name = attackedPiece.getMyPiece().getOntlogyName();
-				String pos = attackedPiece.getMyPosition().getPositionName();
-				String attack = "ATTACK";
-				Sentence sentence = kb.newSymbol(attack+name+"_"+pos, t);
-				kb.tell(sentence);
-			}
-		}
-		if (protectedPositions != null) {
-			for (Position protectedPos:protectedPositions) {
-				String name = thisAction.getChessPiece().getMyPiece().getOntlogyName();
-				String pos = protectedPos.getPositionName();
-				Sentence sentence = kb.newSymbol(PROTECTED+name+"_"+pos, t);
-				Sentence simple = kb.newSymbol(simpleProtected +"_"+pos, t);
-				kb.tell(sentence);
-				kb.tell(simple);
-			}
-			
-		}
-		if (otherprotectedPositions != null) {
-			for (Position protectedPos:otherprotectedPositions) {
-				String name = thisAction.getChessPiece().getMyPiece().getOntlogyName();
-				String pos = protectedPos.getPositionName();
-				Sentence sentence = kb.newSymbol(PROTECTED+name+"_"+pos, t);
-				kb.tell(sentence);
-				Sentence attacksentence = kb.newSymbol(ATTACKED+name+"_"+pos, t);
-				kb.tell(attacksentence);
-			}
-			
-		}		
-		if (attackedPositions != null) {
-			for (Position attackedPos:attackedPositions) {
-				String pos = attackedPos.getPositionName();
-				String name = thisAction.getChessPiece().getMyPiece().getOntlogyName();
-				Sentence sentence = kb.newSymbol(ATTACKED+name+"_"+pos, t);
-				kb.tell(sentence);
-			}
-		}
-		if (thisAction.getChessPiece().isActive() ) {
-			String name = thisAction.getChessPiece().getMyPiece().getOntlogyName();
-			String position = thisAction.getChessPiece().getmyPosition().getPositionName();
-			ApieceMove move = thisAction.getPossibleMove();
-			if (move == null || thisAction.isBlocked()) {
-				Sentence sentence = kb.newSymbol(active+name+"_AT"+position, t);
-//				kb.tell(sentence);
-				return sentence;
-			}
-			if (move != null && !thisAction.isBlocked()) {
-//				String moveNotation = move.getMoveNotation();
-				String toPos = move.getToPosition().getPositionName();
-/*				if (moveNotation == null || moveNotation.equals(""))
-					moveNotation ="MOV";
-				String toPos = move.getToPosition().getPositionName();
-				Sentence sentence = kb.newSymbol(moveNotation+name+"_"+toPos, t);*/
-//				kb.tell(sentence);
-				Sentence sentence = kb.newSymbol(ACTION+name+"_AT"+position, t);
-//				thisAction.setSentence(sentence); Removed 13.2.23 olj
-//				kb.tell(sentence);
-				kb.tellmoveRule(kb.newSymbol(ACTION+name+"_TO"+toPos, t), "AT"+position, t);
-				return sentence;
-			}
-		}
-		if (!thisAction.getChessPiece().isActive()) {
-			active = "VAC";
-//			Position newPos = thisAction.getPreferredPosition(); // Makes a new attempt creating a new possible move for this action.
-//			ApieceMove newMove = thisAction.getPossibleMove();
-			String pieceName = thisAction.getChessPiece().getMyPiece().getOntlogyName();
-			String position = thisAction.getChessPiece().getmyPosition().getPositionName();
-			return kb.newSymbol(active+pieceName+"_"+position, t);
-		}
-			
+
 
 		return null;
 	}
 
 	@Override
 	public Sentence makePerceptSentence(Percept state, int t) {
-		ChessActionImpl action = stateImpl.getChessAction();
-		if (localAction == action) {
-			String name = localAction.getChessPiece().getMyPiece().getOntlogyName();
-			String position = localAction.getChessPiece().getmyPosition().getPositionName();
-			return kb.newSymbol(name+"_"+position, 0);
-			
-		}
+
 		return null;
 	}
 
