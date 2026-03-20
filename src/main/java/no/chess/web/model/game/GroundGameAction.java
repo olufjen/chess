@@ -17,7 +17,7 @@ import no.games.chess.search.nondeterministic.GameState;
  */
 public class GroundGameAction extends GameAction {
 	private AgamePiece piece; // The gamePiece involved in this action;
-	private ActionSchema actionSchema;
+	private ActionSchema actionSchema; // The action schema for this action
 	
 	public GroundGameAction(GamePiece<Position> gamePiece, ActionSchema actionSchema) {
 		super(gamePiece);
@@ -49,6 +49,15 @@ public class GroundGameAction extends GameAction {
 	/**
 	 * performAcion
 	 * This method is called from the result function.
+	 * which again is called from the orSearch method when the problem testGoal function for a chosen state returns false.
+	 * For å bruke søkemotoren til å lage en plan, må du definere en Results-funksjon som simulerer nondeterminismen:
+Modellering av "Results(s, a)":
+Når agenten (Hvit) utfører handlingen $a$:
+	1. Transition: Utfør trekket $a$ på brettet.
+	2. Opponent's Turn: Identifiser alle lovlige trekk for Sort ($m_1, m_2, ..., m_n$).
+	3. State Set: Generer en ny KB for hvert av Sorts mulige svar.
+	4. Output: Funksjonen returnerer en liste over disse KB-ene.
+
 	 * It returns a list of Game states as a result of the action
 	 */
 	public List<GameState> performAcion() {

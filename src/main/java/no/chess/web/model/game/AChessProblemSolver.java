@@ -50,6 +50,7 @@ import aima.core.search.framework.problem.StepCostFunction;
 import no.function.FunctionContect;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
+import no.games.chess.ChessAction;
 import no.games.chess.ChessPieceType;
 import no.games.chess.ChessPlayer;
 import no.games.chess.AbstractGamePiece.pieceType;
@@ -67,6 +68,7 @@ import no.games.chess.search.ChessSearchProblem;
 import no.games.chess.search.PlannerQueueBasedSearch;
 import no.games.chess.search.PlannerQueueSearch;
 import no.games.chess.search.nondeterministic.AndOrChessSearch;
+import no.games.chess.search.nondeterministic.ChessNonDeterGoalTest;
 import no.games.chess.search.nondeterministic.ChessPath;
 import no.games.chess.search.nondeterministic.ChessPlan;
 import no.games.chess.search.nondeterministic.GameAction;
@@ -174,6 +176,7 @@ public class AChessProblemSolver {
   private PlayGame game =  null;
   private APlayer myPlayer =  null;
   private APlayer opponent =  null;
+  private APlayer thePlayer = null; // The player used creating action schemas. Added 13.3.26
   private State initialState =  null; // Collected from the perceptor and used when creating the Chessproblem used in the graphplan alogithm. (See the planProblem method)
   private State goalState =  null;// Collected from the perceptor and used when creating the Chessproblem used in the graphplan alogithm.
   private State deferredInitial = null;
@@ -181,8 +184,8 @@ public class AChessProblemSolver {
   private Map<String,State>deferredGoalstates = null;
   private String deferredKey = null;
   private GraphPlanAlgorithm graphPlan =  null;
-  private Map<String,ActionSchema> actionSchemas = null;
-  private List<List> initialStates = null; // A list of initial states 
+  private Map<String,ActionSchema> actionSchemas = null; // Contains action schemas for both player and opponent 11.3.26
+  private List<List> initialStates = null; // A list of initial states - Both for player and opponent?!! 11.3.26
   private Map<String,State>initStates = null; // Contains all initial states for current move
   private Map<String,State>goalStates = null; // Contains all goal states for current move
   private Map<String,AgamePiece>possiblePieces = null; // Contains opponent pieces that can be taken
@@ -196,9 +199,11 @@ public class AChessProblemSolver {
   private Position opponentcatchPosition = null;
   private List <ChessActionImpl> actions = null;
   private ChessActionImpl castleAction = null;
+  
   private List<ActionSchema> actionSchemalist = null; // The list of actionschemas produced by the searchProblem method (Check the Map actionSchemas)
 //  private List<GroundGameState> gameStateList = null; // The list of GameState states. Represent the population of GameState OJN June 25 Removed 26.01.26
 //  private List<GameState> thegameStateList = null;
+  private List<ActionSchema> opponentactionSchemalist = null; // The list of actionschemas produced by the searchProblem method (Check the Map actionSchemas) Created 11.3.26
   private OpponentAgent opponentAgent = null;
   private AgamePiece chosenPiece = null; // Is only set in the checkoppoentThreat method
   private Position chosenPosition = null;// Is only set in the checkoppoentThreat method
@@ -232,7 +237,7 @@ public class AChessProblemSolver {
 		positions = this.game.getPositions();
 		opponentAgent = new OpponentAgent(this.stateImpl,this.game,this.opponent,this.myPlayer,this.folKb,chessDomain);
 		opponentAgent.setPositions(positions);
-		localKb = opponentAgent.getLocalKb();
+		localKb = opponentAgent.getLocalKb(); // The strategy knowledge base
 		playerName = this.myPlayer.getNameOfplayer();
 		playSide = playerName.substring(0,5);
 		noofMoves = game.getMovements().size();
@@ -249,6 +254,7 @@ public class AChessProblemSolver {
 	    setPredicatenames();
 	    actionSchemas = new HashMap<String,ActionSchema>();
 	    actionSchemalist = new ArrayList<ActionSchema>();
+	    opponentactionSchemalist = new ArrayList<ActionSchema>(); // Created 11.3.26
 //	    gameStateList = new LinkedList<GroundGameState>(); // Removed 26.01.26
 //	    thegameStateList = new LinkedList<GameState>();
 	    initialStates = new ArrayList<List>();
@@ -338,6 +344,12 @@ public class AChessProblemSolver {
   }
   
 
+  public List<ActionSchema> getOpponentactionSchemalist() {
+	return opponentactionSchemalist;
+}
+  public void setOpponentactionSchemalist(List<ActionSchema> opponentactionSchemalist) {
+	this.opponentactionSchemalist = opponentactionSchemalist;
+  }
   public List<List> getInitialStates() {
 	  return initialStates;
   }
@@ -850,8 +862,21 @@ public void createPerceptor() {
  */
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  this.actions = actions; // All chess actions available to player
+	  thePlayer = myPlayer;
 	  opponentAgent.setPlayeractions(actions);
 	  actionSchemalist = searchProblem(actions); // Builds an ActionSchema and GameStates for every Chess Action. This is the planning phase
+	  /*
+	   * Creates an action schema list for the opponent. Added 11.3.26
+	   */
+	  List<ChessAction>	alloppActions = opponent.getActions();
+	  ArrayList<ChessActionImpl>	opponentActions = new ArrayList<ChessActionImpl>();
+	  for (ChessAction opponentaction:alloppActions) { //*** Added 23.05.25 olj
+		  ChessActionImpl localAction =(ChessActionImpl) opponentaction;
+		  opponentActions.add(localAction);
+	  }
+	  thePlayer = opponent;
+	  opponentactionSchemalist = searchProblem(opponentActions); // Create opponent action schemas 13.3.26
+	  
 // The maps initStates and goalStates are also filled.	
 	  opponentAgent.setInitStates(initStates);
 	  opponentAgent.setGoalStates(goalStates);
@@ -861,7 +886,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  State theInitState = null;
       State theGoal = null;
 	  opponentAgent.probepossibilities(actions, myPlayer); // Creates entries to the strategy knowledge base. This call is moved from the prepareAction method
-      checkOpponent("", actions); //This method finds which opponent pieces the active player can safely take
+      checkOpponent("", actions); //This method finds which opponent pieces the active player can safely take held in possiblePieces and possiblePositions
       checkoppoentThreat(THREATEN, actions); // This method find opponent pieces that threaten player's pieces, which pieces protect player's own pieces
       // and opponents attacker pieces.
       createPerceptor();
@@ -931,14 +956,14 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 /*
  * For nondeterministic search as described in chapter 4.3.2 and figure 4.11 page 135     
  */
-      GroundGameState nondeterminState = new GroundGameState(myPlayer,opponent,noofMoves,thePerceptor,folKb,actionSchemalist,positionList); // When created also create the initial action
+      GroundGameState nondeterminState = new GroundGameState(myPlayer,opponent,noofMoves,thePerceptor,folKb,actionSchemalist,opponentactionSchemalist,positionList); // When created also create the initial action
       GroundGameAction gameAction  = (GroundGameAction) nondeterminState.createAction(); // creates an initial action
       NonDetermineResultFunction ndeterRFN = new NonDetermineResultFunction (nondeterminState,gameAction); //
-      ChessGoalTest<GameState> gameTest = KnowledgeBuilder.nondeterminGoaltest(gameAction); //OBS no initial action?
+      ChessNonDeterGoalTest<GameState> gameTest = KnowledgeBuilder.nondeterminGoaltest(gameAction); //OBS no initial action?
       NonDetermineChessActionFunction ndeterActionfn =new NonDetermineChessActionFunction();
       NondeterministicChessProblem nondeterProblem = new NondeterministicChessProblem(nondeterminState,ndeterActionfn,ndeterRFN,gameTest); // No step cost function !!
       /*
-       * The structure for And or search chapter 4.    
+       * The structure for And Or search chapter 4.    
        * A nondeterministic environment. 
        */
       AndOrChessSearch andorSearch = new AndOrChessSearch();
@@ -1078,6 +1103,9 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
   }
   /**
  * searchProblem
+ * @since 18.03.26
+ * Reconstruction: Create action schemas based on avaiable actions and their avaiable positions.
+ * 
  * For every available chessaction that contains a possible move and that is not blocked
  * create an actionschema.
  * These action schemas are held in the Map actionSchemas with the name of the piece as the key.
@@ -1086,67 +1114,71 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * Preconditions and Effects are populated with Constants, the given piecename, posname
  * @since June 25 - OBS: Removed since 26.01.26 
  * Creates a GameState list from actionschemas
- * @param actions
+ * @param actions - The actions available to player
  * @return a List of ActionSchemas
  */
   public List<ActionSchema> searchProblem(ArrayList<ChessActionImpl> actions) {
 	  List<ActionSchema> schemas = new ArrayList<ActionSchema>();
 	//  List<AgamePiece> pieces = myPlayer.getMygamePieces();
+	  int actionSize = actions.size();
+	  int counter = 0;
+	  writer.println("=== Number of actions  ==== "+actionSize);
 	  for (ChessActionImpl action:actions) {
 			if (action.getPossibleMove()!= null && !action.isBlocked()) {
 				determineParameters(action);
 				List<Position> availablePos = action.getAvailablePositions();
 				List<Position> removedPos = action.getPositionRemoved();
-				String newPos = action.getPossibleMove().getToPosition().getPositionName(); // Get newPos from Preferred position ??!!
+//				String newPos = action.getPossibleMove().getToPosition().getPositionName(); // Get newPos from Preferred position ??!! NOT TO BE USED OJN 18.3.26
 //				String newPos = action.getPreferredPosition().getPositionName(); !!!
 				String pieceName = action.getChessPiece().getMyPiece().getOntlogyName(); // Ontology name of piece
+//				boolean black = true; // To be removed !!
 				AgamePiece actionPiece = action.getChessPiece();
 				Position position = action.getChessPiece().getHeldPosition();
 				if (position == null) {
 					position = action.getChessPiece().getMyPosition();
 				}
 				String posName = position.getPositionName();
-				String actionName = action.getActionName()+"_"+newPos;
-// OJN 28.05.24: To return a list of init states for this piece:				
-				State localinitialState = buildInitialstate(pieceName,posName,newPos);// Ontology name of piece, name of occupied position
-				State localgoalState = buildGoalstate(action);
-				if (pieceName.equals("WhiteKing")) {
-					writer.println("=== Creating action schema for ==== "+pieceName);
-					writer.println("Goal state for "+pieceName);
-					for (Literal literal :
-						localgoalState.getFluents()) {
-						writer.println(literal.toString());
-					}
-					writer.println("Init state for "+pieceName);
-					for (Literal literal :
-						localinitialState.getFluents()) {
-						writer.println(literal.toString());
-					}
-				}
-				String apiecepos = pieceName+"_"+newPos;
-				initStates.put(apiecepos, localinitialState);
-				goalStates.put(apiecepos, localgoalState);
-				ActionSchema movedAction = makeActionSchemas(pieceName, actionName, posName, newPos);
-				if (movedAction!= null) {
-					schemas.add(movedAction);
-//					GroundGameState gameState = new GroundGameState(actionPiece,movedAction); // Added june 25 OJNRemoved as of 26.01.26
-//					gameStateList.add(gameState);
-				}else
-					writer.println("No action schema for "+pieceName);
-	//			AgamePiece gpiece =  action.getChessPiece();
+//				String actionName = action.getActionName()+"_"+newPos;
+/*
+ * Create action schemas only based on available positions 18.3.26				
+ */
+				
+				String actionSchemaname = null;
 				for (Position apos:availablePos) {
 					String aposName = apos.getPositionName();
+					Position attack = null;
+					HashMap<String,Position> attackpos = actionPiece.getAttackPositions();
+					if (attackpos != null)
+						attack = attackpos.get(aposName);
 					Position pos =  (Position) removedPos.stream().filter(c -> c.getPositionName().contains(aposName)).findAny().orElse(null);
-					if (pos == null) {
+					if (pos == null && attack == null) {
 						State anotherinitialState = buildInitialstate(pieceName,posName,aposName); //This is the same initial state
 						State anothergoalstate = buildGoalstate(pieceName, aposName);
 						String piecepos = pieceName+"_"+aposName;
+						writer.println("Testing moved action for "+piecepos);
+						/*
+						 * for (Literal literal : anothergoalstate.getFluents()) {
+						 * writer.println(literal.toString()); }
+						 */
+//						writer.println("Another Init state for "+piecepos);
+						/*
+						 * for (Literal literal : anotherinitialState.getFluents()) {
+						 * writer.println(literal.toString()); }
+						 */
 						initStates.put(piecepos, anotherinitialState);//The same initial state with a different key
 						goalStates.put(piecepos, anothergoalstate);
 						ActionSchema anotherActionschema = makeActionSchemas(pieceName, piecepos, posName, aposName);
 //Parameters: Ontology name of piece, Ontology name of piece+ name of available position,name of occupied position,name of available position
 						if (anotherActionschema!= null) {
+							String anotherName = anotherActionschema.getName();
+//							if (actionSchemaname != null && !actionSchemaname.equals(anotherName)) // OBS removed 18.3.26
 							schemas.add(anotherActionschema);
+//							if (black) {
+								writer.println("Adding moved action 2 for "+piecepos);
+								counter++;
+								writer.println("Number of action schemas: "+counter);
+//								writer.println(anotherActionschema.toString());
+//							}
 							/*
 							 * GroundGameState gameState = new
 							 * GroundGameState(actionPiece,anotherActionschema); // Added june 25 OJN
@@ -1156,21 +1188,31 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 					}
 				}
 				if (typeofPiece.equals(PAWN)) {
+					writer.println("=== Testing for pawn attacks ==== "+pieceName);
 					 HashMap<String,Position>attackpos=  action.getChessPiece().getAttackPositions();
 					 Collection<Position> attackCollection = attackpos.values();
 					 ArrayList<Position> attackList = new ArrayList<>(attackCollection);
 					 for (Position apos:attackList) {
 							String aposName = apos.getPositionName();
+							Position attack = null;
+							HashMap<String,Position> pattackpos = actionPiece.getAttackPositions();
+							if (pattackpos != null)
+								attack = pattackpos.get(aposName);
 							Position pos =  (Position) removedPos.stream().filter(c -> c.getPositionName().contains(aposName)).findAny().orElse(null);
-							if (pos == null) {
+							if (pos == null && attack == null) {
 								State anotherinitialState = buildInitialstate(pieceName,posName,aposName);
 								State anothergoalstate = buildGoalstate(pieceName, aposName);
 								String piecepos = pieceName+"_"+aposName;
 								initStates.put(piecepos, anotherinitialState);
 								goalStates.put(piecepos, anothergoalstate);
+								writer.println("=== Creating initial and goal state for a pawn attacks ==== "+piecepos);
 								ActionSchema anotherActionschema = makeActionSchemas(pieceName, piecepos, posName, aposName);
 								if (anotherActionschema!= null) {
 									schemas.add(anotherActionschema);
+//									if (black) {
+										writer.println("Adding moved action 3");
+										writer.println(anotherActionschema.toString());
+//									}
 //									GroundGameState gameState = new GroundGameState(actionPiece,anotherActionschema); // Added june 25 OJN Removed 26.01.26
 //									gameStateList.add(gameState);
 								}
@@ -1185,6 +1227,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
   /**
  * makeActionSchemas
  * This method creates an action schema based on a chess action.
+ * @since 13.3.26 creates action schemas for both player and opponent (see thePlayer)
  * @param pieceName Name of piece
  * @param actionName Name of action (pieceName+"_"+toPosit)
  * @param posName Starting position of piece
@@ -1193,7 +1236,19 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  */
 private ActionSchema makeActionSchemas(String pieceName,String actionName,String posName,String toPosit){
 	  ArrayList<String>reachparentNames = (ArrayList<String>) folKb.searchFacts("x", toPosit, PROTECTED);
-	  List<AgamePiece> pieces = myPlayer.getMygamePieces();
+	  ArrayList<String> mypiecenames = new ArrayList<String>();
+	  List<AgamePiece> pieces = thePlayer.getMygamePieces();
+	  for (AgamePiece piece:pieces) {
+		  String name = piece.getMyPiece().getOntlogyName();
+		  mypiecenames.add(name);
+	  }
+	  boolean hasCommonValue = false;
+	  if (reachparentNames != null && !reachparentNames.isEmpty() ) {
+		  hasCommonValue = mypiecenames.stream()
+                  .anyMatch(reachparentNames::contains);
+	  }
+	  if(typeofPiece.equals(PAWN) && !hasCommonValue)
+		  hasCommonValue = true;
 	  List<Term> protectorTerms = new ArrayList();
 	  String piecepos = pieceName+"_"+toPosit;
 	  Constant piece = new Constant(pieceName);
@@ -1219,23 +1274,24 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 	  List<Literal> effects = new ArrayList();
 	  boolean protectorFlag = false;
 	  boolean attackFlag = false;
-	  if (reachparentNames != null && !reachparentNames.isEmpty() ) { // A list of piece names that protect a given position
+	  if (hasCommonValue) { // A list of my piece names that protect a given position or a pawn
+	  //if (reachparentNames != null && !reachparentNames.isEmpty() ) { // A list of piece names that protect a given position
 		  int psize = reachparentNames.size();
 		  for (int i = 0;i<psize;i++) {
 			  protectorName = reachparentNames.get(i);
 			  String p = protectorName;
 			  AgamePiece gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(p)).findAny().orElse(null);
-			  if (gpiece != null &&!pieceName.equals(protectorName)) {
+			  if (gpiece != null &&!pieceName.equals(protectorName)) { // Protector is different from piece
 				  protector = new Constant(protectorName);
 				  //					Variable protector = new Variable("x"); //Cannot use Variable in preconditions and effects?
 				  protectorTerms.add(protector);
 				  protectorTerms.add(toPos);
 				  protectedBy = new Predicate(PROTECTED,protectorTerms);
-				  if (!typeofPiece.equals(PAWN)) {
+//				  if (!typeofPiece.equals(PAWN)) {
 					  precondition.add(new Literal((AtomicSentence) protectedBy));
 					  variables.add(protector);
 					  protectorFlag = true;
-				  }
+//				  }
 				  protectorTerms.clear();
 				  if (typeofPiece.equals(PAWN)) {
 					  AgamePiece pawnpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(pieceName)).findAny().orElse(null);
@@ -1247,7 +1303,7 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 								String aposName = apos.getPositionName();
 								String occupant= null;
 								AgamePiece ownpiece = null;
-								 attackFlag = true;
+//								 attackFlag = true; Moved OBS 19.3.26
 								ArrayList<String>occupier = (ArrayList<String>)folKb.searchFacts("x", aposName, OCCUPIES);
 								if (!occupier.isEmpty()) {
 									occupant = occupier.get(0);
@@ -1260,6 +1316,7 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 									 Constant pawnConstant = new Constant(aposName);
 									 attackTerms.add(piece);
 									 attackTerms.add(pawnConstant);
+									 attackFlag = true;
 								}
 						  }
 					  }
@@ -1271,7 +1328,7 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 					  castlingTerms.add(toPos);
 					  
 				  }
-			  }
+			  } // End protector is different from piece
 		  } // End for all piece names that protect a given position
 
 	  } // end if protector names
@@ -1306,7 +1363,7 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 		  //		effects.add(new Literal( (AtomicSentence)ownerPred));
 		  effects.add(new Literal( (AtomicSentence)typePred));
 	  }
-	  if (!attackFlag ) { // To prevent pawn attack position to become a reachable action schema OJN 31.05.24
+	  if (!attackFlag && hasCommonValue) { // To prevent pawn attack position to become a reachable action schema OJN 31.05.24 hasCommonValue added 14.3.26
 		  precondition.add(new Literal((AtomicSentence) reachablePredicate));
 		  precondition.add(new Literal((AtomicSentence) pospred));
 		  precondition.add(new Literal((AtomicSentence) boardPredicate)); // The board predicate is added to the precondition

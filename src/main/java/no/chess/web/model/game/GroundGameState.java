@@ -55,6 +55,8 @@ public class GroundGameState extends GameState {
 	private List<AgamePiece>oppinactivePieces;
 	private List<AgamePiece> mylostPieces;
 	private List<AgamePiece> opponentremovedPieces;
+	private List<ActionSchema> opponentActions; // The list of action schemas available to the opponent
+	private List<GroundGameAction> opponentGameActions;
 	private double heuristicScore; // Verdien beregnet ut fra fakta i KB
 	/**
 	 * Basic Constructor
@@ -84,7 +86,7 @@ public class GroundGameState extends GameState {
 	 * @param kb - Fol knowlwedge base representing the state of the game
 	 * @param actionSchemas These are all available action schemas for this state
 	 */
-	public GroundGameState(APlayer player,APlayer opponent, int moveNr, APerceptor thePerceptor, ChessFolKnowledgeBase kb,List<ActionSchema> actionSchemas,List<Position> positions) {
+	public GroundGameState(APlayer player,APlayer opponent, int moveNr, APerceptor thePerceptor, ChessFolKnowledgeBase kb,List<ActionSchema> actionSchemas,List<ActionSchema> opponentactionSchemas,List<Position> positions) {
 		super();
 		this.player = player;
 		this.opponent = opponent;
@@ -93,6 +95,7 @@ public class GroundGameState extends GameState {
 		this.knowledgeBase = kb;
 		this.actionSchemas = actionSchemas;
 		this.positionList = positions;
+		this.opponentActions =  opponentactionSchemas;
 		noofActions = actionSchemas.size();
 		stateId = "S"+Integer.toString(moveNr);
 		String catalog = KnowledgeBuilder.getFileCatalog();
@@ -107,13 +110,16 @@ public class GroundGameState extends GameState {
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));	
 	    actions = new ArrayList<GameAction>();
+	    opponentGameActions = new ArrayList<GroundGameAction>();
 	    produceActions();
 	    setStatestatistics();
-
+	    checkKb("CONTROLCENTER(a,b)");
+		writer.flush();
 	}
 	/**
 	 * produceActions
 	 * This method produces a ground game action for every available action schema
+	 * both for the player and the opponent
 	 * 
 	 */
 	public void produceActions() {
@@ -125,11 +131,19 @@ public class GroundGameState extends GameState {
 			GroundGameAction gameAction = new GroundGameAction(gpiece,actionSchema,this);
 			actions.add(gameAction);
 		}
+		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
+		for (ActionSchema actionSchema:opponentActions) {
+			String name = actionSchema.getName();
+			String p = KnowledgeBuilder.extractString(name,'_',0);
+			AgamePiece gpiece =  (AgamePiece) opponentpieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(p)).findAny().orElse(null);
+			GroundGameAction gameAction = new GroundGameAction(gpiece,actionSchema,this);
+			opponentGameActions.add(gameAction);
+		}
 	}
 	/**
 	 * checkKb
 	 * This method queries the FOL knowledge base
-	 * @param query THe query to ask the knowledge base
+	 * @param query The query to ask the knowledge base
 	 * 
 	 */
 	public void checkKb(String query) {
@@ -143,8 +157,8 @@ public class GroundGameState extends GameState {
 			writer.println("The backward chain object is "+p);
 			gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(p)).findAny().orElse(null);
 			pos = (Position) positionList.stream().filter(ps -> ps.getPositionName().contains(p)).findAny().orElse(null);
-			if (gpiece == null) {
-				
+			if (gpiece != null) {
+				writer.println(gpiece.toString());
 			} 
 		}
 		/*
@@ -163,7 +177,7 @@ public class GroundGameState extends GameState {
 		return actions.get(0);
 	}
 	public List<GameAction> getActions(){
-		return null;
+		return actions;
 	}
 	public String getStateId() {
 		return stateId;
@@ -230,14 +244,18 @@ public class GroundGameState extends GameState {
 				writer.println(l.toString());
 			}
 		}
+		writer.println("Actions available to player");
 		List<GameAction> groundActions = actions;
 		for (GameAction action:groundActions) {
 			GroundGameAction localAction = (GroundGameAction)action;
 			writer.println(localAction.toString());
 		}
-		
+		writer.println("Actions available to opponent");	
+		for (GroundGameAction action:opponentGameActions) {
+			writer.println(action.toString());
+		}
 		writer.println("********* end statistics **********");
-		writer.flush();
+
 	}
 	public void setStatestatistics() {
 		myMoves = player.getMyMoves();

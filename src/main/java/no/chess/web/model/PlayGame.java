@@ -298,7 +298,7 @@ public class PlayGame {
 	 * The chess piece that is moved receives the new position, and the move is recorded as move in algebraic notation 
 	 * After each move a new search object is created to make a new search on the current state.
 	 */
-	public void proposeMove() {
+	public void proposeMove(AgamePiece movedPiece) {
 
 		castleMove = null;
 		currentState = game.getInitialState();
@@ -337,6 +337,12 @@ public class PlayGame {
 		chessAgent = new AChessAgent(kb,localAction,this);
 //		chessAgent.execute(currentState); // Creates new knowledge for the knowledge base
 		localAction = (ChessActionImpl) chessAgent.execute(currentState); // ****** Creates new knowledge for the knowledge base and determines the next move.
+		/* Removed 8.03.26 - see movestatistics
+		 * if (movedPiece != null) { //An opponent piece has been moved String pieceName
+		 * = movedPiece.getMyPiece().getFullName(); String pred =
+		 * chessAgent.getDEVELOPED(); chessAgent.getFolKb().createsinglefacts(pred,
+		 * pieceName); }
+		 */
 // The next move is in the returned local action.		
 		
 /*		if (localAction != newAction)
@@ -533,6 +539,7 @@ public class PlayGame {
 		stateImpl.getOpponent().showPieceactivity();
 		moveStatistics(myplayer);
 		moveStatistics(stateImpl.getOpponent());
+		chessAgent.getFolKb().writeKnowledgebase(); //Show the full knowledge base after statistics
 //		chessAgent.updateKnowledge(); // Must update knowledge bases after last move ??
 /*
  * At the end of statistics: We must update the FOL knowledge bases with the latest move !!		
@@ -557,16 +564,18 @@ public class PlayGame {
 /*		 for ( Position pos : positionlist) {
 			 writer.println(pos.toString());
 		 }*/
-		 writer.println("Knowledge base after last move \n"+chessAgent.getFolKb().toString());
-		 writer.println("Strategy Knowledge base after last move \n"+chessAgent.getStrategyKB().toString());
+//		 writer.println("Knowledge base after last move \n"+chessAgent.getFolKb().toString());
+//		 writer.println("Strategy Knowledge base after last move \n"+chessAgent.getStrategyKB().toString());
 		 writer.flush();
 	}
 	/**
 	 * moveStatistics
 	 * This method show move statistics so far in the game
+	 * It is called at the end of the proposeMove method
+	 * @since 9.03.26 It is also called before the player makes the next move (The chessAgen execute method)
 	 * @param myplayer
 	 */
-	private void moveStatistics(APlayer myplayer) {
+	public void moveStatistics(APlayer myplayer) {
 		List<AgamePiece> inactivePieces = myplayer.getInactivePieces();
 		List myPieces = myplayer.getMygamePieces();
 		HashMap<String,ApieceMove> myMoves = myplayer.getMyMoves();
@@ -585,11 +594,15 @@ public class PlayGame {
 		}
 
 		List<ApieceMove> movetotals = new ArrayList<ApieceMove>(myMoves.values());
-		 writer.println(" Moves so far for player "+ myplayer.getNameOfplayer());
+		writer.println(" Moves so far for player "+ myplayer.getNameOfplayer());
 		for (ApieceMove thismove:movetotals) {
-			 writer.println(" Move "+thismove.toString());
+			String pieceName = thismove.getPiece().getMyPiece().getOntlogyName();
+			writer.println(" Move "+thismove.toString());
+			String pred = chessAgent.getDEVELOPED();
+			chessAgent.getFolKb().createsinglefacts(pred, pieceName);
+			//			 writer.println("Create knowledge fact: "+pred + " for "+pieceName);
 		}
-		
+		writer.println("== End statistics == ");
 	}
 	/**
 	 * checkCastling

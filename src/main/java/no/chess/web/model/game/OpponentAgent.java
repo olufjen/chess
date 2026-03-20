@@ -28,7 +28,7 @@ import no.games.chess.fol.FOLGamesFCAsk;
  * The Opponent Agent is both a utility based agent and a goal based agent.
  * (For definition see p. 52 and p. 53.)
  * The opponent agent object, is a Knowledge based agent and it
- * contains all opponent available actions, and their action schemas.
+ * contains all opponent available actions, and NOT their action schemas?????
  * It is created whenever the chessproblemsolver is created.
  * It also contains a FOL strategy Knowledge base, that contains
  * knowledge of possible moves one ply ahead.

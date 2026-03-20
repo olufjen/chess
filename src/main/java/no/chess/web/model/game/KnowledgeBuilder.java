@@ -32,6 +32,7 @@ import no.games.chess.planning.ChessPlannerAction;
 import no.games.chess.planning.PlannerState;
 import no.games.chess.search.ChessGoalTest;
 import no.games.chess.search.ChessStepCostImpl;
+import no.games.chess.search.nondeterministic.ChessNonDeterGoalTest;
 import no.games.chess.search.nondeterministic.GameAction;
 import no.games.chess.search.nondeterministic.GameState;
 import no.games.chess.search.nondeterministic.NonDetermineChessActionFunction;
@@ -76,7 +77,7 @@ public class KnowledgeBuilder {
   private static String STRIKE =  "STRIKE";
   private static String PIECETYPE =  "PIECETYPE";
   private static String PIECE = "PIECE";  
-  private static String PAWNMOVE =  "PAWNMOVE";
+
   private static String PAWN =  "PAWN";
   private static String KNIGHT =  "KNIGHT";
   private static String BISHOP =  "BISHOP";
@@ -98,14 +99,16 @@ public class KnowledgeBuilder {
   private static String CENTERSQUARE = "CENTERSQUARE"; // Predicate to define center square
   private static String CONTROLCENTER = "CONTROLCENTER"; //Predicate to control center
  /* 
-  * Added 23.02.26 POssible piecemoves
+  * Added 23.02.26 Possible types of piecemoves
   */
   private static String KNIGHTMOVE = "KNIGHTMOVE";
   private static String BISHOPMOVE = "BISHOPMOVE";
   private static String ROOKMOVE = "ROOKMOVE";
   private static String KINGMOVE = "KINGMOVE";
   private static String QUEENMOVE = "QUEENMOVE";
-  
+  private static String MINORMOVE = "MINORMOVE";
+  private static String PAWNMOVE =  "PAWNMOVE";
+  private static String DEVELOPED = "DEVELOPED"; // A piece is developed when it has made a move
   
 /*
  * Additional predicate names  
@@ -125,6 +128,22 @@ public class KnowledgeBuilder {
   
   
 
+
+  public static String getDEVELOPED() {
+	return DEVELOPED;
+}
+
+  public static void setDEVELOPED(String dEVELOPED) {
+	DEVELOPED = dEVELOPED;
+  }
+
+  public static String getMINORMOVE() {
+	return MINORMOVE;
+}
+
+  public static void setMINORMOVE(String mINORMOVE) {
+	MINORMOVE = mINORMOVE;
+  }
 
   public static List<String> getPiecetypePreds() {
 	return piecetypePreds;
@@ -888,8 +907,8 @@ public static List<ActionSchema> findApplicable(Map<String,State>initStates,Acti
    * The goal test, which determines whether a given state is a goal state
  * @return a nondeterminGoaltest function
  */
-  public static ChessGoalTest<GameState> nondeterminGoaltest(GameAction a){
-	  ChessGoalTest<GameState>  g = s -> s.testEnd(a);
+  public static ChessNonDeterGoalTest<GameState> nondeterminGoaltest(GameAction a){
+	  ChessNonDeterGoalTest<GameState>  g = s -> s.testEnd(a);
 	  return g;
   }
   // The resultfunction is not a functional interface

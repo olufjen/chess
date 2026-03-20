@@ -766,7 +766,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     		SimpleScalar chessPosition = new SimpleScalar(position);
 //    		establishRules(chessBoard);
     		chessBoard.emptyGame();
-    		game.proposeMove();
+    		game.proposeMove(null);
   	    	AgamePiece playerPiece = game.getLastPiece();
    		 	availablePosNames = new ArrayList<String>();
    		 	availablePosNames.add("pl"); // Wants to play a game of chess
@@ -954,7 +954,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
    	    	System.out.println(game.getGame().getBoardPic());
 //   	    	game.getGame().setChosenPlayer(); // This method is only used at startup OLJ 20.04.20
    	    	
-   	    	game.proposeMove(); //The game object proposes the next move for player
+   	    	game.proposeMove(movedPiece); //The game object proposes the next move for player
    	    	AgamePiece playerPiece = game.getLastPiece();
    	    	piece = playerPiece.getMyPiece().getName();
    	    	snewPosition = game.getNewPosition().getPositionName();

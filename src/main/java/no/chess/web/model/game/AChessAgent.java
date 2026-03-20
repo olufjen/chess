@@ -101,7 +101,7 @@ public class AChessAgent extends KBAgent {
 	private String outputFileName = "chessAgent.txt";
 	private PrintWriter writer = null;
 	private FileWriter fw = null;
-	private PlayGame game = null;
+	private PlayGame game = null; // The PlayGame object
 	private APlayer myPlayer = null;
 	private APlayer opponent = null;
 	private List<Position> emptyPositions = null;
@@ -149,7 +149,16 @@ public class AChessAgent extends KBAgent {
     private String HOMESQUARE;
     private String MINORPIECE;
     private String CONTROLCENTER;
-    
+    /* 
+     * Added 23.02.26 Possible types of piecemoves
+     */
+    private String KNIGHTMOVE = "KNIGHTMOVE";
+    private String BISHOPMOVE = "BISHOPMOVE";
+    private String ROOKMOVE = "ROOKMOVE";
+    private String KINGMOVE = "KINGMOVE";
+    private String QUEENMOVE = "QUEENMOVE";
+    private String MINORMOVE = "MINORMOVE";    
+    private String DEVELOPED = "DEVELOPED"; // A piece is developed when it has made a move
     private ChessActionImpl castleAction = null;
     
 	public AChessAgent(KnowledgeBase kb) {
@@ -215,7 +224,18 @@ public class AChessAgent extends KBAgent {
 		setPredicatenames();
 		
 	}
-	  public void setPredicatenames() {
+	
+	public String getDEVELOPED() {
+		return DEVELOPED;
+	}
+
+
+	public void setDEVELOPED(String dEVELOPED) {
+		DEVELOPED = dEVELOPED;
+	}
+
+
+	public void setPredicatenames() {
 		  KnowledgeBuilder.generatePieceTypePreds();
 			ACTION = KnowledgeBuilder.getACTION();
 			ATTACKED = KnowledgeBuilder.getATTACKED();
@@ -254,6 +274,23 @@ public class AChessAgent extends KBAgent {
 			MINORPIECE = KnowledgeBuilder.getMINORPIECE();
 			CENTERSQUARE = KnowledgeBuilder.getCENTERSQUARE();
 			CONTROLCENTER = KnowledgeBuilder.getCONTROLCENTER();
+			
+			KNIGHTMOVE = KnowledgeBuilder.getKNIGHTMOVE();
+			BISHOPMOVE = KnowledgeBuilder.getBISHOPMOVE();
+			ROOKMOVE = KnowledgeBuilder.getROOKMOVE();
+			KINGMOVE = KnowledgeBuilder.getKINGMOVE();
+			QUEENMOVE = KnowledgeBuilder.getQUEENMOVE();
+			MINORMOVE = KnowledgeBuilder.getMINORMOVE();
+			DEVELOPED = KnowledgeBuilder.getDEVELOPED();
+			
+			chessDomain.addPredicate(DEVELOPED);
+			chessDomain.addPredicate(KNIGHTMOVE);
+			chessDomain.addPredicate(BISHOPMOVE);
+			chessDomain.addPredicate(ROOKMOVE);
+			chessDomain.addPredicate(KINGMOVE);
+			chessDomain.addPredicate(QUEENMOVE);
+			chessDomain.addPredicate(MINORMOVE);
+			chessDomain.addPredicate(PAWNMOVE);
 			chessDomain.addPredicate(CONTROLCENTER);
 			chessDomain.addPredicate(CENTERSQUARE);
 			chessDomain.addPredicate(MINORPIECE);
@@ -437,21 +474,38 @@ public class AChessAgent extends KBAgent {
 //		folKb.tell(qSentence); // Returned to code 28.02.23 REplaced, see createConnected
 //		String asentence = "FORALL a b ((REACHABLE(a,b) AND CENTERSQUARE(b)) => CONTROLCENTER(a,b))";
 //		createConnected("player", "y", "x"); Not to be used. The defineRules method is used instead
+/*
+ * Create all types of move to the knowledge base		
+ */
+		createFact(MINORMOVE,2);
+		createFact(KNIGHTMOVE,2);
+		createFact(BISHOPMOVE,2);
+		createFact(ROOKMOVE,2);
+		createFact(KINGMOVE,2);
+		createFact(QUEENMOVE,2);
+		createFact(PAWNMOVE,2);
 		createFact(MOVE, 2);
 		createFact(CONTROLCENTER,2);
 //		These calls create the unary relation of type BISHOP(piecename) etc. for all the player's pieces
 		makeSentences(stateImpl.getMyPlayer()); // 
 		makeSentences(stateImpl.getOpponent()); // 
 //		defineRules("FORALL", 1,PIECETYPE,MINORPIECE);
-		defineRules("FORALL", 3,REACHABLE,PROTECTED,MOVE);	
+		defineRules("FORALL", 3,REACHABLE,PROTECTED,MINORMOVE);	
 		defineRules("FORALL",2,REACHABLE,CENTERSQUARE,CONTROLCENTER);
-		defineRules("FORALL",2,REACHABLE,PAWN,CENTERSQUARE,MOVE);
+		defineRules("FORALL",2,REACHABLE,PAWN,CENTERSQUARE,PAWNMOVE);
+		defineRules("FORALL",2,REACHABLE,PAWN,PAWNMOVE); // Pawn move
 //		AnswerHandler res = folKb.ask(asentence);
 //		String s1 = "occupies(o,px)^occupies(pi,py)";
 //		String s2 = "MOVE(pi,pz)";
 	//	KnowledgeBuilder.parseSentence(s1,s2,folKb);
 		checkKb("CONTROLCENTER(a,b)");
-		checkKb("MOVE(a,b)");
+		checkKb("MINORMOVE(a,b)");
+		checkKb("PAWNMOVE(a,b)");
+/*
+ * Create statistics before the move. It creates information about developed pieces.		
+ */
+		game.moveStatistics(stateImpl.getMyPlayer());
+		game.moveStatistics(stateImpl.getOpponent());		
 		Literal chessLiteral = new Literal(folPredicate);
 		List<Literal> allLiterals = new ArrayList<Literal>();
 		allLiterals.add(chessLiteral);
@@ -504,18 +558,19 @@ public class AChessAgent extends KBAgent {
 			ActionSchema actionSchema = actionSchemas.get(0);
 			List<Constant>solConstants = actionSchema.getConstants();
 
-
+			AgamePiece gpiece = null;
+			writer.println("The constants of the action schema");
 			String aName = null; // Name to be used to find the chessAction that the actionSchema corresponds to
 			for (Constant constant:solConstants) {
 				writer.println(constant.getSymbolicName());
 				String symName = constant.getSymbolicName();
-				AgamePiece gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(symName)).findAny().orElse(null);
+				gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(symName)).findAny().orElse(null);
 				if (gpiece != null) {
 					aName = symName;
 					break;
 				}
 			}
-
+//			folKb.createsinglefacts(DEVELOPED, aName);  Removed 8.03.26 - see movestatistics
 			String nactionName = actionSchema.getName();
 			String chessName = null;
 			int nIndex = nactionName.indexOf("_");
@@ -570,7 +625,7 @@ public class AChessAgent extends KBAgent {
 //		writer.println("The first order knowledge base");
 //		writer.println(folKb.toString());
 
-		folKb.writeKnowledgebase();
+//		folKb.writeKnowledgebase(); Moved to end of statistics
 		chessDomain.printDomain();
 		strategyKB =  solver.getOpponentAgent().getLocalKb();
 		strategyKB.writeKnowledgebase();
@@ -638,10 +693,10 @@ public class AChessAgent extends KBAgent {
 	/**
 	 * defineRules
 	 * This method defines rules to the parent knowledge base
-	 * OBS: Must define which variables are used in each defined predicate!!
+	 * The piecetype predicate defines which variables are used in each defined predicate!!
 	 * @param qualifier  - The qualifier for the rule 
 	 * @param antVars - The number of variables for the rule - max 5
-	 * @param preds - The list of predicates for the rule
+	 * @param preds - The list of predicates for the rule. The last predicate is the implies predicate
 	 */
 	public void defineRules(String qualifier,int antVars,String...preds) {
 		String[] pvar = {"a","b","c","d","e"}; // Max 5 variables
@@ -840,7 +895,7 @@ public class AChessAgent extends KBAgent {
 	/**
 	 * makeRules
 	 * This method tells the FOL knowledgebase rules about how to capture opponent pieces
-	 * It also tells the FOL knowledge base basic facts about the player's pieces, their posditions and reachable positions 
+	 * It also tells the FOL knowledge base basic facts about the player's pieces, their positions and reachable positions 
 	 * It also tells the first order knowledge base and its domain fact about own pieces
 	 * @since 29.01.21 Only active pieces are considered
 	 * @since 07.04.21 Castling rules are added

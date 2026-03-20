@@ -196,7 +196,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	 * checkQuery
 	 * Asks a query to the knowledge base using backward chaining
 	 * @param stringQuery
-	 * @return a LIst of Strings containg term names
+	 * @return a List of Strings containg term names
 	 */
 	public List<String> checkQuery(String stringQuery){
 		FOLParser parser = getParser();
@@ -451,6 +451,21 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	 * @param pos
 	 * @param piece
 	 */
+	public void createsinglefacts(String fact, String piece) {
+		Constant pieceVariable= new Constant(piece);
+		List<Term> reachableTerms = new ArrayList<Term>();
+		reachableTerms.add(pieceVariable);
+		Predicate factPredicate = new Predicate(fact,reachableTerms);
+		tell(factPredicate);
+		
+	}
+	/**
+	 * createsinglefacts
+	 * This method creates fact about a piece and its position to the knowledge base
+	 * @param fact
+	 * @param pos
+	 * @param piece
+	 */
 	public void createfacts(String fact,String pos, String piece) {
 		Constant pieceVariable= new Constant(piece);
 		Constant posVariable = new Constant(pos);
@@ -460,7 +475,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 		Predicate factPredicate = new Predicate(fact,reachableTerms);
 		tell(factPredicate);
 		
-	}
+	}	
 	public void writeKnowledgebase() {
 		writer.println("The first order knowledge base");
 		writer.println(this.toString());
