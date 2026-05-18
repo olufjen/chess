@@ -109,6 +109,7 @@ public class KnowledgeBuilder {
   private static String MINORMOVE = "MINORMOVE";
   private static String PAWNMOVE =  "PAWNMOVE";
   private static String DEVELOPED = "DEVELOPED"; // A piece is developed when it has made a move
+  private static String VACANT = "VACANT"; // Tells if a position is vacant
   
 /*
  * Additional predicate names  
@@ -125,29 +126,138 @@ public class KnowledgeBuilder {
   private static String[] centre = new String[] {"d4","d5","e4","e5"}; // THe center squares of the chess board
   // THe pointer to the file catalog
   private static String fileCatalog = "G:\\Min disk\\privat\\ontologies\\analysis\\";
+  /*
+   * Context - where are we?
+   * Strategy - what profile - wants to play
+   * Intention - what move is next, based on context and strategy
+   * Added 30.04.26
+   */
+  private static String strategyName = "WANTSTOPLAY"; // The predicate name
+  private static String  queenGambit = "QUEENGAMBIT"; // The name of the strategy
+  private static String contextType = "CONTEXT"; // The predicate name for context
+  private static String queenPawncontext = "QUEENPAWNGAME"; // What is the context (one of many)
+  private static String queenPlayerpawn = "WhitePawn4";
+  private static String queenOpponentpawn = "BlackPawn4";
+  private static String queenPlayerpawnPos = "d4";
+  private static String queenOpponentPos = "d5";
+  private static String contextMove = "CONTEXTMOVE"; // Given a context, this is the predicate for the next move
+  private static String gameOpening = "OPENING"; // The predicate for the opening
   
-  
+  /* Rules in the knowledge base
+   * WANTSTOPLAY(QUEENGAMBIT)
+   * ((occupies(WhitePawn4,d4) AND occupies(BlackPawn4,d5)) => CONTEXT(QUEENPAWNGAME))
+   */
+/*
+ * 	1. Context(QueensPawnGame) AND WantsToPlay(QueensGambit) => CONTEXTMOVE(WhitePawn3, c4)
+ */
 
 
-  public static String getDEVELOPED() {
-	return DEVELOPED;
+  public static String getVACANT() {
+	  return VACANT;
+  }
+
+  public static String getContextMove() {
+	  return contextMove;
+  }
+
+  public static void setContextMove(String contextMove) {
+	  KnowledgeBuilder.contextMove = contextMove;
+  }
+
+  public static void setVACANT(String vACANT) {
+	VACANT = vACANT;
+  }
+  
+  public static String getGameOpening() {
+	  return gameOpening;
+  }
+
+  public static void setGameOpening(String gameOpening) {
+	  KnowledgeBuilder.gameOpening = gameOpening;
+  }
+
+  public static String getQueenPlayerpawn() {
+	return queenPlayerpawn;
 }
 
+  public static void setQueenPlayerpawn(String queenPlayerpawn) {
+	KnowledgeBuilder.queenPlayerpawn = queenPlayerpawn;
+  }
+
+  public static String getQueenOpponentpawn() {
+	return queenOpponentpawn;
+  }
+
+  public static void setQueenOpponentpawn(String queenOpponentpawn) {
+	KnowledgeBuilder.queenOpponentpawn = queenOpponentpawn;
+  }
+
+  public static String getQueenPlayerpawnPos() {
+	return queenPlayerpawnPos;
+  }
+
+  public static void setQueenPlayerpawnPos(String queenPlayerpawnPos) {
+	KnowledgeBuilder.queenPlayerpawnPos = queenPlayerpawnPos;
+  }
+
+  public static String getQueenOpponentPos() {
+	return queenOpponentPos;
+  }
+
+  public static void setQueenOpponentPos(String queenOpponentPos) {
+	KnowledgeBuilder.queenOpponentPos = queenOpponentPos;
+  }
+
+  public static String getStrategyName() {
+	  return strategyName;
+  }
+
+  public static void setStrategyName(String strategyName) {
+	KnowledgeBuilder.strategyName = strategyName;
+  }
+
+  public static String getQueenGambit() {
+	return queenGambit;
+  }
+
+  public static void setQueenGambit(String queenGambit) {
+	KnowledgeBuilder.queenGambit = queenGambit;
+  }
+
+  public static String getContextType() {
+	return contextType;
+  }
+
+  public static void setContextType(String contextType) {
+	KnowledgeBuilder.contextType = contextType;
+  }
+
+  public static String getQueenPawncontext() {
+	return queenPawncontext;
+}
+
+  public static void setQueenPawncontext(String queenPawncontext) {
+	KnowledgeBuilder.queenPawncontext = queenPawncontext;
+  }
+
+  public static String getDEVELOPED() {
+	  return DEVELOPED;
+  }
   public static void setDEVELOPED(String dEVELOPED) {
-	DEVELOPED = dEVELOPED;
+	  DEVELOPED = dEVELOPED;
   }
 
   public static String getMINORMOVE() {
-	return MINORMOVE;
-}
+	  return MINORMOVE;
+  }
 
   public static void setMINORMOVE(String mINORMOVE) {
-	MINORMOVE = mINORMOVE;
+	  MINORMOVE = mINORMOVE;
   }
 
   public static List<String> getPiecetypePreds() {
-	return piecetypePreds;
-}
+	  return piecetypePreds;
+  }
 
   public static void setPiecetypePreds(List<String> piecetypePreds) {
 	KnowledgeBuilder.piecetypePreds = piecetypePreds;

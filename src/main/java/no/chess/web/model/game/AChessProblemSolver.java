@@ -954,7 +954,8 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       Metrics metric = queueSearch.getMetrics();
       Queue<Node<PlannerState, ChessPlannerAction>> front = queueSearch.getFrontier();
 /*
- * For nondeterministic search as described in chapter 4.3.2 and figure 4.11 page 135     
+ * For nondeterministic search as described in chapter 4.3.2 and figure 4.11 page 135 
+ * The nondeterminState becomes the initial state of the problem    
  */
       GroundGameState nondeterminState = new GroundGameState(myPlayer,opponent,noofMoves,thePerceptor,folKb,actionSchemalist,opponentactionSchemalist,positionList); // When created also create the initial action
       GroundGameAction gameAction  = (GroundGameAction) nondeterminState.createAction(); // creates an initial action
@@ -975,17 +976,39 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * At present all game states are the goal state, so there is no plan
  * And the plan contains the GroundState with WhitePawn 6 - The first move
  */
+      State tempinitstate = null;
+      State tempgoalstate = null;
       if (thisPlan != null) {
    	    writer.println("The plan - ");
-        writer.println(thisPlan.toString());
+        writer.println(thisPlan.toString()); // Prints the path - a linked list of gameactions
+        GroundGameAction action = (GroundGameAction) thisPlan.getAction(0);
+        String actionName = action.getActionSchema().getName();
+        tempinitstate = initStates.get(actionName);
+        tempgoalstate = goalStates.get(actionName);
+        writer.println(" - And the initial and goal states are from action - ");
+        writer.println(actionName);
+        for(Literal l:tempinitstate.getFluents()) {
+        	writer.println(l.toString());
+        }
+        writer.println(actionName + " The goal state");
+        for(Literal l:tempgoalstate.getFluents()) {
+        	writer.println(l.toString());
+        }
+        
       }else {
     	  writer.println("No plan - ");
       }
   
 // The optional astate object refers to the same object as plannerState and localPlanner       
 //	  thePerceptor.createLiftedActions(null,"WhiteKnight2","f3",null); // Creates the initial and goal states based on this action schema
-	  initialState = thePerceptor.getInitState();
-	  goalState = thePerceptor.getGoalState();
+      if(tempinitstate != null)
+    	  initialState = tempinitstate;
+      else
+    	  initialState = thePerceptor.getInitState();
+      if(tempgoalstate != null)
+    	  goalState = tempgoalstate;
+      else
+    	  goalState = thePerceptor.getGoalState();
 	  otherSchemas = thePerceptor.getOtherSchemas();
 /*
  * The above states and schemas are necessary for creating the ChessProblem for the planning graph 	  

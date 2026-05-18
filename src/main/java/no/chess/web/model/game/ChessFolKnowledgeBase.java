@@ -223,6 +223,25 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 		return termNames;
 	}
 	/**
+	 * checkKB
+	 * This method test if a certain query returns true
+	 * @param thequery
+	 * @return true if the query returns a result.
+	 * Otherwise it returns false
+	 */
+	public boolean checkKB(String thequery) {
+		FOLParser parser = getParser();
+		Sentence query = parser.parse(thequery);
+		InferenceResult backWardresult =  backWardChain.ask(this,query);
+		BCGamesAskHandler handler = (BCGamesAskHandler)backWardresult;
+		List<HashMap<Variable, Term>> finals = handler.getFinalList();
+		int noofFinals = finals.size();
+		if (finals != null && !finals.isEmpty())
+			return true;
+		else
+			return false;
+	}
+	/**
 	 * forwardcheckQuery
 	 * Asks a query to the knowledge base using forward chaining
 	 * @param stringQuery

@@ -159,6 +159,7 @@ public class AChessAgent extends KBAgent {
     private String QUEENMOVE = "QUEENMOVE";
     private String MINORMOVE = "MINORMOVE";    
     private String DEVELOPED = "DEVELOPED"; // A piece is developed when it has made a move
+    private String VACANT = "VACANT"; // Tells if a position is vacant
     private ChessActionImpl castleAction = null;
     
 	public AChessAgent(KnowledgeBase kb) {
@@ -282,6 +283,7 @@ public class AChessAgent extends KBAgent {
 			QUEENMOVE = KnowledgeBuilder.getQUEENMOVE();
 			MINORMOVE = KnowledgeBuilder.getMINORMOVE();
 			DEVELOPED = KnowledgeBuilder.getDEVELOPED();
+			VACANT = KnowledgeBuilder.getVACANT();
 			
 			chessDomain.addPredicate(DEVELOPED);
 			chessDomain.addPredicate(KNIGHTMOVE);
@@ -326,7 +328,12 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(PAWN);
 			chessDomain.addPredicate(BISHOP);
 			chessDomain.addPredicate(KNIGHT);
-
+			chessDomain.addPredicate(KnowledgeBuilder.getStrategyName());
+			chessDomain.addPredicate(KnowledgeBuilder.getQueenGambit());
+			chessDomain.addPredicate(KnowledgeBuilder.getContextType());
+			chessDomain.addPredicate(KnowledgeBuilder.getQueenPawncontext());
+			chessDomain.addPredicate(KnowledgeBuilder.getContextMove());
+			chessDomain.addPredicate(KnowledgeBuilder.getGameOpening());
 	  }
 	  
 
@@ -474,6 +481,10 @@ public class AChessAgent extends KBAgent {
 //		folKb.tell(qSentence); // Returned to code 28.02.23 REplaced, see createConnected
 //		String asentence = "FORALL a b ((REACHABLE(a,b) AND CENTERSQUARE(b)) => CONTROLCENTER(a,b))";
 //		createConnected("player", "y", "x"); Not to be used. The defineRules method is used instead
+
+//		These calls create the unary relation of type BISHOP(piecename) etc. for all the player's pieces
+		makeSentences(stateImpl.getMyPlayer()); // 
+		makeSentences(stateImpl.getOpponent()); // 
 /*
  * Create all types of move to the knowledge base		
  */
@@ -486,21 +497,23 @@ public class AChessAgent extends KBAgent {
 		createFact(PAWNMOVE,2);
 		createFact(MOVE, 2);
 		createFact(CONTROLCENTER,2);
-//		These calls create the unary relation of type BISHOP(piecename) etc. for all the player's pieces
-		makeSentences(stateImpl.getMyPlayer()); // 
-		makeSentences(stateImpl.getOpponent()); // 
-//		defineRules("FORALL", 1,PIECETYPE,MINORPIECE);
+		createFact(VACANT,1);
+//		createFact(KnowledgeBuilder.getContextType(),1);
+		//		defineRules("FORALL", 1,PIECETYPE,MINORPIECE);
 		defineRules("FORALL", 3,REACHABLE,PROTECTED,MINORMOVE);	
 		defineRules("FORALL",2,REACHABLE,CENTERSQUARE,CONTROLCENTER);
 		defineRules("FORALL",2,REACHABLE,PAWN,CENTERSQUARE,PAWNMOVE);
 		defineRules("FORALL",2,REACHABLE,PAWN,PAWNMOVE); // Pawn move
+//		defineRules("FORALL",2,PROTECTED,VACANT); // Not needed?
 //		AnswerHandler res = folKb.ask(asentence);
 //		String s1 = "occupies(o,px)^occupies(pi,py)";
 //		String s2 = "MOVE(pi,pz)";
 	//	KnowledgeBuilder.parseSentence(s1,s2,folKb);
-		checkKb("CONTROLCENTER(a,b)");
-		checkKb("MINORMOVE(a,b)");
-		checkKb("PAWNMOVE(a,b)");
+		strategyChoice(); // Choose a strategy for the game
+		/*
+		 * checkKb("CONTROLCENTER(a,b)"); checkKb("MINORMOVE(a,b)");
+		 * checkKb("PAWNMOVE(a,b)");
+		 */
 /*
  * Create statistics before the move. It creates information about developed pieces.		
  */
@@ -649,7 +662,7 @@ public class AChessAgent extends KBAgent {
 	}
 	/**
 	 * createFact
-	 * THis method creates a single fact to the fol knowledge base with type variables
+	 * This method creates a single rule to the fol knowledge base with type variables
 	 * @param fact - name of fact
 	 * @param antvar - no of variables
 	 */
@@ -778,6 +791,61 @@ public class AChessAgent extends KBAgent {
 		}
 		QuantifiedSentence qSentence = new QuantifiedSentence(qualifier,variables,goal); // A single qualified sentence including FORALL
 		folKb.tell(qSentence);
+	}
+	/**
+	 * strategyChoice()
+	 * This method creates a strategy for the game
+	 * TODO:
+	 * Develop this method further for other (opening) strategies
+	 */
+	public void strategyChoice() {
+		String strategyName = KnowledgeBuilder.getStrategyName(); // We want to play:
+		String  queenGambit =  KnowledgeBuilder.getQueenGambit(); // The queen gambit strategy name
+		Constant strategyConstant = new Constant(queenGambit);
+		List<Term> strategyTerms = new ArrayList<Term>();
+		strategyTerms.add(strategyConstant);
+		Predicate strategyPredicate = new Predicate(strategyName,strategyTerms);
+		folKb.tell(strategyPredicate);
+		String opening = KnowledgeBuilder.getGameOpening();
+		Predicate openingPredicate = new Predicate(opening,strategyTerms);
+		
+		String contextType =  KnowledgeBuilder.getContextType(); // The context
+		String contextName =  KnowledgeBuilder.getQueenPawncontext(); // The queen pawn context
+		Constant queenPawn = new Constant(contextName);
+		List<Term> contextTerms = new ArrayList<Term>();
+		contextTerms.add(queenPawn);
+		Predicate contextPredicate = new Predicate(contextType,contextTerms);
+		ConnectedSentence contextandStrategy = new ConnectedSentence(Connectors.AND,strategyPredicate,contextPredicate);
+		Constant nextPawn = new Constant("WhitePawn3");
+		Constant nextPos = new Constant("c4");
+		List<Term> nextTerms = new ArrayList<Term>();
+		nextTerms.add(nextPawn);
+		nextTerms.add(nextPos);
+		Predicate nextMove = new Predicate(KnowledgeBuilder.getContextMove(),nextTerms);
+		ConnectedSentence moveGoal = new ConnectedSentence(Connectors.IMPLIES,contextandStrategy,nextMove); // The next move with strategy
+		folKb.tell(moveGoal); 
+		String pieceName = KnowledgeBuilder.getQueenPlayerpawn(); // The pieces and positions involved in queen gambit
+		String posName = KnowledgeBuilder.getQueenPlayerpawnPos();
+		String opponentPiece = KnowledgeBuilder.getQueenOpponentpawn();
+		String opponentPos = KnowledgeBuilder.getQueenOpponentPos();
+		
+		List<Term> ownTerms = new ArrayList<Term>();
+		List<Term> opponentTerms = new ArrayList<Term>();
+		Constant myPiece = new Constant(pieceName);
+		Constant myPos = new Constant(posName);
+		Constant oppPiece = new Constant(opponentPiece);
+		Constant oppPos = new Constant(opponentPos);
+		ownTerms.add(myPiece);
+		ownTerms.add(myPos);
+		opponentTerms.add(oppPiece);
+		opponentTerms.add(oppPos);
+		Predicate myPredicate = new Predicate(KnowledgeBuilder.getOCCUPIES(),ownTerms);
+		Predicate oppPredicate = new Predicate(KnowledgeBuilder.getOCCUPIES(),opponentTerms);
+		ConnectedSentence finalSentence = new ConnectedSentence(Connectors.AND,myPredicate,oppPredicate);
+		ConnectedSentence goal = new ConnectedSentence(Connectors.IMPLIES,finalSentence,contextPredicate);
+		folKb.tell(goal);
+		ConnectedSentence openingGoal = new ConnectedSentence(Connectors.IMPLIES,finalSentence,openingPredicate);
+		folKb.tell(openingGoal);
 	}
 	/**
 	 * createConnected
