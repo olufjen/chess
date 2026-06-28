@@ -235,11 +235,20 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 		InferenceResult backWardresult =  backWardChain.ask(this,query);
 		BCGamesAskHandler handler = (BCGamesAskHandler)backWardresult;
 		List<HashMap<Variable, Term>> finals = handler.getFinalList();
+		HashMap<Variable, Term> vars = null;
+		boolean backresult = backWardresult.isTrue();
 		int noofFinals = finals.size();
-		if (finals != null && !finals.isEmpty())
-			return true;
-		else
-			return false;
+		if (finals != null && !finals.isEmpty()) {
+			for (int i = 0;i<noofFinals;i++) {
+				vars = finals.get(i);
+				for (Variable v:vars.keySet()) {
+					if(!v.getSymbolicName().startsWith("v")) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 	/**
 	 * forwardcheckQuery
@@ -345,7 +354,70 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 		  }
 		  return result;
 		  
-	  }	
+	  }
+	/**
+	 * isStartPhase
+	 * This method checks if the game is in the start phase:
+	 * No pieces have been moved
+	 * @return true if the game is in the start phase
+	 */
+	public boolean isStartPhase() {
+	    // 1. Hent alle brikker som har en definert HOMESQUARE
+	    // Vi ser etter alle fakta på formen HOMESQUARE(brikke, felt)
+		String home = KnowledgeBuilder.getHOMESQUARE();
+		String occupies = KnowledgeBuilder.getOCCUPIES();
+	    for (Sentence s : getOriginalSentences()) {
+	        if (s instanceof Predicate && ((Predicate) s).getPredicateName().equals(home)) {
+	            Predicate p = (Predicate) s;
+	            String piece = p.getArgs().get(0).getSymbolicName();
+	            String homeSquare = p.getArgs().get(1).getSymbolicName();
+
+	            // 2. Sjekk om denne spesifikke brikken står på sitt hjemmefelt
+	            if (!existsFact(occupies, piece, homeSquare)) {
+	                // Hvis vi finner én brikke som ikke er hjemme, er startfasen over
+	                return false;
+	            }
+	        }
+	    }
+	    
+	    // Hvis vi har gått gjennom alle og ikke funnet noen som har flyttet, er vi i startfasen
+	    return true;
+	}
+	/**
+	 * existsFact
+	 *  This method checks if certain facts in the KB are true.
+	 * @param fact - the fact to be checked
+	 * @param preds - any number of parameters for the given fact 
+	 * @return true if the fact is true
+	 */
+	public boolean existsFact(String predicateName, String... args) {
+	    for (Sentence s : getOriginalSentences()) {
+	        if (s instanceof Predicate) {
+	            Predicate p = (Predicate) s;
+	            
+	            // 1. Sjekk predikatnavn og antall argumenter (arity)
+	            if (p.getPredicateName().equals(predicateName) && p.getArgs().size() == args.length) {
+	                
+	                boolean match = true;
+	                // 2. Sammenlign hvert argument
+	                for (int i = 0; i < args.length; i++) {
+	                    String actualArg = p.getArgs().get(i).getSymbolicName();
+	                    if (!actualArg.equals(args[i])) {
+	                        match = false;
+	                        break;
+	                    }
+	                }
+	                
+	                // 3. Hvis alle argumentene matchet, har vi funnet faktumet
+	                if (match) {
+	                    return true;
+	                }
+	            }
+	        }
+	    }
+	    return false;
+	}
+
 	  /**
 	   * checkpieceFacts
 	   * This method checks the FOL knowledge base for certain facts about the player's pieces.
@@ -421,10 +493,26 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 			}
 			return false;
 	  }	
+	private boolean checkAnswer(List<HashMap<Variable, Term>> finals,Variable pieceVarx) {
+		int noofFinals = finals.size();
+		HashMap vars = null;
+		Term usedTerm = null;
+		if (finals != null && !finals.isEmpty()) {
+			for (int i = 0;i<noofFinals;i++) {
+				vars = finals.get(i);
+				usedTerm = (Term) vars.get(pieceVarx);
+				if (usedTerm != null) {  //  Check if usedTerm is null !!
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 	/**
 	 * searchFacts
 	 * This method returns a list of term names (ontology names of pieces)
 	 * It is used to find which piece(s) can reach/protect/threaten/occupy a given position
+	 * @since 21.05.26 Check if usedTerm is null !!
 	 * @param pieceName
 	 * @param posName
 	 * @param fact
@@ -457,8 +545,10 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 			for (int i = 0;i<noofFinals;i++) {
 				vars = finals.get(i);
 				usedTerm = (Term) vars.get(pieceVarx);
-				termName = usedTerm.getSymbolicName(); // Finds which piece is protecting this position.
-				termNames.add(termName);
+				if (usedTerm != null) {  //  Check if usedTerm is null !!
+					termName = usedTerm.getSymbolicName(); // Finds which piece is protecting this position.
+					termNames.add(termName);
+				}
 			}
 		}
 		return termNames;

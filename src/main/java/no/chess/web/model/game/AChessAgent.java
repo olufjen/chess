@@ -47,6 +47,7 @@ import no.games.chess.ChessAction;
 import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
+import no.games.chess.fol.util.BoardGeometryGenerator;
 import no.games.chess.planning.ChessProblem;
 import no.games.chess.planning.ChessSearchAlgorithm;
 
@@ -160,6 +161,7 @@ public class AChessAgent extends KBAgent {
     private String MINORMOVE = "MINORMOVE";    
     private String DEVELOPED = "DEVELOPED"; // A piece is developed when it has made a move
     private String VACANT = "VACANT"; // Tells if a position is vacant
+    private String GAMEPHASE; // The predicate for game phase
     private ChessActionImpl castleAction = null;
     
 	public AChessAgent(KnowledgeBase kb) {
@@ -238,6 +240,9 @@ public class AChessAgent extends KBAgent {
 
 	public void setPredicatenames() {
 		  KnowledgeBuilder.generatePieceTypePreds();
+		  KnowledgeBuilder.generatepredforContants();
+		  KnowledgeBuilder.generateHomepreds();
+		  KnowledgeBuilder.createMoveMap();
 			ACTION = KnowledgeBuilder.getACTION();
 			ATTACKED = KnowledgeBuilder.getATTACKED();
 			CANMOVE = KnowledgeBuilder.getCANMOVE();
@@ -284,7 +289,7 @@ public class AChessAgent extends KBAgent {
 			MINORMOVE = KnowledgeBuilder.getMINORMOVE();
 			DEVELOPED = KnowledgeBuilder.getDEVELOPED();
 			VACANT = KnowledgeBuilder.getVACANT();
-			
+			GAMEPHASE = KnowledgeBuilder.getGamePhase();
 			chessDomain.addPredicate(DEVELOPED);
 			chessDomain.addPredicate(KNIGHTMOVE);
 			chessDomain.addPredicate(BISHOPMOVE);
@@ -328,12 +333,15 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(PAWN);
 			chessDomain.addPredicate(BISHOP);
 			chessDomain.addPredicate(KNIGHT);
-			chessDomain.addPredicate(KnowledgeBuilder.getStrategyName());
+			chessDomain.addPredicate(ACTION);
+			chessDomain.addPredicate(KnowledgeBuilder.getBETWEEN());
 			chessDomain.addPredicate(KnowledgeBuilder.getQueenGambit());
 			chessDomain.addPredicate(KnowledgeBuilder.getContextType());
 			chessDomain.addPredicate(KnowledgeBuilder.getQueenPawncontext());
 			chessDomain.addPredicate(KnowledgeBuilder.getContextMove());
 			chessDomain.addPredicate(KnowledgeBuilder.getGameOpening());
+			chessDomain.addPredicate(KnowledgeBuilder.getGamePhase());
+			chessDomain.addPredicate(KnowledgeBuilder.getStrategyName());
 	  }
 	  
 
@@ -390,6 +398,9 @@ public class AChessAgent extends KBAgent {
 	 */
 	/* (non-Javadoc)
 	 * @see aima.core.logic.propositional.agent.KBAgent#execute(aima.core.agent.Percept)
+	 */
+	/**
+	 *
 	 */
 	@Override
 	public Action execute(Percept state) {
@@ -497,23 +508,46 @@ public class AChessAgent extends KBAgent {
 		createFact(PAWNMOVE,2);
 		createFact(MOVE, 2);
 		createFact(CONTROLCENTER,2);
+		createFact(HOMESQUARE,2);
+		createFact(OCCUPIES,2);
 		createFact(VACANT,1);
+		createFact(GAMEPHASE,1);
 //		createFact(KnowledgeBuilder.getContextType(),1);
 		//		defineRules("FORALL", 1,PIECETYPE,MINORPIECE);
 		defineRules("FORALL", 3,REACHABLE,PROTECTED,MINORMOVE);	
 		defineRules("FORALL",2,REACHABLE,CENTERSQUARE,CONTROLCENTER);
 		defineRules("FORALL",2,REACHABLE,PAWN,CENTERSQUARE,PAWNMOVE);
 		defineRules("FORALL",2,REACHABLE,PAWN,PAWNMOVE); // Pawn move
+		defineRules("FORALL",2,OCCUPIES,HOMESQUARE,GAMEPHASE); // 11.06.26 Fails because gamephase has only one parameter
+		BoardGeometryGenerator bGeo =  new BoardGeometryGenerator(KnowledgeBuilder.getBETWEEN());
+		bGeo.generateAllBetweenFacts(folKb); // All between facts
+//		defineRules("FORALL",2,OCCUPIES,HOMESQUARE,GAMEPHASE); // The rule for a game phase
 //		defineRules("FORALL",2,PROTECTED,VACANT); // Not needed?
 //		AnswerHandler res = folKb.ask(asentence);
 //		String s1 = "occupies(o,px)^occupies(pi,py)";
 //		String s2 = "MOVE(pi,pz)";
 	//	KnowledgeBuilder.parseSentence(s1,s2,folKb);
+
 		strategyChoice(); // Choose a strategy for the game
+		
+
 		/*
-		 * checkKb("CONTROLCENTER(a,b)"); checkKb("MINORMOVE(a,b)");
-		 * checkKb("PAWNMOVE(a,b)");
+		 * String query = "occupies(WhitePawn4,d4)"; List<String> answer =
+		 * folKb.checkQuery(query); if (answer != null && answer.size() == 1) {
+		 * writer.println(answer.get(0)); }
 		 */
+			/*
+			 * boolean occupied = folKb.checkKB(query); if (occupied) {
+			 * writer.println("The query "+query + "is true"); }else {
+			 * writer.println("The query "+query + "is false"); }
+			 */
+//		checkKb("occupies(WhitePawn4,d2)"); Spørring med bare Constants fungerer ikke !!!!
+		
+			/*
+			 * checkKb("CONTROLCENTER(a,b)"); checkKb("MINORMOVE(a,b)");
+			 * checkKb("PAWNMOVE(a,b)");
+			 */
+		 
 /*
  * Create statistics before the move. It creates information about developed pieces.		
  */
@@ -544,6 +578,8 @@ public class AChessAgent extends KBAgent {
 		makeSentences(stateImpl.getOpponent()); // 
 		solver = new AChessProblemSolver(stateImpl, localAction, folKb, chessDomain, forwardChain, backwardChain, game, myPlayer, opponent);
 		solver.setPositionList(positionList);
+
+		
 /*
  * End move ?
  */
@@ -552,6 +588,8 @@ public class AChessAgent extends KBAgent {
  */
 		String movnr = Integer.toString(noofMoves);
 		ChessActionImpl naction = null;
+		folKb.writeKnowledgebase();
+		
 		/*
 		 * Returns a problem containing an initial and goal state, and a set of Action Schemas.
 		 */
@@ -639,6 +677,12 @@ public class AChessAgent extends KBAgent {
 //		writer.println(folKb.toString());
 
 //		folKb.writeKnowledgebase(); Moved to end of statistics
+		/*
+		 * boolean flag = folKb.existsFact(OCCUPIES,"WhitePawn4", "d4"); if(flag) {
+		 * writer.println("WhitePawn4 is at d4"); }else {
+		 * writer.println("WhitePawn4 is NOT at d4"); }
+		 */
+		
 		chessDomain.printDomain();
 		strategyKB =  solver.getOpponentAgent().getLocalKb();
 		strategyKB.writeKnowledgebase();
@@ -715,14 +759,23 @@ public class AChessAgent extends KBAgent {
 		String[] pvar = {"a","b","c","d","e"}; // Max 5 variables
 		List<Term> predTerms = new ArrayList<Term>();
 		List<Variable> variables = new ArrayList<Variable>(); // Contains the number of Variables given by antVars
+		List<Constant> constants = new ArrayList<Constant>();
 		List<Predicate> predicates = new ArrayList<Predicate>();
 		int antPreds = preds.length;
 		List<Integer> antParam = new ArrayList<Integer>();
 		
 		for(String pr:preds) {
 			int ant = folKb.checkNumberofparams(pr);
-			Integer antP = Integer.valueOf(ant);
+			Integer antP = Integer.valueOf(ant);  // Number of parameters for this predicate
 			antParam.add(antP);
+			boolean cTerm = KnowledgeBuilder.checkpredforConstants(pr);
+			if (cTerm) {
+				for (int i=0;i<ant;i++) {
+					String phase = KnowledgeBuilder.getaPhase();
+					Constant aPhase = new Constant(phase);
+					constants.add(aPhase);
+				}
+			}
 		}
 		boolean single = antPreds<=2;
 		for (int i=0;i<antVars;i++) {
@@ -733,30 +786,41 @@ public class AChessAgent extends KBAgent {
 		ConnectedSentence firstSentence = null;
 		ConnectedSentence finalSentence = null;
 		ConnectedSentence goal = null;
-		for(int i=0;i<antPreds;i++) {
+		for(int i=0;i<antPreds;i++) { // For all predicates in the sentence
 			String pr = preds[i];
-			int t = antParam.get(i).intValue();
-			boolean tpred = KnowledgeBuilder.checkpieceTypepred(pr); // What type of predicate?
-//			int diff = antVars-t;
-			if (i==0 || i==antPreds-1) {
+			int t = antParam.get(i).intValue(); // Get the number of parameters for this predicate
+			boolean cTerm = KnowledgeBuilder.checkpredforConstants(pr);
+			boolean tpred = KnowledgeBuilder.checkpieceTypepred(pr); // What type of predicate? Is it a piecetype predicate?
+			boolean home = KnowledgeBuilder.checkhomepreds(pr);
+			int x = antVars - t;
+			if (cTerm) {
 				for (int n=0;n<t;n++) {
-					if (tpred)
-						predTerms.add(variables.get(0));
-					else
-						predTerms.add(variables.get(n));
-				}
-			}else {
-				for (int n=t;n>0;n--) {
-					if (tpred)
-						predTerms.add(variables.get(0));
-					else
-						predTerms.add(variables.get(n));
+					predTerms.add(constants.get(n));
 				}
 			}
+//			int diff = antVars-t;
+			if(!cTerm) {
+				if (i==0 || i==antPreds-1 || home) { // OM dette er det første eller siste predikatet
+					for (int n=0;n<t;n++) {
+						if (tpred)
+							predTerms.add(variables.get(0));
+						else
+							predTerms.add(variables.get(n));
+					}
+				}else {
+					for (int n=antVars-1;n>x-1;n--) {
+						if (tpred)
+							predTerms.add(variables.get(0));
+						else
+							predTerms.add(variables.get(n));
+					}
+				}
+			} 
 			Predicate pred = new Predicate(preds[i],predTerms);
 			predicates.add(pred);
 			predTerms.clear();
-		}
+//			antParam.clear();
+		}// End for all predicates
 		if(!single && antPreds == 3)
 			firstSentence = new ConnectedSentence(Connectors.AND,predicates.getFirst(),predicates.get(1));
 		if(!single && antPreds > 3) {
@@ -808,44 +872,7 @@ public class AChessAgent extends KBAgent {
 		folKb.tell(strategyPredicate);
 		String opening = KnowledgeBuilder.getGameOpening();
 		Predicate openingPredicate = new Predicate(opening,strategyTerms);
-		
-		String contextType =  KnowledgeBuilder.getContextType(); // The context
-		String contextName =  KnowledgeBuilder.getQueenPawncontext(); // The queen pawn context
-		Constant queenPawn = new Constant(contextName);
-		List<Term> contextTerms = new ArrayList<Term>();
-		contextTerms.add(queenPawn);
-		Predicate contextPredicate = new Predicate(contextType,contextTerms);
-		ConnectedSentence contextandStrategy = new ConnectedSentence(Connectors.AND,strategyPredicate,contextPredicate);
-		Constant nextPawn = new Constant("WhitePawn3");
-		Constant nextPos = new Constant("c4");
-		List<Term> nextTerms = new ArrayList<Term>();
-		nextTerms.add(nextPawn);
-		nextTerms.add(nextPos);
-		Predicate nextMove = new Predicate(KnowledgeBuilder.getContextMove(),nextTerms);
-		ConnectedSentence moveGoal = new ConnectedSentence(Connectors.IMPLIES,contextandStrategy,nextMove); // The next move with strategy
-		folKb.tell(moveGoal); 
-		String pieceName = KnowledgeBuilder.getQueenPlayerpawn(); // The pieces and positions involved in queen gambit
-		String posName = KnowledgeBuilder.getQueenPlayerpawnPos();
-		String opponentPiece = KnowledgeBuilder.getQueenOpponentpawn();
-		String opponentPos = KnowledgeBuilder.getQueenOpponentPos();
-		
-		List<Term> ownTerms = new ArrayList<Term>();
-		List<Term> opponentTerms = new ArrayList<Term>();
-		Constant myPiece = new Constant(pieceName);
-		Constant myPos = new Constant(posName);
-		Constant oppPiece = new Constant(opponentPiece);
-		Constant oppPos = new Constant(opponentPos);
-		ownTerms.add(myPiece);
-		ownTerms.add(myPos);
-		opponentTerms.add(oppPiece);
-		opponentTerms.add(oppPos);
-		Predicate myPredicate = new Predicate(KnowledgeBuilder.getOCCUPIES(),ownTerms);
-		Predicate oppPredicate = new Predicate(KnowledgeBuilder.getOCCUPIES(),opponentTerms);
-		ConnectedSentence finalSentence = new ConnectedSentence(Connectors.AND,myPredicate,oppPredicate);
-		ConnectedSentence goal = new ConnectedSentence(Connectors.IMPLIES,finalSentence,contextPredicate);
-		folKb.tell(goal);
-		ConnectedSentence openingGoal = new ConnectedSentence(Connectors.IMPLIES,finalSentence,openingPredicate);
-		folKb.tell(openingGoal);
+
 	}
 	/**
 	 * createConnected

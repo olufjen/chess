@@ -320,7 +320,7 @@ public class GroundGameState extends GameState {
 	/**
 	 * checkKb
 	 * This method queries the FOL knowledge base
-	 * It is called from the evaluateSore method
+	 * It is called from the evaluateScore method
 	 * @param query The query to ask the knowledge base
 	 * If the query has an answer then, the answer contains a number of objects - a piece and its position
 	 * @return The single string object from the KB if it is a single answer
@@ -525,14 +525,25 @@ public class GroundGameState extends GameState {
 		int oppdiff = opppieces - noofopponentinactive;
 	
 		heuristicScore = mydiff - oppdiff + noofoppremovedPieces - noofLostpieces;
+		boolean start = knowledgeBase.isStartPhase();
+		boolean devflag = knowledgeBase.existsFact(KnowledgeBuilder.getDEVELOPED(),"WhitePawn4");
+		String openingName = KnowledgeBuilder.getQueenGambit();
+		String givenstrategy = KnowledgeBuilder.getStrategyName();
+		boolean stratflag = knowledgeBase.existsFact(givenstrategy,openingName);
+		if(!devflag && stratflag) {
+			writer.println("The strategy is "+openingName);
+		}
 /*
  * TODO develop further:	This structure determines the query to the knowledge base, and the choice of action	
  */
-		if (!knowledgeBase.checkKB("OPENING(x)")) { //OJN 18.05 Test of move number 0 replaced - No opening performed
+		if (start) { //OJN 18.05 Test of move number 0 replaced - No opening performed if (!knowledgeBase.checkKB("CONTEXT(x)"))
 			String strategy = checkKb("WANTSTOPLAY(x)");
-			writer.println("The strategy is "+strategy);
+//			writer.println("The strategy is "+strategy);
+//			String query = "DEVELOPED(x)";
+//			checkKb(query);
 		    checkKb("CONTROLCENTER(a,b)"); // To be enhanced with other queries
-		    String actionId = "WhitePawn4" + "_" + "d4";
+		    String actionId = KnowledgeBuilder.getContextMoves().get(strategy);
+//		    String actionId = "WhitePawn4" + "_" + "d4"; // If wants to play ? choose the correct action id
 		    myAction = relevantMapActions.get(actionId);
 			chosenAction = actionId;
 			writer.println("Evaluation chosen action id: "+actionId);
@@ -543,19 +554,24 @@ public class GroundGameState extends GameState {
 //			chosenState = true;
 		}
 		String context = "no Context";
-		if (knowledgeBase.checkKB("CONTEXT(x)")) {
-			context = checkKb("CONTEXT(x)");
-			checkKb("CONTEXTMOVE(a,b)");
-		    String actionId = "WhitePawn3" + "_" + "c4";
+		if (!openingFound) {  // knowledgeBase.checkKB("CONTEXT(x)")
+			String query = "DEVELOPED(x)";
+			checkKb(query);
+//			context = checkKb("CONTEXT(x)"); // This dors not return correct
+			checkKb("CONTEXTMOVE(a,b)");  // Når din getActions()-metode nå spør KB-en: ask("TheoryMove(p, target)"), vil den få ut det trekket som passer til den valgte strategien.
+			String actionId = KnowledgeBuilder.getContextMoves().get(context); // OJN 25.5.26 Must find an alterative !!
+//		    String actionId = "WhitePawn3" + "_" + "c4"; // If context is ?? choose correct action id
 		    myAction = relevantMapActions.get(actionId);
 			chosenAction = actionId;
 			writer.println("The context is " + context + " and evaluation chosen action id: "+actionId);
-			if (myAction != null)
+			if (myAction != null) {
 				writer.println("Evaluation chosen action: "+myAction.toString());
-			this.action = myAction; 
-			contextFound = true;
+				this.action = myAction; 
+				contextFound = true;
+			}
+
 		}
-		writer.println("The context is "+context);		
+//		writer.println("The context is "+context);		
 	}
 	/**
 	 * determineAction

@@ -110,6 +110,7 @@ public class KnowledgeBuilder {
   private static String PAWNMOVE =  "PAWNMOVE";
   private static String DEVELOPED = "DEVELOPED"; // A piece is developed when it has made a move
   private static String VACANT = "VACANT"; // Tells if a position is vacant
+  private static String BETWEEN = "BETWEEN"; // THe predicate determining which positions are between other positions
   
 /*
  * Additional predicate names  
@@ -120,6 +121,8 @@ public class KnowledgeBuilder {
   private static String kingCastleKey = "o-ok"; // The key to King's Castling
   private static List<Constant> allconstants= new ArrayList();
   private static List<String> piecetypePreds = new ArrayList(); // What predicates indicate a piecetype predicate?
+  private static List<String> predsforConstants = new ArrayList(); // What predicates that requires a Constant?  
+  private static List<String> homePreds = new ArrayList(); // What predicates that requires a Constant?  
   // To make list of possible init states ??
   // 16.12.24 A new key is added: pawn. It is used to signal a pawn strike PAWNATTACK                                                                                                                                                                                                                                                                                       
   private static String[] keys = new String[] {"startpos","piecename","newpos","piecetype","pawn"};
@@ -132,6 +135,8 @@ public class KnowledgeBuilder {
    * Intention - what move is next, based on context and strategy
    * Added 30.04.26
    */
+  private static String gamePhase = "GAMEPHASE"; // The predicate for game phase
+  private static String aPhase = "startphase"; // The name for the start of the game
   private static String strategyName = "WANTSTOPLAY"; // The predicate name
   private static String  queenGambit = "QUEENGAMBIT"; // The name of the strategy
   private static String contextType = "CONTEXT"; // The predicate name for context
@@ -143,7 +148,9 @@ public class KnowledgeBuilder {
   private static String contextMove = "CONTEXTMOVE"; // Given a context, this is the predicate for the next move
   private static String gameOpening = "OPENING"; // The predicate for the opening
   
-  /* Rules in the knowledge base
+  private static Map<String,String> contextMoves = new HashMap<String,String>(); // A map of possible moves given a context
+  
+  /* Examples of rules in the knowledge base
    * WANTSTOPLAY(QUEENGAMBIT)
    * ((occupies(WhitePawn4,d4) AND occupies(BlackPawn4,d5)) => CONTEXT(QUEENPAWNGAME))
    */
@@ -154,6 +161,14 @@ public class KnowledgeBuilder {
 
   public static String getVACANT() {
 	  return VACANT;
+  }
+
+  public static String getBETWEEN() {
+	return BETWEEN;
+}
+
+  public static void setBETWEEN(String bETWEEN) {
+	BETWEEN = bETWEEN;
   }
 
   public static String getContextMove() {
@@ -168,6 +183,22 @@ public class KnowledgeBuilder {
 	VACANT = vACANT;
   }
   
+  public static String getGamePhase() {
+	return gamePhase;
+}
+
+  public static void setGamePhase(String gamePhase) {
+	KnowledgeBuilder.gamePhase = gamePhase;
+  }
+
+  public static String getaPhase() {
+	return aPhase;
+  }
+
+  public static void setaPhase(String aPhase) {
+	KnowledgeBuilder.aPhase = aPhase;
+  }
+
   public static String getGameOpening() {
 	  return gameOpening;
   }
@@ -634,6 +665,58 @@ public static String getPIECE() {
   public static void setAllconstants(List<Constant> allconstants) {
 	  KnowledgeBuilder.allconstants = allconstants;
   }
+  
+  public static Map<String, String> getContextMoves() {
+	  return contextMoves;
+  }
+
+  public static void setContextMoves(Map<String, String> contextMoves) {
+	  KnowledgeBuilder.contextMoves = contextMoves;
+  }
+  /**
+   * generateHomepreds
+   * THis metod generates a set of predicates that needs variables in normar order
+   */
+  public static void generateHomepreds() {
+	  homePreds.add(HOMESQUARE);
+  }
+  /**
+   * checkhomepreds
+   * This method checks if a predicate 
+   * @param pred
+   * @return
+   */
+  public static boolean checkhomepreds(String pred) {
+	  String pieceConstant = homePreds.stream().filter(pred::equals).findAny().orElse(null);
+	  boolean found = pieceConstant != null;
+	  return found;
+  }
+  /**
+   * generatepredforContants
+   * THis metod generates a set of predicates that requires a constant
+   */
+  public static void generatepredforContants() {
+	  predsforConstants.add(gamePhase);
+  }
+  /**
+   * checkpredforConstants
+   * This method checks if a predicate 
+   * @param pred
+   * @return
+   */
+  public static boolean checkpredforConstants(String pred) {
+	  String pieceConstant = predsforConstants.stream().filter(pred::equals).findAny().orElse(null);
+	  boolean found = pieceConstant != null;
+	  return found;
+  }
+  /**
+   * createMoveMap
+   * This method creates a map of possible moves given a context
+   */
+  public static void createMoveMap() {
+	  contextMoves.put(queenPawncontext, "WhitePawn3" + "_" + "c4");
+	  contextMoves.put(queenGambit, "WhitePawn4" + "_" + "d4");
+  }
   /**
    * generatePieceTypePreds
    * this method generates a set of predicates that descibes a game piece
@@ -649,12 +732,12 @@ public static String getPIECE() {
 	  piecetypePreds.add(ROOK);
   }
   /**
- * checkpieceTypepred
- * This method checks if a given predicate is of a piecetype predicate
- * @param pred - The predicate
- * @return true if it is a piece type predicate
- */
-public static boolean checkpieceTypepred(String pred) {
+   * checkpieceTypepred
+   * This method checks if a given predicate is of a piecetype predicate
+   * @param pred - The predicate
+   * @return true if it is a piece type predicate
+   */
+  public static boolean checkpieceTypepred(String pred) {
 	  String pieceConstant = piecetypePreds.stream().filter(pred::equals).findAny().orElse(null);
 	  boolean found = pieceConstant != null;
 	  return found;

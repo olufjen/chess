@@ -572,8 +572,8 @@ public class PlayGame {
 	 * moveStatistics
 	 * This method show move statistics so far in the game
 	 * It is called at the end of the proposeMove method
-	 * @since 9.03.26 It is also called before the player makes the next move (The chessAgen execute method)
-	 * @param myplayer
+	 * @since 9.03.26 It is also called before the player makes the next move (The chessAgent execute method)
+	 * @param myplayer - The player or the opponenent
 	 */
 	public void moveStatistics(APlayer myplayer) {
 		List<AgamePiece> inactivePieces = myplayer.getInactivePieces();
