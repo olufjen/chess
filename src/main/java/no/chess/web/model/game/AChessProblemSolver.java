@@ -57,6 +57,7 @@ import no.games.chess.AbstractGamePiece.pieceType;
 import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
+import no.games.chess.fol.util.RuleBuilder;
 import no.games.chess.planning.ChessProblem;
 import no.games.chess.planning.PlannerGame;
 import no.games.chess.planning.ChessGraphPlanAlgorithm;
@@ -222,6 +223,7 @@ public class AChessProblemSolver {
   private ChessPlannerSearch search;
   private AplannerGame plannerGame;
   private APerceptor thePerceptor = null;
+  private RuleBuilder rb; // The rulebuilder for the kb
   
   public AChessProblemSolver(ChessStateImpl stateImpl, ChessActionImpl localAction, ChessFolKnowledgeBase folKb, ChessDomain chessDomain, FOLGamesFCAsk forwardChain, FOLGamesBCAsk backwardChain, PlayGame game, APlayer myPlayer, APlayer opponent) {
 		super();
@@ -254,6 +256,8 @@ public class AChessProblemSolver {
 	    setPredicatenames();
 	    actionSchemas = new HashMap<String,ActionSchema>();
 	    actionSchemalist = new ArrayList<ActionSchema>();
+	    otherSchemaList = new ArrayList<ActionSchema>();
+	    otherSchemas = new HashSet<ActionSchema>();
 	    opponentactionSchemalist = new ArrayList<ActionSchema>(); // Created 11.3.26
 //	    gameStateList = new LinkedList<GroundGameState>(); // Removed 26.01.26
 //	    thegameStateList = new LinkedList<GameState>();
@@ -281,6 +285,18 @@ public class AChessProblemSolver {
 	    theState = new State(stateLiterals);
 
   }
+  
+  
+  public RuleBuilder getRb() {
+	return rb;
+}
+
+
+  public void setRb(RuleBuilder rb) {
+	this.rb = rb;
+  }
+
+
   /**
    * findOpponentKing
    * This method finds the opponent king
@@ -758,11 +774,13 @@ public class AChessProblemSolver {
   /**
    * buildGoalstate
    * This method builds a goal state based on a chosen piece name and a chosen position name
+   * @since 11.07.26 Added the from pos parameter and Literal
    * @param pieceName
    * @param toPos
+   * @param fromPos
    * @return
    */
-  public State buildGoalstate(String pieceName,String toPos) {
+  public State buildGoalstate(String pieceName,String toPos,String fromPos) {
 	  List<Term> terms = new ArrayList<Term>();
 	  List<Term> typeTerms = new ArrayList<Term>();
 	  List<Term> boardTerms = new ArrayList<Term>();
@@ -778,27 +796,30 @@ public class AChessProblemSolver {
 	  terms.add(posVar);
 	  typeTerms.add(pieceVar);
 	  typeTerms.add(type);
-	  Predicate playerPredicate = new Predicate(PLAYER,playerTerms);
-	  Predicate boardPredicate = new Predicate(BOARD,boardTerms);
-	  Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
+	  String parseString = "(" + OCCUPIES + "(" + pieceName + "," + fromPos +"))";
+	  AtomicSentence retract = (AtomicSentence) rb.parseToPredicate(parseString);
+	  Literal orgPos = new Literal(retract,true);
+//	  Predicate playerPredicate = new Predicate(PLAYER,playerTerms);
+//	  Predicate boardPredicate = new Predicate(BOARD,boardTerms);
+//	  Predicate typePredicate = new Predicate(PIECETYPE,typeTerms);
 	  Predicate posSentence = new Predicate(OCCUPIES,terms);
 	  List<Term> ownerterms = new ArrayList<Term>();
 
 	  ownerterms.add(ownerVar);
 	  ownerterms.add(pieceVar);
-	  Predicate ownerSentence = new Predicate(OWNER,ownerterms);
+//	  Predicate ownerSentence = new Predicate(OWNER,ownerterms);
 	  List<Literal> literals = new ArrayList();
 	  Literal pos = new Literal((AtomicSentence) posSentence);
-	  Literal own = new Literal((AtomicSentence) ownerSentence);
-	  Literal types = new Literal((AtomicSentence)typePredicate);
-	  Literal boards = new Literal((AtomicSentence)boardPredicate);
-	  Literal player = new Literal((AtomicSentence)playerPredicate);
-
+//	  Literal own = new Literal((AtomicSentence) ownerSentence);
+//	  Literal types = new Literal((AtomicSentence)typePredicate);
+//	  Literal boards = new Literal((AtomicSentence)boardPredicate);
+//	  Literal player = new Literal((AtomicSentence)playerPredicate);
+	  literals.add(orgPos);
 	  literals.add(pos);
 	  //		literals.add(own);
-	  literals.add(types);
+//	  literals.add(types);
 	  //		literals.add(player);
-	  literals.add(boards);
+//	  literals.add(boards);
 	  State gState = new State(literals);
 	  return gState;
 
@@ -849,17 +870,15 @@ public void createPerceptor() {
 
   /**
  * planProblem
+ * @since 10.07.26  Planning graphs are removed (see notes Planlegging og spill)
  * This is the main method of the ProblemSolver
  * This method creates and returns a High Level Action Problem given the available actions
  * Hierarchical Task networks and High Level Actions are described in  chapter 11.
  * At present, the High Level Problem contains one primitive action schema (chess action).
  * @param actions - A list of chess actions available
- * @return a ChessProblem to be solved
+ * @return a ChessProblem containing chosen action from search
  */
-/**
- * @param actions
- * @return
- */
+
 public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 	  this.actions = actions; // All chess actions available to player
 	  thePlayer = myPlayer;
@@ -914,9 +933,9 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  *   
  */
       PlannerStateImpl localPlanner = (PlannerStateImpl)plannerState;
-      NodeExpander exp = new NodeExpander();
-      PlannerQueueSearch queueSearch = new PlannerQueueSearch(exp);
-      ToDoubleFunction<Node<PlannerState, ChessPlannerAction>> h = KnowledgeBuilder.toDouble(); // The evaluation function
+//      NodeExpander exp = new NodeExpander();
+//      PlannerQueueSearch queueSearch = new PlannerQueueSearch(exp);
+//      ToDoubleFunction<Node<PlannerState, ChessPlannerAction>> h = KnowledgeBuilder.toDouble(); // The evaluation function
 /*
  * PlannerQueueBasedSearch - an implementation of an informed search strategy described in chapter 3.5 p. 92
  * The general approach is called best first search. 
@@ -926,12 +945,19 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * 2. which piece to move to a certain position?
  * 3. which opponent pieces to take?     
  */
-      PlannerQueueBasedSearch queuebasedSearch = new PlannerQueueBasedSearch(queueSearch,plannerState,plannerAction,h);
-      ActionsFunction<PlannerState, ChessPlannerAction> af = KnowledgeBuilder.anActionFunction();// The Actions Function
-      ResultFunction<PlannerState, ChessPlannerAction> rf = KnowledgeBuilder.aResultFunction(); // The Result function
-      ChessGoalTest<PlannerState> gt = KnowledgeBuilder.aGoaltest(plannerAction); // The goal test function
-      StepCostFunction<PlannerState, ChessPlannerAction> stepcost = KnowledgeBuilder.stepCost();
-      ChessSearchProblem searchProblem = new ChessSearchProblem(plannerState,af, rf, gt,stepcost,plannerState,plannerAction,plannerState.getActions());
+/*
+ * PlannerQueueBasedSearch queuebasedSearch = new
+ * PlannerQueueBasedSearch(queueSearch,plannerState,plannerAction,h);
+ * ActionsFunction<PlannerState, ChessPlannerAction> af =
+ * KnowledgeBuilder.anActionFunction();// The Actions Function
+ * ResultFunction<PlannerState, ChessPlannerAction> rf =
+ * KnowledgeBuilder.aResultFunction(); // The Result function
+ * ChessGoalTest<PlannerState> gt = KnowledgeBuilder.aGoaltest(plannerAction);
+ * // The goal test function StepCostFunction<PlannerState, ChessPlannerAction>
+ * stepcost = KnowledgeBuilder.stepCost(); ChessSearchProblem searchProblem =
+ * new ChessSearchProblem(plannerState,af, rf,
+ * gt,stepcost,plannerState,plannerAction,plannerState.getActions());
+ */
 /*
  * The following call generates the following set of calls:
  *    1. The findState call
@@ -950,9 +976,11 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
        * The set of all available Action Schemas is held by the perceptor.
        * These parameters are used to create the ChessProblem object to be used in the Graphplan procedures.
        */
-      Optional<PlannerState> astate = queuebasedSearch.findState(searchProblem);
-      Metrics metric = queueSearch.getMetrics();
-      Queue<Node<PlannerState, ChessPlannerAction>> front = queueSearch.getFrontier();
+		/*
+		 * Optional<PlannerState> astate = queuebasedSearch.findState(searchProblem);
+		 * Metrics metric = queueSearch.getMetrics(); Queue<Node<PlannerState,
+		 * ChessPlannerAction>> front = queueSearch.getFrontier();
+		 */
 /*
  * For nondeterministic search as described in chapter 4.3.2 and figure 4.11 page 135 
  * The nondeterminState becomes the initial state of the problem    
@@ -978,10 +1006,13 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  */
       State tempinitstate = null;
       State tempgoalstate = null;
+      List<ActionSchema> localActionlist = new ArrayList<ActionSchema>();
       if (thisPlan != null) {
    	    writer.println("The plan - ");
         writer.println(thisPlan.toString()); // Prints the path - a linked list of gameactions
         GroundGameAction action = (GroundGameAction) thisPlan.getAction(0);
+        localActionlist.add(action.getActionSchema());
+        
         String actionName = action.getActionSchema().getName();
         tempinitstate = initStates.get(actionName);
         tempgoalstate = goalStates.get(actionName);
@@ -1003,23 +1034,27 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 //	  thePerceptor.createLiftedActions(null,"WhiteKnight2","f3",null); // Creates the initial and goal states based on this action schema
       if(tempinitstate != null)
     	  initialState = tempinitstate;
-      else
-    	  initialState = thePerceptor.getInitState();
       if(tempgoalstate != null)
     	  goalState = tempgoalstate;
-      else
-    	  goalState = thePerceptor.getGoalState();
-	  otherSchemas = thePerceptor.getOtherSchemas();
+ //	  otherSchemas = thePerceptor.getOtherSchemas();
+	  if (otherSchemas.isEmpty()) {
+//		  otherSchemas = null;
+		  otherSchemas.addAll(localActionlist);
+	  }
+		  
 /*
  * The above states and schemas are necessary for creating the ChessProblem for the planning graph 	  
  */
-	  otherSchemaList = thePerceptor.getOtherActions();
+/*
+ * otherSchemaList = thePerceptor.getOtherActions(); if
+ * (otherSchemaList.isEmpty()) { otherSchemaList.addAll(actionSchemalist); }
+ */
  /* 
   * This astate object must contain the initial and goal states used when creating the ChessProblem used in the graphplan algorithm.     
   */
       String pieceKey = null;
       List<AgamePiece>  pieces = myPlayer.getMygamePieces();
-      if(localPlanner.isCastling()) {
+      if(localPlanner.isCastling()) {  // To be reworked ***** !!!!
  //   	  localPlanner.PerformKingCastling();
     	  String kingpieceName = "WhiteKing";
     	  String kingPos = "e1";
@@ -1036,7 +1071,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 		  castleAction = naction;
 		  Position toCastlePos = positions.get(castlePos);
 		  castleAction.setPreferredPosition(toCastlePos);
-		  goal = buildGoalstate(kingpieceName,castlePos);
+//		  goal = buildGoalstate(kingpieceName,castlePos); OBS !!! 11.07.26
 		  String bishopName = "WhiteBishop2";// Rewrite: must find player's bishop
 		  String fpos = "f1";
 		  String toPos = "d3";
@@ -1085,40 +1120,39 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 
 	
 /*
+ * AS of 10.07.26:
+ * Planning graphs are removed (see notes Planlegging og spill)
  * Planning graphs p. 379.
  * S0 - A0 - S1
  * A0 contains ground actions that might be applicable in S0
  * S0 consists of nodes representing fluents that holds in S0	  
  */
 	  ChessProblem differentProblem = new ChessProblem(initialState,goalState,otherSchemas);
-	  ChessGraphPlanAlgorithm graphplan = new ChessGraphPlanAlgorithm(); // Added graphplan 8.3.23
+//	  ChessProblem differentProblem = new ChessProblem(initialState,goalState,actionSchemas);
+//	  ChessGraphPlanAlgorithm graphplan = new ChessGraphPlanAlgorithm(); // Added graphplan 8.3.23
 //	  List<List<ActionSchema>> solutions = graphplan.graphPlan(problem);
-	  List<List<ActionSchema>> solutions = graphplan.graphPlan(differentProblem);
-	  if (solutions != null && !solutions.isEmpty()) {
-		  for (List<ActionSchema> solutionschemas:solutions) {
-			  writer.println("Solutions from graphplan - levelled off at "+graphplan.getTheLevel());
-			  writer.println("The levels \n"+ graphplan.getTheChesslevel().printLevelObject());
-			  for (ActionSchema asolution:solutionschemas) {
-				  String solutionName = asolution.getName();
-				  if (!solutionName.equals("No-op")) {
-					  theSolution = asolution;
-					  writer.println("The solution name "+solutionName+"\n"+asolution.toString());
-					  List<Constant>solConstants = theSolution.getConstants();
-					  for (Constant constant:solConstants) {
-						  writer.println(constant.getSymbolicName());
-						  String symName = constant.getSymbolicName();
-						  AgamePiece gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(symName)).findAny().orElse(null);
-						  if (gpiece != null) {
-							 
-							  break;
-						  }
-					  }
-				  }
-			  }
-		  }
-	  }else {
-		  writer.println("No solutions from graphplan\n");
-	  }
+	  
+	  
+	  
+		/*
+		 * List<List<ActionSchema>> solutions = graphplan.graphPlan(differentProblem);
+		 * if (solutions != null && !solutions.isEmpty()) { for (List<ActionSchema>
+		 * solutionschemas:solutions) {
+		 * writer.println("Solutions from graphplan - levelled off at "+graphplan.
+		 * getTheLevel()); writer.println("The levels \n"+
+		 * graphplan.getTheChesslevel().printLevelObject()); for (ActionSchema
+		 * asolution:solutionschemas) { String solutionName = asolution.getName(); if
+		 * (!solutionName.equals("No-op")) { theSolution = asolution;
+		 * writer.println("The solution name "+solutionName+"\n"+asolution.toString());
+		 * List<Constant>solConstants = theSolution.getConstants(); for (Constant
+		 * constant:solConstants) { writer.println(constant.getSymbolicName()); String
+		 * symName = constant.getSymbolicName(); AgamePiece gpiece = (AgamePiece)
+		 * pieces.stream().filter(c ->
+		 * c.getMyPiece().getOntlogyName().contains(symName)).findAny().orElse(null); if
+		 * (gpiece != null) {
+		 * 
+		 * break; } } } } } }else { writer.println("No solutions from graphplan\n"); }
+		 */
 
 	  writer.flush();
 //	  return problem;
@@ -1127,7 +1161,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
   /**
  * searchProblem
  * @since 18.03.26
- * Reconstruction: Create action schemas based on avaiable actions and their avaiable positions.
+ * Reconstruction: Create action schemas based on available actions and their avaiable positions.
  * 
  * For every available chessaction that contains a possible move and that is not blocked
  * create an actionschema.
@@ -1176,7 +1210,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 					Position pos =  (Position) removedPos.stream().filter(c -> c.getPositionName().contains(aposName)).findAny().orElse(null);
 					if (pos == null && attack == null) {
 						State anotherinitialState = buildInitialstate(pieceName,posName,aposName); //This is the same initial state
-						State anothergoalstate = buildGoalstate(pieceName, aposName);
+						State anothergoalstate = buildGoalstate(pieceName, aposName,posName);
 						String piecepos = pieceName+"_"+aposName;
 						writer.println("Testing moved action for "+piecepos);
 						/*
@@ -1224,7 +1258,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 							Position pos =  (Position) removedPos.stream().filter(c -> c.getPositionName().contains(aposName)).findAny().orElse(null);
 							if (pos == null && attack == null) {
 								State anotherinitialState = buildInitialstate(pieceName,posName,aposName);
-								State anothergoalstate = buildGoalstate(pieceName, aposName);
+								State anothergoalstate = buildGoalstate(pieceName, aposName,posName);
 								String piecepos = pieceName+"_"+aposName;
 								initStates.put(piecepos, anotherinitialState);
 								goalStates.put(piecepos, anothergoalstate);
@@ -1251,6 +1285,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * makeActionSchemas
  * This method creates an action schema based on a chess action.
  * @since 13.3.26 creates action schemas for both player and opponent (see thePlayer)
+ * @since 09.07.26 Removes unnecessary facts in action schemas and states
  * @param pieceName Name of piece
  * @param actionName Name of action (pieceName+"_"+toPosit)
  * @param posName Starting position of piece
@@ -1357,6 +1392,11 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 	  } // end if protector names
 //	  ownerterms.add(ownerVar);
 //	  ownerterms.add(piece);
+/*
+ * en retract() (sletting) av det gamle occupies-faktumet fra kb 
+ */
+	  String parseString = OCCUPIES + "(" + pieceName + "," + posName +")";
+	  AtomicSentence retract = (AtomicSentence) rb.parseToPredicate(parseString);
 	  terms.add(piece);
 	  terms.add(pos);
 	  boardTerms.add(pos);
@@ -1364,9 +1404,9 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 	  newterms.add(toPos);
 	  typeTerms.add(piece);
 	  typeTerms.add(type);
-	  Predicate typePred = new Predicate(PIECETYPE,typeTerms);
+//	  Predicate typePred = new Predicate(PIECETYPE,typeTerms);
 	  Predicate reachablePredicate = new Predicate(REACHABLE,newterms);
-	  Predicate boardPredicate = new Predicate(BOARD,boardTerms);
+//	  Predicate boardPredicate = new Predicate(BOARD,boardTerms);
 	  Predicate attackPredicate = null;
 	  if (!attackTerms.isEmpty()) {
 		  attackPredicate = new Predicate(PAWNATTACK,attackTerms);
@@ -1380,20 +1420,23 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 */	  if (attackPredicate != null) {
 		  precondition.add(new Literal((AtomicSentence) attackPredicate));
 		  precondition.add(new Literal((AtomicSentence) pospred));
-		  precondition.add(new Literal((AtomicSentence) boardPredicate)); // The board predicate is added to the precondition
-		  precondition.add(new Literal((AtomicSentence) typePred)); // The type predicate is moved in position before the reachable predicate
+//		  precondition.add(new Literal((AtomicSentence) boardPredicate)); // The board predicate is added to the precondition
+//		  precondition.add(new Literal((AtomicSentence) typePred)); // The type predicate is moved in position before the reachable predicate
+
+		  effects.add(new Literal(retract,true));
 		  effects.add(new Literal( (AtomicSentence)newPospred));
 		  //		effects.add(new Literal( (AtomicSentence)ownerPred));
-		  effects.add(new Literal( (AtomicSentence)typePred));
+//		  effects.add(new Literal( (AtomicSentence)typePred));
 	  }
 	  if (!attackFlag && hasCommonValue) { // To prevent pawn attack position to become a reachable action schema OJN 31.05.24 hasCommonValue added 14.3.26
 		  precondition.add(new Literal((AtomicSentence) reachablePredicate));
 		  precondition.add(new Literal((AtomicSentence) pospred));
-		  precondition.add(new Literal((AtomicSentence) boardPredicate)); // The board predicate is added to the precondition
-		  precondition.add(new Literal((AtomicSentence) typePred)); // The type predicate is moved in position before the reachable predicate
+//		  precondition.add(new Literal((AtomicSentence) boardPredicate)); // The board predicate is added to the precondition
+//		  precondition.add(new Literal((AtomicSentence) typePred)); // The type predicate is moved in position before the reachable predicate
+		  effects.add(new Literal(retract,true));
 		  effects.add(new Literal( (AtomicSentence)newPospred));
 		  //		effects.add(new Literal( (AtomicSentence)ownerPred));
-		  effects.add(new Literal( (AtomicSentence)typePred));
+//		  effects.add(new Literal( (AtomicSentence)typePred));
 	  }
 	  Predicate castlingPredicate = null;
 	  if (castlingTerms != null) {
@@ -1418,6 +1461,7 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
  * buildGoalstate
  * This method builds a goal state based on a ChessAction
  * It is called from the method searchProblem
+ * @since 09.07.26 Removes unnecessary facts in action schemas and states
  * @param action
  * @return
  */
@@ -1466,9 +1510,9 @@ public State buildGoalstate(ChessActionImpl action) {
 		
 		literals.add(pos);
 //		literals.add(own);
-		literals.add(types);
+//		literals.add(types);
 //		literals.add(player);
-		literals.add(boards);
+//		literals.add(boards);
 		State gState = new State(literals);
 		return gState;
   } 
@@ -1546,6 +1590,7 @@ public State buildGoalstate(ChessActionImpl action) {
    * buildInitialstate
    * This method creates an initial state for a problem 
    * with a given piece name and posname
+   * @since 09.07.26 Removes unnecessary facts in action schemas and states
    * @since 09.08.22
    * The object variable theState contains all Literals of the initial state
    * @since 28.05.24
@@ -1628,12 +1673,12 @@ public State buildGoalstate(ChessActionImpl action) {
 					boardTerms.add(posVar);
 					reachTerms.add(pieceC);
 					reachTerms.add(posVar);
-					Predicate boardPredicate = new Predicate(BOARD,boardTerms);
+//					Predicate boardPredicate = new Predicate(BOARD,boardTerms);
 					Predicate reachPredicate = new Predicate(REACHABLE,reachTerms);
-					Literal boards = new Literal((AtomicSentence)boardPredicate);
+//					Literal boards = new Literal((AtomicSentence)boardPredicate);
 					Literal reaches = new Literal((AtomicSentence)reachPredicate);
-					literals.add(boards); 
-					localLiterals.add(boards);
+//					literals.add(boards); 
+//					localLiterals.add(boards);
 					if (!reachable)
 						localLiterals.add(reaches);
 					reachable = true;
@@ -1642,41 +1687,31 @@ public State buildGoalstate(ChessActionImpl action) {
 					
 				}
 			}
-			if (symName.equals(PIECE)) { // Added new initial state fluent : The piece name as PIECE OJN 18.05.24
-				List<Term> terms = (List<Term>) s.getArgs();
-				ArrayList<Term> literalTerms = new ArrayList<>();
-				Term f = terms.get(0);
-				String p = f.getSymbolicName();
-				if (p.equals(piece)) {
-					Literal l = new Literal((AtomicSentence) s);
-					literals.add(l);
-					localLiterals.add(l);
-				}
-			} 
-			if (symName.equals(PIECETYPE)) {
-				List<Term> terms = (List<Term>) s.getArgs();
-				ArrayList<Term> literalTerms = new ArrayList<>();
-				Term f = terms.get(0);
-				Term last = terms.get(1);
-				String p = f.getSymbolicName();
-				String type = last.getSymbolicName();
-				if (p.equals(piece) && type.equals(typeofPiece)) {
-					Literal l = new Literal((AtomicSentence) s);
-					literals.add(l);
-					localLiterals.add(l);
-				}
-			}
-			if (symName.equals(BOARD)) {
-				List<Term> terms = (List<Term>) s.getArgs();
-				ArrayList<Term> literalTerms = new ArrayList<>();
-				Term f = terms.get(0);
-				String p = f.getSymbolicName();
-				if (p.equals(posName)) {
-					Literal l = new Literal((AtomicSentence) s);
-					literals.add(l);
-					localLiterals.add(l);
-				}
-			} //The board fluent is removed OJN 7.05.24
+//			if (symName.equals(PIECE)) { // Added new initial state fluent : The piece name as PIECE OJN 18.05.24 Removed july 2026 !!!
+//				List<Term> terms = (List<Term>) s.getArgs();
+//				ArrayList<Term> literalTerms = new ArrayList<>();
+//				Term f = terms.get(0);
+//				String p = f.getSymbolicName();
+//				if (p.equals(piece)) {
+//					Literal l = new Literal((AtomicSentence) s);
+//					literals.add(l);
+//					localLiterals.add(l);
+//				}
+//			} 
+			/*
+			 * if (symName.equals(PIECETYPE)) { List<Term> terms = (List<Term>) s.getArgs();
+			 * ArrayList<Term> literalTerms = new ArrayList<>(); Term f = terms.get(0); Term
+			 * last = terms.get(1); String p = f.getSymbolicName(); String type =
+			 * last.getSymbolicName(); if (p.equals(piece) && type.equals(typeofPiece)) {
+			 * Literal l = new Literal((AtomicSentence) s); literals.add(l);
+			 * localLiterals.add(l); } }
+			 */
+			/*
+			 * if (symName.equals(BOARD)) { List<Term> terms = (List<Term>) s.getArgs();
+			 * ArrayList<Term> literalTerms = new ArrayList<>(); Term f = terms.get(0);
+			 * String p = f.getSymbolicName(); if (p.equals(posName)) { Literal l = new
+			 * Literal((AtomicSentence) s); literals.add(l); localLiterals.add(l); } }
+			 */ //The board fluent is removed OJN 7.05.24
 			if (symName.equals(PAWNATTACK)) {
 				List<Term> terms = (List<Term>) s.getArgs();
 				ArrayList<Term> literalTerms = new ArrayList<>();
@@ -1691,10 +1726,10 @@ public State buildGoalstate(ChessActionImpl action) {
 					Constant posVar = new Constant(pos);
 					List<Term> boardTerms = new ArrayList<Term>();
 					boardTerms.add(posVar);
-					Predicate boardPredicate = new Predicate(BOARD,boardTerms);
-					Literal boards = new Literal((AtomicSentence)boardPredicate);
-					literals.add(boards);
-					localLiterals.add(boards);
+//					Predicate boardPredicate = new Predicate(BOARD,boardTerms);
+//					Literal boards = new Literal((AtomicSentence)boardPredicate);
+//					literals.add(boards);
+//					localLiterals.add(boards);
 				}
 			}
 			if (symName.equals(CASTLE)) {
@@ -1719,9 +1754,9 @@ public State buildGoalstate(ChessActionImpl action) {
 					boardTerms.add(posVar);
 					Predicate boardPredicate = new Predicate(BOARD,boardTerms);
 					Literal boards = new Literal((AtomicSentence)boardPredicate);
-					literals.add(boards);
+//					literals.add(boards);
 					literals.add(reaches);
-					localLiterals.add(boards);
+//					localLiterals.add(boards);
 					localLiterals.add(reaches);
 				}
 			}

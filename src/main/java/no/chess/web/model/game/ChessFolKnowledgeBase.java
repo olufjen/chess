@@ -16,6 +16,7 @@ import aima.core.logic.fol.inference.InferenceResult;
 import aima.core.logic.fol.inference.proof.Proof;
 import aima.core.logic.fol.kb.FOLKnowledgeBase;
 import aima.core.logic.fol.parsing.FOLParser;
+import aima.core.logic.fol.parsing.ast.AtomicSentence;
 import aima.core.logic.fol.parsing.ast.Constant;
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Sentence;
@@ -52,6 +53,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	private String QUEEN;
 	private List<String>pieceTypes;
 	private List<AgamePiece> movePieces; // A list of pieces actively involved in a possible move. This list is set when the checkthreats
+	private ChessDomain localDomain;
 	// method is called.
 	
 	public ChessFolKnowledgeBase(ChessDomain domain, InferenceProcedure inferenceProcedure) {
@@ -72,6 +74,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	}
 	public ChessFolKnowledgeBase(ChessDomain domain, InferenceProcedure inferenceProcedure,String fileName) {
 		super(domain, inferenceProcedure);
+		localDomain = domain;
 		String catalog = KnowledgeBuilder.getFileCatalog();
 		this.fileName = fileName;
 		outputFileName = catalog+outputFileName+this.fileName;
@@ -84,6 +87,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	    writer = new PrintWriter(new BufferedWriter(fw));
 		movePieces = new ArrayList<AgamePiece>();
 	    setPieceTypes();
+	   
 	}
 	private void setPieceTypes() {
 		PAWN = KnowledgeBuilder.getPAWN();
@@ -123,6 +127,19 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 			}
 		}
 		return antPar;
+	}
+	
+	public String getOutputFileName() {
+		return outputFileName;
+	}
+	public void setOutputFileName(String outputFileName) {
+		this.outputFileName = outputFileName;
+	}
+	public ChessDomain getLocalDomain() {
+		return localDomain;
+	}
+	public void setLocalDomain(ChessDomain localDomain) {
+		this.localDomain = localDomain;
 	}
 	public List<AgamePiece> getMovePieces() {
 		return movePieces;
@@ -708,4 +725,58 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 		return facts;
 		
 	}
+	/**
+	 * cloneOrCopy
+	 * This method makes a clone of the knowledge base
+	 * @return The cloned Knowledge base
+	 */
+	public ChessFolKnowledgeBase cloneOrCopy() {
+	    // 1. Opprett en helt ny instans av kunnskapsbasen med samme parser og inferensmotor
+	    // (Bruk de samme parameterne som du opprinnelig instansierte KB-en din med)
+	    ChessFolKnowledgeBase newKB = new ChessFolKnowledgeBase(this.getLocalDomain(), this.getInferenceProcedure(),"clonecopy.txt");
+	    newKB.setBackWardChain(backWardChain);
+	    // 2. Gjør en dyp kopiering av alle setninger (fakta og regler)
+	    // AIMA lagrer originale setninger i en liste vi kan hente ut
+		
+		  for (Sentence sentence : this.getOriginalSentences()) { // Vi bruker AIMA sin
+//		  innebygde parser/substitusjon til å lage en uavhengig kopi // av hver
+//		  setning, slik at de ikke deler minnereferanser på muterbare objekter
+			  newKB.tell(sentence.copy());
+		  }
+		 
+
+	    return newKB;
+	}
+    /**
+     * retract
+     * THis method removes negative sentences from the knowledge base
+     * @param sentenceToRemove
+     */
+    public void retract(AtomicSentence sentenceToRemove) {
+        // 1. Hent ut en kopi av alle nåværende setninger i KB-en
+        List<Sentence> currentSentences = new ArrayList<>(this.getOriginalSentences());
+        boolean removed = false;
+
+        // 2. Finn setningen som matcher strukturelt og fjern den fra listen
+        // Vi bruker toString() eller en strukturell sjekk for å sikre treff uavhengig av objektreferanse
+        String targetStr = sentenceToRemove.toString();
+        
+        for (int i = 0; i < currentSentences.size(); i++) {
+            if (currentSentences.get(i).toString().equals(targetStr)) {
+                currentSentences.remove(i);
+                removed = true;
+                break; // Vi antar at fakta er unike, så vi stopper ved første treff
+            }
+        }
+
+        // 3. Hvis vi faktisk fant og fjernet setningen, må vi tvinge KB-en til å oppdatere seg
+        if (removed) {
+            this.clear(); // Tømmer KB-ens interne indekser og cacher fullstendig
+            
+            // 4. Gjenskap kunnskapsbasen med de gjenværende setningene
+            for (Sentence remainingSentence : currentSentences) {
+                this.tell(remainingSentence);
+            }
+        }
+    }
 }

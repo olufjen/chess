@@ -110,8 +110,9 @@ public class KnowledgeBuilder {
   private static String PAWNMOVE =  "PAWNMOVE";
   private static String DEVELOPED = "DEVELOPED"; // A piece is developed when it has made a move
   private static String VACANT = "VACANT"; // Tells if a position is vacant
-  private static String BETWEEN = "BETWEEN"; // THe predicate determining which positions are between other positions
-  
+  private static String BETWEEN = "BETWEEN"; // The predicate determining which positions are between other positions
+  private static String PIN = "PIN"; // THe PIN predicate
+  private static String KNIGHT_FORK = "KNIGHT_FORK"; 
 /*
  * Additional predicate names  
  */
@@ -161,6 +162,22 @@ public class KnowledgeBuilder {
 
   public static String getVACANT() {
 	  return VACANT;
+  }
+
+  public static String getKNIGHT_FORK() {
+	return KNIGHT_FORK;
+}
+
+  public static void setKNIGHT_FORK(String kNIGHT_FORK) {
+	KNIGHT_FORK = kNIGHT_FORK;
+  }
+
+  public static String getPIN() {
+	return PIN;
+}
+
+  public static void setPIN(String pIN) {
+	PIN = pIN;
   }
 
   public static String getBETWEEN() {

@@ -29,6 +29,7 @@ import aima.core.logic.fol.parsing.ast.ConnectedSentence;
 import aima.core.logic.fol.parsing.ast.Constant;
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.QuantifiedSentence;
+import aima.core.logic.fol.parsing.ast.Sentence;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
 import aima.core.logic.planning.ActionSchema;
@@ -37,7 +38,6 @@ import aima.core.logic.propositional.agent.KBAgent;
 import aima.core.logic.propositional.kb.KnowledgeBase;
 import aima.core.logic.propositional.kb.data.Clause;
 import aima.core.logic.propositional.parsing.ast.AtomicSentence;
-import aima.core.logic.propositional.parsing.ast.Sentence;
 import aima.core.util.datastructure.Pair;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
@@ -48,6 +48,7 @@ import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
 import no.games.chess.fol.util.BoardGeometryGenerator;
+import no.games.chess.fol.util.RuleBuilder;
 import no.games.chess.planning.ChessProblem;
 import no.games.chess.planning.ChessSearchAlgorithm;
 
@@ -164,6 +165,8 @@ public class AChessAgent extends KBAgent {
     private String GAMEPHASE; // The predicate for game phase
     private ChessActionImpl castleAction = null;
     
+    private RuleBuilder rb; // The rulebuilder for the kb
+    
 	public AChessAgent(KnowledgeBase kb) {
 		super(kb);
 		
@@ -225,9 +228,19 @@ public class AChessAgent extends KBAgent {
 		positions = game.getPositions();
 		chessDomain = new ChessDomain();
 		setPredicatenames();
-		
+		rb = new RuleBuilder();
 	}
 	
+	public RuleBuilder getRb() {
+		return rb;
+	}
+
+
+	public void setRb(RuleBuilder rb) {
+		this.rb = rb;
+	}
+
+
 	public String getDEVELOPED() {
 		return DEVELOPED;
 	}
@@ -342,6 +355,8 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(KnowledgeBuilder.getGameOpening());
 			chessDomain.addPredicate(KnowledgeBuilder.getGamePhase());
 			chessDomain.addPredicate(KnowledgeBuilder.getStrategyName());
+			chessDomain.addPredicate(KnowledgeBuilder.getPIN());
+			chessDomain.addPredicate(KnowledgeBuilder.getKNIGHT_FORK());
 	  }
 	  
 
@@ -420,7 +435,7 @@ public class AChessAgent extends KBAgent {
 		forwardChain = new FOLGamesFCAsk(); // A Forward Chain inference procedure see p. 332
 		backwardChain = new FOLGamesBCAsk(); // A backward Chain inference procedure see p. 337
 //		folKb = new FOLKnowledgeBase(chessDomain);
-		folKb = new ChessFolKnowledgeBase(chessDomain, forwardChain,knowledgeFilename);
+		folKb = new ChessFolKnowledgeBase(chessDomain, backwardChain,knowledgeFilename);
 		folKb.setBackWardChain(backwardChain);
 		String[] cpos = KnowledgeBuilder.getCentre();
 		List<Term> centerTerms = new ArrayList<Term>();
@@ -495,32 +510,58 @@ public class AChessAgent extends KBAgent {
 
 //		These calls create the unary relation of type BISHOP(piecename) etc. for all the player's pieces
 		makeSentences(stateImpl.getMyPlayer()); // 
-		makeSentences(stateImpl.getOpponent()); // 
-/*
- * Create all types of move to the knowledge base		
- */
-		createFact(MINORMOVE,2);
-		createFact(KNIGHTMOVE,2);
-		createFact(BISHOPMOVE,2);
-		createFact(ROOKMOVE,2);
-		createFact(KINGMOVE,2);
-		createFact(QUEENMOVE,2);
-		createFact(PAWNMOVE,2);
-		createFact(MOVE, 2);
-		createFact(CONTROLCENTER,2);
-		createFact(HOMESQUARE,2);
-		createFact(OCCUPIES,2);
-		createFact(VACANT,1);
-		createFact(GAMEPHASE,1);
-//		createFact(KnowledgeBuilder.getContextType(),1);
-		//		defineRules("FORALL", 1,PIECETYPE,MINORPIECE);
-		defineRules("FORALL", 3,REACHABLE,PROTECTED,MINORMOVE);	
-		defineRules("FORALL",2,REACHABLE,CENTERSQUARE,CONTROLCENTER);
-		defineRules("FORALL",2,REACHABLE,PAWN,CENTERSQUARE,PAWNMOVE);
-		defineRules("FORALL",2,REACHABLE,PAWN,PAWNMOVE); // Pawn move
-		defineRules("FORALL",2,OCCUPIES,HOMESQUARE,GAMEPHASE); // 11.06.26 Fails because gamephase has only one parameter
+		makeSentences(stateImpl.getOpponent()); //
 		BoardGeometryGenerator bGeo =  new BoardGeometryGenerator(KnowledgeBuilder.getBETWEEN());
 		bGeo.generateAllBetweenFacts(folKb); // All between facts
+		APlayer opponent = stateImpl.getOpponent();
+		String oppName = opponent.getNameOfplayer();
+/*
+ * Create all types of move to the knowledge base	
+ */
+		
+		Sentence pawnMove = rb.defineRule(PAWNMOVE+"(a,b)", REACHABLE+"(a,b)", PAWN+"(a)"); // rule: FORALL a b ((REACHABLE(a,b) AND PAWN(a)) => PAWNMOVE(a,b))
+		Sentence minorMove = rb.defineRule(MINORMOVE+"(a,b)",REACHABLE+"(a,b)", PROTECTED+"(c,b)",MINORPIECE+"(a)"); // rule: FORALL a b c (((REACHABLE(a,b) AND PROTECTEDBY(c,b)) AND MINORPIECE(a)) => MINORMOVE(a,b))	
+		Sentence controlMove = rb.defineRule(CONTROLCENTER+"(a,b)",REACHABLE+"(a,b)",CENTERSQUARE+"(b)"); // rule: FORALL a b ((REACHABLE(a,b) AND CENTERSQUARE(b)) => CONTROLCENTER(a,b))		
+		Sentence pawncontrolMove = rb.defineRule(PAWNMOVE+"(a,b)",REACHABLE+"(a,b)",PAWN+"(a)",CENTERSQUARE+"(b)");	//rule: FORALL a b (((REACHABLE(a,b) AND PAWN(a)) AND CENTERSQUARE(b)) => PAWNMOVE(a,b))	
+		Sentence opening = rb.defineRule(GAMEPHASE+"(Start)",OCCUPIES+"(a,b)",HOMESQUARE+"(a,b)");	// rule: FORALL a b ((occupies(a,b) AND HOMESQUARE(a,b)) => GAMEPHASE(Start))	
+		Sentence pin1 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getBISHOP()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",MINORPIECE+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
+		Sentence pin2 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getROOK()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",MINORPIECE+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
+		Sentence pin3 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getBISHOP()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",QUEEN+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
+		Sentence pin4 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getBISHOP()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",KING+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
+		Sentence pin5 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getROOK()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",QUEEN+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
+		Sentence pin6 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getROOK()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",KING+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
+		Sentence knightFork = rb.defineRule(KnowledgeBuilder.getKNIGHT_FORK()+"(a,b1,b2)",KnowledgeBuilder.getKNIGHT()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getREACHABLE() +"(a,s1)",KnowledgeBuilder.getREACHABLE() +"(a,s2)",OCCUPIES+"(b1,s1)",OCCUPIES+"(b2,s2)",OWNER +"("+oppName+",b1)",OWNER +"("+oppName+",b2)",Connectors.NOT+"(s1==s2)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
+		
+		folKb.tell(pawnMove);
+		folKb.tell(minorMove);
+		folKb.tell(controlMove);
+		folKb.tell(pawncontrolMove);
+		folKb.tell(opening);
+		folKb.tell(pin1);
+		folKb.tell(pin2);
+		folKb.tell(pin3);
+		folKb.tell(pin4);
+		folKb.tell(pin5);
+		folKb.tell(pin6);
+		folKb.tell(knightFork);
+		
+		
+		
+		/*
+		 * createFact(MINORMOVE,2); createFact(KNIGHTMOVE,2); createFact(BISHOPMOVE,2);
+		 * createFact(ROOKMOVE,2); createFact(KINGMOVE,2); createFact(QUEENMOVE,2);
+		 * createFact(PAWNMOVE,2); createFact(MOVE, 2); createFact(CONTROLCENTER,2);
+		 * createFact(HOMESQUARE,2); createFact(OCCUPIES,2); createFact(VACANT,1);
+		 * createFact(GAMEPHASE,1)
+		 */;
+//		createFact(KnowledgeBuilder.getContextType(),1);
+		//		defineRules("FORALL", 1,PIECETYPE,MINORPIECE);
+//		defineRules("FORALL", 3,REACHABLE,PROTECTED,MINORMOVE);	
+//		defineRules("FORALL",2,REACHABLE,CENTERSQUARE,CONTROLCENTER);
+//		defineRules("FORALL",2,REACHABLE,PAWN,CENTERSQUARE,PAWNMOVE);
+//		defineRules("FORALL",2,REACHABLE,PAWN,PAWNMOVE); // Pawn move
+//		defineRules("FORALL",2,OCCUPIES,HOMESQUARE,GAMEPHASE); // 11.06.26 Fails because gamephase has only one parameter
+
 //		defineRules("FORALL",2,OCCUPIES,HOMESQUARE,GAMEPHASE); // The rule for a game phase
 //		defineRules("FORALL",2,PROTECTED,VACANT); // Not needed?
 //		AnswerHandler res = folKb.ask(asentence);
@@ -577,6 +618,7 @@ public class AChessAgent extends KBAgent {
 		makeSentences(stateImpl.getMyPlayer()); // 
 		makeSentences(stateImpl.getOpponent()); // 
 		solver = new AChessProblemSolver(stateImpl, localAction, folKb, chessDomain, forwardChain, backwardChain, game, myPlayer, opponent);
+		solver.setRb(rb);
 		solver.setPositionList(positionList);
 
 		
@@ -594,11 +636,20 @@ public class AChessAgent extends KBAgent {
 		 * Returns a problem containing an initial and goal state, and a set of Action Schemas.
 		 */
 		ChessProblem problem = solver.planProblem((ArrayList<ChessActionImpl>) actions);
+		
+/*
+ * As of 10.07.26
+ * The ChessSearchAlgorithm is removed  (see notes Planlegging og spill)
+ * 		
+ */
+		
+		
 		List<AgamePiece>  pieces = myPlayer.getMygamePieces();
 		if (problem != null) {
-			chessSearch = new ChessSearchAlgorithm(fw,writer);
+			List<ActionSchema> actionSchemas = problem.getAllActionSchemas();
+//			chessSearch = new ChessSearchAlgorithm(fw,writer);
 //			List<List<ActionSchema>> solution = solver.solveProblem(localAction);
-			List<ActionSchema> actionSchemas = chessSearch.heirarchicalSearch(problem);
+//			List<ActionSchema> actionSchemas = chessSearch.heirarchicalSearch(problem);
 			writer.println("No of action schemas: "+actionSchemas.size()+"\n");
 /*
  * The hiearchical search returns three actionschemas.
@@ -1346,33 +1397,33 @@ public class AChessAgent extends KBAgent {
 
 	}
 
+
+
+
 	@Override
-	public Action ask(KnowledgeBase kb, Sentence sentence) {
+	public Action ask(KnowledgeBase KB, aima.core.logic.propositional.parsing.ast.Sentence actionQuery) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+
 	@Override
-	public Sentence makeActionQuery(int t) {
+	public aima.core.logic.propositional.parsing.ast.Sentence makePerceptSentence(Percept percept, int t) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * This method is used to make sentences for propositional logic
-	 * @see aima.core.logic.propositional.agent.KBAgent#makeActionSentence(aima.core.agent.Action, int)
-	 * @since ?? Not in use
-	 */
+
 	@Override
-	public Sentence makeActionSentence(Action action, int t) {
-
-
+	public aima.core.logic.propositional.parsing.ast.Sentence makeActionQuery(int t) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
-	public Sentence makePerceptSentence(Percept state, int t) {
 
+	@Override
+	public aima.core.logic.propositional.parsing.ast.Sentence makeActionSentence(Action action, int t) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 

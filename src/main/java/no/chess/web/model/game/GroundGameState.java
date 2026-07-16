@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import aima.core.logic.fol.parsing.ast.AtomicSentence;
 import aima.core.logic.fol.parsing.ast.Sentence;
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.planning.ActionSchema;
@@ -43,6 +44,7 @@ public class GroundGameState extends GameState {
 	private int noofoppremovedPieces;
 	private int noofActions;
 	private APerceptor thePerceptor = null;
+
 	private String outputFileName =  "gamestate";
 	private String stateId;
 	private PrintWriter writer =  null;
@@ -50,6 +52,7 @@ public class GroundGameState extends GameState {
 	private ThePeas peas = null;
     private List<Position> positionList = null; // The original HashMap of positions as a list
 	private ChessFolKnowledgeBase knowledgeBase;// This represent the state of the game
+	private ChessFolKnowledgeBase testKB; // The cloned knowledge base after a move
 	private HashMap<String,ApieceMove> myMoves;
 	private List<GroundGameAction> myActions;
 	private List<AgamePiece>myinactivePieces;
@@ -130,10 +133,10 @@ public class GroundGameState extends GameState {
 		this.player = player;
 		this.opponent = opponent;
 		this.moveNr = moveNr;
-		this.knowledgeBase = kb;
 		this.actionSchemas = actionSchemas;
 		this.positionList = positions;
 		this.opponentActions =  opponentactionSchemas;
+		this.knowledgeBase = kb;
 		noofActions = actionSchemas.size();
 		stateId = "S"+Integer.toString(moveNr);	 
 		writer.println("-- New state after opponent action "+actionSchema.getName()+ " --");
@@ -183,7 +186,8 @@ public class GroundGameState extends GameState {
 
 			e1.printStackTrace();
 		}
-	    writer = new PrintWriter(new BufferedWriter(fw));	
+	    writer = new PrintWriter(new BufferedWriter(fw));
+		writer.println("The main contructor");
 	    myActions = new ArrayList<GroundGameAction>();
 	    actions = new ArrayList<GameAction>();
 	    opponentGameActions = new ArrayList<GroundGameAction>();
@@ -195,9 +199,18 @@ public class GroundGameState extends GameState {
 	    actions.addAll(relevantActions);
 		gamestateId = stateId + chosenAction; //myAction.getActionSchema().getName(); The state id after an opponent action
 	//    checkKb("CONTROLCENTER(a,b)");
-		writer.flush();
+
+//		writer.flush();
 	}
 	
+	public ChessFolKnowledgeBase getTestKB() {
+		return testKB;
+	}
+
+	public void setTestKB(ChessFolKnowledgeBase testKB) {
+		this.testKB = testKB;
+	}
+
 	public boolean isOpeningFound() {
 		return openingFound;
 	}
@@ -301,12 +314,18 @@ public class GroundGameState extends GameState {
 	 */
 	public void produceActions() {
 		List<AgamePiece> pieces = player.getMygamePieces();
+		relevantMapActions.clear();
+		relevantActions.clear();
 		for (ActionSchema actionSchema:actionSchemas) {
 			String name = actionSchema.getName();
 			String p = KnowledgeBuilder.extractString(name,'_',0);
 			AgamePiece gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(p)).findAny().orElse(null);
 			GroundGameAction gameAction = new GroundGameAction(gpiece,actionSchema,this);
+			String pos = KnowledgeBuilder.extractString(name,'_',-1);
+			String actionId =  gpiece.getMyPiece().getOntlogyName() + "_" + pos;
+			relevantMapActions.put(actionId, gameAction);
 			actions.add(gameAction);
+			relevantActions.add(gameAction);
 		}
 		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
 		for (ActionSchema actionSchema:opponentActions) {
@@ -350,6 +369,7 @@ public class GroundGameState extends GameState {
 			}
 			if (pos != null && mypiece) {
 				String posName = pos.getPositionName();
+//				relevantMapActions.clear();
 				for (GameAction action:actions) {
 					AgamePiece piece = (AgamePiece) action.getGamePiece();
 					if(gpiece == piece) {
@@ -526,23 +546,24 @@ public class GroundGameState extends GameState {
 	
 		heuristicScore = mydiff - oppdiff + noofoppremovedPieces - noofLostpieces;
 		boolean start = knowledgeBase.isStartPhase();
-		boolean devflag = knowledgeBase.existsFact(KnowledgeBuilder.getDEVELOPED(),"WhitePawn4");
+		boolean qOpening = knowledgeBase.existsFact(KnowledgeBuilder.getDEVELOPED(),"WhitePawn4");
+		boolean nextStep = knowledgeBase.existsFact(KnowledgeBuilder.getDEVELOPED(),"WhitePawn3"); 
 		String openingName = KnowledgeBuilder.getQueenGambit();
 		String givenstrategy = KnowledgeBuilder.getStrategyName();
 		boolean stratflag = knowledgeBase.existsFact(givenstrategy,openingName);
-		if(!devflag && stratflag) {
+		if(!qOpening && stratflag) {
 			writer.println("The strategy is "+openingName);
 		}
 /*
  * TODO develop further:	This structure determines the query to the knowledge base, and the choice of action	
  */
 		if (start) { //OJN 18.05 Test of move number 0 replaced - No opening performed if (!knowledgeBase.checkKB("CONTEXT(x)"))
-			String strategy = checkKb("WANTSTOPLAY(x)");
+//			String strategy = checkKb("WANTSTOPLAY(x)");
 //			writer.println("The strategy is "+strategy);
 //			String query = "DEVELOPED(x)";
 //			checkKb(query);
 		    checkKb("CONTROLCENTER(a,b)"); // To be enhanced with other queries
-		    String actionId = KnowledgeBuilder.getContextMoves().get(strategy);
+		    String actionId = KnowledgeBuilder.getContextMoves().get(openingName);
 //		    String actionId = "WhitePawn4" + "_" + "d4"; // If wants to play ? choose the correct action id
 		    myAction = relevantMapActions.get(actionId);
 			chosenAction = actionId;
@@ -553,12 +574,12 @@ public class GroundGameState extends GameState {
 			openingFound = true;
 //			chosenState = true;
 		}
-		String context = "no Context";
+		String context = KnowledgeBuilder.getQueenPawncontext();
 		if (!openingFound) {  // knowledgeBase.checkKB("CONTEXT(x)")
 			String query = "DEVELOPED(x)";
 			checkKb(query);
 //			context = checkKb("CONTEXT(x)"); // This dors not return correct
-			checkKb("CONTEXTMOVE(a,b)");  // Når din getActions()-metode nå spør KB-en: ask("TheoryMove(p, target)"), vil den få ut det trekket som passer til den valgte strategien.
+//			checkKb("CONTEXTMOVE(a,b)");  // Når din getActions()-metode nå spør KB-en: ask("TheoryMove(p, target)"), vil den få ut det trekket som passer til den valgte strategien.
 			String actionId = KnowledgeBuilder.getContextMoves().get(context); // OJN 25.5.26 Must find an alterative !!
 //		    String actionId = "WhitePawn3" + "_" + "c4"; // If context is ?? choose correct action id
 		    myAction = relevantMapActions.get(actionId);
@@ -585,10 +606,10 @@ public class GroundGameState extends GameState {
 	/**
 	 * testEnd
 	 * This is the method used by the ChessGoalTest functional interface 
-	 * the testGoal method
+	 * the testGoal method. The testGoal method is called from the Or-search method of the And-OrSearch THis is the player's move
 	 * A Game Action may return a set of GameStates, each of these states have a value.
 	 * If this method returns true then a chosen actionSchema is available together with its initial and goal states.
-	 * OBS 5.2.26 At present the action Parameter is the initial action
+	 * The action parameter is chosen based on evaluation 
 	 * 
 	 * @param action Based on this action, is this the goal state?
 	 * @return true if this is the goal state. This results in an empty plan in the search tree
@@ -596,10 +617,12 @@ public class GroundGameState extends GameState {
 	@Override
 	public boolean testEnd(GameAction action) {
 		GroundGameAction localAction = (GroundGameAction)action;
-
-		if (newState && action != null) {
+		testKB = knowledgeBase.cloneOrCopy();
+		applyEffects(testKB, localAction);
+		testKB.writeKnowledgebase();
+		if ((openingFound || contextFound) && action != null) {
 			writer.println("State testEnd chosen action "+ localAction.toString());
-			writer.println("State testEnd chosen state "+ gamestateId);
+//			writer.println("State testEnd chosen state "+ gamestateId);
 			this.action = action;
 			writer.flush();
 			goalState = true;
@@ -607,5 +630,20 @@ public class GroundGameState extends GameState {
 		}
 		return false;
 	}
-
+	/**
+	 * applyEffects
+	 * This method makes changes to the kb based on the effects of the Action Schema
+	 * @param testKB
+	 * @param action
+	 */
+	public void applyEffects(ChessFolKnowledgeBase kb,GroundGameAction action) {
+		ActionSchema actionSchema = action.getActionSchema();
+		for (Literal effect : actionSchema.getEffects()) {
+	        if (effect.isNegativeLiteral()) {
+	            kb.retract((AtomicSentence) effect.getAtomicSentence());
+	        } else {
+	            kb.tell((Sentence) effect.getAtomicSentence());
+	        }
+	    }
+	}
 }

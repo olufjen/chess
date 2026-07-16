@@ -80,10 +80,13 @@ public class GroundGameAction extends GameAction {
 		GroundGameState state = (GroundGameState) this.gameState; // The state this action is performed in
 		List<GameState> states = new ArrayList<GameState>();
 		List<GroundGameAction> opponentActions = state.getOpponentGameActions();
+		ChessFolKnowledgeBase kb = state.getTestKB();
 		for (GroundGameAction oppaction:opponentActions) { // All opponent's actions - For all opponent actions - create a new state
 			ActionSchema schema = oppaction.getActionSchema();
+			ChessFolKnowledgeBase newKb = kb.cloneOrCopy();
+			state.applyEffects(newKb, oppaction);
 			writer.println("Results(s, a) - performAction: Creates a state for the Opponent action schema "+schema.getName());
-			GroundGameState actionState = new GroundGameState(state.getPlayer(),state.getOpponent(),state.getMoveNr(),state.getKnowledgeBase(),state.getThePerceptor(),state.getActionSchemas(), state.getOpponentActions(),state.getPositionList(),schema); // Creates a groundgamestate based on a possible opponent actionschema
+			GroundGameState actionState = new GroundGameState(state.getPlayer(),state.getOpponent(),state.getMoveNr(),newKb,state.getThePerceptor(),state.getActionSchemas(), state.getOpponentActions(),state.getPositionList(),schema); // Creates a groundgamestate based on a possible opponent actionschema
 			actionState.setActions(state.gettheRelavantActions());
 			actionState.setOpponentGameActions(opponentActions);
 			actionState.setOppAction(oppaction);
