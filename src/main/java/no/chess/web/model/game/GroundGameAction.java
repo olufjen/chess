@@ -36,7 +36,7 @@ public class GroundGameAction extends GameAction {
 		String name = actionSchema.getName();
 		endPos = KnowledgeBuilder.extractString(name,'_',-1);
 		writer = mystate.getWriter();
-		
+
 	}
 	public AgamePiece getPiece() {
 		return piece;
@@ -74,7 +74,7 @@ public class GroundGameAction extends GameAction {
 	3. State Set: Generer en ny KB for hvert av Sorts mulige svar.
 	4. Output: Funksjonen returnerer en liste over disse KB-ene.
 
-	 * It returns a list of Game states as a result of the action
+	 * It returns a list of Game states as a result of the action. Each new Game state contains a new and different kb
 	 */
 	public List<GameState> performAction() {
 		GroundGameState state = (GroundGameState) this.gameState; // The state this action is performed in

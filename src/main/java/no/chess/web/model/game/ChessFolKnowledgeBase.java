@@ -27,6 +27,7 @@ import no.games.chess.fol.BCGamesAskHandler;
 import no.games.chess.fol.FCGamesAskAnswerHandler;
 import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
+import no.games.chess.fol.util.RuleBuilder;
 
 /**
  * The  ChessFolKnowledgeBase is a subclass of the FOLKnowledgeBase.
@@ -54,6 +55,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	private List<String>pieceTypes;
 	private List<AgamePiece> movePieces; // A list of pieces actively involved in a possible move. This list is set when the checkthreats
 	private ChessDomain localDomain;
+	private RuleBuilder ruleBuilder;
 	// method is called.
 	
 	public ChessFolKnowledgeBase(ChessDomain domain, InferenceProcedure inferenceProcedure) {
@@ -88,6 +90,13 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 		movePieces = new ArrayList<AgamePiece>();
 	    setPieceTypes();
 	   
+	}
+	
+	public RuleBuilder getRuleBuilder() {
+		return ruleBuilder;
+	}
+	public void setRuleBuilder(RuleBuilder ruleBuilder) {
+		this.ruleBuilder = ruleBuilder;
 	}
 	private void setPieceTypes() {
 		PAWN = KnowledgeBuilder.getPAWN();
@@ -400,11 +409,12 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	    // Hvis vi har gått gjennom alle og ikke funnet noen som har flyttet, er vi i startfasen
 	    return true;
 	}
+
 	/**
 	 * existsFact
-	 *  This method checks if certain facts in the KB are true.
-	 * @param fact - the fact to be checked
-	 * @param preds - any number of parameters for the given fact 
+	 * This method checks if a certain fact is true in the kb
+	 * @param predicateName - The name of the predicate
+	 * @param args - The arguments for the predicate
 	 * @return true if the fact is true
 	 */
 	public boolean existsFact(String predicateName, String... args) {
@@ -746,6 +756,30 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 		 
 
 	    return newKB;
+	}
+	/**
+	 * askRule
+	 * This method checks if a rule in the kb is true or not
+	 * @param predicateName - The name of the implication predicate
+	 * @param args - The arguments for this predicate
+	 * @return
+	 */
+	public boolean askRule(String predicateName, String... args) {
+	    // 1. Bygg mål-setningen (Query) ut fra argumentene
+	    // F.eks: MINORMOVE("WhiteKnight1", "f3") -> Predicate("MINORMOVE", [Constant("WhiteKnight1"), Constant("f3")])
+	    List<Term> terms = new ArrayList<>();
+	    for (String arg : args) {
+	        terms.add(ruleBuilder.parseToTerm(arg)); // Bruker parseToTerm-hjelperen din fra tidligere!
+	    }
+	    Predicate query = new Predicate(predicateName, terms);
+
+	    // 2. KjøR INFERENS!
+	    // Vi spør KB om påstanden kan bevises (utledes) fra reglene og faktaene i KB.
+	    // (AIMA bruker ask/FOLBCAsk/FOLFCAsk her)
+	    InferenceResult result = this.ask(query);
+
+	    // 3. Dersom bevisføringen lykkes, er regelen oppfylt!
+	    return result.isTrue();
 	}
     /**
      * retract

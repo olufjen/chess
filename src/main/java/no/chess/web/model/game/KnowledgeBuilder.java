@@ -98,6 +98,8 @@ public class KnowledgeBuilder {
   private static String MINORPIECE = "MINORPIECE"; // Predicate name to define a minor piece (bishop, knight)
   private static String CENTERSQUARE = "CENTERSQUARE"; // Predicate to define center square
   private static String CONTROLCENTER = "CONTROLCENTER"; //Predicate to control center
+  private static String OCCUPIES_CENTER = "OCCUPIES_CENTER"; 
+  
  /* 
   * Added 23.02.26 Possible types of piecemoves
   */
@@ -113,6 +115,7 @@ public class KnowledgeBuilder {
   private static String BETWEEN = "BETWEEN"; // The predicate determining which positions are between other positions
   private static String PIN = "PIN"; // THe PIN predicate
   private static String KNIGHT_FORK = "KNIGHT_FORK"; 
+  private static String IS_SUPPORTED_FOR = "IS_SUPPORTED_FOR";
 /*
  * Additional predicate names  
  */
@@ -149,8 +152,22 @@ public class KnowledgeBuilder {
   private static String contextMove = "CONTEXTMOVE"; // Given a context, this is the predicate for the next move
   private static String gameOpening = "OPENING"; // The predicate for the opening
   
+  // Faste konstanter for midt- og sluttspill som aldri endrer form
+  private static final String MIDGAME_TACTIC_FORK = "MIDGAME_TACTIC_FORK";
+  private static final String MIDGAME_TACTIC_PIN = "MIDGAME_TACTIC_PIN";
+  private static final String MIDGAME_POSITIONAL = "MIDGAME_POSITIONAL";
+  private static final String ENDGAME_BASE = "ENDGAME_BASE";
+//Enkle statiske definisjoner for motpartens svar (for å unngå skrivefeil)
+  private static final String RESP_ACCEPTED = "ACCEPTED";
+  private static final String RESP_DECLINED = "DECLINED";
+  private static final String RESP_INDIAN = "INDIAN";
+  private static final String RESP_NONE = "NONE";
+  private static final String FIRST_RESPONSE = "FIRST_RESPONS";
+  private static final String BALTIC_DEFENCE = "BALTIC_DEFENCE";
+  private static final String BALTIC_MOVE = "BALTIC_MOVE";
+  private static final String WHITEPAWN_DEFENCE = "WHITEPAWN_DEFENCE";
   private static Map<String,String> contextMoves = new HashMap<String,String>(); // A map of possible moves given a context
-  
+  private static List<String> tactics = new ArrayList<String>();
   /* Examples of rules in the knowledge base
    * WANTSTOPLAY(QUEENGAMBIT)
    * ((occupies(WhitePawn4,d4) AND occupies(BlackPawn4,d5)) => CONTEXT(QUEENPAWNGAME))
@@ -159,9 +176,81 @@ public class KnowledgeBuilder {
  * 	1. Context(QueensPawnGame) AND WantsToPlay(QueensGambit) => CONTEXTMOVE(WhitePawn3, c4)
  */
 
+  /**
+ * fillTactics
+ * This method fills the tactics array with available move tactics
+ */
+public static void fillTactics() {
+	  tactics.clear();
+	  tactics.add(MIDGAME_POSITIONAL);
+	  tactics.add(MIDGAME_TACTIC_FORK);
+	  tactics.add(MIDGAME_TACTIC_PIN);
+	  tactics.add(RESP_ACCEPTED);
+	  tactics.add(RESP_DECLINED);
+	  tactics.add(RESP_INDIAN);
+	  tactics.add(RESP_NONE);
+	  tactics.add(FIRST_RESPONSE);
+	  tactics.add(BALTIC_DEFENCE);
+  }
+  
+  public static String getIS_SUPPORTED_FOR() {
+	return IS_SUPPORTED_FOR;
+}
+
+  public static void setIS_SUPPORTED_FOR(String iS_SUPPORTED_FOR) {
+	IS_SUPPORTED_FOR = iS_SUPPORTED_FOR;
+  }
+
+  public static String getOCCUPIES_CENTER() {
+	return OCCUPIES_CENTER;
+}
+
+  public static void setOCCUPIES_CENTER(String oCCUPIES_CENTER) {
+	OCCUPIES_CENTER = oCCUPIES_CENTER;
+  }
+
+  public static List<String> getTactics() {
+	return tactics;
+  }
+
+  public static void setTactics(List<String> tactics) {
+	KnowledgeBuilder.tactics = tactics;
+  }
 
   public static String getVACANT() {
 	  return VACANT;
+  }
+
+  public static String getMidgameTacticFork() {
+	return MIDGAME_TACTIC_FORK;
+}
+
+  public static String getMidgameTacticPin() {
+	return MIDGAME_TACTIC_PIN;
+  }
+
+  public static String getMidgamePositional() {
+	return MIDGAME_POSITIONAL;
+  }
+
+  public static String getEndgameBase() {
+	return ENDGAME_BASE;
+  }
+
+  public static String getRespAccepted() {
+	return RESP_ACCEPTED;
+  }
+
+  public static String getRespDeclined() {
+	return RESP_DECLINED;
+  }
+
+  public static String getRespIndian() {
+	return RESP_INDIAN;
+  }
+
+  public static String getRespNone() {
+	return RESP_NONE;
   }
 
   public static String getKNIGHT_FORK() {
@@ -691,6 +780,43 @@ public static String getPIECE() {
 	  KnowledgeBuilder.contextMoves = contextMoves;
   }
   /**
+   * generateStrategyKey
+   * This method generates strategy keys to be used to register strategy implementations of FunctionExecutor
+ * @param state - represent the state of the game
+ * @return - the strategy key
+ */
+public static String generateStrategyKey(GroundGameState state) {
+	    int ply = state.getMoveNr();
+	    ChessFolKnowledgeBase kb = state.getKnowledgeBase();
+		String plyValue = Integer.toString(ply);    
+	    if (ply <= 10) { // Åpningsfasen
+	        
+	    	// Vi sjekker KUN motstanderens svar i KB for å bestemme forgreiningen
+	        // Bestem motstanderens svar-konstant ut fra KB
+	        String response = RESP_NONE;	        
+	        // Hva har motparten svart?
+	        if (kb.existsFact(DEVELOPED,"BlackPawn4"))response = FIRST_RESPONSE;
+	        if (kb.existsFact(OCCUPIES,"BlackPawn4", "c4"))response = RESP_ACCEPTED;
+	        if (kb.existsFact(DEVELOPED,"BlackPawn5")) response = RESP_DECLINED ;
+	        if (kb.existsFact(DEVELOPED,"BlackKnight2"))response = RESP_INDIAN ;
+	        if (kb.existsFact(OCCUPIES,"BlackBishop1", "f5"))response = BALTIC_DEFENCE;
+	        if (kb.existsFact(OCCUPIES,"BlackQueen", "d5"))response = BALTIC_MOVE;
+	        if (kb.existsFact(DEVELOPED,"BlackPawn5") && kb.existsFact(DEVELOPED,"BlackKnight2")) response = WHITEPAWN_DEFENCE;
+//	        return "OPENING_PLY" + plyValue + "_" +response;
+	        return response;
+	    } else { // Midtspill / Sluttspill
+	        if (kb.existsFact("GAMEPHASE(Endgame)")) {
+	        	return ENDGAME_BASE;
+	        } else {
+	            // Hvis KB har detektert et kritisk taktisk motiv, baker vi det inn i nøkkelen!
+	            if (kb.existsFact("KNIGHT_FORK(a,b1,b2)"))  return MIDGAME_TACTIC_FORK;
+	            else if (kb.existsFact("PIN(v,a,b)")) return MIDGAME_TACTIC_PIN;
+	        }
+	    }
+	    
+	    return MIDGAME_POSITIONAL;
+	}
+  /**
    * generateHomepreds
    * THis metod generates a set of predicates that needs variables in normar order
    */
@@ -733,6 +859,13 @@ public static String getPIECE() {
   public static void createMoveMap() {
 	  contextMoves.put(queenPawncontext, "WhitePawn3" + "_" + "c4");
 	  contextMoves.put(queenGambit, "WhitePawn4" + "_" + "d4");
+	  contextMoves.put(FIRST_RESPONSE,"WhitePawn3" + "_" + "c4");
+	  contextMoves.put(RESP_INDIAN, "WhiteKnight2"+"_"+"f3");
+	  contextMoves.put(RESP_DECLINED, "WhiteKnight1"+"_"+"c3");
+	  contextMoves.put(RESP_ACCEPTED, "WhitePawn5" + "_" + "e4");
+	  contextMoves.put(BALTIC_DEFENCE, "WhitePawn3" + "_" + "d5");
+	  contextMoves.put(BALTIC_MOVE, "WhiteKnight1"+"_"+"c3");
+	  contextMoves.put(WHITEPAWN_DEFENCE,"WhitePawn1"+"_"+"a3");
   }
   /**
    * generatePieceTypePreds

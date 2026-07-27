@@ -1170,6 +1170,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * @Since 17.12.21
  * Preconditions and Effects are populated with Constants, the given piecename, posname
  * @since June 25 - OBS: Removed since 26.01.26 
+ * @since July 26 - corrected BUG Added PAWN attack actions
  * Creates a GameState list from actionschemas
  * @param actions - The actions available to player
  * @return a List of ActionSchemas
@@ -1256,7 +1257,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 							if (pattackpos != null)
 								attack = pattackpos.get(aposName);
 							Position pos =  (Position) removedPos.stream().filter(c -> c.getPositionName().contains(aposName)).findAny().orElse(null);
-							if (pos == null && attack == null) {
+							if (pos == null && attack != null) {		// OBS attackposition must exist !! Endret fra == null OJN 21.7.26 
 								State anotherinitialState = buildInitialstate(pieceName,posName,aposName);
 								State anothergoalstate = buildGoalstate(pieceName, aposName,posName);
 								String piecepos = pieceName+"_"+aposName;

@@ -357,6 +357,8 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(KnowledgeBuilder.getStrategyName());
 			chessDomain.addPredicate(KnowledgeBuilder.getPIN());
 			chessDomain.addPredicate(KnowledgeBuilder.getKNIGHT_FORK());
+			chessDomain.addPredicate(KnowledgeBuilder.getOCCUPIES_CENTER());
+			chessDomain.addPredicate(KnowledgeBuilder.getIS_SUPPORTED_FOR());
 	  }
 	  
 
@@ -437,6 +439,7 @@ public class AChessAgent extends KBAgent {
 //		folKb = new FOLKnowledgeBase(chessDomain);
 		folKb = new ChessFolKnowledgeBase(chessDomain, backwardChain,knowledgeFilename);
 		folKb.setBackWardChain(backwardChain);
+		folKb.setRuleBuilder(rb);
 		String[] cpos = KnowledgeBuilder.getCentre();
 		List<Term> centerTerms = new ArrayList<Term>();
 		List<Constant> centerConstants = new ArrayList<Constant>();
@@ -518,9 +521,11 @@ public class AChessAgent extends KBAgent {
 /*
  * Create all types of move to the knowledge base	
  */
-		
+//		Sentence protectSupport = rb.defineRule(KnowledgeBuilder.getIS_SUPPORTED_FOR()+"(a,b)",  PROTECTED+"(c,b)",Connectors.NOT+"(c==a)");
 		Sentence pawnMove = rb.defineRule(PAWNMOVE+"(a,b)", REACHABLE+"(a,b)", PAWN+"(a)"); // rule: FORALL a b ((REACHABLE(a,b) AND PAWN(a)) => PAWNMOVE(a,b))
-		Sentence minorMove = rb.defineRule(MINORMOVE+"(a,b)",REACHABLE+"(a,b)", PROTECTED+"(c,b)",MINORPIECE+"(a)"); // rule: FORALL a b c (((REACHABLE(a,b) AND PROTECTEDBY(c,b)) AND MINORPIECE(a)) => MINORMOVE(a,b))	
+//		Sentence minorMove = rb.defineRule(MINORMOVE+"(a,b)",REACHABLE+"(a,b)",KnowledgeBuilder.getIS_SUPPORTED_FOR() +"(a,b)",MINORPIECE+"(a)"); // rule: FORALL a b c (((REACHABLE(a,b) AND PROTECTEDBY(c,b)) AND MINORPIECE(a)) => MINORMOVE(a,b))	
+		Sentence minorMove = rb.defineRule(MINORMOVE+"(a,b)",REACHABLE+"(a,b)",PROTECTED+"(c,b)",MINORPIECE+"(a)"); // rule: FORALL a b c (((REACHABLE(a,b) AND PROTECTEDBY(c,b)) AND MINORPIECE(a)) => MINORMOVE(a,b))	
+
 		Sentence controlMove = rb.defineRule(CONTROLCENTER+"(a,b)",REACHABLE+"(a,b)",CENTERSQUARE+"(b)"); // rule: FORALL a b ((REACHABLE(a,b) AND CENTERSQUARE(b)) => CONTROLCENTER(a,b))		
 		Sentence pawncontrolMove = rb.defineRule(PAWNMOVE+"(a,b)",REACHABLE+"(a,b)",PAWN+"(a)",CENTERSQUARE+"(b)");	//rule: FORALL a b (((REACHABLE(a,b) AND PAWN(a)) AND CENTERSQUARE(b)) => PAWNMOVE(a,b))	
 		Sentence opening = rb.defineRule(GAMEPHASE+"(Start)",OCCUPIES+"(a,b)",HOMESQUARE+"(a,b)");	// rule: FORALL a b ((occupies(a,b) AND HOMESQUARE(a,b)) => GAMEPHASE(Start))	
@@ -531,7 +536,11 @@ public class AChessAgent extends KBAgent {
 		Sentence pin5 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getROOK()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",QUEEN+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
 		Sentence pin6 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getROOK()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",KING+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
 		Sentence knightFork = rb.defineRule(KnowledgeBuilder.getKNIGHT_FORK()+"(a,b1,b2)",KnowledgeBuilder.getKNIGHT()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getREACHABLE() +"(a,s1)",KnowledgeBuilder.getREACHABLE() +"(a,s2)",OCCUPIES+"(b1,s1)",OCCUPIES+"(b2,s2)",OWNER +"("+oppName+",b1)",OWNER +"("+oppName+",b2)",Connectors.NOT+"(s1==s2)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
-		
+		Sentence occupyCenterd4 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,d4)");
+		Sentence occupyCentere4 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,e4)");
+		Sentence occupyCenterd5 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,d5)");
+		Sentence occupyCentere5 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,e5)");
+//		folKb.tell(protectSupport);
 		folKb.tell(pawnMove);
 		folKb.tell(minorMove);
 		folKb.tell(controlMove);
@@ -544,9 +553,10 @@ public class AChessAgent extends KBAgent {
 		folKb.tell(pin5);
 		folKb.tell(pin6);
 		folKb.tell(knightFork);
-		
-		
-		
+		folKb.tell(occupyCenterd4);
+		folKb.tell(occupyCentere4);
+		folKb.tell(occupyCenterd5);
+		folKb.tell(occupyCentere5);
 		/*
 		 * createFact(MINORMOVE,2); createFact(KNIGHTMOVE,2); createFact(BISHOPMOVE,2);
 		 * createFact(ROOKMOVE,2); createFact(KINGMOVE,2); createFact(QUEENMOVE,2);
@@ -600,7 +610,8 @@ public class AChessAgent extends KBAgent {
 		LinkedHashSet<Map<Variable, Term>> mapResult = (LinkedHashSet<Map<Variable, Term>>) folKb.fetch(allLiterals);
 		List<Map<Variable, Term>> listResults = mapResult.stream().collect(Collectors.toList());
 		results.add(result);
-	
+//		boolean testkb = folKb.existsFact(DEVELOPED,"BlackPawn4");
+//		boolean whiteP = folKb.existsFact(DEVELOPED,"WhitePawn4");
 /*
  * To move this into makePerceptSentence ?		
  */
@@ -630,6 +641,7 @@ public class AChessAgent extends KBAgent {
  */
 		String movnr = Integer.toString(noofMoves);
 		ChessActionImpl naction = null;
+//		writer.println("Testing DEVELOPED BlackPawn4 and WhitePawn4   "+testkb+" "+whiteP);
 		folKb.writeKnowledgebase();
 		
 		/*
@@ -650,7 +662,7 @@ public class AChessAgent extends KBAgent {
 //			chessSearch = new ChessSearchAlgorithm(fw,writer);
 //			List<List<ActionSchema>> solution = solver.solveProblem(localAction);
 //			List<ActionSchema> actionSchemas = chessSearch.heirarchicalSearch(problem);
-			writer.println("No of action schemas: "+actionSchemas.size()+"\n");
+			writer.println("Trekknummer: "+movnr);
 /*
  * The hiearchical search returns three actionschemas.
  * The two first are identical, the third one is the original HLA
@@ -661,7 +673,7 @@ public class AChessAgent extends KBAgent {
 			List<Constant>solConstants = actionSchema.getConstants();
 
 			AgamePiece gpiece = null;
-			writer.println("The constants of the action schema");
+			writer.println("Brikke fra action schema");
 			String aName = null; // Name to be used to find the chessAction that the actionSchema corresponds to
 			for (Constant constant:solConstants) {
 				writer.println(constant.getSymbolicName());
