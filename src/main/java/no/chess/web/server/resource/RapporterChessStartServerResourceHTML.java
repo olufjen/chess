@@ -444,7 +444,7 @@ public class RapporterChessStartServerResourceHTML extends ChessServerResource {
     	if (printGame != null) {
 
     		chessMoves = chessBoard.getChessMoves();
-    		String pdfFile = "";
+    		String pdfFile = "game" + ".pdf";
     		try {
 				pdfFile = printGame(chessMoves);
 				/*
