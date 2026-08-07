@@ -15,6 +15,7 @@ import no.function.FunctionExecutor;
  * DirectMinorMoveExecutor
  * This class checks to see if there are minor officers (bishops or knights that can be
  * safely moved accoring the the MINORMOVE rule in the kb 
+ * OBS must be tested for threatenedby facts!
  * 
  */
 public class DirectMinorMoveExecutor implements FunctionExecutor {

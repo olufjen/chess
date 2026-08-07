@@ -1,5 +1,8 @@
 package no.chess.web.model.game;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +24,9 @@ public class GroundGameAction extends GameAction {
 	private ActionSchema actionSchema; // The action schema for this action
 	private PrintWriter writer =  null;
 	private String endPos; // The end position of this action
-	
+	private String outputFileName = "gameaction";
+	private FileWriter fw =  null;
+	private String filename;
 	public GroundGameAction(GamePiece<Position> gamePiece, ActionSchema actionSchema) {
 		super(gamePiece);
 		piece = (AgamePiece) gamePiece;
@@ -35,7 +40,10 @@ public class GroundGameAction extends GameAction {
 		GroundGameState mystate = (GroundGameState) this.gameState;
 		String name = actionSchema.getName();
 		endPos = KnowledgeBuilder.extractString(name,'_',-1);
-		writer = mystate.getWriter();
+		String catalog = KnowledgeBuilder.getFileCatalog();
+	    filename = catalog + outputFileName+name+".txt";
+
+//		writer = mystate.getWriter();
 
 	}
 	public AgamePiece getPiece() {
@@ -61,6 +69,15 @@ public class GroundGameAction extends GameAction {
 		String ret = actionSchema.toString();
 		return ret;
 	}
+	public void setWriter() {
+		try {
+			fw = new FileWriter(filename, true);
+		} catch (IOException e1) {
+
+			e1.printStackTrace();
+		}
+
+	}
 	/**
 	 * performAction
 	 * This method is called from the result function - "Results(s, a)".
@@ -77,27 +94,33 @@ public class GroundGameAction extends GameAction {
 	 * It returns a list of Game states as a result of the action. Each new Game state contains a new and different kb
 	 */
 	public List<GameState> performAction() {
+		setWriter();
+	    writer = new PrintWriter(new BufferedWriter(fw));
 		GroundGameState state = (GroundGameState) this.gameState; // The state this action is performed in
 		List<GameState> states = new ArrayList<GameState>();
 		List<GroundGameAction> opponentActions = state.getOpponentGameActions();
 		ChessFolKnowledgeBase kb = state.getTestKB();
+//		kb.setRuleBuilder(state.getKnowledgeBase().getRuleBuilder());
 		for (GroundGameAction oppaction:opponentActions) { // All opponent's actions - For all opponent actions - create a new state
 			ActionSchema schema = oppaction.getActionSchema();
 			ChessFolKnowledgeBase newKb = kb.cloneOrCopy();
-			state.applyEffects(newKb, oppaction);
 			writer.println("Results(s, a) - performAction: Creates a state for the Opponent action schema "+schema.getName());
+			state.applyEffects(newKb, oppaction);
 			GroundGameState actionState = new GroundGameState(state.getPlayer(),state.getOpponent(),state.getMoveNr(),newKb,state.getThePerceptor(),state.getActionSchemas(), state.getOpponentActions(),state.getPositionList(),schema); // Creates a groundgamestate based on a possible opponent actionschema
-			actionState.setActions(state.gettheRelavantActions());
-			actionState.setOpponentGameActions(opponentActions);
-			actionState.setOppAction(oppaction);
+			/* OBS: MAkes its own list of actions !!!
+			 * actionState.setActions(state.gettheRelavantActions());
+			 * actionState.setOpponentGameActions(opponentActions);
+			 * actionState.setOppAction(oppaction); states.add(actionState);
+			 */
 			states.add(actionState);
 			if (actionState.isContextFound())
 				break;
 			if (actionState.isOpeningFound())
 				break;
+
 		}
 		writer.flush();
-		states.add(state); // Also adds the current state?
+//		states.add(state); // Also adds the current state?
 		return states;
 	}
 

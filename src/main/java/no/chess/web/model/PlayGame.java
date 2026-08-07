@@ -31,6 +31,7 @@ import no.chess.web.model.game.ChessActionImpl;
 import no.chess.web.model.game.ChessKnowledgeBase;
 import no.chess.web.model.game.ChessStateImpl;
 import no.chess.web.model.game.KnowledgeBuilder;
+import no.chess.web.model.game.strategy.ChessPlanCheck;
 import no.games.chess.ChessAction;
 import no.games.chess.ChessAlphaBetaSearch;
 import no.games.chess.ChessSearch;
@@ -41,7 +42,7 @@ import no.games.chess.GamePiece;
 /**
  * This class is implemented to run a game of chess
  * It is created when the user has selected to play a game of chess.
- * It thgen becomes a session object 
+ * It then becomes a session object 
  * It receives a HashMap of Positions with their chesspieces from the ontology
  * From this it creates
  * A list of used positions
@@ -92,7 +93,17 @@ public class PlayGame {
 	private Position oldPosition = null;
 	private Position newPosition = null; 
 	private ApieceMove castleMove = null;
+	private ChessPlanCheck chessPlancheck = null;
 	
+	/**
+	 * PlayGame
+	 * This is the main constructor of thwe PlayGame object
+	 * It is a session object, created when the user choose to play agame 
+	 * @since 3.8.26
+	 * The ChessPlanCheck object is added to session
+	 * @param positions
+	 * @param frontBoard
+	 */
 	public PlayGame(HashMap<String, Position> positions,ChessBoard frontBoard)   {
 		super();
 		this.myFrontBoard = frontBoard;
@@ -119,7 +130,16 @@ public class PlayGame {
 			e1.printStackTrace();
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));
+	    chessPlancheck = new  ChessPlanCheck();
 //		kb = new ChessKnowledgeBase();
+	}
+
+	public ChessPlanCheck getChessPlancheck() {
+		return chessPlancheck;
+	}
+
+	public void setChessPlancheck(ChessPlanCheck chessPlancheck) {
+		this.chessPlancheck = chessPlancheck;
 	}
 
 	public Position getOldPosition() {

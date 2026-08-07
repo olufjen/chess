@@ -744,6 +744,7 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	    // 1. Opprett en helt ny instans av kunnskapsbasen med samme parser og inferensmotor
 	    // (Bruk de samme parameterne som du opprinnelig instansierte KB-en din med)
 	    ChessFolKnowledgeBase newKB = new ChessFolKnowledgeBase(this.getLocalDomain(), this.getInferenceProcedure(),"clonecopy.txt");
+	    newKB.setRuleBuilder(ruleBuilder);
 	    newKB.setBackWardChain(backWardChain);
 	    // 2. Gjør en dyp kopiering av alle setninger (fakta og regler)
 	    // AIMA lagrer originale setninger i en liste vi kan hente ut

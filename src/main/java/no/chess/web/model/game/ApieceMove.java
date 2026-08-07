@@ -31,6 +31,7 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 	
 
 	public ApieceMove(Position toPosition, AgamePiece piece) {
+
 		super();
 		this.toPosition = toPosition;
 		this.piece = piece;
@@ -61,7 +62,7 @@ public class ApieceMove extends AbstractPieceMove<Position,Position> {
 			this.moveNotation = moveNotation+"x";
 			moveNumber--;
 		}
-		plannedMove = false;;
+		plannedMove = false;
 		executedMove = true;
 		creation = "Created with from and to position";
 	}

@@ -41,6 +41,7 @@ import aima.core.logic.propositional.parsing.ast.AtomicSentence;
 import aima.core.util.datastructure.Pair;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
+import no.chess.web.model.game.strategy.ChessPlanCheck;
 import no.games.chess.ChessPieceType;
 import no.games.chess.AbstractGamePiece.pieceType;
 import no.games.chess.ChessAction;
@@ -51,6 +52,7 @@ import no.games.chess.fol.util.BoardGeometryGenerator;
 import no.games.chess.fol.util.RuleBuilder;
 import no.games.chess.planning.ChessProblem;
 import no.games.chess.planning.ChessSearchAlgorithm;
+import no.games.chess.search.nondeterministic.ChessPlan;
 
 /**
  * The Chess Agent is both a utility based agent, a goal based agent and a model based agent.
@@ -164,9 +166,9 @@ public class AChessAgent extends KBAgent {
     private String VACANT = "VACANT"; // Tells if a position is vacant
     private String GAMEPHASE; // The predicate for game phase
     private ChessActionImpl castleAction = null;
-    
+    private ChessPlan currentPlan = null;
     private RuleBuilder rb; // The rulebuilder for the kb
-    
+	private ChessPlanCheck chessPlancheck = null;
 	public AChessAgent(KnowledgeBase kb) {
 		super(kb);
 		
@@ -359,6 +361,7 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(KnowledgeBuilder.getKNIGHT_FORK());
 			chessDomain.addPredicate(KnowledgeBuilder.getOCCUPIES_CENTER());
 			chessDomain.addPredicate(KnowledgeBuilder.getIS_SUPPORTED_FOR());
+			chessDomain.addPredicate(KnowledgeBuilder.getTAKE_PIECE());
 	  }
 	  
 
@@ -425,7 +428,18 @@ public class AChessAgent extends KBAgent {
 		myPlayer = stateImpl.getMyPlayer();
 		opponent = stateImpl.getOpponent();
 		allActions = stateImpl.getActions(); // creates new actions !!!
-		
+		chessPlancheck = game.getChessPlancheck();
+		boolean aplan = chessPlancheck.checkPlan();
+		noofMoves = game.getMovements().size();
+		GroundGameAction newAction = null;
+		ApieceMove lastMove = null;
+		if (aplan) {
+			List<ApieceMove> moves = game.getMovements();
+			lastMove = moves.getLast();
+			writer.println("\n The last opponent move: "+lastMove.toString());
+			newAction = chessPlancheck.selectMove(lastMove,noofMoves);
+
+		}
 		for (ChessAction action:allActions) { //*** Added 23.05.25 olj
 			ChessActionImpl localAction =(ChessActionImpl) action;
 			actions.add(localAction);
@@ -456,7 +470,7 @@ public class AChessAgent extends KBAgent {
 				centerTerms.clear();
 			}
 		}
-		noofMoves = game.getMovements().size();
+	
 		String playerName = stateImpl.getMyPlayer().getNameOfplayer();
 
 		makeRules(myPlayer,"g1","c1"); // tells the FOL knowledgebase rules about how to capture opponent pieces
@@ -518,6 +532,7 @@ public class AChessAgent extends KBAgent {
 		bGeo.generateAllBetweenFacts(folKb); // All between facts
 		APlayer opponent = stateImpl.getOpponent();
 		String oppName = opponent.getNameOfplayer();
+		playerName = myPlayer.getNameOfplayer();
 /*
  * Create all types of move to the knowledge base	
  */
@@ -528,19 +543,22 @@ public class AChessAgent extends KBAgent {
 
 		Sentence controlMove = rb.defineRule(CONTROLCENTER+"(a,b)",REACHABLE+"(a,b)",CENTERSQUARE+"(b)"); // rule: FORALL a b ((REACHABLE(a,b) AND CENTERSQUARE(b)) => CONTROLCENTER(a,b))		
 		Sentence pawncontrolMove = rb.defineRule(PAWNMOVE+"(a,b)",REACHABLE+"(a,b)",PAWN+"(a)",CENTERSQUARE+"(b)");	//rule: FORALL a b (((REACHABLE(a,b) AND PAWN(a)) AND CENTERSQUARE(b)) => PAWNMOVE(a,b))	
-		Sentence opening = rb.defineRule(GAMEPHASE+"(Start)",OCCUPIES+"(a,b)",HOMESQUARE+"(a,b)");	// rule: FORALL a b ((occupies(a,b) AND HOMESQUARE(a,b)) => GAMEPHASE(Start))	
+		Sentence opening = rb.defineRule(GAMEPHASE+"(Start)",OCCUPIES+"(a,b)",HOMESQUARE+"(a,b)");	// rule: FORALL a b ((occupies(a,b) AND HOMESQUARE(a,b)) => GAMEPHASE(Start))
+		
 		Sentence pin1 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getBISHOP()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",MINORPIECE+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
 		Sentence pin2 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getROOK()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",MINORPIECE+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
 		Sentence pin3 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getBISHOP()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",QUEEN+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
 		Sentence pin4 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getBISHOP()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",KING+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
 		Sentence pin5 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getROOK()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",QUEEN+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
 		Sentence pin6 = rb.defineRule(KnowledgeBuilder.getPIN()+"(v,a,b)",KnowledgeBuilder.getROOK()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getPOSSIBLEREACH() +"(a,s2)",KnowledgeBuilder.getBETWEEN()+"(s1,s,s2)",OCCUPIES+"(v,s1)",OCCUPIES+"(b,s2)",OWNER +"("+oppName+",b)",KING+"(b)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
-		Sentence knightFork = rb.defineRule(KnowledgeBuilder.getKNIGHT_FORK()+"(a,b1,b2)",KnowledgeBuilder.getKNIGHT()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getREACHABLE() +"(a,s1)",KnowledgeBuilder.getREACHABLE() +"(a,s2)",OCCUPIES+"(b1,s1)",OCCUPIES+"(b2,s2)",OWNER +"("+oppName+",b1)",OWNER +"("+oppName+",b2)",Connectors.NOT+"(s1==s2)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
+		Sentence knightFork = rb.defineRule(KnowledgeBuilder.getKNIGHT_FORK()+"(a,b,c)",KnowledgeBuilder.getKNIGHT()+"(a)",OCCUPIES+"(a,s)",KnowledgeBuilder.getREACHABLE() +"(a,s1)",KnowledgeBuilder.getREACHABLE() +"(a,s2)",OCCUPIES+"(b,s1)",OCCUPIES+"(c,s2)",OWNER +"("+oppName+",b)",OWNER +"("+oppName+",c)"); // rule: FORALL a,s2,s1,s,v,b BISHOP(a) AND POSSIBLEREACH(a, s2) AND Between(s1, s, s2) AND occupies(v, s1) AND occupies(b, s2) AND MINORPIECE(b) =>PIN(v,a,b)
+		Sentence takePiece = rb.defineRule(KnowledgeBuilder.getTAKE_PIECE()+"(a,b,s1)", PIECE+"(a)",OCCUPIES+"(a,s)",REACHABLE+"(a,s1)",OCCUPIES+"(b,s1)",OWNER +"("+oppName+",b)",OWNER +"("+playerName+",a)");
 		Sentence occupyCenterd4 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,d4)");
 		Sentence occupyCentere4 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,e4)");
 		Sentence occupyCenterd5 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,d5)");
 		Sentence occupyCentere5 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,e5)");
 //		folKb.tell(protectSupport);
+		folKb.tell(takePiece);
 		folKb.tell(pawnMove);
 		folKb.tell(minorMove);
 		folKb.tell(controlMove);
@@ -628,6 +646,10 @@ public class AChessAgent extends KBAgent {
 //		makeOpponentsentences(stateImpl.getOpponent(),noofMoves); //knowledge about the opponent and its pieces to the proportional knowledge base knowledge base
 		makeSentences(stateImpl.getMyPlayer()); // 
 		makeSentences(stateImpl.getOpponent()); // 
+		ActionSchema planactionSchema = null;
+		if (aplan && newAction != null) {
+			planactionSchema = newAction.getActionSchema();
+		}
 		solver = new AChessProblemSolver(stateImpl, localAction, folKb, chessDomain, forwardChain, backwardChain, game, myPlayer, opponent);
 		solver.setRb(rb);
 		solver.setPositionList(positionList);
@@ -643,11 +665,13 @@ public class AChessAgent extends KBAgent {
 		ChessActionImpl naction = null;
 //		writer.println("Testing DEVELOPED BlackPawn4 and WhitePawn4   "+testkb+" "+whiteP);
 		folKb.writeKnowledgebase();
-		
+		ChessProblem problem = null;
 		/*
 		 * Returns a problem containing an initial and goal state, and a set of Action Schemas.
 		 */
-		ChessProblem problem = solver.planProblem((ArrayList<ChessActionImpl>) actions);
+		if (!aplan)// IF there is no plan - solve the problem
+			problem = solver.planProblem((ArrayList<ChessActionImpl>) actions);
+//		currentPlan = solver.getCurrentPlan();
 		
 /*
  * As of 10.07.26
@@ -657,7 +681,7 @@ public class AChessAgent extends KBAgent {
 		
 		
 		List<AgamePiece>  pieces = myPlayer.getMygamePieces();
-		if (problem != null) {
+		if (problem != null && !aplan) { // IF there is no plan - solve the problem
 			List<ActionSchema> actionSchemas = problem.getAllActionSchemas();
 //			chessSearch = new ChessSearchAlgorithm(fw,writer);
 //			List<List<ActionSchema>> solution = solver.solveProblem(localAction);
@@ -671,7 +695,7 @@ public class AChessAgent extends KBAgent {
  */
 			ActionSchema actionSchema = actionSchemas.get(0);
 			List<Constant>solConstants = actionSchema.getConstants();
-
+			chessPlancheck.setCurrentPlan(solver.getCurrentPlan());
 			AgamePiece gpiece = null;
 			writer.println("Brikke fra action schema");
 			String aName = null; // Name to be used to find the chessAction that the actionSchema corresponds to
@@ -715,6 +739,17 @@ public class AChessAgent extends KBAgent {
 			if (altPos != null) {
 				naction.setPreferredPosition(altPos);
 			}
+		}else if (aplan && newAction != null) {
+			String aName = null; // Name to be used to find the chessAction that the actionSchema corresponds to
+			String nactionName = planactionSchema.getName();
+			String chessName = null;
+			int nIndex = nactionName.indexOf("_");
+			if (nIndex != -1)
+				chessName = nactionName.substring(0, nIndex);
+			else
+				chessName = aName;
+			String newName = chessName; // Name to be used to find the chessAction that the actionSchema corresponds to
+			naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(newName)).findAny().orElse(null);
 		}
 
 		for (ChessActionImpl action:actions) {
@@ -749,42 +784,15 @@ public class AChessAgent extends KBAgent {
 		chessDomain.printDomain();
 		strategyKB =  solver.getOpponentAgent().getLocalKb();
 		strategyKB.writeKnowledgebase();
+		writer.println("********* Trekknummer: "+movnr+ " gjennomført ********************");		
 		writer.flush();
 		if (naction != null)
 			localAction = naction;
 		return localAction;
 
 	}
-	public void checkKb(String query) {
-		writer.println("The query is "+query);
-		List<String> answer = folKb.checkQuery(query);
-//		List <String> forwardanswer = folKb.forwardcheckQuery(query);
-		for (String p: answer) {
-			writer.println("The backward chain object is "+p);
-		}
-		/*
-		 * for (String p: forwardanswer) {
-		 * writer.println("The forward chain object is "+p); }
-		 */
-	}
-	/**
-	 * createFact
-	 * This method creates a single rule to the fol knowledge base with type variables
-	 * @param fact - name of fact
-	 * @param antvar - no of variables
-	 */
-	public void createFact(String fact, int antvar) {
-		String[] pvar = {"a","b","c","d","e"}; // Max 5 variables
-		List<Term> myTerms = new ArrayList<Term>();
-		List<Variable> variables = new ArrayList<Variable>();
-		for (int i=0;i<antvar;i++) {
-			Variable var = new Variable(pvar[i]);
-			variables.add(var);
-		}
-		myTerms.addAll(variables);
-		Predicate pred = new Predicate(fact,myTerms);
-		folKb.tell(pred);
-	}
+
+
 	
 	/**
 	 * updateKnowledge

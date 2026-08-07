@@ -99,6 +99,7 @@ public class KnowledgeBuilder {
   private static String CENTERSQUARE = "CENTERSQUARE"; // Predicate to define center square
   private static String CONTROLCENTER = "CONTROLCENTER"; //Predicate to control center
   private static String OCCUPIES_CENTER = "OCCUPIES_CENTER"; 
+  private static String TAKE_PIECE = "TAKE_PIECE";
   
  /* 
   * Added 23.02.26 Possible types of piecemoves
@@ -166,6 +167,8 @@ public class KnowledgeBuilder {
   private static final String BALTIC_DEFENCE = "BALTIC_DEFENCE";
   private static final String BALTIC_MOVE = "BALTIC_MOVE";
   private static final String WHITEPAWN_DEFENCE = "WHITEPAWN_DEFENCE";
+  private static final String DEVELOP_PIECE = "DEVELOP_PIECE"; // Key for to develop pieces
+  
   private static Map<String,String> contextMoves = new HashMap<String,String>(); // A map of possible moves given a context
   private static List<String> tactics = new ArrayList<String>();
   /* Examples of rules in the knowledge base
@@ -193,6 +196,18 @@ public static void fillTactics() {
 	  tactics.add(BALTIC_DEFENCE);
   }
   
+  public static String getDevelopPiece() {
+	return DEVELOP_PIECE;
+}
+
+  public static String getTAKE_PIECE() {
+	return TAKE_PIECE;
+}
+
+  public static void setTAKE_PIECE(String tAKE_PIECE) {
+	TAKE_PIECE = tAKE_PIECE;
+  }
+
   public static String getIS_SUPPORTED_FOR() {
 	return IS_SUPPORTED_FOR;
 }
@@ -809,7 +824,7 @@ public static String generateStrategyKey(GroundGameState state) {
 	        	return ENDGAME_BASE;
 	        } else {
 	            // Hvis KB har detektert et kritisk taktisk motiv, baker vi det inn i nøkkelen!
-	            if (kb.existsFact("KNIGHT_FORK(a,b1,b2)"))  return MIDGAME_TACTIC_FORK;
+	            if (kb.existsFact("KNIGHT_FORK(a,b,c)"))  return MIDGAME_TACTIC_FORK;
 	            else if (kb.existsFact("PIN(v,a,b)")) return MIDGAME_TACTIC_PIN;
 	        }
 	    }
@@ -855,6 +870,7 @@ public static String generateStrategyKey(GroundGameState state) {
   /**
    * createMoveMap
    * This method creates a map of possible moves given a context
+   * It is called by the ChessAgent (setPredicateNames) 
    */
   public static void createMoveMap() {
 	  contextMoves.put(queenPawncontext, "WhitePawn3" + "_" + "c4");
@@ -865,7 +881,7 @@ public static String generateStrategyKey(GroundGameState state) {
 	  contextMoves.put(RESP_ACCEPTED, "WhitePawn5" + "_" + "e4");
 	  contextMoves.put(BALTIC_DEFENCE, "WhitePawn3" + "_" + "d5");
 	  contextMoves.put(BALTIC_MOVE, "WhiteKnight1"+"_"+"c3");
-	  contextMoves.put(WHITEPAWN_DEFENCE,"WhitePawn1"+"_"+"a3");
+	  contextMoves.put(WHITEPAWN_DEFENCE,"WhitePawn3"+"_"+"d5");
   }
   /**
    * generatePieceTypePreds

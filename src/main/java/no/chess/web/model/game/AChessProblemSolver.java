@@ -211,6 +211,9 @@ public class AChessProblemSolver {
   private AgamePiece opponentKing = null;
   private String opponentKingPosition = null;
   private State chosenInitstate = null;
+  private ChessPlan currentPlan = null;
+  
+  
   private ActionSchema theSolution = null; // An action Schema chosen from the graphplan algorithm
   private Set<ActionSchema> otherSchemas = null;// A Set of propositionalized action schemas from the lifted action schema. It is used for problem solving
   private List<ActionSchema>otherSchemaList = null;// A list of propositionalized action schemas from the lifted action schema. It is used for problem solving
@@ -294,6 +297,16 @@ public class AChessProblemSolver {
 
   public void setRb(RuleBuilder rb) {
 	this.rb = rb;
+  }
+
+
+  public ChessPlan getCurrentPlan() {
+	return currentPlan;
+}
+
+
+  public void setCurrentPlan(ChessPlan currentPlan) {
+	this.currentPlan = currentPlan;
   }
 
 
@@ -1008,11 +1021,14 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
       State tempgoalstate = null;
       List<ActionSchema> localActionlist = new ArrayList<ActionSchema>();
       if (thisPlan != null) {
-   	    writer.println("The plan - ");
+    	int planSize =   thisPlan.size();
+   	    writer.println("The plan - "+planSize);
         writer.println(thisPlan.toString()); // Prints the path - a linked list of gameactions
-        GroundGameAction action = (GroundGameAction) thisPlan.getAction(0);
+        GroundGameAction action = (GroundGameAction) thisPlan.getAction(0); // Get the first action of the plan !! The plan then contains all possible opponent moves and the player's reaction (move)
         localActionlist.add(action.getActionSchema());
-        
+        currentPlan = thisPlan;
+        game.getChessPlancheck().setCurrentPlan(currentPlan);
+        game.getChessPlancheck().setCurrectState(nondeterminState);
         String actionName = action.getActionSchema().getName();
         tempinitstate = initStates.get(actionName);
         tempgoalstate = goalStates.get(actionName);

@@ -14,6 +14,7 @@ import aima.core.logic.fol.parsing.ast.Sentence;
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.planning.ActionSchema;
 import no.chess.web.model.Position;
+import no.chess.web.model.game.strategy.DevelopMinorExecutor;
 import no.chess.web.model.game.strategy.DirectMinorMoveExecutor;
 import no.chess.web.model.game.strategy.TargetMoveExecutor;
 import no.function.FunctionContect;
@@ -77,6 +78,8 @@ public class GroundGameState extends GameState {
 	private boolean openingFound = false; // True when opening is performed
 	private boolean chosenState = false; // A flag to determine if this is the end state - the chosen state
 	private String chosenAction = null; // The id of the chosen action after call to the evaluation function
+	private GroundGameAction nextAction = null; // The next action in case it is not the goal action
+
 	/**
 	 * Basic Constructor
 	 * @param gamePiece
@@ -119,14 +122,6 @@ public class GroundGameState extends GameState {
 	public GroundGameState(APlayer player,APlayer opponent, int moveNr, ChessFolKnowledgeBase kb,ChessPercept thePerceptor, List<ActionSchema> actionSchemas,List<ActionSchema> opponentactionSchemas,List<Position> positions,ActionSchema actionSchema) {
 		super(thePerceptor, actionSchemas);
 		String catalog = KnowledgeBuilder.getFileCatalog();
-	    String filename = catalog + outputFileName+".txt";
-		try {
-			fw = new FileWriter(filename, true);
-		} catch (IOException e1) {
-
-			e1.printStackTrace();
-		}
-	    writer = new PrintWriter(new BufferedWriter(fw));	
 	    this.opponentAction = actionSchema; // A legal move available to the opponent - This state is the result of this opponent action
 	    myActions = new ArrayList<GroundGameAction>(); // Moved from GameState
 	    actions = new ArrayList<GameAction>();
@@ -141,21 +136,29 @@ public class GroundGameState extends GameState {
 		this.opponentActions =  opponentactionSchemas;
 		this.knowledgeBase = kb; // The revised kb
 		noofActions = actionSchemas.size();
-		stateId = "S"+Integer.toString(moveNr);	 
-		writer.println("-- New state after opponent action "+actionSchema.getName()+ " --");
+		stateId = "S"+Integer.toString(moveNr);	
+	    String filename = catalog + outputFileName+stateId+".txt";
+		try {
+			fw = new FileWriter(filename, true);
+		} catch (IOException e1) {
+
+			e1.printStackTrace();
+		}
+	    writer = new PrintWriter(new BufferedWriter(fw));
+		writer.println("\n-- New state after opponent action "+actionSchema.getName()+ " --");
 		KnowledgeBuilder.fillTactics();
 		functionRegistrar = new FunctionContect();
-		gamestateId = stateId + actionSchema.getName(); //myAction.getActionSchema().getName(); The state id after an opponent action
+		gamestateId = stateId +"_" + actionSchema.getName(); //myAction.getActionSchema().getName(); The state id after an opponent action
 		newState = true; // New state must be set when correct action is found based on what opponent has available and the evaluation score
 	    produceActions();
 		for (int i=0;i<KnowledgeBuilder.getTactics().size();i++ ) {
 			String key = KnowledgeBuilder.getTactics().get(i);
 			registerFunctions(key);
 		}
-	    setStatestatistics(); // Produces statistics for this state and evaluate the score.
+	    setStatestatistics(); // Produces statistics for this state MUST set this.action based on statistics
 	    actions.addAll(relevantActions);
 	    // All states produced get the same preferred game action from the evaluation function
-		writer.flush();
+//		writer.flush();
 /*
  * To do:
  * Find which opponent piece is active in the given action schema
@@ -195,7 +198,7 @@ public class GroundGameState extends GameState {
 			e1.printStackTrace();
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));
-		writer.println("The main contructor");
+		writer.println("\nThe main contructor");
 		functionRegistrar = null; 
 		functionRegistrar = new FunctionContect();
 		KnowledgeBuilder.fillTactics();
@@ -212,12 +215,21 @@ public class GroundGameState extends GameState {
 	    setStatestatistics();
 	    stateStatisics();	
 	    actions.addAll(relevantActions);
-		gamestateId = stateId + chosenAction; //myAction.getActionSchema().getName(); The state id after an opponent action
+		gamestateId = stateId + "_" + chosenAction; //myAction.getActionSchema().getName(); The state id after an opponent action
+		evaluateScore();
 	//    checkKb("CONTROLCENTER(a,b)");
 
 //		writer.flush();
 	}
 	
+	public GroundGameAction getNextAction() {
+		return nextAction;
+	}
+
+	public void setNextAction(GroundGameAction nextAction) {
+		this.nextAction = nextAction;
+	}
+
 	public ChessFolKnowledgeBase getTestKB() {
 		return testKB;
 	}
@@ -359,10 +371,17 @@ public class GroundGameState extends GameState {
 		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
 		for (ActionSchema actionSchema:opponentActions) {
 			String name = actionSchema.getName();
+			String oppActionName = null;
 			String p = KnowledgeBuilder.extractString(name,'_',0);
-			AgamePiece gpiece =  (AgamePiece) opponentpieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(p)).findAny().orElse(null);
-			GroundGameAction gameAction = new GroundGameAction(gpiece,actionSchema,this);
-			opponentGameActions.add(gameAction);
+			if(opponentAction != null) {
+				oppActionName = opponentAction.getName();
+			}
+			boolean addSchema = oppActionName != null && oppActionName.equals(name);
+			if(!addSchema) {
+				AgamePiece gpiece =  (AgamePiece) opponentpieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(p)).findAny().orElse(null);
+				GroundGameAction gameAction = new GroundGameAction(gpiece,actionSchema,this);
+				opponentGameActions.add(gameAction);
+			}
 		}
 	}
 	/**
@@ -416,7 +435,7 @@ public class GroundGameState extends GameState {
 				mypiece = false; // OBS - no ground action produced !!!
 			}
 		}
-		writer.flush();
+//		writer.flush();
 		return ret;
 		/*  
 		 * for (String p: forwardanswer) {
@@ -558,8 +577,11 @@ public class GroundGameState extends GameState {
 		noofopponentActions = oppMoves.size();
 		noofplayerinactive = myinactivePieces.size();
 		noofopponentinactive = oppinactivePieces.size();
-		evaluateScore();
-//	    stateStatisics();	
+		if (newState) {
+			writer.println("-- New state and statistics ");
+		    stateStatisics();	
+		}
+
 		
 	}
 	/**
@@ -601,6 +623,7 @@ public class GroundGameState extends GameState {
 			if (myAction != null)
 				writer.println("Evaluation chosen action: "+myAction.toString());
 			this.action = myAction; 
+			this.actionSchema = myAction.getActionSchema();
 			openingFound = true;
 //			chosenState = true;
 		}
@@ -611,7 +634,7 @@ public class GroundGameState extends GameState {
 			String key = KnowledgeBuilder.generateStrategyKey(this);
 //			context = checkKb("CONTEXT(x)"); // This dors not return correct
 //			checkKb("CONTEXTMOVE(a,b)");  // Når din getActions()-metode nå spør KB-en: ask("TheoryMove(p, target)"), vil den få ut det trekket som passer til den valgte strategien.
-			String actionId = KnowledgeBuilder.getContextMoves().get(key); // OJN 25.5.26 Must find an alterative !!
+			String actionId = KnowledgeBuilder.getContextMoves().get(key); // OJN 25.5.26 Must find an alterative !! Created by the method createMoveMap
 //		    String actionId = "WhitePawn3" + "_" + "c4"; // If context is ?? choose correct action id
 		    myAction = relevantMapActions.get(actionId);
 			chosenAction = actionId;
@@ -619,11 +642,17 @@ public class GroundGameState extends GameState {
 			if (myAction != null) {
 				writer.println("Evaluation chosen action: "+myAction.toString());
 				this.action = myAction; 
+				this.actionSchema = myAction.getActionSchema();
 				contextFound = true;
 			}
 			if (myAction == null) {
 				relevantActions.clear();
 				relevantMapActions.clear();
+				DevelopMinorExecutor developMinor = new DevelopMinorExecutor(player,knowledgeBase);
+				functionRegistrar.register(developMinor.getMyKey(), developMinor);
+				developMinor.execute();
+				List<AgamePiece> undevelopedPieces = developMinor.getHomePieces();
+				
 				List<AgamePiece> pieces = player.getMygamePieces();
 				DirectMinorMoveExecutor executor = new DirectMinorMoveExecutor(knowledgeBase);
 				executor.setKey(KnowledgeBuilder.getMINORMOVE());
@@ -642,8 +671,12 @@ public class GroundGameState extends GameState {
 				}
 				contextFound = !relevantActions.isEmpty();
 				if (contextFound) {
-					myAction = relevantMapActions.get("WhiteBishop1_e3");
-					this.action = myAction;
+					myAction = relevantMapActions.get("WhiteBishop1_g5");
+					if (myAction != null) {
+						this.action = myAction;
+						this.actionSchema = myAction.getActionSchema();
+					}
+
 				}
 			}
 
@@ -674,16 +707,37 @@ public class GroundGameState extends GameState {
 	public boolean testEnd(GameAction action) {
 		GroundGameAction localAction = (GroundGameAction)action;
 		testKB = knowledgeBase.cloneOrCopy();
+//		testKB.setRuleBuilder(knowledgeBase.getRuleBuilder());
 		applyEffects(testKB, localAction);
 //		testKB.writeKnowledgebase();
 		if ((openingFound || contextFound) && action != null) {
 			writer.println("State testEnd chosen action "+ localAction.toString());
 //			writer.println("State testEnd chosen state "+ gamestateId);
 			this.action = action;
-			writer.flush();
+//			writer.flush();
 			goalState = true;
 			return true;
 		}
+		if(newState) {
+			if(localAction != null) {
+				writer.println("State testEnd new state true "+ localAction.toString());
+				myAction = localAction;
+				this.action = myAction;
+				this.actionSchema = myAction.getActionSchema();
+				goalState = true;
+				return true;
+			}else {
+				myAction = relevantMapActions.get("WhitePawn5_e3");
+				plannedAction = myAction;
+//				this.action = myAction;
+				writer.println("State testEnd new state true no action");
+				this.actionSchema = myAction.getActionSchema();
+//				goalState = true;
+				return true;
+			}
+		}
+		nextAction = relevantMapActions.get("WhiteKnight1_c3");
+		this.action = nextAction;
 		return false;
 	}
 	/**
