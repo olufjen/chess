@@ -100,7 +100,7 @@ public class KnowledgeBuilder {
   private static String CONTROLCENTER = "CONTROLCENTER"; //Predicate to control center
   private static String OCCUPIES_CENTER = "OCCUPIES_CENTER"; 
   private static String TAKE_PIECE = "TAKE_PIECE";
-  
+  private static String PROTECTOR ="PROTECTOR"; // A protector piece of a frendly piece
  /* 
   * Added 23.02.26 Possible types of piecemoves
   */
@@ -167,7 +167,7 @@ public class KnowledgeBuilder {
   private static final String BALTIC_DEFENCE = "BALTIC_DEFENCE";
   private static final String BALTIC_MOVE = "BALTIC_MOVE";
   private static final String WHITEPAWN_DEFENCE = "WHITEPAWN_DEFENCE";
-  private static final String DEVELOP_PIECE = "DEVELOP_PIECE"; // Key for to develop pieces
+  private static final String DEVELOP_PIECE = "DEVELOP_PIECE"; // Key for to develop minor  pieces
   
   private static Map<String,String> contextMoves = new HashMap<String,String>(); // A map of possible moves given a context
   private static List<String> tactics = new ArrayList<String>();
@@ -196,6 +196,14 @@ public static void fillTactics() {
 	  tactics.add(BALTIC_DEFENCE);
   }
   
+  public static String getPROTECTOR() {
+	return PROTECTOR;
+}
+
+  public static void setPROTECTOR(String pROTECTOR) {
+	PROTECTOR = pROTECTOR;
+  }
+
   public static String getDevelopPiece() {
 	return DEVELOP_PIECE;
 }

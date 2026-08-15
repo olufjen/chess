@@ -998,7 +998,13 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * For nondeterministic search as described in chapter 4.3.2 and figure 4.11 page 135 
  * The nondeterminState becomes the initial state of the problem    
  */
+	  List<ApieceMove> moves = game.getMovements();
+	  ApieceMove lastMove = null;
+	  if(moves != null && !moves.isEmpty()) // IS there a plan?
+		  lastMove = moves.getLast();
       GroundGameState nondeterminState = new GroundGameState(myPlayer,opponent,noofMoves,thePerceptor,folKb,actionSchemalist,opponentactionSchemalist,positionList); // When created also create the initial action
+	  if(lastMove != null)
+		  nondeterminState.setLastOpponentmove(lastMove);
       GroundGameAction gameAction  = (GroundGameAction) nondeterminState.createAction(); // creates an initial action
       NonDetermineResultFunction ndeterRFN = new NonDetermineResultFunction (nondeterminState,gameAction); //
       ChessNonDeterGoalTest<GameState> gameTest = KnowledgeBuilder.nondeterminGoaltest(gameAction); //OBS no initial action?

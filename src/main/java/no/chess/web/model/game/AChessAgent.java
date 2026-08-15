@@ -32,12 +32,13 @@ import aima.core.logic.fol.parsing.ast.QuantifiedSentence;
 import aima.core.logic.fol.parsing.ast.Sentence;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
+import aima.core.logic.fol.parsing.ast.AtomicSentence;
 import aima.core.logic.planning.ActionSchema;
 import aima.core.logic.planning.Problem;
 import aima.core.logic.propositional.agent.KBAgent;
 import aima.core.logic.propositional.kb.KnowledgeBase;
 import aima.core.logic.propositional.kb.data.Clause;
-import aima.core.logic.propositional.parsing.ast.AtomicSentence;
+
 import aima.core.util.datastructure.Pair;
 import no.chess.web.model.PlayGame;
 import no.chess.web.model.Position;
@@ -362,6 +363,7 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(KnowledgeBuilder.getOCCUPIES_CENTER());
 			chessDomain.addPredicate(KnowledgeBuilder.getIS_SUPPORTED_FOR());
 			chessDomain.addPredicate(KnowledgeBuilder.getTAKE_PIECE());
+			chessDomain.addPredicate(KnowledgeBuilder.getPROTECTOR());
 	  }
 	  
 
@@ -557,6 +559,7 @@ public class AChessAgent extends KBAgent {
 		Sentence occupyCentere4 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,e4)");
 		Sentence occupyCenterd5 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,d5)");
 		Sentence occupyCentere5 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,e5)");
+		Sentence protectorpiece = rb.defineRule(KnowledgeBuilder.getPROTECTOR()+"(p,x)",PROTECTED+"(p,x)",OCCUPIES+"(a,x)",OWNER+"("+playerName+",p)",OWNER+"("+playerName+",a)");
 //		folKb.tell(protectSupport);
 		folKb.tell(takePiece);
 		folKb.tell(pawnMove);
@@ -575,27 +578,7 @@ public class AChessAgent extends KBAgent {
 		folKb.tell(occupyCentere4);
 		folKb.tell(occupyCenterd5);
 		folKb.tell(occupyCentere5);
-		/*
-		 * createFact(MINORMOVE,2); createFact(KNIGHTMOVE,2); createFact(BISHOPMOVE,2);
-		 * createFact(ROOKMOVE,2); createFact(KINGMOVE,2); createFact(QUEENMOVE,2);
-		 * createFact(PAWNMOVE,2); createFact(MOVE, 2); createFact(CONTROLCENTER,2);
-		 * createFact(HOMESQUARE,2); createFact(OCCUPIES,2); createFact(VACANT,1);
-		 * createFact(GAMEPHASE,1)
-		 */;
-//		createFact(KnowledgeBuilder.getContextType(),1);
-		//		defineRules("FORALL", 1,PIECETYPE,MINORPIECE);
-//		defineRules("FORALL", 3,REACHABLE,PROTECTED,MINORMOVE);	
-//		defineRules("FORALL",2,REACHABLE,CENTERSQUARE,CONTROLCENTER);
-//		defineRules("FORALL",2,REACHABLE,PAWN,CENTERSQUARE,PAWNMOVE);
-//		defineRules("FORALL",2,REACHABLE,PAWN,PAWNMOVE); // Pawn move
-//		defineRules("FORALL",2,OCCUPIES,HOMESQUARE,GAMEPHASE); // 11.06.26 Fails because gamephase has only one parameter
-
-//		defineRules("FORALL",2,OCCUPIES,HOMESQUARE,GAMEPHASE); // The rule for a game phase
-//		defineRules("FORALL",2,PROTECTED,VACANT); // Not needed?
-//		AnswerHandler res = folKb.ask(asentence);
-//		String s1 = "occupies(o,px)^occupies(pi,py)";
-//		String s2 = "MOVE(pi,pz)";
-	//	KnowledgeBuilder.parseSentence(s1,s2,folKb);
+		folKb.tell(protectorpiece);
 
 		strategyChoice(); // Choose a strategy for the game
 		
@@ -708,48 +691,28 @@ public class AChessAgent extends KBAgent {
 					break;
 				}
 			}
+			naction = chooseAction(actionSchema);
 //			folKb.createsinglefacts(DEVELOPED, aName);  Removed 8.03.26 - see movestatistics
-			String nactionName = actionSchema.getName();
-			String chessName = null;
-			int nIndex = nactionName.indexOf("_");
-			if (nIndex != -1)
-				chessName = nactionName.substring(0, nIndex);
-			else
-				chessName = aName;
-			String newName = chessName; // Name to be used to find the chessAction that the actionSchema corresponds to
-			naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(newName)).findAny().orElse(null);
-			Position altPos = null;
-			List<Literal>effects = actionSchema.getEffects(); // Find alt. new position
-			for (Literal literal:effects) {
-				aima.core.logic.fol.parsing.ast.AtomicSentence sentence = literal.getAtomicSentence();
-				List<Term> effectterms = sentence.getArgs();
-				String posname = "";
-				Position  toPos = null;
-				for (Term effectTerm:effectterms) {
-					posname = effectTerm.getSymbolicName();
-					toPos = positions.get(posname);
-					if (toPos != null) {
-						altPos = toPos;
-						break;
-					}
-				}
-
-//				Position  toPos = (Position) positionList.stream().filter(c -> c.getPositionName().contains(posname)).findAny().orElse(null);
-			}
-			if (altPos != null) {
-				naction.setPreferredPosition(altPos);
-			}
+			/*
+			 * String nactionName = actionSchema.getName(); String chessName = null; int
+			 * nIndex = nactionName.indexOf("_"); if (nIndex != -1) chessName =
+			 * nactionName.substring(0, nIndex); else chessName = aName; String newName =
+			 * chessName; // Name to be used to find the chessAction that the actionSchema
+			 * corresponds to naction = (ChessActionImpl) actions.stream().filter(c ->
+			 * c.getActionName().equals(newName)).findAny().orElse(null); Position altPos =
+			 * null; List<Literal>effects = actionSchema.getEffects(); // Find alt. new
+			 * position for (Literal literal:effects) { AtomicSentence sentence =
+			 * literal.getAtomicSentence(); List<Term> effectterms = sentence.getArgs();
+			 * String posname = ""; Position toPos = null; for (Term effectTerm:effectterms)
+			 * { posname = effectTerm.getSymbolicName(); toPos = positions.get(posname); if
+			 * (toPos != null) { altPos = toPos; break; } }
+			 * 
+			 * // Position toPos = (Position) positionList.stream().filter(c ->
+			 * c.getPositionName().contains(posname)).findAny().orElse(null); } if (altPos
+			 * != null) { naction.setPreferredPosition(altPos); }
+			 */
 		}else if (aplan && newAction != null) {
-			String aName = null; // Name to be used to find the chessAction that the actionSchema corresponds to
-			String nactionName = planactionSchema.getName();
-			String chessName = null;
-			int nIndex = nactionName.indexOf("_");
-			if (nIndex != -1)
-				chessName = nactionName.substring(0, nIndex);
-			else
-				chessName = aName;
-			String newName = chessName; // Name to be used to find the chessAction that the actionSchema corresponds to
-			naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(newName)).findAny().orElse(null);
+			naction = chooseAction(planactionSchema);
 		}
 
 		for (ChessActionImpl action:actions) {
@@ -791,7 +754,48 @@ public class AChessAgent extends KBAgent {
 		return localAction;
 
 	}
+	/**
+	 * chooseAction
+	 * This method chooses the correct ChessActionImpl
+	 * from chosen ActionSchema
+	 * @param actionSchema
+	 * @return chosen ChessActionImpl
+	 */
+	public ChessActionImpl chooseAction(ActionSchema actionSchema) {
+		String nactionName = actionSchema.getName();
+		String chessName = null;
+		String aName = null; // Name to be used to find the chessAction that the actionSchema corresponds to
+		int nIndex = nactionName.indexOf("_");
+		if (nIndex != -1)
+			chessName = nactionName.substring(0, nIndex);
+		else
+			chessName = aName;
+		String newName = chessName; // Name to be used to find the chessAction that the actionSchema corresponds to
+		ChessActionImpl naction =  (ChessActionImpl) actions.stream().filter(c -> c.getActionName().equals(newName)).findAny().orElse(null);
+		Position altPos = null;
+		List<Literal>effects = actionSchema.getEffects(); // Find alt. new position
+		for (Literal literal:effects) {
+			AtomicSentence sentence = literal.getAtomicSentence();
+			List<Term> effectterms = sentence.getArgs();
+			String posname = "";
+			Position  toPos = null;
+			for (Term effectTerm:effectterms) {
+				posname = effectTerm.getSymbolicName();
+				toPos = positions.get(posname);
+				if (toPos != null) {
+					altPos = toPos;
+					break;
+				}
+			}
 
+//			Position  toPos = (Position) positionList.stream().filter(c -> c.getPositionName().contains(posname)).findAny().orElse(null);
+		}
+		if (altPos != null) {
+			naction.setPreferredPosition(altPos);
+		}
+		return naction;
+	}
+	
 
 	
 	/**
@@ -931,7 +935,7 @@ public class AChessAgent extends KBAgent {
 	 * strategyChoice()
 	 * This method creates a strategy for the game
 	 * TODO:
-	 * Develop this method further for other (opening) strategies
+	 * Develop this method further for other openings and strategies
 	 */
 	public void strategyChoice() {
 		String strategyName = KnowledgeBuilder.getStrategyName(); // We want to play:

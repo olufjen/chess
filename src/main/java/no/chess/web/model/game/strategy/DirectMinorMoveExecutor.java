@@ -71,34 +71,33 @@ public class DirectMinorMoveExecutor implements FunctionExecutor {
 	@Override
 	public Object execute() {
         // Vi går gjennom alle de LOVLIGE handlingene motoren vurderer akkurat nå
- 
-            ActionSchema schema = availableAction.getActionSchema();
-            String actionName = schema.getName();
-            String targetSquare = KnowledgeBuilder.extractString(actionName,'_', -1); // "f3"
-            AgamePiece piece = (AgamePiece) availableAction.getGamePiece();
-            // 1. Ekstraher brikke (a) og destination-felt (b) fra lovlig handling
-            // F.eks. fra Move(WhiteKnight1, g1, f3) får vi a = WhiteKnight1, b = f3
-            String pieceName = piece.getMyPiece().getOntlogyName();   // "WhiteKnight1"
-            // 2. Vi spør KB REGELEN DIREKTE!
-            // Har KB utledet at dette spesifikke paret utgjør en MINORMOVE?
-            String queryFact = key;
-            boolean properprotect = false;
-            for (AgamePiece otherpiece:pieces) {
-            	String otherPieceName = otherpiece.getMyPiece().getOntlogyName();
-            	if (!otherPieceName.equals(pieceName)) {
-            		String pred = KnowledgeBuilder.getPROTECTED();
-            		properprotect = kb.existsFact(pred, otherPieceName, targetSquare);
-            		if (properprotect)
-            			break;
-            	}
-            }
-            if (kb.askRule(queryFact,pieceName,targetSquare) && properprotect) {
-                // REGELEN SLÅR TIL! KB har gjort hele jobben og bekreftet at trekket er smart.
-                return availableAction; 
-            }
- 
+		ActionSchema schema = availableAction.getActionSchema();
+		String actionName = schema.getName();
+		String targetSquare = KnowledgeBuilder.extractString(actionName,'_', -1); // "f3"
+		AgamePiece piece = (AgamePiece) availableAction.getGamePiece();
+		// 1. Ekstraher brikke (a) og destination-felt (b) fra lovlig handling
+		// F.eks. fra Move(WhiteKnight1, g1, f3) får vi a = WhiteKnight1, b = f3
+		String pieceName = piece.getMyPiece().getOntlogyName();   // "WhiteKnight1"
+		// 2. Vi spør KB REGELEN DIREKTE!
+		// Har KB utledet at dette spesifikke paret utgjør en MINORMOVE?
+		String queryFact = key;
+		boolean properprotect = false;
+		for (AgamePiece otherpiece:pieces) {
+			String otherPieceName = otherpiece.getMyPiece().getOntlogyName();
+			if (!otherPieceName.equals(pieceName)) {
+				String pred = KnowledgeBuilder.getPROTECTED();
+				properprotect = kb.existsFact(pred, otherPieceName, targetSquare);
+				if (properprotect)
+					break;
+			}
+		}
+		if (kb.askRule(queryFact,pieceName,targetSquare) && properprotect) {
+			// REGELEN SLÅR TIL! KB har gjort hele jobben og bekreftet at trekket er smart.
+			return availableAction; 
+		}
 
-        return null; // Ingen av de tilgjengelige trekkene tilfredsstilte MINORMOVE-regelen
+
+		return null; // Ingen av de tilgjengelige trekkene tilfredsstilte MINORMOVE-regelen
 	}
 
 	@Override

@@ -15,6 +15,7 @@ import no.function.FunctionExecutor;
 /**
  * DevelopMinorExecutor
  * This Executor checks if any Minor pieces are not developed (they are still in HOMESQUARE)
+ * THe execute routine returns the first piece in the list of undeveloped pieces
  */
 public class DevelopMinorExecutor implements FunctionExecutor {
 	private APlayer myPlayer;
@@ -77,7 +78,7 @@ public class DevelopMinorExecutor implements FunctionExecutor {
 				homePieces.add(piece);
 			}	
 		}
-		return null;
+		return homePieces.get(0);
 	}
 
 	@Override

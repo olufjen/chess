@@ -14,8 +14,10 @@ import aima.core.logic.fol.parsing.ast.Sentence;
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.planning.ActionSchema;
 import no.chess.web.model.Position;
+import no.chess.web.model.game.strategy.ActionSelector;
 import no.chess.web.model.game.strategy.DevelopMinorExecutor;
 import no.chess.web.model.game.strategy.DirectMinorMoveExecutor;
+import no.chess.web.model.game.strategy.MidGamePositional;
 import no.chess.web.model.game.strategy.TargetMoveExecutor;
 import no.function.FunctionContect;
 import no.games.chess.GamePiece;
@@ -79,7 +81,8 @@ public class GroundGameState extends GameState {
 	private boolean chosenState = false; // A flag to determine if this is the end state - the chosen state
 	private String chosenAction = null; // The id of the chosen action after call to the evaluation function
 	private GroundGameAction nextAction = null; // The next action in case it is not the goal action
-
+	private ApieceMove lastOpponentmove = null;
+	private ActionSelector actionSelector = null;
 	/**
 	 * Basic Constructor
 	 * @param gamePiece
@@ -157,6 +160,7 @@ public class GroundGameState extends GameState {
 		}
 	    setStatestatistics(); // Produces statistics for this state MUST set this.action based on statistics
 	    actions.addAll(relevantActions);
+		actionSelector = new ActionSelector(functionRegistrar,relevantActions,this);
 	    // All states produced get the same preferred game action from the evaluation function
 //		writer.flush();
 /*
@@ -222,6 +226,14 @@ public class GroundGameState extends GameState {
 //		writer.flush();
 	}
 	
+	public ApieceMove getLastOpponentmove() {
+		return lastOpponentmove;
+	}
+
+	public void setLastOpponentmove(ApieceMove lastOpponentmove) {
+		this.lastOpponentmove = lastOpponentmove;
+	}
+
 	public GroundGameAction getNextAction() {
 		return nextAction;
 	}
@@ -614,7 +626,7 @@ public class GroundGameState extends GameState {
 //			writer.println("The strategy is "+strategy);
 //			String query = "DEVELOPED(x)";
 //			checkKb(query);
-		    checkKb("CONTROLCENTER(a,b)"); // To be enhanced with other queries
+		    checkKb("CONTROLCENTER(a,b)"); // To be enhanced with other queries THis call fills the relevantMapActions
 		    String actionId = KnowledgeBuilder.getContextMoves().get(openingName);
 //		    String actionId = "WhitePawn4" + "_" + "d4"; // If wants to play ? choose the correct action id
 		    myAction = relevantMapActions.get(actionId);
@@ -648,7 +660,11 @@ public class GroundGameState extends GameState {
 			if (myAction == null) {
 				relevantActions.clear();
 				relevantMapActions.clear();
+/*
+ * Rework this	and Use the action selector			
+ */
 				DevelopMinorExecutor developMinor = new DevelopMinorExecutor(player,knowledgeBase);
+				MidGamePositional developMidgame = new MidGamePositional(knowledgeBase,this,actions);
 				functionRegistrar.register(developMinor.getMyKey(), developMinor);
 				developMinor.execute();
 				List<AgamePiece> undevelopedPieces = developMinor.getHomePieces();
@@ -669,9 +685,12 @@ public class GroundGameState extends GameState {
 						relevantMapActions.put(name, possibleAction);
 					}
 				}
+/*
+ * End rework this 				
+ */
 				contextFound = !relevantActions.isEmpty();
 				if (contextFound) {
-					myAction = relevantMapActions.get("WhiteBishop1_g5");
+					myAction = relevantMapActions.get("WhiteBishop1_g5"); // This is replaced by choice from action Selector or no action - then we create a plan
 					if (myAction != null) {
 						this.action = myAction;
 						this.actionSchema = myAction.getActionSchema();
@@ -700,7 +719,7 @@ public class GroundGameState extends GameState {
 	 * If this method returns true then a chosen actionSchema is available together with its initial and goal states.
 	 * The action parameter is chosen based on evaluation 
 	 * 
-	 * @param action Based on this action, is this the goal state?
+	 * @param The player's action Based on this, is this the goal state?
 	 * @return true if this is the goal state. This results in an empty plan in the search tree
 	 */
 	@Override
@@ -710,7 +729,7 @@ public class GroundGameState extends GameState {
 //		testKB.setRuleBuilder(knowledgeBase.getRuleBuilder());
 		applyEffects(testKB, localAction);
 //		testKB.writeKnowledgebase();
-		if ((openingFound || contextFound) && action != null) {
+		if ((openingFound || contextFound) && action != null) { // We have a definite action
 			writer.println("State testEnd chosen action "+ localAction.toString());
 //			writer.println("State testEnd chosen state "+ gamestateId);
 			this.action = action;
@@ -718,7 +737,7 @@ public class GroundGameState extends GameState {
 			goalState = true;
 			return true;
 		}
-		if(newState) {
+		if(newState) { // This is from result(s.a) and GroundGameAction.performAction 
 			if(localAction != null) {
 				writer.println("State testEnd new state true "+ localAction.toString());
 				myAction = localAction;
@@ -726,8 +745,15 @@ public class GroundGameState extends GameState {
 				this.actionSchema = myAction.getActionSchema();
 				goalState = true;
 				return true;
-			}else {
-				myAction = relevantMapActions.get("WhitePawn5_e3");
+			}else {  //This is when we create a plan based on opponent actions
+				functionRegistrar.getContext().clear();
+				if (actionSelector != null) {
+					actionSelector.registerFunctions();
+					myAction = actionSelector.selectBestAction();
+				}
+				if (myAction == null)
+					myAction = relevantMapActions.get("WhitePawn5_e3"); // Need a method to choose correct move
+				// Based on available opponent actions what is the best move of the available moves of the player. We use actionSelecteor 
 				plannedAction = myAction;
 //				this.action = myAction;
 				writer.println("State testEnd new state true no action");
@@ -736,7 +762,9 @@ public class GroundGameState extends GameState {
 				return true;
 			}
 		}
-		nextAction = relevantMapActions.get("WhiteKnight1_c3");
+		nextAction = relevantMapActions.get("WhiteKnight1_c3");// Need a method to choose correct move based on the last opponent action.
+		//Run through all relevant available action for the player
+		// to choose the best move
 		this.action = nextAction;
 		return false;
 	}
