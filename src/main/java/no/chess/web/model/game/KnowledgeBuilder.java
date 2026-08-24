@@ -101,6 +101,8 @@ public class KnowledgeBuilder {
   private static String OCCUPIES_CENTER = "OCCUPIES_CENTER"; 
   private static String TAKE_PIECE = "TAKE_PIECE";
   private static String PROTECTOR ="PROTECTOR"; // A protector piece of a frendly piece
+  private static String ENABLES_BISHOP = "ENABLES_BISHOP"; // predicate to enable a bishop
+  
  /* 
   * Added 23.02.26 Possible types of piecemoves
   */
@@ -196,6 +198,14 @@ public static void fillTactics() {
 	  tactics.add(BALTIC_DEFENCE);
   }
   
+  public static String getENABLES_BISHOP() {
+	return ENABLES_BISHOP;
+}
+
+  public static void setENABLES_BISHOP(String eNABLES_BISHOP) {
+	ENABLES_BISHOP = eNABLES_BISHOP;
+  }
+
   public static String getPROTECTOR() {
 	return PROTECTOR;
 }

@@ -83,6 +83,7 @@ public class GroundGameState extends GameState {
 	private GroundGameAction nextAction = null; // The next action in case it is not the goal action
 	private ApieceMove lastOpponentmove = null;
 	private ActionSelector actionSelector = null;
+	private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
 	/**
 	 * Basic Constructor
 	 * @param gamePiece
@@ -218,7 +219,7 @@ public class GroundGameState extends GameState {
 		}
 	    setStatestatistics();
 	    stateStatisics();	
-	    actions.addAll(relevantActions);
+//	    actions.addAll(relevantActions);
 		gamestateId = stateId + "_" + chosenAction; //myAction.getActionSchema().getName(); The state id after an opponent action
 		evaluateScore();
 	//    checkKb("CONTROLCENTER(a,b)");
@@ -226,6 +227,22 @@ public class GroundGameState extends GameState {
 //		writer.flush();
 	}
 	
+	public GroundGameAction getDeterminedAction() {
+		return determinedAction;
+	}
+
+	public void setDeterminedAction(GroundGameAction determinedAction) {
+		this.determinedAction = determinedAction;
+	}
+
+	public String getChosenAction() {
+		return chosenAction;
+	}
+
+	public void setChosenAction(String chosenAction) {
+		this.chosenAction = chosenAction;
+	}
+
 	public ApieceMove getLastOpponentmove() {
 		return lastOpponentmove;
 	}
@@ -663,7 +680,7 @@ public class GroundGameState extends GameState {
 /*
  * Rework this	and Use the action selector			
  */
-				DevelopMinorExecutor developMinor = new DevelopMinorExecutor(player,knowledgeBase);
+				DevelopMinorExecutor developMinor = new DevelopMinorExecutor(player,knowledgeBase,actions);
 				MidGamePositional developMidgame = new MidGamePositional(knowledgeBase,this,actions);
 				functionRegistrar.register(developMinor.getMyKey(), developMinor);
 				developMinor.execute();
@@ -737,7 +754,7 @@ public class GroundGameState extends GameState {
 			goalState = true;
 			return true;
 		}
-		if(newState) { // This is from result(s.a) and GroundGameAction.performAction 
+		if(newState) { // This is from result(s.a) and GroundGameAction.performAction - a new state is created
 			if(localAction != null) {
 				writer.println("State testEnd new state true "+ localAction.toString());
 				myAction = localAction;
@@ -747,8 +764,12 @@ public class GroundGameState extends GameState {
 				return true;
 			}else {  //This is when we create a plan based on opponent actions
 				functionRegistrar.getContext().clear();
+//				determinedAction = relevantMapActions.get("WhiteKnight1_c3");// Need a method to choose correct move based on the last opponent action.
 				if (actionSelector != null) {
 					actionSelector.registerFunctions();
+					if (determinedAction == null)
+						determinedAction = actionSelector.selectBestAction();
+					actionSelector.setDeterminedAction(determinedAction);
 					myAction = actionSelector.selectBestAction();
 				}
 				if (myAction == null)
@@ -763,7 +784,7 @@ public class GroundGameState extends GameState {
 			}
 		}
 		nextAction = relevantMapActions.get("WhiteKnight1_c3");// Need a method to choose correct move based on the last opponent action.
-		//Run through all relevant available action for the player
+		// And the chosen action must not be among the actions in the plan !!
 		// to choose the best move
 		this.action = nextAction;
 		return false;

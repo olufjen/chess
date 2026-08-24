@@ -364,6 +364,7 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(KnowledgeBuilder.getIS_SUPPORTED_FOR());
 			chessDomain.addPredicate(KnowledgeBuilder.getTAKE_PIECE());
 			chessDomain.addPredicate(KnowledgeBuilder.getPROTECTOR());
+			chessDomain.addPredicate(KnowledgeBuilder.getENABLES_BISHOP());
 	  }
 	  
 
@@ -438,7 +439,7 @@ public class AChessAgent extends KBAgent {
 		if (aplan) {
 			List<ApieceMove> moves = game.getMovements();
 			lastMove = moves.getLast();
-			writer.println("\n The last opponent move: "+lastMove.toString());
+			writer.println("\n The last opponent move: "+lastMove.toString()); // Needs to empty the plan
 			newAction = chessPlancheck.selectMove(lastMove,noofMoves);
 
 		}
@@ -560,9 +561,22 @@ public class AChessAgent extends KBAgent {
 		Sentence occupyCenterd5 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,d5)");
 		Sentence occupyCentere5 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,e5)");
 		Sentence protectorpiece = rb.defineRule(KnowledgeBuilder.getPROTECTOR()+"(p,x)",PROTECTED+"(p,x)",OCCUPIES+"(a,x)",OWNER+"("+playerName+",p)",OWNER+"("+playerName+",a)");
-//		folKb.tell(protectSupport);
-		folKb.tell(takePiece);
+		List<String> myBishops  = myPlayer.getNameofBishops();
+		Sentence enableMinor = null;
 		folKb.tell(pawnMove);
+		for (String name:myBishops ) {
+			String pos = "f1";
+			String pawnpos = "e3"; // OBS only if player is white player
+			boolean fpos = folKb.existsFact(KnowledgeBuilder.getHOMESQUARE(),name,pos);
+			if(!fpos) {
+				pos = "c1";
+				pawnpos = "d3";
+			}
+			enableMinor = rb.defineRule(KnowledgeBuilder.getENABLES_BISHOP()+"(p,"+name+")",PAWNMOVE+"(p,"+pawnpos+")");
+			folKb.tell(enableMinor);
+		}
+		folKb.tell(takePiece);
+
 		folKb.tell(minorMove);
 		folKb.tell(controlMove);
 		folKb.tell(pawncontrolMove);
@@ -713,6 +727,9 @@ public class AChessAgent extends KBAgent {
 			 */
 		}else if (aplan && newAction != null) {
 			naction = chooseAction(planactionSchema);
+			currentPlan = null;
+			chessPlancheck.setCurrentPlan(currentPlan);
+			
 		}
 
 		for (ChessActionImpl action:actions) {

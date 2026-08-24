@@ -27,6 +27,8 @@ public class MidGamePositional implements FunctionExecutor {
     private String opponentPiece = "BlackPawn";
     private String opponentType = "Black";
     private String ownType = "White";
+	private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
+
     
     private String key = KnowledgeBuilder.getMidgamePositional();
     
@@ -35,6 +37,14 @@ public class MidGamePositional implements FunctionExecutor {
 		this.kb = kb;
 		this.state = state;
 		this.availableActions = availableActions;
+	}
+
+	public GroundGameAction getDeterminedAction() {
+		return determinedAction;
+	}
+
+	public void setDeterminedAction(GroundGameAction determinedAction) {
+		this.determinedAction = determinedAction;
 	}
 
 	public String getKey() {
@@ -75,6 +85,8 @@ public class MidGamePositional implements FunctionExecutor {
 	public Object execute() {
 		GroundGameAction bestAction = null;
 		int maxActionScore = Integer.MIN_VALUE;
+		String activeSchema = determinedAction.getActionSchema().getName();
+		String activePiece = KnowledgeBuilder.extractString(activeSchema,'_',0);
         for (GameAction action : availableActions) {
         	GroundGameAction localAction = (GroundGameAction) action;
         	AgamePiece thePiece = (AgamePiece)action.getGamePiece();
@@ -124,17 +136,34 @@ public class MidGamePositional implements FunctionExecutor {
         	if(pieceProtector)
         		continue;
         	
+        	String protectedBy = KnowledgeBuilder.getPROTECTED();
+        	List<String> otherpieces = kb.searchFacts("x", pos,protectedBy);
+        	boolean ownProtection = false;
+        	boolean isprotected = false;
+        	if (!otherpieces.isEmpty()) {
+        		for (String pieceName:otherpieces) {
+        			ownProtection = pieceName.equals(pieceId);
+        			isprotected = !pieceName.contains(opponentType) && !ownProtection;
+        			if (isprotected)
+        				break;
+        		}
+        	}
+        	if(!isprotected && isThreatened)
+        		continue;
+            if(localAction.getActionSchema().getName().contains(activePiece))
+            	continue;
             // 5. EVALUERING: Beregn hvor verdifull posisjonen er
-            int currentScore = calculateSquareValue(pieceId, pos, isThreatened);
+            int currentScore = calculateSquareValue(pieceId, pos, isThreatened,isprotected);
             // Oppdater dersom dette trekket ga høyere poengsum enn tidligere kandidater
             if (currentScore > maxActionScore) {
                 maxActionScore = currentScore;
                 bestAction = localAction;
             }
+
         }
 		return bestAction;
 	}
-    private int calculateSquareValue(String pieceId, String targetSquare, boolean isThreatened) {
+    private int calculateSquareValue(String pieceId, String targetSquare, boolean isThreatened,boolean protection) {
         int score = 0;
 
         String square = KnowledgeBuilder.getCENTERSQUARE();
@@ -145,13 +174,16 @@ public class MidGamePositional implements FunctionExecutor {
         }
         boolean extended = targetSquare.equals("c4") || targetSquare.equals("f4") ||targetSquare.equals("c5") ||targetSquare.equals("f5");
         // C. Utvidet sentrum/aktive felt (c4, f4, c5, f5 osv.)
-        if (extended) {
+        if (extended && protection) {
             score += 20;
         }
 
         // D. Trekk til trygt uforstyrret felt (ikke truet i det hele tatt)
         if (!isThreatened) {
             score += 10;
+        }
+        if (protection) {
+            score += 21;
         }
 
         return score;

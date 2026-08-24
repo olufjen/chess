@@ -59,9 +59,7 @@ import no.games.chess.fol.FOLGamesBCAsk;
 import no.games.chess.fol.FOLGamesFCAsk;
 import no.games.chess.fol.util.RuleBuilder;
 import no.games.chess.planning.ChessProblem;
-import no.games.chess.planning.PlannerGame;
 import no.games.chess.planning.ChessGraphPlanAlgorithm;
-import no.games.chess.planning.ChessPlannerSearch;
 import no.games.chess.planning.PlannerState;
 import no.games.chess.search.ChessGoalTest;
 import no.games.chess.search.ChessNode;
@@ -223,8 +221,6 @@ public class AChessProblemSolver {
   private List<Literal> stateLiterals = null;
   private State theState = null;
   
-  private ChessPlannerSearch search;
-  private AplannerGame plannerGame;
   private APerceptor thePerceptor = null;
   private RuleBuilder rb; // The rulebuilder for the kb
   

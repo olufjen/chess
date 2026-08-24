@@ -3,6 +3,7 @@ package no.chess.web.model.game.strategy;
 import java.util.ArrayList;
 import java.util.List;
 
+import no.chess.web.model.game.APlayer;
 import no.chess.web.model.game.ChessFolKnowledgeBase;
 import no.chess.web.model.game.GroundGameAction;
 import no.chess.web.model.game.GroundGameState;
@@ -24,6 +25,8 @@ public class ActionSelector {
     private List<GameAction> actions;
     private ChessFolKnowledgeBase testKB; // The cloned knowledge base after a move
     private GroundGameState gameState;
+	private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
+
     
     public ActionSelector(FunctionContect functionContext, List<GroundGameAction> relevantActions,GroundGameState gameState) {
 		super();
@@ -35,6 +38,15 @@ public class ActionSelector {
 			actions.add(action);
 		}
 		registerFunctions();
+	}
+
+	public GroundGameAction getDeterminedAction() {
+		return determinedAction;
+	}
+
+	public void setDeterminedAction(GroundGameAction determinedAction) {
+		if(this.determinedAction == null)
+			this.determinedAction = determinedAction;
 	}
 
 	public ChessFolKnowledgeBase getTestKB() {
@@ -51,9 +63,12 @@ public class ActionSelector {
 		}
     }
     public void registerFunctions() {
-		MidGamePositional exec = new MidGamePositional(gameState.getKnowledgeBase(),gameState,actions);
-		String key = exec.getKey();
-		functionContext.register(key, exec);
+		MidGamePositional mexec = new MidGamePositional(gameState.getKnowledgeBase(),gameState,actions);
+		String key = mexec.getKey();
+		functionContext.register(key, mexec);
+		APlayer player = gameState.getPlayer();
+		DevelopMinorExecutor devmexec = new DevelopMinorExecutor(player,gameState.getKnowledgeBase(),actions);
+		functionContext.register(devmexec.getMyKey(), devmexec);
     }
     /**
      * Velger det mest relevante trekket for Hvit basert på den nye tilstanden s'
@@ -62,6 +77,7 @@ public class ActionSelector {
         String midGameFork = KnowledgeBuilder.getMidgameTacticFork();
         String midGamePin = KnowledgeBuilder.getMidgameTacticPin();
         String midGamePos = KnowledgeBuilder.getMidgamePositional();
+        String devPiece = KnowledgeBuilder.getDevelopPiece();
         GroundGameAction selectedAction = null;
         // 1. PRIORITET 1: Taktisk Gaffel (MIDGAME_TACTIC_FORK)
         FunctionExecutor forkExecutor = functionContext.get(midGameFork);
@@ -80,11 +96,22 @@ public class ActionSelector {
                 selectedAction = pinMove; // Hvis en binding er mulig, GJØR DEN!
             }
         }
-
+        FunctionExecutor devPieceExec = functionContext.get(devPiece);
+        if (devPieceExec != null && selectedAction == null) {
+        	DevelopMinorExecutor developMinor = (DevelopMinorExecutor)devPieceExec;
+        	developMinor.setDeterminedAction(determinedAction);
+            GroundGameAction devMove = (GroundGameAction) developMinor.execute();
+            if (devMove != null) {
+                selectedAction = devMove; // Hvis en brikke ikke er utviklet, GJØR DEN!
+                determinedAction = devMove;
+            }
+        }
         // 3. PRIORITET 3: Posisjonell vurdering (MIDGAME_POSITIONAL)
         FunctionExecutor positionalExecutor = functionContext.get(midGamePos);
         if (positionalExecutor != null && selectedAction == null) {
-            GroundGameAction posMove = (GroundGameAction) positionalExecutor.execute();
+        	MidGamePositional positionalExec = (MidGamePositional)positionalExecutor;
+        	positionalExec.setDeterminedAction(determinedAction);
+        	GroundGameAction posMove = (GroundGameAction) positionalExecutor.execute();
             if (posMove != null) {
                 selectedAction = posMove; // Velg det posisjonelt beste trekket (sentrum, mobilitet)
             }

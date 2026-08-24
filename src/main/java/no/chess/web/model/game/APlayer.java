@@ -122,7 +122,21 @@ public class APlayer extends AbstractPlayer<AgamePiece,ApieceMove> implements Ch
 			}
 		}
 	}
-	
+	/**
+	 * getNameofBishops
+	 * This method returns the name of the bishops belonging to the player
+	 * @return - A list of names
+	 */
+	public List<String> getNameofBishops(){
+		List<String> myBishops = new ArrayList<String>();
+		for (AgamePiece piece:mygamePieces) {
+			String name = piece.getMyPiece().getOntlogyName();
+			if (name.contains("Bishop")) {
+				myBishops.add(name);
+			}
+		}
+		return myBishops;
+	}
 	public List<AgamePiece> getRemovedPieces() {
 		return removedPieces;
 	}
