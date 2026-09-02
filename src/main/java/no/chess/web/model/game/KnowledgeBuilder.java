@@ -159,6 +159,7 @@ public class KnowledgeBuilder {
   private static final String MIDGAME_TACTIC_FORK = "MIDGAME_TACTIC_FORK";
   private static final String MIDGAME_TACTIC_PIN = "MIDGAME_TACTIC_PIN";
   private static final String MIDGAME_POSITIONAL = "MIDGAME_POSITIONAL";
+  private static final String PAWN_ENABLER = "PAWN_ENABLER"; // The key for pawn enabler
   private static final String ENDGAME_BASE = "ENDGAME_BASE";
 //Enkle statiske definisjoner for motpartens svar (for å unngå skrivefeil)
   private static final String RESP_ACCEPTED = "ACCEPTED";
@@ -198,6 +199,10 @@ public static void fillTactics() {
 	  tactics.add(BALTIC_DEFENCE);
   }
   
+  public static String getPawnEnabler() {
+	return PAWN_ENABLER;
+}
+
   public static String getENABLES_BISHOP() {
 	return ENABLES_BISHOP;
 }

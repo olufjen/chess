@@ -85,14 +85,21 @@ public class MidGamePositional implements FunctionExecutor {
 	public Object execute() {
 		GroundGameAction bestAction = null;
 		int maxActionScore = Integer.MIN_VALUE;
-		String activeSchema = determinedAction.getActionSchema().getName();
-		String activePiece = KnowledgeBuilder.extractString(activeSchema,'_',0);
+		String activeSchema = "";
+		String activePiece = "";
+		String target = "";
+		if (determinedAction != null) {
+			activeSchema = determinedAction.getActionSchema().getName();
+			activePiece = KnowledgeBuilder.extractString(activeSchema,'_',0);
+		}
         for (GameAction action : availableActions) {
         	GroundGameAction localAction = (GroundGameAction) action;
         	AgamePiece thePiece = (AgamePiece)action.getGamePiece();
         	ActionSchema schema = localAction.getActionSchema();
         	String actionName = schema.getName();
         	String pos = KnowledgeBuilder.extractString(actionName,'_',-1);
+        	if (!target.equals("b5"))
+        		target = pos;
         	String pieceId =  thePiece.getMyPiece().getOntlogyName();
         	String minor = KnowledgeBuilder.getMINORPIECE();
         	if (!kb.existsFact(minor,pieceId)) {
@@ -110,6 +117,12 @@ public class MidGamePositional implements FunctionExecutor {
         	}
         	if (ownOccupy)
         		continue;
+        	
+			String attack = KnowledgeBuilder.getPAWNATTACK();
+			List<String> pawns = kb.searchFacts("x", pos, attack);
+			if(!pawns.isEmpty()) {
+				continue;
+			}
         	String threaten = KnowledgeBuilder.getTHREATEN();
         	List<String> pieces = kb.searchFacts("x", pos, threaten);
         	boolean noGood = false;

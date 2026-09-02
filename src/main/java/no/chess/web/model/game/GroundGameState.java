@@ -212,12 +212,15 @@ public class GroundGameState extends GameState {
 	    opponentGameActions = new ArrayList<GroundGameAction>();
 	    relevantActions = new ArrayList<GroundGameAction>();
 	    relevantMapActions = new HashMap<String,GroundGameAction>();
+
 	    produceActions();
 		for (int i=0;i<KnowledgeBuilder.getTactics().size();i++ ) {
 			String key = KnowledgeBuilder.getTactics().get(i);
 			registerFunctions(key);
 		}
 	    setStatestatistics();
+	    actions.addAll(relevantActions);
+		actionSelector = new ActionSelector(functionRegistrar,relevantActions,this);// Create the action selector
 	    stateStatisics();	
 //	    actions.addAll(relevantActions);
 		gamestateId = stateId + "_" + chosenAction; //myAction.getActionSchema().getName(); The state id after an opponent action
@@ -678,41 +681,65 @@ public class GroundGameState extends GameState {
 				relevantActions.clear();
 				relevantMapActions.clear();
 /*
+ * New structure added:				
+ */
+				if (actionSelector != null) {
+					actionSelector.registerFunctions();
+					if (determinedAction == null)
+						determinedAction = actionSelector.selectBestAction();
+					actionSelector.setDeterminedAction(determinedAction);
+					myAction = determinedAction;
+				}
+				if (myAction != null) {
+					this.action = myAction;
+					this.actionSchema = myAction.getActionSchema();
+					relevantActions.add(myAction);
+					String name = myAction.getActionSchema().getName();
+					relevantMapActions.put(name, myAction);
+					contextFound = true;
+				}
+
+/*
+ * The above code structure is an alternative to the code below				   
+ */
+				
+				
+/*
  * Rework this	and Use the action selector			
  */
-				DevelopMinorExecutor developMinor = new DevelopMinorExecutor(player,knowledgeBase,actions);
-				MidGamePositional developMidgame = new MidGamePositional(knowledgeBase,this,actions);
-				functionRegistrar.register(developMinor.getMyKey(), developMinor);
-				developMinor.execute();
-				List<AgamePiece> undevelopedPieces = developMinor.getHomePieces();
-				
-				List<AgamePiece> pieces = player.getMygamePieces();
-				DirectMinorMoveExecutor executor = new DirectMinorMoveExecutor(knowledgeBase);
-				executor.setKey(KnowledgeBuilder.getMINORMOVE());
-				executor.setPieces(pieces);
-				functionRegistrar.register(KnowledgeBuilder.getMINORMOVE(),executor);
-				for (GameAction action:actions) {
-					GroundGameAction localAction = (GroundGameAction)action;
-					executor = (DirectMinorMoveExecutor) functionRegistrar.get(KnowledgeBuilder.getMINORMOVE());
-					executor.setAvailableAction(localAction);
-					GroundGameAction possibleAction = (GroundGameAction) executor.execute();
-					if (possibleAction != null) {
-						relevantActions.add(possibleAction);
-						String name = possibleAction.getActionSchema().getName();
-						relevantMapActions.put(name, possibleAction);
-					}
-				}
+/*
+ * DevelopMinorExecutor developMinor = new
+ * DevelopMinorExecutor(player,opponent,knowledgeBase,actions);
+ * MidGamePositional developMidgame = new
+ * MidGamePositional(knowledgeBase,this,actions);
+ * functionRegistrar.register(developMinor.getMyKey(), developMinor);
+ * developMinor.execute(); List<AgamePiece> undevelopedPieces =
+ * developMinor.getHomePieces();
+ * 
+ * List<AgamePiece> pieces = player.getMygamePieces(); DirectMinorMoveExecutor
+ * executor = new DirectMinorMoveExecutor(knowledgeBase);
+ * executor.setKey(KnowledgeBuilder.getMINORMOVE()); executor.setPieces(pieces);
+ * functionRegistrar.register(KnowledgeBuilder.getMINORMOVE(),executor); for
+ * (GameAction action:actions) { GroundGameAction localAction =
+ * (GroundGameAction)action; executor = (DirectMinorMoveExecutor)
+ * functionRegistrar.get(KnowledgeBuilder.getMINORMOVE());
+ * executor.setAvailableAction(localAction); GroundGameAction possibleAction =
+ * (GroundGameAction) executor.execute(); if (possibleAction != null) {
+ * relevantActions.add(possibleAction); String name =
+ * possibleAction.getActionSchema().getName(); relevantMapActions.put(name,
+ * possibleAction); } }
+ */
+ 
 /*
  * End rework this 				
  */
-				contextFound = !relevantActions.isEmpty();
-				if (contextFound) {
+//				contextFound = !relevantActions.isEmpty();
+//				if (contextFound && myAction == null) {
+				if (myAction == null) {	
 					myAction = relevantMapActions.get("WhiteBishop1_g5"); // This is replaced by choice from action Selector or no action - then we create a plan
-					if (myAction != null) {
-						this.action = myAction;
-						this.actionSchema = myAction.getActionSchema();
-					}
-
+					this.action = myAction;
+					this.actionSchema = myAction.getActionSchema();
+					contextFound = true;
 				}
 			}
 

@@ -3,6 +3,7 @@ package no.chess.web.model.game.strategy;
 import java.util.ArrayList;
 import java.util.List;
 
+import aima.core.logic.planning.ActionSchema;
 import no.chess.web.model.game.APlayer;
 import no.chess.web.model.game.ChessFolKnowledgeBase;
 import no.chess.web.model.game.GroundGameAction;
@@ -62,13 +63,22 @@ public class ActionSelector {
 			String key = KnowledgeBuilder.getTactics().get(i);
 		}
     }
+    /**
+     * registerFunctions
+     * This method register executor functions
+     */
     public void registerFunctions() {
 		MidGamePositional mexec = new MidGamePositional(gameState.getKnowledgeBase(),gameState,actions);
 		String key = mexec.getKey();
-		functionContext.register(key, mexec);
+		functionContext.register(key, mexec); // Register mid game positional
 		APlayer player = gameState.getPlayer();
-		DevelopMinorExecutor devmexec = new DevelopMinorExecutor(player,gameState.getKnowledgeBase(),actions);
-		functionContext.register(devmexec.getMyKey(), devmexec);
+		APlayer opponent = gameState.getOpponent();
+		DevelopMinorExecutor devmexec = new DevelopMinorExecutor(player,opponent,gameState.getKnowledgeBase(),actions);
+		functionContext.register(devmexec.getMyKey(), devmexec); // Register develop minor
+		PawnStructureExecutor pawnStructurexec = new PawnStructureExecutor(gameState.getKnowledgeBase(),actions); 
+		functionContext.register(pawnStructurexec.getKey(), pawnStructurexec);// Register pawn structure
+		DirectMinorMoveExecutor directExecutor = new DirectMinorMoveExecutor(gameState.getKnowledgeBase(),actions,player.getMygamePieces());
+		
     }
     /**
      * Velger det mest relevante trekket for Hvit basert på den nye tilstanden s'
@@ -78,6 +88,7 @@ public class ActionSelector {
         String midGamePin = KnowledgeBuilder.getMidgameTacticPin();
         String midGamePos = KnowledgeBuilder.getMidgamePositional();
         String devPiece = KnowledgeBuilder.getDevelopPiece();
+        String pawnenabler = KnowledgeBuilder.getPawnEnabler();
         GroundGameAction selectedAction = null;
         // 1. PRIORITET 1: Taktisk Gaffel (MIDGAME_TACTIC_FORK)
         FunctionExecutor forkExecutor = functionContext.get(midGameFork);
@@ -103,8 +114,18 @@ public class ActionSelector {
             GroundGameAction devMove = (GroundGameAction) developMinor.execute();
             if (devMove != null) {
                 selectedAction = devMove; // Hvis en brikke ikke er utviklet, GJØR DEN!
+      			ActionSchema schema = selectedAction.getActionSchema();
+       			String actionName = schema.getName();
                 determinedAction = devMove;
             }
+        }
+        FunctionExecutor pawnEnabler = functionContext.get(pawnenabler);
+        if(pawnEnabler != null && selectedAction == null) {
+        	PawnStructureExecutor pawnStructurexec = (PawnStructureExecutor)pawnEnabler;
+        	GroundGameAction pawnMove = (GroundGameAction) pawnStructurexec.execute();
+        	if(pawnMove != null) {
+        		selectedAction = pawnMove;
+        	}
         }
         // 3. PRIORITET 3: Posisjonell vurdering (MIDGAME_POSITIONAL)
         FunctionExecutor positionalExecutor = functionContext.get(midGamePos);
