@@ -28,7 +28,7 @@ public class MidGamePositional implements FunctionExecutor {
     private String opponentType = "Black";
     private String ownType = "White";
 	private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
-
+	private String startpos = "1";
     
     private String key = KnowledgeBuilder.getMidgamePositional();
     
@@ -86,7 +86,7 @@ public class MidGamePositional implements FunctionExecutor {
 		GroundGameAction bestAction = null;
 		int maxActionScore = Integer.MIN_VALUE;
 		String activeSchema = "";
-		String activePiece = "";
+		String activePiece = "xxyy";
 		String target = "";
 		if (determinedAction != null) {
 			activeSchema = determinedAction.getActionSchema().getName();
@@ -98,13 +98,20 @@ public class MidGamePositional implements FunctionExecutor {
         	ActionSchema schema = localAction.getActionSchema();
         	String actionName = schema.getName();
         	String pos = KnowledgeBuilder.extractString(actionName,'_',-1);
-        	if (!target.equals("b5"))
-        		target = pos;
-        	String pieceId =  thePiece.getMyPiece().getOntlogyName();
+          	String pieceId =  thePiece.getMyPiece().getOntlogyName();
         	String minor = KnowledgeBuilder.getMINORPIECE();
-        	if (!kb.existsFact(minor,pieceId)) {
-        		continue; // Hopp over om det er bonde, tårn, dronning eller konge
+        	String queen = KnowledgeBuilder.getQUEEN();
+        	String pawn = KnowledgeBuilder.getPAWN();
+        	boolean minorPiece = false;
+        	boolean queenPiece = false;
+        	boolean pawnPiece = false;
+        	if (kb.existsFact(minor,pieceId)) {
+        		minorPiece = true; // Hopp over om det er bonde, tårn, dronning eller konge
         	}
+        	if (kb.existsFact(queen, pieceId))
+        		queenPiece = true;
+        	if (kb.existsFact(pawn, pieceId))
+        		pawnPiece = true;
         	String occupies = KnowledgeBuilder.getOCCUPIES();
         	List<String> occupypieces = kb.searchFacts("x", pos,occupies);
         	boolean ownOccupy = false;
@@ -120,8 +127,9 @@ public class MidGamePositional implements FunctionExecutor {
         	
 			String attack = KnowledgeBuilder.getPAWNATTACK();
 			List<String> pawns = kb.searchFacts("x", pos, attack);
+			boolean pawnsAttack = false;
 			if(!pawns.isEmpty()) {
-				continue;
+				pawnsAttack = true;
 			}
         	String threaten = KnowledgeBuilder.getTHREATEN();
         	List<String> pieces = kb.searchFacts("x", pos, threaten);
@@ -129,13 +137,11 @@ public class MidGamePositional implements FunctionExecutor {
         	boolean isThreatened = false; 
         	if (!pieces.isEmpty()) {
         		for (String pieceName:pieces) {
-        			noGood = pieceName.contains(opponentPiece);
+        			noGood = pieceName.contains(opponentPiece); // The opponent pawn
         			if (noGood)
         				break;
           		}
         	}
-        	if (noGood)
-        		continue;
         	if (!noGood) {
            		for (String pieceName:pieces) {
         			isThreatened = pieceName.contains(opponentType);
@@ -144,11 +150,10 @@ public class MidGamePositional implements FunctionExecutor {
           		}
         	}
         	String protector = KnowledgeBuilder.getPROTECTOR();
-        	boolean pieceProtector = false;
-        	pieceProtector = kb.askRule(protector,pieceId,"x");
-        	if(pieceProtector)
-        		continue;
-        	
+			/* ????? Act as a protector ???
+			 * boolean pieceProtector = false; pieceProtector =
+			 * kb.askRule(protector,pieceId,pos); if(pieceProtector) continue;
+			 */
         	String protectedBy = KnowledgeBuilder.getPROTECTED();
         	List<String> otherpieces = kb.searchFacts("x", pos,protectedBy);
         	boolean ownProtection = false;
@@ -161,9 +166,13 @@ public class MidGamePositional implements FunctionExecutor {
         				break;
         		}
         	}
-        	if(!isprotected && isThreatened)
+        	if(!isprotected && isThreatened && !pawnPiece)
         		continue;
-            if(localAction.getActionSchema().getName().contains(activePiece))
+        	if (pawnsAttack && !pawnPiece)
+        		continue;
+        	if ((isThreatened || pawnsAttack) && queenPiece)
+        		continue;
+            if(localAction.getActionSchema().getName().contains(activePiece)) // OBS This is true if activePiece is "" Now corrected
             	continue;
             // 5. EVALUERING: Beregn hvor verdifull posisjonen er
             int currentScore = calculateSquareValue(pieceId, pos, isThreatened,isprotected);
@@ -176,11 +185,25 @@ public class MidGamePositional implements FunctionExecutor {
         }
 		return bestAction;
 	}
+    /**
+     * calculateSquareValue
+     * Calculates the value of the new postion
+     * @param pieceId
+     * @param targetSquare
+     * @param isThreatened
+     * @param protection
+     * @return
+     */
     private int calculateSquareValue(String pieceId, String targetSquare, boolean isThreatened,boolean protection) {
         int score = 0;
 
         String square = KnowledgeBuilder.getCENTERSQUARE();
-
+        String homeSquare = KnowledgeBuilder.getHOMESQUARE();
+        if (kb.existsFact(homeSquare,pieceId,targetSquare)) {
+            score -= 10;
+        }
+        if(targetSquare.contains(startpos)) // Is this first row?
+        	score -= 10;
         // B. Sentrumskontroll (d4, e4, d5, e5)
         if (kb.existsFact(square,targetSquare)) {
             score += 50;

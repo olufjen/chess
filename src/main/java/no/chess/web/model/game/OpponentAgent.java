@@ -628,7 +628,7 @@ public class OpponentAgent {
 /*					if (pieceType instanceof AQueen && piece.checkWhite() ) {
 						writer.println("Checking reachable for white queen\n"+piece.toString());
 					}*/
-					ChessActionImpl tempaction = new ChessActionImpl(reachablePositions,piece,player,myPlayer); // Creates new removed positions
+					ChessActionImpl tempaction = new ChessActionImpl(reachablePositions,piece,player,myPlayer,player); // Creates new removed positions
 //					player.calculatePreferredPosition(piece, tempaction); // Must use a new action
 
 					String occupies = piece.returnPredicate();

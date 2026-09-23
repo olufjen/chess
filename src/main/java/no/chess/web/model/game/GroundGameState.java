@@ -155,13 +155,15 @@ public class GroundGameState extends GameState {
 		gamestateId = stateId +"_" + actionSchema.getName(); //myAction.getActionSchema().getName(); The state id after an opponent action
 		newState = true; // New state must be set when correct action is found based on what opponent has available and the evaluation score
 	    produceActions();
-		for (int i=0;i<KnowledgeBuilder.getTactics().size();i++ ) {
-			String key = KnowledgeBuilder.getTactics().get(i);
-			registerFunctions(key);
-		}
+		
+		  for (int i=0;i<KnowledgeBuilder.getTactics().size();i++ ) {
+			  String key = KnowledgeBuilder.getTactics().get(i); registerFunctions(key);
+		  }
+		 
 	    setStatestatistics(); // Produces statistics for this state MUST set this.action based on statistics
 	    actions.addAll(relevantActions);
 		actionSelector = new ActionSelector(functionRegistrar,relevantActions,this);
+		
 	    // All states produced get the same preferred game action from the evaluation function
 //		writer.flush();
 /*
@@ -221,7 +223,7 @@ public class GroundGameState extends GameState {
 	    setStatestatistics();
 	    actions.addAll(relevantActions);
 		actionSelector = new ActionSelector(functionRegistrar,relevantActions,this);// Create the action selector
-	    stateStatisics();	
+//	    stateStatisics();	
 //	    actions.addAll(relevantActions);
 		gamestateId = stateId + "_" + chosenAction; //myAction.getActionSchema().getName(); The state id after an opponent action
 		evaluateScore();
@@ -684,7 +686,7 @@ public class GroundGameState extends GameState {
  * New structure added:				
  */
 				if (actionSelector != null) {
-					actionSelector.registerFunctions();
+//					actionSelector.registerFunctions(); Functions are registered when action selector is created
 					if (determinedAction == null)
 						determinedAction = actionSelector.selectBestAction();
 					actionSelector.setDeterminedAction(determinedAction);

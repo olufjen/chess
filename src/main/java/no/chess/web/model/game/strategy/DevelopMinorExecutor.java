@@ -28,6 +28,7 @@ public class DevelopMinorExecutor implements FunctionExecutor {
     private  List<GameAction> availableActions;
     private String myKey = KnowledgeBuilder.getDevelopPiece();
 	private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
+	private BishopEvaluationService evaluationService;
 
 	public DevelopMinorExecutor(APlayer myPlayer) {
 		super();
@@ -42,6 +43,7 @@ public class DevelopMinorExecutor implements FunctionExecutor {
 		this.kb = kb;
 		homePieces = new ArrayList<AgamePiece>(); // Contains Minor pieces
 		this.availableActions = availableActions;
+		evaluationService = new BishopEvaluationService(kb,myPlayer,opponent);
 	}
 
 	public GroundGameAction getDeterminedAction() {
@@ -88,6 +90,7 @@ public class DevelopMinorExecutor implements FunctionExecutor {
 	@Override
 	public Object execute() {
 		GroundGameAction bestAction = null;
+		int bestScore = Integer.MIN_VALUE;
 		List<AgamePiece> pieces = myPlayer.getMygamePieces();
 		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
 		homePieces.clear();
@@ -118,8 +121,12 @@ public class DevelopMinorExecutor implements FunctionExecutor {
 		boolean properprotect = false;
 		String target = "";
        	GroundGameAction localAction = null;
+       	GroundGameAction chosenAction = null;
+       	int noofActions = 0;
        	if(availableActions != null && !availableActions.isEmpty()) {
+       		noofActions = availableActions.size() - 1;
        		for (GameAction action : availableActions) {
+       			int score = 0;
        	      	foundPiece = false;
        			pawn = false;
        			properprotect = false;
@@ -153,24 +160,37 @@ public class DevelopMinorExecutor implements FunctionExecutor {
            					String otherPieceName = otherpiece.getMyPiece().getOntlogyName();
            					if (!otherPieceName.equals(pieceId)) {
            						properprotect = kb.existsFact(pred, otherPieceName, targetSquare);
-           						if(properprotect)
+           						if(properprotect) {
            							break;
+           						}
            					}
            				}
        				}
 
        			}
-       			if (foundPiece && properprotect && !pawn)
-       				break;
+       			if (foundPiece && properprotect && !pawn) {
+       				// Evaluate the position before
+       				if (pieceId.contains("Bishop")) {
+          				score = evaluationService.evaluateBishopDevelopment(pieceId, targetSquare);
+           				if (score > bestScore) {
+           					bestScore = score;
+           					chosenAction = localAction;
+           				}
+       				}else {
+       					chosenAction = localAction;
+       					break;
+       				}
+       			}
        		}
        	}
 		if(foundPiece && !pawn) {
-   			ActionSchema schema = localAction.getActionSchema();
+   			ActionSchema schema = chosenAction.getActionSchema();
    			String actionName = schema.getName();
    			String mytargetSquare = KnowledgeBuilder.extractString(actionName,'_', -1); //
-			bestAction = localAction;
+			bestAction = chosenAction;
 		}
-
+		if (chosenAction != null)
+			bestAction = chosenAction;
 		return bestAction;
 	}
 

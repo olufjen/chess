@@ -171,6 +171,7 @@ public class KnowledgeBuilder {
   private static final String BALTIC_MOVE = "BALTIC_MOVE";
   private static final String WHITEPAWN_DEFENCE = "WHITEPAWN_DEFENCE";
   private static final String DEVELOP_PIECE = "DEVELOP_PIECE"; // Key for to develop minor  pieces
+  private static final String DEFENDTHREATENEDPIECE = "DEFENDTHREATENEDPIECE";
   
   private static Map<String,String> contextMoves = new HashMap<String,String>(); // A map of possible moves given a context
   private static List<String> tactics = new ArrayList<String>();
@@ -218,6 +219,10 @@ public static void fillTactics() {
   public static void setPROTECTOR(String pROTECTOR) {
 	PROTECTOR = pROTECTOR;
   }
+
+  public static String getDefendthreatenedpiece() {
+	return DEFENDTHREATENEDPIECE;
+}
 
   public static String getDevelopPiece() {
 	return DEVELOP_PIECE;

@@ -78,7 +78,9 @@ public class ActionSelector {
 		PawnStructureExecutor pawnStructurexec = new PawnStructureExecutor(gameState.getKnowledgeBase(),actions); 
 		functionContext.register(pawnStructurexec.getKey(), pawnStructurexec);// Register pawn structure
 		DirectMinorMoveExecutor directExecutor = new DirectMinorMoveExecutor(gameState.getKnowledgeBase(),actions,player.getMygamePieces());
-		
+		functionContext.register(directExecutor.getKey(), directExecutor);
+		DefendThreatenedPieceExecutor defenderExecutor = new DefendThreatenedPieceExecutor(gameState);
+		functionContext.register(defenderExecutor.getMyKey(), defenderExecutor); // Register defender executor
     }
     /**
      * Velger det mest relevante trekket for Hvit basert på den nye tilstanden s'
@@ -89,10 +91,19 @@ public class ActionSelector {
         String midGamePos = KnowledgeBuilder.getMidgamePositional();
         String devPiece = KnowledgeBuilder.getDevelopPiece();
         String pawnenabler = KnowledgeBuilder.getPawnEnabler();
+        String defender = KnowledgeBuilder.getDefendthreatenedpiece();
         GroundGameAction selectedAction = null;
+        FunctionExecutor defenderExec = functionContext.get(defender);
+        if (defenderExec != null ) {
+        	GroundGameAction defenderMove = (GroundGameAction) defenderExec.execute(); 
+        	if (defenderMove != null) {
+        		selectedAction = defenderMove;
+        	}
+        }
+        
         // 1. PRIORITET 1: Taktisk Gaffel (MIDGAME_TACTIC_FORK)
         FunctionExecutor forkExecutor = functionContext.get(midGameFork);
-        if (forkExecutor != null) {
+        if (forkExecutor != null && selectedAction == null) {
             GroundGameAction forkMove = (GroundGameAction) forkExecutor.execute();
             if (forkMove != null) {
                 selectedAction =  forkMove; // Hvis en gaffel er mulig, GJØR DEN!

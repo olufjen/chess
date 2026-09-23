@@ -1227,7 +1227,7 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
 					if (attackpos != null)
 						attack = attackpos.get(aposName);
 					Position pos =  (Position) removedPos.stream().filter(c -> c.getPositionName().contains(aposName)).findAny().orElse(null);
-					if (pos == null && attack == null) {
+					if (pos == null ){//&& attack == null) { // Regel: Dersom posisjonen ikke er fjernet, lag et action schema.  OBS 19.09.26 !! De kan ikke være null begge samtidig 
 						State anotherinitialState = buildInitialstate(pieceName,posName,aposName); //This is the same initial state
 						State anothergoalstate = buildGoalstate(pieceName, aposName,posName);
 						String piecepos = pieceName+"_"+aposName;

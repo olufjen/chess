@@ -22,6 +22,8 @@ import no.games.chess.AbstractGamePiece.pieceType;
  * It also calculates which reachable positions are occupied by other pieces belonging to the same player.
  * They are held in the List positionRemoved
  * The PreferredMove processor uses this information to determine which positions are available for a given piece
+ * @since 18.09.26
+ * If third row for a pawn is blocked then the forth row must be blocked
  * @author oluf 
  *
  */
@@ -44,7 +46,8 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private Position strikePosition = null; // This position is set if it is occupied by an opponent piece
 	private boolean strike = false; // This flag is set by the actionprocessor
 	private APlayer player; // The player for this action
-	private APlayer opponent; // The opponent player
+	private APlayer opponent; // The opponent player for this action
+	private APlayer myPlayer; // The player representing the game, At present (21.09.26) This can only be the white player 
 	
 	private ApieceMove possibleMove;
 	private int pn = 0;
@@ -64,12 +67,14 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	private String actionName;
 	private Double evaluationValue = null; // An evaluation value for the action. It is produced by the ActionProcessor
 	private boolean moveFlag = false; // True when a move is possible
-	public ChessActionImpl(HashMap<String, Position> positions, AgamePiece chessPiece,APlayer player, APlayer opponent) {
+	
+	public ChessActionImpl(HashMap<String, Position> positions, AgamePiece chessPiece,APlayer player, APlayer opponent,APlayer myPlayer) {
 		super();
 		this.positions = positions;
 		this.chessPiece = chessPiece;
 		this.player = player;
 		this.opponent = opponent;
+		this.myPlayer = myPlayer;
 		pieceType = chessPiece.getChessType();
 		type = chessPiece.getPieceType();
 		this.availablePositions = getActions(); // The positionRemoved are also created and filled. They are positions occupied by other pieces owned by the player
@@ -418,7 +423,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 //					pos.setFriendlyPosition(false);
 					if (pos != null) {
 						if (pos.isInUse()) { // OBS: Added 14.05.20 Are never active !! ??
-							if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) {
+							if (otherPiece.getMyPosition().getPositionName().equals(position.getPositionName())) { // Dersom posisjonen er tatt av en av mine brikker:
 								String name = otherPiece.getMyPosition().getPositionName();
 								String pName = otherPiece.getMyPiece().getOntlogyName();
 /*								if (pieceType instanceof AQueen)
@@ -426,6 +431,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 								Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
 								if (posinTable == null && !checkQueen(pos) && ! bKnight) { //The bKnight added nov. 21. All positions are available to the knight
 									positionRemoved.add(position);
+									checkPawnStart(chessPiece,position);
 									chessPiece.determinFriendPosition(pos);
 									//position.setFriendlyPosition(true);
 								}
@@ -515,6 +521,35 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		}
 		chessPiece.setBishopRemoved(bishopRemoved);
 		return queen;
+	}
+	/**
+	 * checkPawnStart
+	 * This method removes the forth row if the third row s blocked for a pawn
+	 * @param pawnPiece
+	 */
+	private void checkPawnStart(AgamePiece pawnPiece, Position blockedPos) {
+		if (pieceType instanceof APawn) {
+			String name = pawnPiece.getMyPiece().getOntlogyName();
+			String blockposName = blockedPos.getPositionName();
+			AgamePiece playerPiece = (AgamePiece)myPlayer.getMygamePieces().stream().filter(c -> c.getMyPiece().getOntlogyName().contains(name)).findAny().orElse(null);
+			if (playerPiece == pawnPiece) {
+				Position pos = pawnPiece.getMyPosition();
+				if(pos == null)
+					pos = pawnPiece.getHeldPosition();
+				Position homePos = pawnPiece.getHomePosition();
+				if (pos.getPositionName().equals(homePos.getPositionName())) {
+					Position attackPos = pawnPiece.getAttackPositions().get(blockposName);
+					String posName = homePos.getPositionName().substring(0, 1) + "4";
+					if(attackPos != null)
+						posName = blockposName;
+					Position remPos = positions.get(posName);
+					if(remPos != null)
+						positionRemoved.add(remPos);
+				}
+			}
+
+		}
+
 	}
 	/**
 	 * checkCastling

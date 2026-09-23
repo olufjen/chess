@@ -661,7 +661,7 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 		for (AgamePiece piece : pieces) {
 			if (piece.isActive()) {
 				HashMap<String,Position> reachablePositions = piece.getReacablePositions();
-				ChessAction action = new ChessActionImpl(reachablePositions,piece,localPlayer,localOpponent);
+				ChessAction action = new ChessActionImpl(reachablePositions,piece,localPlayer,localOpponent,myPlayer);
 				opponentActions.add(action);
 			}
 		}
@@ -694,7 +694,7 @@ public class ChessStateImpl<GameBoard> implements ChessState<GameBoard> {
 		for (AgamePiece piece : pieces) {
 			if (piece.isActive()) {
 				HashMap<String,Position> reachablePositions = piece.getReacablePositions();
-				ChessAction action = new ChessActionImpl(reachablePositions,piece,playerTomove,opponent);
+				ChessAction action = new ChessActionImpl(reachablePositions,piece,playerTomove,opponent,myPlayer);
 				actions.add(action);
 			}
 		}
