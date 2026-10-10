@@ -23,6 +23,7 @@ public class MidGamePositional implements FunctionExecutor {
 
     private  ChessFolKnowledgeBase kb;
     private  GroundGameState state;
+    private ExecutorHelper helper;
     private  List<GameAction> availableActions;
     private String opponentPiece = "BlackPawn";
     private String opponentType = "Black";
@@ -37,6 +38,16 @@ public class MidGamePositional implements FunctionExecutor {
 		this.kb = kb;
 		this.state = state;
 		this.availableActions = availableActions;
+        helper = new ExecutorHelper(kb); 
+        helper.setOpponent(state.getOpponent());
+	}
+
+	public ExecutorHelper getHelper() {
+		return helper;
+	}
+
+	public void setHelper(ExecutorHelper helper) {
+		this.helper = helper;
 	}
 
 	public GroundGameAction getDeterminedAction() {
@@ -106,7 +117,7 @@ public class MidGamePositional implements FunctionExecutor {
         	boolean queenPiece = false;
         	boolean pawnPiece = false;
         	if (kb.existsFact(minor,pieceId)) {
-        		minorPiece = true; // Hopp over om det er bonde, tårn, dronning eller konge
+        		minorPiece = true; //
         	}
         	if (kb.existsFact(queen, pieceId))
         		queenPiece = true;
@@ -124,12 +135,24 @@ public class MidGamePositional implements FunctionExecutor {
         	}
         	if (ownOccupy)
         		continue;
-        	
+        	if (pawnPiece) {
+        		String myPos = thePiece.getmyPosition().getPositionName();
+        		boolean onRank = helper.isOnSameFile(myPos, pos); //
+        		if(!onRank) {
+        			boolean legal = helper.checkAttack(pos);
+        			if (!legal)
+        				continue;
+        		}
+        	}
 			String attack = KnowledgeBuilder.getPAWNATTACK();
 			List<String> pawns = kb.searchFacts("x", pos, attack);
 			boolean pawnsAttack = false;
 			if(!pawns.isEmpty()) {
-				pawnsAttack = true;
+				for (String pawnName:pawns) {
+					pawnsAttack = pawnName.contains(opponentPiece);
+					if (pawnsAttack)
+						break;
+				}
 			}
         	String threaten = KnowledgeBuilder.getTHREATEN();
         	List<String> pieces = kb.searchFacts("x", pos, threaten);

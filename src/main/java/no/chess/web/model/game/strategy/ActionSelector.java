@@ -18,6 +18,13 @@ import no.games.chess.search.nondeterministic.GameAction;
  * This object selects the best available action by testing a number of various rules in the kb
  * The action selector is used to find the best move based on a move chosen by the opponent.
  * The opponent move creates a new kb'. 
+ * The Action Selecter works with the following priorities:
+ * PRIORITET 0 DEFEND_THREATENED Redde ubeskyttede brikker i fare (Unngå bukk)
+ * PRIORITET 1 MIDGAME_TACTIC_FORK Skape direkte dobbelttangrep (vinne materiell)
+ * PRIORITET 2 MIDGAME_TACTIC_PIN Etablere bindinger mot tunge offiserer
+ * PRIORITET 3 DEVELOP_MINOR & PAWN_ENABLER Få uutviklede brikker ut / åpne diagonaler
+ * PRIORITET 4 MIDGAME_POSITIONAL Sentrumskontroll, aktive felt, manøvrering
+
  * @author olufj
  */
 public class ActionSelector {
@@ -80,6 +87,27 @@ public class ActionSelector {
 		DirectMinorMoveExecutor directExecutor = new DirectMinorMoveExecutor(gameState.getKnowledgeBase(),actions,player.getMygamePieces());
 		functionContext.register(directExecutor.getKey(), directExecutor);
 		DefendThreatenedPieceExecutor defenderExecutor = new DefendThreatenedPieceExecutor(gameState);
+		functionContext.register(defenderExecutor.getMyKey(), defenderExecutor); // Register defender executor
+    }
+    /**
+     * registerFunctions
+     * This method register executor functions with a cloned KB
+     */
+    public void registernewFunctions() {
+		MidGamePositional mexec = new MidGamePositional(testKB,gameState,actions);
+		String key = mexec.getKey();
+		functionContext.register(key, mexec); // Register mid game positional
+		APlayer player = gameState.getPlayer();
+		APlayer opponent = gameState.getOpponent();
+		DevelopMinorExecutor devmexec = new DevelopMinorExecutor(player,opponent,testKB,actions);
+		functionContext.register(devmexec.getMyKey(), devmexec); // Register develop minor
+		PawnStructureExecutor pawnStructurexec = new PawnStructureExecutor(testKB,actions); 
+		functionContext.register(pawnStructurexec.getKey(), pawnStructurexec);// Register pawn structure
+		DirectMinorMoveExecutor directExecutor = new DirectMinorMoveExecutor(testKB,actions,player.getMygamePieces());
+		functionContext.register(directExecutor.getKey(), directExecutor);
+		DefendThreatenedPieceExecutor defenderExecutor = new DefendThreatenedPieceExecutor(gameState);
+		defenderExecutor.setKb(null);
+		defenderExecutor.setKb(testKB);
 		functionContext.register(defenderExecutor.getMyKey(), defenderExecutor); // Register defender executor
     }
     /**

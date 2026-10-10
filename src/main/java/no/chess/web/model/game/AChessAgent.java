@@ -365,6 +365,10 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(KnowledgeBuilder.getTAKE_PIECE());
 			chessDomain.addPredicate(KnowledgeBuilder.getPROTECTOR());
 			chessDomain.addPredicate(KnowledgeBuilder.getENABLES_BISHOP());
+			chessDomain.addPredicate(KnowledgeBuilder.getOnSameFile());
+			chessDomain.addPredicate(KnowledgeBuilder.getOnSameRank());		
+			chessDomain.addPredicate(KnowledgeBuilder.getPinsAgainstKing());
+			chessDomain.addPredicate(KnowledgeBuilder.getPinsAgainstQueen());
 	  }
 	  
 
@@ -439,9 +443,9 @@ public class AChessAgent extends KBAgent {
 		if (aplan) {
 			List<ApieceMove> moves = game.getMovements();
 			lastMove = moves.getLast();
-			writer.println("\n The last opponent move: "+lastMove.toString()); // Needs to empty the plan
+			writer.println("\nThe last opponent move: "+lastMove.toString()); // Needs to empty the plan
 			newAction = chessPlancheck.selectMove(lastMove,noofMoves);
-
+			aplan = newAction != null;
 		}
 		for (ChessAction action:allActions) { //*** Added 23.05.25 olj
 			ChessActionImpl localAction =(ChessActionImpl) action;
@@ -533,6 +537,7 @@ public class AChessAgent extends KBAgent {
 		makeSentences(stateImpl.getOpponent()); //
 		BoardGeometryGenerator bGeo =  new BoardGeometryGenerator(KnowledgeBuilder.getBETWEEN());
 		bGeo.generateAllBetweenFacts(folKb); // All between facts
+		createTopology();
 		APlayer opponent = stateImpl.getOpponent();
 		String oppName = opponent.getNameOfplayer();
 		playerName = myPlayer.getNameOfplayer();
@@ -560,6 +565,7 @@ public class AChessAgent extends KBAgent {
 		Sentence occupyCentere4 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,e4)");
 		Sentence occupyCenterd5 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,d5)");
 		Sentence occupyCentere5 = rb.defineRule(KnowledgeBuilder.getOCCUPIES_CENTER()+"(p)", OCCUPIES+"(p,e5)");
+//		Sentence pinKing = rb.defineRule(KnowledgeBuilder.getPinsAgainstKing()+"", cpos)
 		Sentence protectorpiece = rb.defineRule(KnowledgeBuilder.getPROTECTOR()+"(p,x)",PROTECTED+"(p,x)",OCCUPIES+"(a,x)",OWNER+"("+playerName+",p)",OWNER+"("+playerName+",a)");
 		List<String> myBishops  = myPlayer.getNameofBishops();
 		Sentence enableMinor = null;
@@ -760,16 +766,50 @@ public class AChessAgent extends KBAgent {
 		 * writer.println("WhitePawn4 is at d4"); }else {
 		 * writer.println("WhitePawn4 is NOT at d4"); }
 		 */
-		
-		chessDomain.printDomain();
+		if (noofMoves == 1)
+			chessDomain.printDomain();
 		strategyKB =  solver.getOpponentAgent().getLocalKb();
 		strategyKB.writeKnowledgebase();
-		writer.println("********* Trekknummer: "+movnr+ " gjennomført ********************");		
-		writer.flush();
-		if (naction != null)
+		writer.println("********* Trekknummer: "+movnr+ " gjort ********************");		
+
+		if (naction != null) {
 			localAction = naction;
+			writer.println(naction.getActionName());
+		}
+		writer.flush();
 		return localAction;
 
+	}
+	/**
+	 * createTopology
+	 * This method creates the rank and file topology of the chessboard
+	 * 
+	 */
+	private void createTopology() {
+		// Kjøres én gang under initialisering av brettets topologi i KB
+		String onfile = KnowledgeBuilder.getOnSameFile();
+		String onrank = KnowledgeBuilder.getOnSameRank();
+		String[] files = {"a", "b", "c", "d", "e", "f", "g", "h"};
+		for (String f : files) {
+		    for (int r1 = 1; r1 <= 8; r1++) {
+		        for (int r2 = 1; r2 <= 8; r2++) {
+		            String sq1 = f + r1;
+		            String sq2 = f + r2;
+		            folKb.tell(onfile+"(" + sq1 + ", " + sq2 + ")");
+		        }
+		    }
+		}
+		// Legg til alle rader i KB ved initialisering
+		String[] rankfiles = {"a", "b", "c", "d", "e", "f", "g", "h"};
+		for (int rank = 1; rank <= 8; rank++) {
+		    for (String f1 : rankfiles) {
+		        for (String f2 : files) {
+		            String sq1 = f1 + rank;
+		            String sq2 = f2 + rank;
+		            folKb.tell(onrank+"(" + sq1 + ", " + sq2 + ")");
+		        }
+		    }
+		}
 	}
 	/**
 	 * chooseAction
@@ -1246,8 +1286,8 @@ public class AChessAgent extends KBAgent {
 										castleTerms.add(castleConstant);
 										Predicate castlePredicate = new Predicate(CASTLE,castleTerms);
 										folKb.tell(castlePredicate);
-										writer.println("Made a CASTLE predicate for "+name+" and position "+cPosname);
-										writer.flush();
+//										writer.println("Made a CASTLE predicate for "+name+" and position "+cPosname);
+//										writer.flush();
 /*										writer.println(folKb.toString());
 										folKb.writeKnowledgebase();*/
 									}

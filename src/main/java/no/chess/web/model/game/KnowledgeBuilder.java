@@ -173,21 +173,27 @@ public class KnowledgeBuilder {
   private static final String DEVELOP_PIECE = "DEVELOP_PIECE"; // Key for to develop minor  pieces
   private static final String DEFENDTHREATENEDPIECE = "DEFENDTHREATENEDPIECE";
   
+  private static final String ON_SAME_FILE = "ON_SAME_FILE";
+  private static final String ON_SAME_RANK = "ON_SAME_RANK";
+  private static final String PINS_AGAINST_KING = "PINS_AGAINST_KING";
+  private static final String PINS_AGAINST_QUEEN = "PINS_AGAINST_QUEEN";
+  
+  
   private static Map<String,String> contextMoves = new HashMap<String,String>(); // A map of possible moves given a context
   private static List<String> tactics = new ArrayList<String>();
   /* Examples of rules in the knowledge base
    * WANTSTOPLAY(QUEENGAMBIT)
    * ((occupies(WhitePawn4,d4) AND occupies(BlackPawn4,d5)) => CONTEXT(QUEENPAWNGAME))
    */
-/*
- * 	1. Context(QueensPawnGame) AND WantsToPlay(QueensGambit) => CONTEXTMOVE(WhitePawn3, c4)
- */
+  /*
+   * 	1. Context(QueensPawnGame) AND WantsToPlay(QueensGambit) => CONTEXTMOVE(WhitePawn3, c4)
+   */
 
   /**
- * fillTactics
- * This method fills the tactics array with available move tactics
- */
-public static void fillTactics() {
+   * fillTactics
+   * This method fills the tactics array with available move tactics
+   */
+  public static void fillTactics() {
 	  tactics.clear();
 	  tactics.add(MIDGAME_POSITIONAL);
 	  tactics.add(MIDGAME_TACTIC_FORK);
@@ -200,6 +206,22 @@ public static void fillTactics() {
 	  tactics.add(BALTIC_DEFENCE);
   }
   
+  public static String getPinsAgainstKing() {
+	return PINS_AGAINST_KING;
+}
+
+  public static String getPinsAgainstQueen() {
+	return PINS_AGAINST_QUEEN;
+  }
+
+  public static String getOnSameFile() {
+	return ON_SAME_FILE;
+}
+
+  public static String getOnSameRank() {
+	return ON_SAME_RANK;
+  }
+
   public static String getPawnEnabler() {
 	return PAWN_ENABLER;
 }

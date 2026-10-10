@@ -585,16 +585,14 @@ public class GroundGameState extends GameState {
 				writer.println(l.toString());
 			}
 		}
-		writer.println("Relevant Actions available to player");
+//		writer.println("Relevant Actions available to player");
 //		List<GameAction> groundActions = actions;
-		for (GameAction action:relevantActions) {
-			GroundGameAction localAction = (GroundGameAction)action;
-			writer.println(localAction.toString());
-		}
-		writer.println("Actions available to opponent");	
-		for (GroundGameAction action:opponentGameActions) {
-			writer.println(action.toString());
-		}
+		/*
+		 * for (GameAction action:relevantActions) { GroundGameAction localAction =
+		 * (GroundGameAction)action; writer.println(localAction.toString()); }
+		 * writer.println("Actions available to opponent"); for (GroundGameAction
+		 * action:opponentGameActions) { writer.println(action.toString()); }
+		 */
 		writer.println("********* end statistics **********");
 
 	}
@@ -648,7 +646,7 @@ public class GroundGameState extends GameState {
 //			writer.println("The strategy is "+strategy);
 //			String query = "DEVELOPED(x)";
 //			checkKb(query);
-		    checkKb("CONTROLCENTER(a,b)"); // To be enhanced with other queries THis call fills the relevantMapActions
+		    checkKb("CONTROLCENTER(a,b)"); // To be enhanced with other queries This call fills the relevantMapActions
 		    String actionId = KnowledgeBuilder.getContextMoves().get(openingName);
 //		    String actionId = "WhitePawn4" + "_" + "d4"; // If wants to play ? choose the correct action id
 		    myAction = relevantMapActions.get(actionId);
@@ -677,68 +675,35 @@ public class GroundGameState extends GameState {
 				writer.println("Evaluation chosen action: "+myAction.toString());
 				this.action = myAction; 
 				this.actionSchema = myAction.getActionSchema();
-				contextFound = true;
+				contextFound = true; // The action is determined by context
 			}
-			if (myAction == null) {
+			if (myAction == null) { // No context is found
 				relevantActions.clear();
 				relevantMapActions.clear();
 /*
  * New structure added:				
  */
-				if (actionSelector != null) {
+				if (actionSelector != null) { // Action Selector is always created when the GroundGameState i screated
 //					actionSelector.registerFunctions(); Functions are registered when action selector is created
 					if (determinedAction == null)
 						determinedAction = actionSelector.selectBestAction();
 					actionSelector.setDeterminedAction(determinedAction);
 					myAction = determinedAction;
 				}
-				if (myAction != null) {
+				if (myAction != null) { // The actionSelector has found an action
 					this.action = myAction;
 					this.actionSchema = myAction.getActionSchema();
 					relevantActions.add(myAction);
 					String name = myAction.getActionSchema().getName();
 					relevantMapActions.put(name, myAction);
-					contextFound = true;
+//					contextFound = true; Here we do not rely on context !!
 				}
 
-/*
- * The above code structure is an alternative to the code below				   
- */
-				
-				
-/*
- * Rework this	and Use the action selector			
- */
-/*
- * DevelopMinorExecutor developMinor = new
- * DevelopMinorExecutor(player,opponent,knowledgeBase,actions);
- * MidGamePositional developMidgame = new
- * MidGamePositional(knowledgeBase,this,actions);
- * functionRegistrar.register(developMinor.getMyKey(), developMinor);
- * developMinor.execute(); List<AgamePiece> undevelopedPieces =
- * developMinor.getHomePieces();
- * 
- * List<AgamePiece> pieces = player.getMygamePieces(); DirectMinorMoveExecutor
- * executor = new DirectMinorMoveExecutor(knowledgeBase);
- * executor.setKey(KnowledgeBuilder.getMINORMOVE()); executor.setPieces(pieces);
- * functionRegistrar.register(KnowledgeBuilder.getMINORMOVE(),executor); for
- * (GameAction action:actions) { GroundGameAction localAction =
- * (GroundGameAction)action; executor = (DirectMinorMoveExecutor)
- * functionRegistrar.get(KnowledgeBuilder.getMINORMOVE());
- * executor.setAvailableAction(localAction); GroundGameAction possibleAction =
- * (GroundGameAction) executor.execute(); if (possibleAction != null) {
- * relevantActions.add(possibleAction); String name =
- * possibleAction.getActionSchema().getName(); relevantMapActions.put(name,
- * possibleAction); } }
- */
- 
-/*
- * End rework this 				
- */
+
 //				contextFound = !relevantActions.isEmpty();
 //				if (contextFound && myAction == null) {
-				if (myAction == null) {	
-					myAction = relevantMapActions.get("WhiteBishop1_g5"); // This is replaced by choice from action Selector or no action - then we create a plan
+				if (myAction == null) {	// The actionSelector har failed to find an action
+					myAction = relevantMapActions.get("WhitePawn1_a4"); // This is replaced by choice from action Selector or no action - then we create a plan
 					this.action = myAction;
 					this.actionSchema = myAction.getActionSchema();
 					contextFound = true;
@@ -760,7 +725,7 @@ public class GroundGameState extends GameState {
 	/**
 	 * testEnd
 	 * This is the method used by the ChessGoalTest functional interface 
-	 * the testGoal method. The testGoal method is called from the Or-search method of the And-OrSearch THis is the player's move
+	 * the testGoal method. The testGoal method is called from the Or-search method of the And-OrSearch This is the player's move
 	 * A Game Action may return a set of GameStates, each of these states have a value.
 	 * If this method returns true then a chosen actionSchema is available together with its initial and goal states.
 	 * The action parameter is chosen based on evaluation 
@@ -775,8 +740,9 @@ public class GroundGameState extends GameState {
 //		testKB.setRuleBuilder(knowledgeBase.getRuleBuilder());
 		applyEffects(testKB, localAction);
 //		testKB.writeKnowledgebase();
-		if ((openingFound || contextFound) && action != null) { // We have a definite action
-			writer.println("State testEnd chosen action "+ localAction.toString());
+		writer.flush();
+		if ((openingFound || contextFound) && action != null) { // We have a definite action in a context
+			writer.println("State testEnd chosen action "+ localAction.getActionSchema().getName());
 //			writer.println("State testEnd chosen state "+ gamestateId);
 			this.action = action;
 //			writer.flush();
@@ -785,17 +751,17 @@ public class GroundGameState extends GameState {
 		}
 		if(newState) { // This is from result(s.a) and GroundGameAction.performAction - a new state is created
 			if(localAction != null) {
-				writer.println("State testEnd new state true "+ localAction.toString());
+				writer.println("State testEnd new state true "+ localAction.getActionSchema().getName());
 				myAction = localAction;
 				this.action = myAction;
 				this.actionSchema = myAction.getActionSchema();
-				goalState = true;
+				goalState = true;  // If goalState is true, the result(s,a) is broken, and no plan is produced.
+				buildPlan();
 				return true;
 			}else {  //This is when we create a plan based on opponent actions
-				functionRegistrar.getContext().clear();
-//				determinedAction = relevantMapActions.get("WhiteKnight1_c3");// Need a method to choose correct move based on the last opponent action.
+//				functionRegistrar.getContext().clear();
 				if (actionSelector != null) {
-					actionSelector.registerFunctions();
+//					actionSelector.registerFunctions();
 					if (determinedAction == null)
 						determinedAction = actionSelector.selectBestAction();
 					actionSelector.setDeterminedAction(determinedAction);
@@ -817,6 +783,25 @@ public class GroundGameState extends GameState {
 		// to choose the best move
 		this.action = nextAction;
 		return false;
+	}
+	/**
+	 * buildPlan
+	 * This method build the next step in the plan
+	 */
+	private void buildPlan() {
+		functionRegistrar.getContext().clear();
+		if (actionSelector != null) {
+			actionSelector.setTestKB(testKB);
+			actionSelector.registernewFunctions();
+			if (determinedAction == null)
+				determinedAction = actionSelector.selectBestAction();
+			actionSelector.setDeterminedAction(determinedAction);
+			plannedAction = actionSelector.selectBestAction();
+		}
+		if (plannedAction == null)
+			plannedAction = relevantMapActions.get("WhitePawn1_a4"); // Need a method to choose correct move
+		// Based on available opponent actions what is the best move of the available moves of the player. We use actionSelecteor 
+//		plannedAction = myAction;
 	}
 	/**
 	 * applyEffects

@@ -96,7 +96,12 @@ public class ChessPlanCheck {
  //           currentPlan.get
             // Sjekk om planen har et definert svar for dette trekket
             GroundGameAction plannedAction = null; //currentPlan.getStepFor(lastOpponentAction);
-            ChessPlan plan = currentPlan.getNextChessPlan(step, stateId);
+            ChessPlan plan = null;
+            try {
+            	plan = currentPlan.getNextChessPlan(step, stateId);
+            } catch (IllegalArgumentException e) {
+                      System.err.println("Feil: Det angitte steget er ikke kondisjonalt. " + e.getMessage());
+            }
             if(plan != null)
             	plannedAction = (GroundGameAction) plan.getAction(0);
             if (plannedAction != null) {

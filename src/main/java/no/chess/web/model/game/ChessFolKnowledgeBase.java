@@ -759,6 +759,41 @@ public class ChessFolKnowledgeBase extends FOLKnowledgeBase {
 	    return newKB;
 	}
 	/**
+	 * getSquaresBetween
+	 * This method finds which squares are betwwen the two squares given as parameters
+	 * @since 24.09.26
+	 * @param s1 Square 1
+	 * @param s2 Square 2
+	 * @return A list of strings containing squares between s1 and s2 
+	 */
+	public List<String> getSquaresBetween(String s1, String s2) {
+	    List<String> intermediateSquares = new ArrayList<>();
+	    String between = KnowledgeBuilder.getBETWEEN();
+	    for (Predicate factSentence : getFacts()) {
+	        if (factSentence instanceof AtomicSentence) {
+	            AtomicSentence atom = (AtomicSentence) factSentence;
+
+	            // 1. Sjekk predikatnavn og argumentlengde direkte (ingen parser!)
+	            if (atom.getSymbolicName().equals(between) && atom.getArgs().size() == 3) {
+	                List<Term> args = atom.getArgs();
+	                
+	                String mid = ((Constant) args.get(0)).getValue();
+	                String start = ((Constant) args.get(1)).getValue();
+	                String end = ((Constant) args.get(2)).getValue();
+
+	                // 2. Sjekk om dette faktumet matcher endepunktene våre
+	                // (Støtter begge retninger: s1->s2 eller s2->s1)
+	                if ((start.equals(s1) && end.equals(s2)) || (start.equals(s2) && end.equals(s1))) {
+	                    intermediateSquares.add(mid);
+	                }
+	            }
+	        }
+	    }
+	    return intermediateSquares;
+	}
+	
+	
+	/**
 	 * askRule
 	 * This method checks if a rule in the kb is true or not
 	 * @param predicateName - The name of the implication predicate

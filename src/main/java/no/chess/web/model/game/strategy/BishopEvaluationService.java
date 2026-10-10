@@ -3,6 +3,7 @@ package no.chess.web.model.game.strategy;
 import java.util.List;
 
 import no.chess.web.model.game.APlayer;
+import no.chess.web.model.game.AgamePiece;
 import no.chess.web.model.game.ChessFolKnowledgeBase;
 import no.chess.web.model.game.KnowledgeBuilder;
 
@@ -123,8 +124,31 @@ public class BishopEvaluationService {
         // 6. SJEKK OM FELTET ER DEKKET AV EN MEDSPILLER (MINORMOVE-harmoni)
         if (kb.askRule("MINORMOVE", pieceId, targetSquare)) {
             score += 15; // Feltet er harmonisk dekket av medspiller
+        }else {
+        	score = -10;
         }
 
         return score;
+    }
+    /**
+     * takeOpponent
+     * This method checks if an opponent piece can be taken
+     * @param pieceId
+     * @param pos
+     * @return
+     */
+    public boolean takeOpponent(String pieceId, String pos) {
+		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
+		String takePred = KnowledgeBuilder.getTAKE_PIECE();
+		boolean taken = false;
+		for (AgamePiece oppPiece:opponentpieces) {
+			String piecePos = oppPiece.getmyPosition().getPositionName();
+			String pieceName = oppPiece.getMyPiece().getOntlogyName();
+			taken = kb.askRule(takePred,pieceId,pieceName,pos);
+			if(taken) {
+				break;
+			}
+		}
+    	return taken;
     }
 }
