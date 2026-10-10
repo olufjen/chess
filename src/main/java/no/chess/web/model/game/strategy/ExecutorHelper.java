@@ -14,7 +14,7 @@ import no.chess.web.model.game.KnowledgeBuilder;
  * ExecutorHelper
  * This class contains methods to help executors decide on the best action
  * It test same rank and same file positions
- * 
+ * File: on same ex e1 to e8 
  */
 public class ExecutorHelper {
 
