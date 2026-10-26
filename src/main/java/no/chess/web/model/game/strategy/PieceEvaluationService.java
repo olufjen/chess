@@ -11,16 +11,19 @@ import no.chess.web.model.game.KnowledgeBuilder;
  * BishopEvaluationService
  * This service evaluates and determines which position is the best for the Bishop to move to
  */
-public class BishopEvaluationService {
+public class PieceEvaluationService {
     private  ChessFolKnowledgeBase kb;
     private APlayer player; 
     private APlayer opponent;
+    private String opponentColor = "";
     
-    public BishopEvaluationService(ChessFolKnowledgeBase kb, APlayer player, APlayer opponent) {
+    public PieceEvaluationService(ChessFolKnowledgeBase kb, APlayer player, APlayer opponent) {
 		super();
 		this.kb = kb;
 		this.player = player;
 		this.opponent = opponent;
+		opponentColor = opponent.getNameOfplayer();
+		opponentColor = KnowledgeBuilder.extractString(opponentColor,'P', 0);
 	}
 
 	public ChessFolKnowledgeBase getKb() {
@@ -46,16 +49,89 @@ public class BishopEvaluationService {
 	public void setOpponent(APlayer opponent) {
 		this.opponent = opponent;
 	}
-
+	/**
+	 * evaluateKnightsDevelopment
+	 * This method evaluates the knights development
+	 * @param pieceId
+	 * @param targetSquare
+	 * @return The score
+	 */
+	public int evaluateKnightsDevelopment(String pieceId, String targetSquare,String currentPos) {
+		 int score = 0;
+		 String homeSquare  = KnowledgeBuilder.getHOMESQUARE();
+		 List<String> myKnights = player.getNameofKnights();
+		 String centerPawn = "";
+		 if (player.getPlayerId().equals("WHITE")) {
+			 centerPawn = "WhitePawn4";
+		 }else {
+			 centerPawn = "BlackPawn4";
+		 }		 
+	      if (pieceId.equals(myKnights.get(0))|| pieceId.equals(myKnights.get(1))) {
+	    	  if(kb.existsFact(homeSquare,pieceId,currentPos))
+	    		  score +=90;
+	    	  else
+	    		  score -=5;
+	          String pawnAttack = KnowledgeBuilder.getPAWNATTACK();
+	          List<String> pawnNames = kb.findFacts(targetSquare,pawnAttack);
+	          boolean pawnThreat = false;
+	          if (!pawnNames.isEmpty()) {
+	          	for (String pawn:pawnNames) {
+	          		if (pawn.contains(opponentColor)) {
+	          			score = -100;
+	          			pawnThreat = true;
+	          			break;
+	          		}
+	          	}
+	          }
+	          if (pawnThreat)
+	        	  return score;
+        	  boolean pieceFork = false;
+	          String fork = KnowledgeBuilder.getKNIGHT_FORK();
+	          List<AgamePiece> pieces = opponent.getMygamePieces();
+	          for(AgamePiece piecea:pieces) {
+	        	  boolean pawn = piecea.getPieceType() == piecea.getMyType().PAWN;
+	        	  if (pawn)
+	        		  continue;
+	        	  for (AgamePiece pieceb:pieces) {
+		        	  boolean pawnb = pieceb.getPieceType() == piecea.getMyType().PAWN;
+		        	  if (pawnb)
+		        		  continue;	
+		        	  String posa = piecea.getmyPosition().getPositionName();
+		        	  String posb = pieceb.getmyPosition().getPositionName();
+		        	  String namea = piecea.getMyPiece().getOntlogyName();
+		        	  String nameb = pieceb.getMyPiece().getOntlogyName();
+		        	  if (namea.equals(nameb))
+		        		  continue;
+		        	  pieceFork = kb.askRule(fork, pieceId,namea,nameb);
+		        	  if (pieceFork) {
+		        		  score += 50;
+		        		  break;
+		        	  }
+		          }
+	        	  if(pieceFork)
+	        		  break;
+	        	  
+	          }
+	          boolean taken = false;
+	          if (!pieceFork) {
+	        	  taken = takeOpponent(pieceId,targetSquare);
+	        	  if (taken)
+	        		  score +=40;
+	          }
+	          score +=10;
+	      }
+		 return score;
+	}
 	/**
      * Evaluerer og gir en poengsum for et kandidatfelt for en hvit løper.
      * Høyere score = bedre og mer aktiv utvikling.
      */
-    public int evaluateBishopDevelopment(String pieceId, String targetSquare) {
+    public int evaluateBishopDevelopment(String pieceId, String targetSquare,String currentPos) {
         int score = 0;
         String thePlayer = player.getNameOfplayer();
         String theOpponent = opponent.getNameOfplayer();
         List<String> myBishops = player.getNameofBishops();
+		String homeSquare  = KnowledgeBuilder.getHOMESQUARE();
         List<String> opponentKnights = player.getNameofKnights();
         String occupies = KnowledgeBuilder.getOCCUPIES();
         String centerPawn = "";
@@ -85,6 +161,10 @@ public class BishopEvaluationService {
 
         // 4. SPESIFIKK EVALUERING FOR WhiteBishop1 (Svartfeltsløper fra c1)
         if (pieceId.equals(myBishops.get(0))|| pieceId.equals(myBishops.get(1))) {
+	    	  if(kb.existsFact(homeSquare,pieceId,currentPos))
+	    		  score +=90;
+	    	  else
+	    		  score -=5;
             // g5 er et klassisk kjempefelt (pin mot Nf6 eller Dronning/Konge)
             if (targetSquare.equals("g5")) {
                 score += 40;
@@ -119,13 +199,25 @@ public class BishopEvaluationService {
                 score += 10; // Trygt, gjør klar for rokkade, men passivt
             }
         }
-
- 
-        // 6. SJEKK OM FELTET ER DEKKET AV EN MEDSPILLER (MINORMOVE-harmoni)
-        if (kb.askRule("MINORMOVE", pieceId, targetSquare)) {
+        String minor = KnowledgeBuilder.getMINORMOVE();
+        String pawnAttack = KnowledgeBuilder.getPAWNATTACK();
+        List<String> pawnNames = kb.findFacts(targetSquare,pawnAttack);
+        boolean pawnThreat = false;
+        if (!pawnNames.isEmpty()) {
+        	for (String pawn:pawnNames) {
+        		if (pawn.contains(opponentColor)) {
+        			score = -100;
+        			pawnThreat = true;
+        			break;
+        		}
+        	}
+        }
+        // 6. SJEKK OM FELTET ER DEKKET AV EN MEDSPILLER (MINORMOVE-harmoni) - Og ikke truet av opponent bonde
+        boolean pieceProtect = kb.askRule(minor, pieceId, targetSquare);
+        if (!pawnThreat && pieceProtect) {
             score += 15; // Feltet er harmonisk dekket av medspiller
-        }else {
-        	score = -10;
+        }else if(!pieceProtect) {
+        	score -= 50;
         }
 
         return score;

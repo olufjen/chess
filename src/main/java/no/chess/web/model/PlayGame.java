@@ -355,7 +355,6 @@ public class PlayGame {
 		kb.setStateImpl(stateImpl); // The knowledge base receives the percepts of the the game which is the state of the game
 		chessAgent = null;
 		chessAgent = new AChessAgent(kb,localAction,this);
-//		chessAgent.execute(currentState); // Creates new knowledge for the knowledge base
 		localAction = (ChessActionImpl) chessAgent.execute(currentState); // ****** Creates new knowledge for the knowledge base and determines the next move.
 		/* Removed 8.03.26 - see movestatistics
 		 * if (movedPiece != null) { //An opponent piece has been moved String pieceName

@@ -28,7 +28,7 @@ public class DevelopMinorExecutor implements FunctionExecutor {
     private  List<GameAction> availableActions;
     private String myKey = KnowledgeBuilder.getDevelopPiece();
 	private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
-	private BishopEvaluationService evaluationService;
+	private PieceEvaluationService evaluationService;
 
 	public DevelopMinorExecutor(APlayer myPlayer) {
 		super();
@@ -43,7 +43,7 @@ public class DevelopMinorExecutor implements FunctionExecutor {
 		this.kb = kb;
 		homePieces = new ArrayList<AgamePiece>(); // Contains Minor pieces
 		this.availableActions = availableActions;
-		evaluationService = new BishopEvaluationService(kb,myPlayer,opponent);
+		evaluationService = new PieceEvaluationService(kb,myPlayer,opponent);
 	}
 
 	public GroundGameAction getDeterminedAction() {
@@ -136,6 +136,8 @@ public class DevelopMinorExecutor implements FunctionExecutor {
        			String actionName = schema.getName();
        			String pieceId =  thePiece.getMyPiece().getOntlogyName();
        			String targetSquare = KnowledgeBuilder.extractString(actionName,'_', -1); // "f3"
+    			Position currentPos = thePiece.getmyPosition();
+    			String thisPos = currentPos.getPositionName();
        			if (!homePieces.isEmpty()) {
        				for (AgamePiece homePiece:homePieces) {
        					String homePieceName = homePiece.getMyPiece().getOntlogyName();
@@ -171,13 +173,15 @@ public class DevelopMinorExecutor implements FunctionExecutor {
        			if (foundPiece && properprotect && !pawn) {
        				// Evaluate the position before
        				if (pieceId.contains("Bishop")) {
-          				score = evaluationService.evaluateBishopDevelopment(pieceId, targetSquare);
+          				score = evaluationService.evaluateBishopDevelopment(pieceId, targetSquare,thisPos);
            				if (score > bestScore) {
            					bestScore = score;
            					chosenAction = localAction;
+           					chosenAction.setValuePoints(bestScore);
            				}
        				}else {
        					chosenAction = localAction;
+       					chosenAction.setValuePoints(bestScore);
        					break;
        				}
        			}

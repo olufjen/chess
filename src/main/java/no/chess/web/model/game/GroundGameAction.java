@@ -25,6 +25,7 @@ public class GroundGameAction extends GameAction {
 	private PrintWriter writer =  null;
 	private String endPos; // The end position of this action
 	private String outputFileName = "gameaction";
+	private int valuePoints = 0; // The value of this move as suggested by actionselector
 	private FileWriter fw =  null;
 	private String filename;
 	public GroundGameAction(GamePiece<Position> gamePiece, ActionSchema actionSchema) {
@@ -45,6 +46,13 @@ public class GroundGameAction extends GameAction {
 
 //		writer = mystate.getWriter();
 
+	}
+	
+	public int getValuePoints() {
+		return valuePoints;
+	}
+	public void setValuePoints(int valuePoints) {
+		this.valuePoints = valuePoints;
 	}
 	public AgamePiece getPiece() {
 		return piece;

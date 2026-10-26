@@ -84,7 +84,9 @@ public class PawnStructureExecutor implements FunctionExecutor {
           	if (!enabled) {
           		continue;
           	}else {
+          		bestScore = 100;
           		bestPawnMove =localAction;
+          		bestPawnMove.setValuePoints(bestScore);
           		break;
           	}
           	

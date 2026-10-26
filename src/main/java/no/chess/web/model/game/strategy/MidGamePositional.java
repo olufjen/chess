@@ -203,6 +203,7 @@ public class MidGamePositional implements FunctionExecutor {
             if (currentScore > maxActionScore) {
                 maxActionScore = currentScore;
                 bestAction = localAction;
+                bestAction.setValuePoints(maxActionScore);
             }
 
         }

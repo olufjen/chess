@@ -19,6 +19,7 @@ import no.games.chess.search.nondeterministic.GameAction;
  * DefendThreatenedPieceExecutor
  * This executor checks if any of the player's pieces (officers) are under attack, and if so
  * determines the best action.
+ * If no pieces are threatened then it investigates other posssible moves
  * 
  * @author olufj
  */
@@ -31,13 +32,15 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
     private APlayer player;
     private APlayer opponent;
     private ExecutorHelper helper;
-    private boolean pawnAttack = false;
-    private boolean opponentAttack = false;
-    private String attackerPiece = null;
-    private String attackerPos = null;
-	private BishopEvaluationService evaluationService;
-
-
+    private boolean pawnAttack = false; // true if player's piece is attacked by an opponent pawn
+    private boolean opponentAttack = false; // true if player's piece is attacked by an opponent piece
+    private String attackerPiece = null; // The name of the opponent piece that attacks player's piece
+    private String attackerPos = null;  // The position of the opponent piece 
+	private PieceEvaluationService evaluationService;
+	private boolean threats = false; // This flag is true when a player's officer is under attack. This move is top priority 
+	private GroundGameAction defenderAction = null;// Suggested move if any of player's pieces are threatened 
+	private GroundGameAction otherAction = null;// Suggested move if none of player's pieces are threatened
+	
     public DefendThreatenedPieceExecutor(GroundGameState state) {
         this.state = state;
         this.kb = state.getKnowledgeBase();
@@ -45,10 +48,30 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
         this.player = state.getPlayer();
         this.opponent = state.getOpponent();
         helper = new ExecutorHelper(kb); 
-		evaluationService = new BishopEvaluationService(kb,player,opponent);
+		evaluationService = new PieceEvaluationService(kb,player,opponent);
     }	
     
     
+	public GroundGameAction getDefenderAction() {
+		return defenderAction;
+	}
+
+
+	public void setDefenderAction(GroundGameAction defenderAction) {
+		this.defenderAction = defenderAction;
+	}
+
+
+	public GroundGameAction getOtherAction() {
+		return otherAction;
+	}
+
+
+	public void setOtherAction(GroundGameAction otherAction) {
+		this.otherAction = otherAction;
+	}
+
+
 	public String getMyKey() {
 		return myKey;
 	}
@@ -99,29 +122,44 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
 		this.availableActions = availableActions;
 	}
 
+	public boolean isThreats() {
+		return threats;
+	}
+
+
+	public void setThreats(boolean threats) {
+		this.threats = threats;
+	}
+
+
 	@Override
 	public Object execute() {
         // 1. FINN DEN MEST VERDIFULLE TRUEDE BRIKKEN VÅR
         String mostValuableThreatenedPiece = findMostValuableThreatenedPiece();
 
         if (mostValuableThreatenedPiece == null) {
-            return pieceMove(); // Ingen akutt trussel, check if possible minor move or to take opponent piece
+        	otherAction =  pieceMove();
+            return otherAction; // Ingen akutt trussel, check if possible minor move or to take opponent piece
         }
         String pos = "";
+    
         pos = KnowledgeBuilder.extractString(mostValuableThreatenedPiece,'_', -1); // 
         String thratenedPiece = KnowledgeBuilder.extractString(mostValuableThreatenedPiece,'_', 0); //
         GroundGameAction bestAttack = counterAttack(attackerPiece,attackerPos);
+        defenderAction = bestAttack;
         if (bestAttack != null)
         	return bestAttack;
         // 2. PARER TRUSSELEN (Flytt, slå eller dekk)
         GroundGameAction bestDefense = findBestDefenseAction(thratenedPiece,pos);
-
+        defenderAction = bestDefense;
+        if (bestDefense != null)
+            threats = true;
         return bestDefense;
 	}
 	/**
 	 * pieceMove
 	 * This method is called if there are no threats to player's pieces
-	 * @return
+	 * @return a GroundGameAction 
 	 */
 	private GroundGameAction pieceMove() {
 		GroundGameAction localAction = null;
@@ -137,39 +175,54 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
 			pos = KnowledgeBuilder.extractString(schemaName,'_', -1); // The new position....
 			String usedPiece = KnowledgeBuilder.extractString(schemaName,'_', 0); // For the used piece
 			AgamePiece thePiece = (AgamePiece)action.getGamePiece();
+			if (!thePiece.isActive())
+				continue;
 			String pieceId =  thePiece.getMyPiece().getOntlogyName();
+			Position currentPos = thePiece.getmyPosition();
+			String thisPos = currentPos.getPositionName();
 			int score = 0;
 			boolean taken = evaluationService.takeOpponent(pieceId, pos);
 			if (taken) {
 				if (kb.askRule(minormove, pieceId, pos)) {
 					chosenAction = localAction;
+					bestScore = 100;
 					break;
 				}
-				if (kb.existsFact(pawnmove, pos)) {
+				if (kb.existsFact(pawnmove, pos)) { // Can it be taken by a pawn?
 					chosenAction = localAction;
+					bestScore = 200;
 					break;
 				}
 			}
 			if (pieceId.contains("Bishop")) {
-				score = evaluationService.evaluateBishopDevelopment(pieceId, pos);
+				score = evaluationService.evaluateBishopDevelopment(pieceId, pos,thisPos);
+				if (score > bestScore) {
+					bestScore = score;
+					chosenAction = localAction;
+				}
+			}
+			if (pieceId.contains("Knight")) {
+				score = evaluationService.evaluateKnightsDevelopment(pieceId, pos,thisPos);
 				if (score > bestScore) {
 					bestScore = score;
 					chosenAction = localAction;
 				}
 			}
 		}
+		chosenAction.setValuePoints(bestScore);
 		return chosenAction;
 	}
 	/**
 	 * counterAttack
-	 * This metod checks if there is a counterattack possible
+	 * This method checks if there is a counterattack possible
 	 * @param attackerPiece Name of piece that threatens our pieces
 	 * @param attackpos Name of position of attackerPiece
-	 * @return
+	 * @return a GroundGameAction that creates a pin against opponent king or queen
 	 */
 	private GroundGameAction counterAttack(String attackerPiece,String attackpos) {
 		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
 		 GroundGameAction bestAttack = null;
+		 int score = 0;
 		for (AgamePiece piece:opponentpieces) {
 			String oppieceName = piece.getMyPiece().getOntlogyName();
 			String opPosition = piece.getmyPosition().getPositionName();
@@ -189,15 +242,18 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
 			            	continue;
 			            String occupy = KnowledgeBuilder.getOCCUPIES();
 			            String kqpos = kb.checkPosition(oppieceName, occupy);
-			            boolean pinPossible = helper.createsPinAgainstpiece(name, pos, attackerPos,kqpos);
+			            boolean pinPossible = helper.createsPinAgainstpiece(name, pos, attackpos,kqpos);
 			            if (pinPossible) {
 			            	bestAttack = localAction;
+			            	score = 200;
+			            	bestAttack.setValuePoints(score);
 			            	break;
 			            }
 			            
 			       }
 			}
 		}
+		
 		return bestAttack;
 	}
     /**
@@ -212,6 +268,8 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
 		List<AgamePiece> pieces = player.getMygamePieces();
 		List<AgamePiece> opponentpieces = opponent.getMygamePieces();
 		for (AgamePiece temppiece:pieces) {
+			if (!temppiece.isActive())
+				continue;
 			String pieceName = temppiece.getMyPiece().getOntlogyName();
 			Position pos = temppiece.getmyPosition();
 			if (pos == null)
@@ -223,9 +281,10 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
 			String pred = KnowledgeBuilder.getPROTECTED();
 			for (AgamePiece opponentPiece:opponentpieces) {
 				boolean attackedByPawn = false;
+				boolean attackedByBlack = false;
 				String oppieceName = opponentPiece.getMyPiece().getOntlogyName();
 				String opPosition = opponentPiece.getmyPosition().getPositionName();
-				boolean attackedByBlack = kb.existsFact(threatens,oppieceName,square);
+				attackedByBlack = kb.existsFact(threatens,oppieceName,square);
 				if (attackedByBlack)
 					attackedByPawn = oppieceName.contains("Pawn");
 				boolean properprotect = false;
@@ -278,6 +337,7 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
 		GroundGameAction bestAction = null;
         // Strategi A: Flytt den truede brikken til et trygt felt (Run)
         for (GameAction action : availableActions) {
+        	int score = 0;
         	GroundGameAction localAction = (GroundGameAction) action;
         	ActionSchema schema = localAction.getActionSchema();
         	String schemaName = schema.getName();
@@ -308,10 +368,13 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
        					}
        				}
        			}
-       			if (bestAction != null) // Need a method to determine if the new position is a "good and stratetic" position
+       			if (bestAction != null) { // Need a method to determine if the new position is a "good and stratetic" position
        				break;
+       			}
        			if ((!attackedByBlack && !attackedByPawn)  || (properprotect && !attackedByPawn) && bestAction == null) {
        				bestAction = localAction; // Reddet brikken!
+       				score = 150;
+       				bestAction.setValuePoints(score);
        			}
 
             }
@@ -319,6 +382,7 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
 
         // Strategi B: Slå brikken som angriper (Capture)
         for (GameAction action : availableActions) {
+        	int score = 0;
         	GroundGameAction localAction = (GroundGameAction) action;
         	ActionSchema schema = localAction.getActionSchema();
         	AgamePiece thePiece = (AgamePiece)action.getGamePiece();
@@ -335,6 +399,8 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
     			String square = pos.getPositionName();
         		if (attackerPiece.equals(oppieceName) && targetSquare.equals(square) && !attackedByPawn) { // Dette må revideres !!!!
         			bestAction = localAction;
+        			score = 160;
+        			bestAction.setValuePoints(score);
         			break;
         		}
         	}

@@ -118,7 +118,8 @@ public class KnowledgeBuilder {
   private static String BETWEEN = "BETWEEN"; // The predicate determining which positions are between other positions
   private static String PIN = "PIN"; // THe PIN predicate
   private static String KNIGHT_FORK = "KNIGHT_FORK"; 
-  private static String IS_SUPPORTED_FOR = "IS_SUPPORTED_FOR";
+  private static String IS_SUPPORTED_FOR = "IS_SUPPORTED_FOR"; // At present: 10.10.26 Not in use
+  private static String DIFFERENT_PIECES = "DIFFERENT_PIECES"; // A fact for pieces that are different (Bishop, Knight etc)
 /*
  * Additional predicate names  
  */
@@ -256,6 +257,14 @@ public class KnowledgeBuilder {
 
   public static void setTAKE_PIECE(String tAKE_PIECE) {
 	TAKE_PIECE = tAKE_PIECE;
+  }
+
+  public static String getDIFFERENT_PIECES() {
+	return DIFFERENT_PIECES;
+}
+
+  public static void setDIFFERENT_PIECES(String dIFFERENT_PIECES) {
+	DIFFERENT_PIECES = dIFFERENT_PIECES;
   }
 
   public static String getIS_SUPPORTED_FOR() {
