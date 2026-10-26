@@ -1305,16 +1305,32 @@ public ChessProblem planProblem(ArrayList<ChessActionImpl> actions) {
  * This method creates an action schema based on a chess action.
  * @since 13.3.26 creates action schemas for both player and opponent (see thePlayer)
  * @since 09.07.26 Removes unnecessary facts in action schemas and states
+ * @since 23.10.26 If the piece is a knight and target position is taken by a friendly piece then no action schema is produced !!
  * @param pieceName Name of piece
  * @param actionName Name of action (pieceName+"_"+toPosit)
  * @param posName Starting position of piece
  * @param toPosit Available position to move to
- * @return
+ * @return - An actionSchema
  */
 private ActionSchema makeActionSchemas(String pieceName,String actionName,String posName,String toPosit){
 	  ArrayList<String>reachparentNames = (ArrayList<String>) folKb.searchFacts("x", toPosit, PROTECTED);
 	  ArrayList<String> mypiecenames = new ArrayList<String>();
+	  String pieceColor = "Black";
+	  if(thePlayer.getPlayerId().equals("WHITE")) {
+		  pieceColor = "White";
+	  }
+//	  thePlayer.get
 	  List<AgamePiece> pieces = thePlayer.getMygamePieces();
+	  boolean knight = pieceName.contains("Knight");
+	  boolean posTaken = false;
+	  Position goalPos = positions.get(toPosit);
+	  String ocupyPiece = null;
+	  if (goalPos.getUsedBy() != null)
+		  ocupyPiece = goalPos.getUsedBy().getOntlogyName();
+	  if (ocupyPiece != null && ocupyPiece.contains(pieceColor)) {
+		  posTaken = true;
+	  }
+	  boolean noSchema = (knight && posTaken);
 	  for (AgamePiece piece:pieces) {
 		  String name = piece.getMyPiece().getOntlogyName();
 		  mypiecenames.add(name);
@@ -1466,11 +1482,13 @@ private ActionSchema makeActionSchemas(String pieceName,String actionName,String
 	  //		Literal notAt = new Literal(pospred, true);
 	  //		effects.add(notAt);
 	  ActionSchema movedAction = null;
-	  if (!precondition.isEmpty()) {
+	  if (!precondition.isEmpty() && !noSchema) {
 		  movedAction = new ActionSchema(actionName,variables,precondition,effects);
 		  actionSchemas.put(piecepos, movedAction);
 	  }
-	
+	  if(noSchema) {
+		  writer.println("No action schema for "+pieceName+ " to "+toPos);
+	  }
 	  
 
 	  //		schemas.add(movedAction);

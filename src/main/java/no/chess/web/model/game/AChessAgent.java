@@ -369,6 +369,7 @@ public class AChessAgent extends KBAgent {
 			chessDomain.addPredicate(KnowledgeBuilder.getOnSameRank());		
 			chessDomain.addPredicate(KnowledgeBuilder.getPinsAgainstKing());
 			chessDomain.addPredicate(KnowledgeBuilder.getPinsAgainstQueen());
+			chessDomain.addPredicate(KnowledgeBuilder.getDIFFERENT_PIECES());
 	  }
 	  
 
@@ -541,13 +542,15 @@ public class AChessAgent extends KBAgent {
 		APlayer opponent = stateImpl.getOpponent();
 		String oppName = opponent.getNameOfplayer();
 		playerName = myPlayer.getNameOfplayer();
+		createDifferentPieces(myPlayer);
+//		createDifferentPieces(opponent);
 /*
  * Create all types of move to the knowledge base	
  */
 //		Sentence protectSupport = rb.defineRule(KnowledgeBuilder.getIS_SUPPORTED_FOR()+"(a,b)",  PROTECTED+"(c,b)",Connectors.NOT+"(c==a)");
 		Sentence pawnMove = rb.defineRule(PAWNMOVE+"(a,b)", REACHABLE+"(a,b)", PAWN+"(a)"); // rule: FORALL a b ((REACHABLE(a,b) AND PAWN(a)) => PAWNMOVE(a,b))
 //		Sentence minorMove = rb.defineRule(MINORMOVE+"(a,b)",REACHABLE+"(a,b)",KnowledgeBuilder.getIS_SUPPORTED_FOR() +"(a,b)",MINORPIECE+"(a)"); // rule: FORALL a b c (((REACHABLE(a,b) AND PROTECTEDBY(c,b)) AND MINORPIECE(a)) => MINORMOVE(a,b))	
-		Sentence minorMove = rb.defineRule(MINORMOVE+"(a,b)",REACHABLE+"(a,b)",PROTECTED+"(c,b)",MINORPIECE+"(a)"); // rule: FORALL a b c (((REACHABLE(a,b) AND PROTECTEDBY(c,b)) AND MINORPIECE(a)) => MINORMOVE(a,b))	
+		Sentence minorMove = rb.defineRule(MINORMOVE+"(a,b)",REACHABLE+"(a,b)",PROTECTED+"(c,b)",KnowledgeBuilder.getDIFFERENT_PIECES()+"(c,a)",MINORPIECE+"(a)"); // rule: FORALL a b c (((REACHABLE(a,b) AND PROTECTEDBY(c,b)) AND MINORPIECE(a)) => MINORMOVE(a,b))	
 
 		Sentence controlMove = rb.defineRule(CONTROLCENTER+"(a,b)",REACHABLE+"(a,b)",CENTERSQUARE+"(b)"); // rule: FORALL a b ((REACHABLE(a,b) AND CENTERSQUARE(b)) => CONTROLCENTER(a,b))		
 		Sentence pawncontrolMove = rb.defineRule(PAWNMOVE+"(a,b)",REACHABLE+"(a,b)",PAWN+"(a)",CENTERSQUARE+"(b)");	//rule: FORALL a b (((REACHABLE(a,b) AND PAWN(a)) AND CENTERSQUARE(b)) => PAWNMOVE(a,b))	
@@ -779,6 +782,25 @@ public class AChessAgent extends KBAgent {
 		writer.flush();
 		return localAction;
 
+	}
+	/**
+	 * createDifferentPieces
+	 * This method creates the DIFFERENT_PIECES fact to the kb 
+	 * @param player
+	 */
+	private void createDifferentPieces(APlayer player) {
+		List<AgamePiece> pieces = player.getMygamePieces();
+		String different = KnowledgeBuilder.getDIFFERENT_PIECES();
+		for(AgamePiece piece:pieces) {
+			String p1 = piece.getMyPiece().getOntlogyName();
+			for(AgamePiece piece2:pieces) {
+				String p2 = piece2.getMyPiece().getOntlogyName();
+				if (!p1.equals(p2)) {
+					Predicate pred = (Predicate) rb.parseToPredicate(different+"(" + p1 + ", " + p2 + ")");
+		            folKb.tell(pred);
+		        }
+			}
+		}
 	}
 	/**
 	 * createTopology
