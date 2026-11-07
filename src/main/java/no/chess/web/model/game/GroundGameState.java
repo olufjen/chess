@@ -84,6 +84,8 @@ public class GroundGameState extends GameState {
 	private ApieceMove lastOpponentmove = null;
 	private ActionSelector actionSelector = null;
 	private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
+	// And thus the determinedAction is the action found to be best for this state
+	private String theState = ""; // Used to hold the statistics of this state
 	/**
 	 * Basic Constructor
 	 * @param gamePiece
@@ -106,13 +108,14 @@ public class GroundGameState extends GameState {
 	/**
 	 * This constructor is used when a state is created from the performAction method of GameAction
 	 * which again is called from the orSearch method when the problem testGoal function for a chosen state returns false.
+	 * This GameAction represent a move by the opponent. So this new GameState is a result of an opponent move
 	 * As defined:
 	 * For å bruke søkemotoren til å lage en plan, må du definere en Results-funksjon som simulerer nondeterminismen:
 	 * Modellering av "Results(s, a)":
 	 * Når agenten (Hvit) utfører handlingen $a$:
 	1. Transition: Utfør trekket $a$ på brettet.
 	2. Opponent's Turn: Identifiser alle lovlige trekk for Sort ($m_1, m_2, ..., m_n$).
-	3. State Set: Generer en ny KB for hvert av Sorts mulige svar.
+	3. State Set: Generer en ny GAmeState og KB for hvert av Sorts mulige svar.
 	4. Output: Funksjonen returnerer en liste over disse KB-ene.
 	
 	 * @param player - the player of the game
@@ -125,8 +128,10 @@ public class GroundGameState extends GameState {
 	 */
 	public GroundGameState(APlayer player,APlayer opponent, int moveNr, ChessFolKnowledgeBase kb,ChessPercept thePerceptor, List<ActionSchema> actionSchemas,List<ActionSchema> opponentactionSchemas,List<Position> positions,ActionSchema actionSchema) {
 		super(thePerceptor, actionSchemas);
+		this.thePerceptor = (APerceptor) thePerceptor;
 		String catalog = KnowledgeBuilder.getFileCatalog();
 	    this.opponentAction = actionSchema; // A legal move available to the opponent - This state is the result of this opponent action
+	    this.parentopponentAction = actionSchema;
 	    myActions = new ArrayList<GroundGameAction>(); // Moved from GameState
 	    actions = new ArrayList<GameAction>();
 	    opponentGameActions = new ArrayList<GroundGameAction>();    
@@ -138,9 +143,10 @@ public class GroundGameState extends GameState {
 		this.actionSchemas = actionSchemas;
 		this.positionList = positions;
 		this.opponentActions =  opponentactionSchemas;
-		this.knowledgeBase = kb; // The revised kb
+		this.knowledgeBase = kb; // The revised kb as a result of the oponent action
 		noofActions = actionSchemas.size();
 		stateId = "S"+Integer.toString(moveNr);	
+		gamestateId = stateId +"_" + actionSchema.getName(); //myAction.getActionSchema().getName(); The state id after an opponent action
 	    String filename = catalog + outputFileName+stateId+".txt";
 		try {
 			fw = new FileWriter(filename, true);
@@ -149,20 +155,23 @@ public class GroundGameState extends GameState {
 			e1.printStackTrace();
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));
-		writer.println("\n-- New state after opponent action "+actionSchema.getName()+ " --");
+//		writer.println("\n-- New state after opponent action "+actionSchema.getName()+ " --");
 		KnowledgeBuilder.fillTactics();
 		functionRegistrar = new FunctionContect();
-		gamestateId = stateId +"_" + actionSchema.getName(); //myAction.getActionSchema().getName(); The state id after an opponent action
+		theState = theState + "\n-- New state after opponent action "+ actionSchema.getName()+ " --";
 		newState = true; // New state must be set when correct action is found based on what opponent has available and the evaluation score
-	    produceActions();
-		
-		  for (int i=0;i<KnowledgeBuilder.getTactics().size();i++ ) {
-			  String key = KnowledgeBuilder.getTactics().get(i); registerFunctions(key);
-		  }
-		 
-	    setStatestatistics(); // Produces statistics for this state MUST set this.action based on statistics
+		goalState = true;
+		produceActions();
 	    actions.addAll(relevantActions);
 		actionSelector = new ActionSelector(functionRegistrar,relevantActions,this);
+		actionSelector.setTestKB(knowledgeBase);
+		for (int i=0;i<KnowledgeBuilder.getTactics().size();i++ ) {
+			String key = KnowledgeBuilder.getTactics().get(i); registerFunctions(key);
+		}
+//		evaluateScore(); // Produces a possible action for this state
+		evaluateGamescore();
+//		setStatestatistics(); // Produces statistics for this state MUST set this.action based on statistics
+
 		
 	    // All states produced get the same preferred game action from the evaluation function
 //		writer.flush();
@@ -223,6 +232,7 @@ public class GroundGameState extends GameState {
 	    setStatestatistics();
 	    actions.addAll(relevantActions);
 		actionSelector = new ActionSelector(functionRegistrar,relevantActions,this);// Create the action selector
+		actionSelector.setTestKB(knowledgeBase);
 //	    stateStatisics();	
 //	    actions.addAll(relevantActions);
 		gamestateId = stateId + "_" + chosenAction; //myAction.getActionSchema().getName(); The state id after an opponent action
@@ -594,7 +604,7 @@ public class GroundGameState extends GameState {
 		 * action:opponentGameActions) { writer.println(action.toString()); }
 		 */
 		writer.println("********* end statistics **********");
-
+		theState = "Statistics for "+ stateId +"\n"+"Total no of moves player "+String.valueOf(noofplayerActions);
 	}
 	public void setStatestatistics() {
 		myMoves = player.getMyMoves();
@@ -611,11 +621,51 @@ public class GroundGameState extends GameState {
 		noofopponentinactive = oppinactivePieces.size();
 		if (newState) {
 			writer.println("-- New state and statistics ");
-		    stateStatisics();	
+		    theState = theState + "\n-- New state and statistics ";
+		    stateStatisics();
 		}
 
 		
 	}
+	/**
+	 * evaluateGamescore
+	 * This method is used when the state is created as a result of an opponent action - when performing the "Results(s, a)" function: 
+	 * The performAction method of GameAction
+	 * 
+	 * 
+	 */
+	public void evaluateGamescore() {
+		GroundGameAction lastAction = thePerceptor.getDeterminedAction();
+		if (lastAction != null && actionSelector != null) {
+			actionSelector.setDeterminedAction(lastAction);
+		}
+		if (actionSelector != null) { // Action Selector is always created when the GroundGameState is created
+			//							actionSelector.registerFunctions(); Functions are registered when action selector is created
+			//			if (determinedAction == null)
+			determinedAction = actionSelector.selectBestAction();
+			if(!actionSelector.getThreatenedPieces().isEmpty()) {
+				threatened = true; //Pieces are under threat
+			}
+			actionSelector.setDeterminedAction(determinedAction);
+			myAction = determinedAction;
+			thePerceptor.setDeterminedAction(determinedAction);
+		}
+		if (myAction != null) { // The actionSelector has found an action
+			this.action = myAction;
+			this.actionSchema = myAction.getActionSchema();
+			relevantActions.add(myAction);
+			String name = myAction.getActionSchema().getName();
+			relevantMapActions.put(name, myAction);
+			thePerceptor.setRelevantMapActions(relevantMapActions);
+		}
+		if (myAction == null) {	// The actionSelector har failed to find an action
+			myAction = relevantMapActions.get("WhitePawn1_a4"); // This is replaced by choice from action Selector or no action - then we create a plan
+			this.action = myAction;
+			this.actionSchema = myAction.getActionSchema();
+			contextFound = true;
+		}
+	}
+
 	/**
 	 * evaluateScore
 	 * This method evaluate the score of this state, which then is used to determine if this is the end state
@@ -678,12 +728,12 @@ public class GroundGameState extends GameState {
 				contextFound = true; // The action is determined by context
 			}
 			if (myAction == null) { // No context is found
-				relevantActions.clear();
-				relevantMapActions.clear();
+//				relevantActions.clear();
+//				relevantMapActions.clear();
 /*
  * New structure added:				
  */
-				if (actionSelector != null) { // Action Selector is always created when the GroundGameState i screated
+				if (actionSelector != null) { // Action Selector is always created when the GroundGameState is created
 //					actionSelector.registerFunctions(); Functions are registered when action selector is created
 					if (determinedAction == null)
 						determinedAction = actionSelector.selectBestAction();
@@ -740,7 +790,7 @@ public class GroundGameState extends GameState {
 //		testKB.setRuleBuilder(knowledgeBase.getRuleBuilder());
 		applyEffects(testKB, localAction);
 //		testKB.writeKnowledgebase();
-		writer.flush();
+//		writer.flush();
 		if ((openingFound || contextFound) && action != null) { // We have a definite action in a context
 			writer.println("State testEnd chosen action "+ localAction.getActionSchema().getName());
 //			writer.println("State testEnd chosen state "+ gamestateId);
@@ -749,23 +799,26 @@ public class GroundGameState extends GameState {
 			goalState = true;
 			return true;
 		}
-		if(newState) { // This is from result(s.a) and GroundGameAction.performAction - a new state is created
+		if(newState) { // This is from result(s.a) and GroundGameAction.performAction - a new state is created and the opponent action has been performed on the given kb
+			theState = theState+ "\n"+ "State testEnd new state true ";
 			if(localAction != null) {
-				writer.println("State testEnd new state true "+ localAction.getActionSchema().getName());
+//				writer.println("State testEnd new state true "+ localAction.getActionSchema().getName());
+				theState = theState+ "\n"+ localAction.getActionSchema().getName();
 				myAction = localAction;
 				this.action = myAction;
 				this.actionSchema = myAction.getActionSchema();
-				goalState = true;  // If goalState is true, the result(s,a) is broken, and no plan is produced.
+				goalState = true;  // 
 				buildPlan();
 				return true;
-			}else {  //This is when we create a plan based on opponent actions
+			}else {  //This is when we create a plan based on opponent actions - there is no opponent action?!
 //				functionRegistrar.getContext().clear();
+				theState = theState+ "\n"+ "State testEnd creating a plan";
 				if (actionSelector != null) {
 //					actionSelector.registerFunctions();
 					if (determinedAction == null)
 						determinedAction = actionSelector.selectBestAction();
 					actionSelector.setDeterminedAction(determinedAction);
-					myAction = actionSelector.selectBestAction();
+					myAction = determinedAction;
 				}
 				if (myAction == null)
 					myAction = relevantMapActions.get("WhitePawn5_e3"); // Need a method to choose correct move
@@ -774,7 +827,7 @@ public class GroundGameState extends GameState {
 //				this.action = myAction;
 				writer.println("State testEnd new state true no action");
 				this.actionSchema = myAction.getActionSchema();
-//				goalState = true;
+				goalState = true;
 				return true;
 			}
 		}
@@ -792,11 +845,12 @@ public class GroundGameState extends GameState {
 		functionRegistrar.getContext().clear();
 		if (actionSelector != null) {
 			actionSelector.setTestKB(testKB);
-			actionSelector.registernewFunctions();
+			actionSelector.registernewFunctions(); // Use action selector with the new kb after applying effects of opponent action
 			if (determinedAction == null)
-				determinedAction = actionSelector.selectBestAction();
+				determinedAction = actionSelector.selectBestAction(); // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
 			actionSelector.setDeterminedAction(determinedAction);
-			plannedAction = actionSelector.selectBestAction();
+//			plannedAction = actionSelector.selectBestAction(); // The next planned action in a plan Held in superclass
+			plannedAction = determinedAction;
 		}
 		if (plannedAction == null)
 			plannedAction = relevantMapActions.get("WhitePawn1_a4"); // Need a method to choose correct move
@@ -819,9 +873,18 @@ public class GroundGameState extends GameState {
 		            kb.tell((Sentence) effect.getAtomicSentence());
 		        }
 		        writer.println("Changes: "+effect.toString());
+		        theState = theState +action.getActionSchema().getName() + "\napply effects Changes: "+effect.toString();
 		    }
 		}
-        writer.println("No Changes - no action found ");
-
+		if (action == null) {
+			writer.println("No Changes - no action found ");
+	       theState = theState + "No Changes - no action found ";
+		}
+ 
+	}
+	public String toString() {
+		
+		return theState;
+		
 	}
 }

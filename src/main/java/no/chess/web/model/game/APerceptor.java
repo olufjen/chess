@@ -86,7 +86,14 @@ public class APerceptor implements ChessPercept {
 	  private String POSSIBLETHREAT;
 	  private String POSSIBLEPROTECT; // All available positions for a piece are possibly protected by that piece
 	  private String POSSIBLEREACH; // All available positions for a piece are possibly reachable by that piece
-	  
+/*
+ * The below element are used in a revised version of the perceptor
+ */
+
+	  private HashMap<String,GroundGameAction> relevantMapActions;
+	  private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
+
+
 	  private APlayer myPlayer = null; // The player of the game
 	  private APlayer opponent = null; // The opponent of the game
 	  private ChessFolKnowledgeBase folKb = null; // The parent knowledge base
@@ -244,6 +251,19 @@ public class APerceptor implements ChessPercept {
 		  POSSIBLEREACH = KnowledgeBuilder.getPOSSIBLEREACH();
 	  }
 
+	  
+	  public GroundGameAction getDeterminedAction() {
+		return determinedAction;
+	}
+	  public void setDeterminedAction(GroundGameAction determinedAction) {
+		  this.determinedAction = determinedAction;
+	  }
+	  public HashMap<String, GroundGameAction> getRelevantMapActions() {
+		return relevantMapActions;
+	}
+	  public void setRelevantMapActions(HashMap<String, GroundGameAction> relevantMapActions) {
+		  this.relevantMapActions = relevantMapActions;
+	  }
 	  public Map<String, AgamePiece> getThreatenedPieces() {
 		  return threatenedPieces;
 	  }

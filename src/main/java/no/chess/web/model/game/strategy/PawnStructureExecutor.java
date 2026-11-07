@@ -15,7 +15,7 @@ import no.games.chess.search.nondeterministic.GameAction;
 
 /**
  * PawnStructureExecutor
- * This executor checks to see if a pawn needs to be moved in order to enable development of a bishop
+ * This executor checks to see if a pawn needs to be moved in order to enable development of a bishop - or other officers?
  * 
  */
 public class PawnStructureExecutor implements FunctionExecutor {
@@ -84,7 +84,7 @@ public class PawnStructureExecutor implements FunctionExecutor {
           	if (!enabled) {
           		continue;
           	}else {
-          		bestScore = 100;
+          		bestScore = 200;
           		bestPawnMove =localAction;
           		bestPawnMove.setValuePoints(bestScore);
           		break;

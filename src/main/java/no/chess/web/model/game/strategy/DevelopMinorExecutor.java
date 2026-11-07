@@ -179,10 +179,13 @@ public class DevelopMinorExecutor implements FunctionExecutor {
            					chosenAction = localAction;
            					chosenAction.setValuePoints(bestScore);
            				}
-       				}else {
-       					chosenAction = localAction;
-       					chosenAction.setValuePoints(bestScore);
-       					break;
+       				}else if (pieceId.contains("Knight")) {
+       					score = evaluationService.evaluateKnightsDevelopment(pieceId, targetSquare,thisPos);
+          				if (score > bestScore) {
+           					bestScore = score;
+           					chosenAction = localAction;
+           					chosenAction.setValuePoints(bestScore);
+           				}
        				}
        			}
        		}

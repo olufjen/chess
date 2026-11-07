@@ -16,6 +16,7 @@ import no.games.chess.search.nondeterministic.GameState;
 /**
  * GroundGameAction
  * The GroundGameAction is a sub class of GameAction used in nondeterminitic and or search (chapter 4)
+ * One game action is created for every action schema available
  * It contains a gamepiece and a from and to postion.
  * 
  */
@@ -42,7 +43,7 @@ public class GroundGameAction extends GameAction {
 		String name = actionSchema.getName();
 		endPos = KnowledgeBuilder.extractString(name,'_',-1);
 		String catalog = KnowledgeBuilder.getFileCatalog();
-	    filename = catalog + outputFileName+name+".txt";
+//	    filename = catalog + outputFileName+name+".txt";
 
 //		writer = mystate.getWriter();
 
@@ -102,8 +103,8 @@ public class GroundGameAction extends GameAction {
 	 * It returns a list of Game states as a result of the action. Each new Game state contains a new and different kb
 	 */
 	public List<GameState> performAction() {
-		setWriter();
-	    writer = new PrintWriter(new BufferedWriter(fw));
+//		setWriter();
+//	    writer = new PrintWriter(new BufferedWriter(fw));
 		GroundGameState state = (GroundGameState) this.gameState; // The state this action is performed in
 		List<GameState> states = new ArrayList<GameState>();
 		List<GroundGameAction> opponentActions = state.getOpponentGameActions();
@@ -112,22 +113,28 @@ public class GroundGameAction extends GameAction {
 		for (GroundGameAction oppaction:opponentActions) { // All opponent's actions - For all opponent actions - create a new state
 			ActionSchema schema = oppaction.getActionSchema();
 			ChessFolKnowledgeBase newKb = kb.cloneOrCopy();
-			writer.println("Results(s, a) - performAction: Creates a state for the Opponent action schema "+schema.getName());
+	
 			state.applyEffects(newKb, oppaction);
 			GroundGameState actionState = new GroundGameState(state.getPlayer(),state.getOpponent(),state.getMoveNr(),newKb,state.getThePerceptor(),state.getActionSchemas(), state.getOpponentActions(),state.getPositionList(),schema); // Creates a groundgamestate based on a possible opponent actionschema
-			/* OBS: MAkes its own list of actions !!!
+			/* OBS: Makes its own list of actions !!!
 			 * actionState.setActions(state.gettheRelavantActions());
 			 * actionState.setOpponentGameActions(opponentActions);
 			 * actionState.setOppAction(oppaction); states.add(actionState);
 			 */
+//			writer.println(actionState.toString());
+//			writer.println("Results(s, a) - performAction: Creates a state for the Opponent action schema "+schema.getName()+" The state " +actionState.getGamestateId());
 			states.add(actionState);
+			if (actionState.isThreatened()) {
+//				writer.println("Results(s, a) - performAction peace threatened: "+actionState.getActionSchema().getName());
+				break;
+			}
 			if (actionState.isContextFound())
 				break;
 			if (actionState.isOpeningFound())
 				break;
 
 		}
-		writer.flush();
+//		writer.flush();
 //		states.add(state); // Also adds the current state?
 		return states;
 	}

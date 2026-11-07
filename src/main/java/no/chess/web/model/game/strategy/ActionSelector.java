@@ -21,7 +21,8 @@ import no.games.chess.search.nondeterministic.GameAction;
  * ActionSelector
  * This object selects the best available action by testing a number of various rules in the kb
  * The action selector is used to find the best move based on a move chosen by the opponent.
- * The opponent move creates a new kb'. 
+ * The opponent move creates a new kb' and the Action selector is created and run for every new move by the opponent. 
+ * 
  * The Action Selecter works with the following priorities:
  * PRIORITET 0 DEFEND_THREATENED Redde ubeskyttede brikker i fare (Unngå bukk)
  * PRIORITET 1 MIDGAME_TACTIC_FORK Skape direkte dobbelttangrep (vinne materiell)
@@ -38,11 +39,12 @@ public class ActionSelector {
     private ChessFolKnowledgeBase testKB; // The cloned knowledge base after a move
     private GroundGameState gameState;
 	private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
-	private GroundGameAction chosenAction = null;	// This action is current selected action
+	private GroundGameAction chosenAction = null;	// This action is current selected action for this run of the action selector
 	private String outputFileName =  "actionselection";
 	private PrintWriter writer =  null;
 	private FileWriter fw =  null;
 	private GroundGameAction defenderAction = null;// Satt dersom en brikke må flyttes fordi den er under angrep 
+	private List<GroundGameAction> threatenedPieces;
 	
     public ActionSelector(FunctionContect functionContext, List<GroundGameAction> relevantActions,GroundGameState gameState) {
 		super();
@@ -53,6 +55,7 @@ public class ActionSelector {
 		for (GroundGameAction action:relevantActions) {
 			actions.add(action);
 		}
+		threatenedPieces = new ArrayList<GroundGameAction>();
 		registerFunctions();
 		String catalog = KnowledgeBuilder.getFileCatalog();
 	    String filename = catalog + outputFileName+".txt";
@@ -64,6 +67,22 @@ public class ActionSelector {
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));
 		writer.println("\nThe Action selector");
+	}
+
+	public GroundGameAction getDefenderAction() {
+		return defenderAction;
+	}
+
+	public void setDefenderAction(GroundGameAction defenderAction) {
+		this.defenderAction = defenderAction;
+	}
+
+	public List<GroundGameAction> getThreatenedPieces() {
+		return threatenedPieces;
+	}
+
+	public void setThreatenedPieces(List<GroundGameAction> threatenedPieces) {
+		this.threatenedPieces = threatenedPieces;
 	}
 
 	public GroundGameAction getChosenAction() {
@@ -156,6 +175,9 @@ public class ActionSelector {
         String defender = KnowledgeBuilder.getDefendthreatenedpiece(); // Finnes
         GroundGameAction selectedAction = null;
         int maxScore = 0;
+		/*
+		 * if (defenderAction != null) { return defenderAction; } THis never occurs because every new move from opponent creates a new selector
+		 */
         FunctionExecutor defenderExec = functionContext.get(defender);
         DefendThreatenedPieceExecutor defend = (DefendThreatenedPieceExecutor)defenderExec;
         if (defenderExec != null ) {
@@ -163,12 +185,23 @@ public class ActionSelector {
         	if (defenderMove != null ) {
         		selectedAction = defenderMove;
         		chosenAction = defenderMove;
+        		String chosenName = chosenAction.getActionSchema().getName();
+        		String determinedName = "";
+        		if (determinedAction != null) {
+        			determinedName = determinedAction.getActionSchema().getName();
+        			if (determinedName.equals(chosenName)) {
+        				writer.println("DefenderExecutor found same action "+determinedName);
+        			}
+        		}
         		if (chosenAction.getValuePoints()> maxScore)
         			maxScore = chosenAction.getValuePoints();
             	writer.println("DefenderExecutor "+chosenAction.toString()+ "Score "+maxScore);
         	}
 
         	if(defend.isThreats() && selectedAction != null) {
+        		defenderAction = selectedAction;
+        		threatenedPieces.add(defenderAction);
+        		gameState.setThreatened(true);
         		return selectedAction;
         	}
         }
@@ -176,19 +209,31 @@ public class ActionSelector {
         // 1. PRIORITET 1: Taktisk Gaffel (MIDGAME_TACTIC_FORK) OBS: Lagt inn i defender executor (15.10.26)
         FunctionExecutor forkExecutor = functionContext.get(midGameFork);
         if (forkExecutor != null) {
+        	int forkscore = 0;
             GroundGameAction forkMove = (GroundGameAction) forkExecutor.execute();
             if (forkMove != null) {
                 selectedAction =  forkMove; // Hvis en gaffel er mulig, GJØR DEN!
+                if (forkMove.getValuePoints()> maxScore) {
+                	chosenAction = selectedAction;
+                }
+                forkscore = selectedAction.getValuePoints();
             }
+         	writer.println("ForkExecutor "+ "Score "+forkscore);
         }
 
         // 2. PRIORITET 2: Taktisk Binding (MIDGAME_TACTIC_PIN) OBS: Lagt inn i defender executor (15.10.26)
         FunctionExecutor pinExecutor = functionContext.get(midGamePin);
         if (pinExecutor != null) {
             GroundGameAction pinMove = (GroundGameAction) pinExecutor.execute();
+            int pinscore = 0;
             if (pinMove != null) {
                 selectedAction = pinMove; // Hvis en binding er mulig, GJØR DEN!
+                if (pinMove.getValuePoints()> maxScore) {
+                	chosenAction = selectedAction;
+                }
+                pinscore = selectedAction.getValuePoints();
             }
+        	writer.println("PinExecutor "+ "Score "+pinscore);
         }
         FunctionExecutor devPieceExec = functionContext.get(devPiece);
         if (devPieceExec != null) {
@@ -197,6 +242,7 @@ public class ActionSelector {
             GroundGameAction devMove = (GroundGameAction) developMinor.execute();
             if (devMove != null) {
                 selectedAction = devMove; // Hvis en brikke ikke er utviklet, GJØR DEN!
+    	       	writer.println("DevelopExecutor "+selectedAction.toString()+ "Score "+devMove.getValuePoints());
          		if (devMove.getValuePoints()> maxScore) {
         			maxScore = devMove.getValuePoints();
                     chosenAction = devMove;
@@ -209,12 +255,14 @@ public class ActionSelector {
         if(pawnEnabler != null) {
         	PawnStructureExecutor pawnStructurexec = (PawnStructureExecutor)pawnEnabler;
         	GroundGameAction pawnMove = (GroundGameAction) pawnStructurexec.execute();
+        	writer.println("Attempting PawnExecutor ");
         	if(pawnMove != null) {
         		selectedAction = pawnMove;
+      	       	writer.println("PawnExecutor "+selectedAction.toString()+ "Score "+pawnMove.getValuePoints());
         		if (pawnMove.getValuePoints()> maxScore) {
         			maxScore = pawnMove.getValuePoints();
                     chosenAction = pawnMove;
-        	       	writer.println("PawnExecutor "+chosenAction.toString()+ "Score "+maxScore);
+        	       	writer.println("PawnExecutor chosen: "+chosenAction.toString()+ "Score "+maxScore);
         		}
          	}
         }

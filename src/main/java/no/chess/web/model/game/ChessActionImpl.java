@@ -370,6 +370,7 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 	 * A ChessAction is created by the call to the ChesState getActions() method
 	 * @since 25.02.21 Adapted for castling
 	 * @since 24.12.22 Added friendspositions for knights
+	 * @since 29.10.26 If piece is a pawn and the position of available positions is empty, then attackpositions must be removed
 	 * @return
 	 */
 	public List<Position> getActions(){
@@ -414,6 +415,10 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 		if (pieceType instanceof AKnight) {
 			bKnight = true;
 		}
+		boolean bPawn = false;
+		if (pieceType instanceof APawn) {
+			bPawn = true;
+		}
 		List<AgamePiece> pieces = player.getMygamePieces(); 
 		for (Position position:availablePositions) {
 			for (AgamePiece otherPiece:pieces) {
@@ -449,9 +454,20 @@ public class ChessActionImpl implements ChessAction<HashMap<String, Position>,Li
 
 					}
 				}
+			} // End loop of all player's pieces
+			/*
+			 * Added 29.10.26 If piece is a pawn and the position of available positions is empty, then attackpositions must be removed
+			 */
+			if (bPawn && !position.isInUse()) {
+				String name = position.getPositionName();
+				Position posinTable =  (Position) positionRemoved.stream().filter(c -> c.getPositionName().contains(name)).findAny().orElse(null); // Do not put position in removed table if it is there already
+//				List<Position> attackPos = new ArrayList<Position>(chessPiece.getAttackPositions().values());
+				Position apos = chessPiece.getAttackPositions().get(name); 
+				if(posinTable == null && apos != null && apos.getPositionName().equals(name)) {
+					positionRemoved.add(position);
+				}
 			}
 
-		
 		}
 
 		checkOpponent();

@@ -441,12 +441,19 @@ public class AChessAgent extends KBAgent {
 		noofMoves = game.getMovements().size();
 		GroundGameAction newAction = null;
 		ApieceMove lastMove = null;
-		if (aplan) {
-			List<ApieceMove> moves = game.getMovements();
+		List<ApieceMove> moves = game.getMovements();
+		if (!moves.isEmpty()) {
 			lastMove = moves.getLast();
 			writer.println("\nThe last opponent move: "+lastMove.toString()); // Needs to empty the plan
+		}
+
+		if (aplan) {
 			newAction = chessPlancheck.selectMove(lastMove,noofMoves);
 			aplan = newAction != null;
+			if (!aplan)
+				writer.println("!!No plan created !!!"); // Needs to empty the plan
+			else
+				writer.println("The planned move "+newAction.getActionSchema().getName()+ " with value "+newAction.getValuePoints());
 		}
 		for (ChessAction action:allActions) { //*** Added 23.05.25 olj
 			ChessActionImpl localAction =(ChessActionImpl) action;
@@ -703,17 +710,15 @@ public class AChessAgent extends KBAgent {
 			List<Constant>solConstants = actionSchema.getConstants();
 			chessPlancheck.setCurrentPlan(solver.getCurrentPlan());
 			AgamePiece gpiece = null;
-			writer.println("Brikke fra action schema");
-			String aName = null; // Name to be used to find the chessAction that the actionSchema corresponds to
-			for (Constant constant:solConstants) {
-				writer.println(constant.getSymbolicName());
-				String symName = constant.getSymbolicName();
-				gpiece =  (AgamePiece) pieces.stream().filter(c -> c.getMyPiece().getOntlogyName().contains(symName)).findAny().orElse(null);
-				if (gpiece != null) {
-					aName = symName;
-					break;
-				}
-			}
+			writer.println("Valgt Action schema "+actionSchema.getName());
+			/*
+			 * String aName = null; // Name to be used to find the chessAction that the
+			 * actionSchema corresponds to for (Constant constant:solConstants) {
+			 * writer.println(constant.getSymbolicName()); String symName =
+			 * constant.getSymbolicName(); gpiece = (AgamePiece) pieces.stream().filter(c ->
+			 * c.getMyPiece().getOntlogyName().contains(symName)).findAny().orElse(null); if
+			 * (gpiece != null) { aName = symName; break; } }
+			 */
 			naction = chooseAction(actionSchema);
 //			folKb.createsinglefacts(DEVELOPED, aName);  Removed 8.03.26 - see movestatistics
 			/*
@@ -769,8 +774,9 @@ public class AChessAgent extends KBAgent {
 		 * writer.println("WhitePawn4 is at d4"); }else {
 		 * writer.println("WhitePawn4 is NOT at d4"); }
 		 */
-		if (noofMoves == 1)
-			chessDomain.printDomain();
+		/*
+		 * if (noofMoves == 1) chessDomain.printDomain();
+		 */
 		strategyKB =  solver.getOpponentAgent().getLocalKb();
 		strategyKB.writeKnowledgebase();
 		writer.println("********* Trekknummer: "+movnr+ " gjort ********************");		
