@@ -46,7 +46,10 @@ import no.games.chess.GamePiece;
  * @since 24.07.24
  * Creates a set of propositionalized action schemas from the lifted action schema
  * These action schemas are used as a basis for problem solving see the method createLiftedActions
- * 
+ * @since November 26:
+ * The perceptor is created with every move from opponent
+ * The perceptor is also used to hold a list of GroundGameActions chosen by the Action Selector
+ * when a plan is generated. (See the AndOrSearch and the performAction method of GroundGameAction)
  */
 public class APerceptor implements ChessPercept {
 	/*
@@ -92,8 +95,8 @@ public class APerceptor implements ChessPercept {
 
 	  private HashMap<String,GroundGameAction> relevantMapActions;
 	  private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
-
-
+	  private List<GroundGameAction> suggestedActions; // This list contains actions suggested as a move in respons to an opponent move (the plan)
+	  private GroundGameAction firstAction; // The first action of a plan
 	  private APlayer myPlayer = null; // The player of the game
 	  private APlayer opponent = null; // The opponent of the game
 	  private ChessFolKnowledgeBase folKb = null; // The parent knowledge base
@@ -158,6 +161,7 @@ public class APerceptor implements ChessPercept {
 			  e1.printStackTrace();
 		  }
 		  writer = new PrintWriter(new BufferedWriter(fw));	
+		  suggestedActions = new ArrayList<GroundGameAction>();
 	  }
 	/*
 	   * In order to use any defined predicate, the predicates must have two terms
@@ -252,6 +256,18 @@ public class APerceptor implements ChessPercept {
 	  }
 
 	  
+	  public GroundGameAction getFirstAction() {
+		return firstAction;
+	}
+	  public void setFirstAction(GroundGameAction firstAction) {
+		  this.firstAction = firstAction;
+	  }
+	  public List<GroundGameAction> getSuggestedActions() {
+		return suggestedActions;
+	}
+	  public void setSuggestedActions(List<GroundGameAction> suggestedActions) {
+		  this.suggestedActions = suggestedActions;
+	  }
 	  public GroundGameAction getDeterminedAction() {
 		return determinedAction;
 	}

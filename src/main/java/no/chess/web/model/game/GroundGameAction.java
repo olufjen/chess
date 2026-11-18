@@ -101,6 +101,7 @@ public class GroundGameAction extends GameAction {
 	4. Output: Funksjonen returnerer en liste over disse KB-ene.
 
 	 * It returns a list of Game states as a result of the action. Each new Game state contains a new and different kb
+	 * OBS 12.11.26 The call to this method takes a long time!!!!
 	 */
 	public List<GameState> performAction() {
 //		setWriter();

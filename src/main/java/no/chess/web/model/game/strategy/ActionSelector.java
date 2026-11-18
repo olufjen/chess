@@ -18,7 +18,7 @@ import no.function.FunctionExecutor;
 import no.games.chess.search.nondeterministic.GameAction;
 
 /**
- * ActionSelector
+ * ActionSelector - is created new for every new action state
  * This object selects the best available action by testing a number of various rules in the kb
  * The action selector is used to find the best move based on a move chosen by the opponent.
  * The opponent move creates a new kb' and the Action selector is created and run for every new move by the opponent. 
@@ -40,6 +40,7 @@ public class ActionSelector {
     private GroundGameState gameState;
 	private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
 	private GroundGameAction chosenAction = null;	// This action is current selected action for this run of the action selector
+	private GroundGameAction firstAction = null; // This Action is set when the planning procedure is to take place
 	private String outputFileName =  "actionselection";
 	private PrintWriter writer =  null;
 	private FileWriter fw =  null;
@@ -66,7 +67,15 @@ public class ActionSelector {
 			e1.printStackTrace();
 		}
 	    writer = new PrintWriter(new BufferedWriter(fw));
-		writer.println("\nThe Action selector");
+		writer.println("\nThe Action selector for "+gameState.getGamestateId()+ " state and action");
+	}
+
+	public GroundGameAction getFirstAction() {
+		return firstAction;
+	}
+
+	public void setFirstAction(GroundGameAction firstAction) {
+		this.firstAction = firstAction;
 	}
 
 	public GroundGameAction getDefenderAction() {
@@ -175,9 +184,8 @@ public class ActionSelector {
         String defender = KnowledgeBuilder.getDefendthreatenedpiece(); // Finnes
         GroundGameAction selectedAction = null;
         int maxScore = 0;
-		/*
-		 * if (defenderAction != null) { return defenderAction; } THis never occurs because every new move from opponent creates a new selector
-		 */
+        if(firstAction != null)
+        	return firstAction;
         FunctionExecutor defenderExec = functionContext.get(defender);
         DefendThreatenedPieceExecutor defend = (DefendThreatenedPieceExecutor)defenderExec;
         if (defenderExec != null ) {
@@ -237,16 +245,17 @@ public class ActionSelector {
         }
         FunctionExecutor devPieceExec = functionContext.get(devPiece);
         if (devPieceExec != null) {
+        	writer.println("Attempting DevelopExecutor ");
         	DevelopMinorExecutor developMinor = (DevelopMinorExecutor)devPieceExec;
         	developMinor.setDeterminedAction(determinedAction);
             GroundGameAction devMove = (GroundGameAction) developMinor.execute();
             if (devMove != null) {
                 selectedAction = devMove; // Hvis en brikke ikke er utviklet, GJØR DEN!
-    	       	writer.println("DevelopExecutor "+selectedAction.toString()+ "Score "+devMove.getValuePoints());
+//    	       	writer.println("DevelopExecutor "+selectedAction.toString()+ "Score "+devMove.getValuePoints());
          		if (devMove.getValuePoints()> maxScore) {
         			maxScore = devMove.getValuePoints();
                     chosenAction = devMove;
-        	       	writer.println("DevelopExecutor "+chosenAction.toString()+ "Score "+maxScore);
+        	       	writer.println("DevelopExecutor chosen "+chosenAction.toString()+ "Score "+maxScore);
  
         		}
             }
@@ -269,6 +278,7 @@ public class ActionSelector {
         // 3. PRIORITET 3: Posisjonell vurdering (MIDGAME_POSITIONAL)
         FunctionExecutor positionalExecutor = functionContext.get(midGamePos);
         if (positionalExecutor != null && selectedAction == null) {
+        	writer.println("Attempting Positional Executor ");
         	MidGamePositional positionalExec = (MidGamePositional)positionalExecutor;
         	positionalExec.setDeterminedAction(determinedAction);
         	GroundGameAction posMove = (GroundGameAction) positionalExecutor.execute();
@@ -277,7 +287,7 @@ public class ActionSelector {
         		if (posMove.getValuePoints()> maxScore) {
         			maxScore = posMove.getValuePoints();
                     chosenAction = posMove;
-        	       	writer.println("Pos Executor "+chosenAction.toString()+ "Score "+maxScore);
+        	       	writer.println("Pos Executor chosen "+chosenAction.toString()+ "Score "+maxScore);
   
         		}
              }

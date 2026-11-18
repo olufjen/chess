@@ -84,6 +84,7 @@ public class GroundGameState extends GameState {
 	private ApieceMove lastOpponentmove = null;
 	private ActionSelector actionSelector = null;
 	private GroundGameAction determinedAction = null; // This action is set when a planning procedure takes place from result(s.a) and GroundGameAction.performAction. (The testEnd procedure)
+	private GroundGameAction firstAction = null; // THis action is set when the game state is created after an opponent move !!
 	// And thus the determinedAction is the action found to be best for this state
 	private String theState = ""; // Used to hold the statistics of this state
 	/**
@@ -165,6 +166,7 @@ public class GroundGameState extends GameState {
 	    actions.addAll(relevantActions);
 		actionSelector = new ActionSelector(functionRegistrar,relevantActions,this);
 		actionSelector.setTestKB(knowledgeBase);
+		actionSelector.setFirstAction(this.thePerceptor.getFirstAction());
 		for (int i=0;i<KnowledgeBuilder.getTactics().size();i++ ) {
 			String key = KnowledgeBuilder.getTactics().get(i); registerFunctions(key);
 		}
@@ -223,7 +225,12 @@ public class GroundGameState extends GameState {
 	    opponentGameActions = new ArrayList<GroundGameAction>();
 	    relevantActions = new ArrayList<GroundGameAction>();
 	    relevantMapActions = new HashMap<String,GroundGameAction>();
-
+	    String main = "Player move";
+	    if (chosenAction != null) {
+	    	main = chosenAction;
+	    }
+	    	
+		gamestateId = stateId + "_" + main; //myAction.getActionSchema().getName(); The state id after an opponent action
 	    produceActions();
 		for (int i=0;i<KnowledgeBuilder.getTactics().size();i++ ) {
 			String key = KnowledgeBuilder.getTactics().get(i);
@@ -235,13 +242,20 @@ public class GroundGameState extends GameState {
 		actionSelector.setTestKB(knowledgeBase);
 //	    stateStatisics();	
 //	    actions.addAll(relevantActions);
-		gamestateId = stateId + "_" + chosenAction; //myAction.getActionSchema().getName(); The state id after an opponent action
 		evaluateScore();
 	//    checkKb("CONTROLCENTER(a,b)");
 
 //		writer.flush();
 	}
 	
+	public GroundGameAction getFirstAction() {
+		return firstAction;
+	}
+
+	public void setFirstAction(GroundGameAction firstAction) {
+		this.firstAction = firstAction;
+	}
+
 	public GroundGameAction getDeterminedAction() {
 		return determinedAction;
 	}
@@ -630,25 +644,24 @@ public class GroundGameState extends GameState {
 	/**
 	 * evaluateGamescore
 	 * This method is used when the state is created as a result of an opponent action - when performing the "Results(s, a)" function: 
-	 * The performAction method of GameAction
-	 * 
-	 * 
+	 * The performAction method of GameAction. It is called for every possible opponent move
 	 */
 	public void evaluateGamescore() {
 		GroundGameAction lastAction = thePerceptor.getDeterminedAction();
 		if (lastAction != null && actionSelector != null) {
-			actionSelector.setDeterminedAction(lastAction);
+			actionSelector.setDeterminedAction(lastAction); // From the last possible opponent move
 		}
 		if (actionSelector != null) { // Action Selector is always created when the GroundGameState is created
 			//							actionSelector.registerFunctions(); Functions are registered when action selector is created
 			//			if (determinedAction == null)
-			determinedAction = actionSelector.selectBestAction();
+			determinedAction = actionSelector.selectBestAction(); // From the next possible opponent move
 			if(!actionSelector.getThreatenedPieces().isEmpty()) {
 				threatened = true; //Pieces are under threat
 			}
 			actionSelector.setDeterminedAction(determinedAction);
 			myAction = determinedAction;
 			thePerceptor.setDeterminedAction(determinedAction);
+			thePerceptor.getSuggestedActions().add(myAction);
 		}
 		if (myAction != null) { // The actionSelector has found an action
 			this.action = myAction;
@@ -670,7 +683,7 @@ public class GroundGameState extends GameState {
 	 * evaluateScore
 	 * This method evaluate the score of this state, which then is used to determine if this is the end state
 	 * Based on parameters it determines the preferred action of this state
-	 * TODO: Use functional interface or enum and own methods
+	 * It is called when a new state is created when a new game starts or as a result of an opponent move
 	 */
 	public void evaluateScore() {
 		int mypieces = player.getMygamePieces().size();
@@ -735,12 +748,12 @@ public class GroundGameState extends GameState {
  */
 				if (actionSelector != null) { // Action Selector is always created when the GroundGameState is created
 //					actionSelector.registerFunctions(); Functions are registered when action selector is created
-					if (determinedAction == null)
-						determinedAction = actionSelector.selectBestAction();
-					actionSelector.setDeterminedAction(determinedAction);
-					myAction = determinedAction;
-				}
-				if (myAction != null) { // The actionSelector has found an action
+					if (firstAction == null)
+						firstAction = actionSelector.selectBestAction();
+//					actionSelector.setDeterminedAction(determinedAction);
+					myAction = firstAction;
+					thePerceptor.setFirstAction(firstAction);
+//				if (myAction != null) { // The actionSelector has found an action
 					this.action = myAction;
 					this.actionSchema = myAction.getActionSchema();
 					relevantActions.add(myAction);
@@ -789,6 +802,8 @@ public class GroundGameState extends GameState {
 		testKB = knowledgeBase.cloneOrCopy();
 //		testKB.setRuleBuilder(knowledgeBase.getRuleBuilder());
 		applyEffects(testKB, localAction);
+		int x = 1;
+		x++;
 //		testKB.writeKnowledgebase();
 //		writer.flush();
 		if ((openingFound || contextFound) && action != null) { // We have a definite action in a context
@@ -803,7 +818,7 @@ public class GroundGameState extends GameState {
 			theState = theState+ "\n"+ "State testEnd new state true ";
 			if(localAction != null) {
 //				writer.println("State testEnd new state true "+ localAction.getActionSchema().getName());
-				theState = theState+ "\n"+ localAction.getActionSchema().getName();
+				theState = theState+ "\n - my action: "+ localAction.getActionSchema().getName();
 				myAction = localAction;
 				this.action = myAction;
 				this.actionSchema = myAction.getActionSchema();
@@ -812,7 +827,7 @@ public class GroundGameState extends GameState {
 				return true;
 			}else {  //This is when we create a plan based on opponent actions - there is no opponent action?!
 //				functionRegistrar.getContext().clear();
-				theState = theState+ "\n"+ "State testEnd creating a plan";
+				theState = theState+ "\n"+ "State testEnd creating a plan - no opponent action !!!";
 				if (actionSelector != null) {
 //					actionSelector.registerFunctions();
 					if (determinedAction == null)
@@ -825,17 +840,24 @@ public class GroundGameState extends GameState {
 				// Based on available opponent actions what is the best move of the available moves of the player. We use actionSelecteor 
 				plannedAction = myAction;
 //				this.action = myAction;
-				writer.println("State testEnd new state true no action");
+//				writer.println("State testEnd new state true no action");
+				theState = theState+ "\n"+"No repond action found";
+				this.action = myAction;
 				this.actionSchema = myAction.getActionSchema();
 				goalState = true;
 				return true;
 			}
 		}
+		if (localAction != null) { // In this case The game state is created for the first time and there are no context !!!
+			nextAction = localAction;
+			this.action = nextAction;
+			return false; // true skaper ingen plan - 
+		}
 		nextAction = relevantMapActions.get("WhiteKnight1_c3");// Need a method to choose correct move based on the last opponent action.
 		// And the chosen action must not be among the actions in the plan !!
 		// to choose the best move
 		this.action = nextAction;
-		return false;
+		return true;
 	}
 	/**
 	 * buildPlan

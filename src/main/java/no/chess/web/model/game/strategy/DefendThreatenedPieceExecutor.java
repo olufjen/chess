@@ -138,8 +138,9 @@ public class DefendThreatenedPieceExecutor implements FunctionExecutor {
         String mostValuableThreatenedPiece = findMostValuableThreatenedPiece();
 
         if (mostValuableThreatenedPiece == null) {
-        	otherAction =  pieceMove();
-            return otherAction; // Ingen akutt trussel, check if possible minor move or to take opponent piece
+//        	otherAction =  pieceMove();
+//            return otherAction; // Ingen akutt trussel, check if possible minor move or to take opponent piece
+        	return null;
         }
         String pos = "";
     

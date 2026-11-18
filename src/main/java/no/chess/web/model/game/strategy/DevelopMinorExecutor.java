@@ -190,14 +190,16 @@ public class DevelopMinorExecutor implements FunctionExecutor {
        			}
        		}
        	}
-		if(foundPiece && !pawn) {
-   			ActionSchema schema = chosenAction.getActionSchema();
-   			String actionName = schema.getName();
-   			String mytargetSquare = KnowledgeBuilder.extractString(actionName,'_', -1); //
-			bestAction = chosenAction;
-		}
-		if (chosenAction != null)
-			bestAction = chosenAction;
+		/*
+		 * if(foundPiece && !pawn) { // ActionSchema schema =
+		 * chosenAction.getActionSchema(); // String actionName = schema.getName(); //
+		 * String mytargetSquare = KnowledgeBuilder.extractString(actionName,'_', -1);
+		 * // bestAction = chosenAction; }
+		 */
+		bestAction = chosenAction;
+		/*
+		 * if (chosenAction != null) bestAction = chosenAction;
+		 */
 		return bestAction;
 	}
 
